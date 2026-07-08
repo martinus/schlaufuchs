@@ -61,17 +61,26 @@ the browser.
 | Item | Value |
 |---|---|
 | Host | GitHub Pages, project site from this repository |
-| Source | `main` branch, root directory |
+| Source | **GitHub Actions** (`.github/workflows/deploy.yml`) |
 | Domain | `schlaufuchs.ankerl.com` |
 | HTTPS | Enforced via GitHub Pages settings |
 
+Deployment is done by a workflow, not by publishing the branch directly:
+on every push to `main`, `deploy.yml` runs the unit tests and — only if they
+pass — assembles a curated `_site/` artifact containing **site files only**
+(`index.html`, `album.html`, `CNAME`, `assets/`, `games/`) and deploys it via
+`actions/deploy-pages`. Development files (`SPEC.md`, `README.md`, `tests/`,
+`package.json`, `.github/`) are never published. A new game directory or
+top-level page must be added to the `cp` list in `deploy.yml`.
+
 Setup steps:
 
-1. Add a `CNAME` file at the site root containing `schlaufuchs.ankerl.com`.
+1. In the repository settings, set GitHub Pages **Source: GitHub Actions**.
 2. In the DNS zone for `ankerl.com`, add a `CNAME` record:
    `schlaufuchs` → `martinus.github.io`.
-3. In the repository settings, enable GitHub Pages for `main` and turn on
-   *Enforce HTTPS* once the certificate is provisioned.
+3. Set the custom domain `schlaufuchs.ankerl.com` in the Pages settings and
+   turn on *Enforce HTTPS* once the certificate is provisioned. (The `CNAME`
+   file is also copied into the artifact, which keeps the domain stable.)
 
 The site must also work when served from a subpath
 (`https://martinus.github.io/schlaufuchs/`). Therefore: **only relative URLs**
@@ -793,7 +802,8 @@ Decisions already made — do not reopen:
    The journey strip and map states are designed so adventure mode can be
    added as a layer on top (nodes reuse round configs; map regions gain a
    path overlay).
-8. **Pages source = repo root** (not `/docs`).
+8. **Pages deploys via GitHub Actions** (curated artifact, tests must pass),
+   not from a branch — development files are never published (§2).
 
 ---
 
