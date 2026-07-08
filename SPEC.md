@@ -514,7 +514,7 @@ walks the village lane; goal node: ringing the school bell.
 ```json
 {
   "d": 1, "t": 7,
-  "box": "342103...",                    // 90 digits: pairs 1..10 × 1..9 canonical order
+  "box": "342103...",                    // 100 digits: pairs 1..10 × 1..10 canonical order
   "stars": { "0": "302...", "1": "...", "2": "..." }  // per difficulty: 11 digits (10 tables + mixed)
 }
 ```
