@@ -1,7 +1,11 @@
 /* Schlaufuchs shared design system (§15). Mobile first: baseline 360px
    portrait, wider layouts only via min-width queries (§5.1). */
 
+/* The site is always light and friendly — no dark theme, regardless of the
+   device setting (resolved decision, SPEC §18). color-scheme: light keeps
+   the browser from darkening form controls and scrollbars. */
 :root {
+  color-scheme: light;
   --orange: #e8590c;
   --orange-soft: #fdc79f;
   --bg: #fdf6ec;
@@ -14,19 +18,6 @@
   --grass: #b6d7a8;
   --shadow: 0 2px 8px rgba(74, 44, 23, 0.18);
   --radius: 14px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #221a12;
-    --panel: #31261a;
-    --ink: #f3e7d8;
-    --ink-soft: #c4ab92;
-    --orange-soft: #7a3d12;
-    --sky: #1c2b3a;
-    --grass: #2c4426;
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-  }
 }
 
 * { box-sizing: border-box; }
