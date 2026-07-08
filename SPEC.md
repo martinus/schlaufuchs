@@ -723,8 +723,9 @@ language-neutral.
   accents where a full illustration would be costly. No raster images.
 - Palette: fox-orange primary (`#e8590c` range), cream background,
   dark-brown text; distinct success-green and error-red, all ≥ 4.5:1
-  contrast. `prefers-color-scheme: dark` supported from the start (dark
-  map = evening mood, same layout).
+  contrast. **The site is always light and friendly — no dark theme**, even
+  when the device prefers dark (`color-scheme: light`); a dark UI does not
+  fit the product (resolved decision, §18).
 - Typography: system font stack; very large in-game sizes (a question
   readable from a meter away). Lesen uses a rounded font with a single-story
   `a` to match handwriting forms.
@@ -776,6 +777,10 @@ Rules that keep the implementation on the rails:
 9. When something small is genuinely unspecified, pick the simplest option
    consistent with §1 (kid-friendly, ≤ 2 taps, mobile first, never punish)
    and note the choice in the commit message.
+10. **Bump the `?v=N` query on the stylesheet links** (all HTML files, same
+    N) whenever `schlaufuchs.css` changes. GitHub Pages caches assets and
+    browsers hold them longer; without the bump, users get fresh HTML with
+    stale CSS and new elements render unstyled.
 
 ---
 
@@ -806,6 +811,9 @@ Decisions already made — do not reopen:
    path overlay).
 8. **Pages deploys via GitHub Actions** (curated artifact, tests must pass),
    not from a branch — development files are never published (§2).
+9. **Light theme only.** No dark mode, regardless of the device preference —
+   the world must always look bright and friendly (user decision after
+   playtesting).
 
 ---
 
@@ -848,7 +856,7 @@ speech on tap; cookie stays under budget with all packs played.
 *Accept:* every exercise fully playable without reading UI text; everything
 speakable on tap; rounds of 6; iOS speech works from tap handlers.
 
-**M7 — Polish.** Dark-mode pass, refined map/fox art, cosmetic layers,
+**M7 — Polish.** Refined map/fox art, cosmetic layers,
 service worker for offline play, `prefers-reduced-motion` audit.
 
 **M8 — Adventure mode.** Per §18.7.
