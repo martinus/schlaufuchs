@@ -1,0 +1,305 @@
+// Einmaleins page module (§10): wires the pure logic to the DOM, using the
+// shared engines (adaptive, journey, rewards, storage, i18n, audio).
+
+import { initI18n, t, getLang, setLang } from "../../assets/js/i18n.js";
+import { getGame, setGame, getSettings, setSettings, resetGame } from "../../assets/js/storage.js";
+import { createSession, boxesFromString, boxesToString } from "../../assets/js/adaptive.js";
+import { recordRound, levelInfo } from "../../assets/js/rewards.js";
+import { createJourney } from "../../assets/js/journey.js";
+import { sfx } from "../../assets/js/audio.js";
+import { confetti } from "../../assets/js/confetti.js";
+import strings from "./i18n.js";
+import {
+  POOL_COUNT, EASY_TABLES, poolFor, questionFor, choicesFor,
+  starsFor, starDigit, withStarDigit,
+} from "./logic.js";
+
+initI18n(strings);
+
+const $ = (id) => document.getElementById(id);
+const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
+const FEEDBACK_MS = 2000;
+const NEXT_MS = 400;
+
+// --- persistent state ------------------------------------------------------
+let saved = getGame("einmaleins");
+let diff = [0, 1, 2].includes(saved.d) ? saved.d : 0;
+let table = Number.isInteger(saved.t) && saved.t >= 0 && saved.t <= 10 ? saved.t : 2;
+
+function coerceTable() {
+  if (diff === 0 && table !== 0 && !EASY_TABLES.includes(table)) table = 2;
+}
+
+// --- round state -----------------------------------------------------------
+let session = null;
+let journey = null;
+let question = null;
+let currentId = null;
+let input = "";
+let hot = 0;
+let t0 = 0;
+let locked = false;
+
+function tableName(tbl) {
+  return tbl === 0 ? t("emMixed") : t("emTable", { t: tbl });
+}
+
+function updateChip() {
+  $("pickchip").textContent = `${t(DIFF_KEYS[diff])} · ${tbl2short(table)}`;
+}
+
+function tbl2short(tbl) {
+  return tbl === 0 ? t("emMixed") : t("emTableShort", { t: tbl });
+}
+
+function startRound() {
+  coerceTable();
+  updateChip();
+  saved = getGame("einmaleins");
+  const boxes = boxesFromString(saved.box, POOL_COUNT);
+  session = createSession(poolFor(table, diff), boxes, { roundSize: 10 });
+  journey = createJourney($("journey"), {
+    nodes: session.items().length,
+    theme: "village",
+    level: levelInfo().level,
+  });
+  hot = 0;
+  t0 = Date.now();
+  $("hotstreak").textContent = "";
+  $("sum-overlay").hidden = true;
+  askNext();
+}
+
+function askNext() {
+  const id = session.next();
+  if (id === null) return endRound();
+  currentId = id;
+  question = questionFor(id, diff);
+  input = "";
+  locked = false;
+  $("feedback").hidden = true;
+  renderQuestion();
+  renderAnswers();
+}
+
+function renderQuestion() {
+  const shown = input === "" ? "?" : input;
+  $("question").innerHTML = question.text.replace(
+    "?",
+    `<span class="gap">${shown}</span>`
+  );
+}
+
+function renderAnswers() {
+  const box = $("answers");
+  box.innerHTML = "";
+  if (diff === 0) {
+    const mc = document.createElement("div");
+    mc.className = "mc";
+    for (const opt of choicesFor(question)) {
+      const b = document.createElement("button");
+      b.textContent = opt;
+      b.addEventListener("click", () => {
+        if (locked) return;
+        submit(opt, b);
+      });
+      mc.appendChild(b);
+    }
+    box.appendChild(mc);
+  } else {
+    const kp = document.createElement("div");
+    kp.className = "keypad";
+    const keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "OK"];
+    for (const k of keys) {
+      const b = document.createElement("button");
+      b.textContent = k;
+      if (k === "OK") b.classList.add("kp-ok");
+      if (k === "⌫") b.classList.add("kp-del");
+      b.addEventListener("click", () => {
+        if (locked) return;
+        keyPress(k);
+      });
+      kp.appendChild(b);
+    }
+    box.appendChild(kp);
+  }
+}
+
+function keyPress(k) {
+  sfx.click();
+  if (k === "⌫") input = input.slice(0, -1);
+  else if (k === "OK") {
+    if (input !== "") submit(Number(input));
+    return;
+  } else if (input.length < 3) input += k;
+  renderQuestion();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (locked || diff === 0 || !$("sum-overlay").hidden) return;
+  if (/^[0-9]$/.test(e.key)) keyPress(e.key);
+  else if (e.key === "Backspace") keyPress("⌫");
+  else if (e.key === "Enter") keyPress("OK");
+});
+
+function submit(value, mcButton) {
+  locked = true;
+  const correct = value === question.answer;
+  if (mcButton) mcButton.classList.add(correct ? "flash-ok" : "flash-err");
+  session.answer(currentId, correct);
+  if (correct) {
+    sfx.correct();
+    journey.advance();
+    hot++;
+    $("hotstreak").textContent = hot >= 3 ? t("hotStreak", { n: hot }) : "";
+    if (input !== "") {
+      input = String(value);
+      renderQuestion();
+    }
+    setTimeout(askNext, NEXT_MS);
+  } else {
+    sfx.wrong();
+    journey.stumble();
+    hot = 0;
+    $("hotstreak").textContent = t("tryAgainSoon");
+    showFeedback();
+    setTimeout(askNext, FEEDBACK_MS);
+  }
+}
+
+// Wrong answer: show the full equation plus a dot-grid visual aid (§10.1).
+function showFeedback() {
+  const { kind, t: a, f: b } = question;
+  const eq = kind === "div" ? `${a * b} ÷ ${b} = ${a}` : `${a} × ${b} = ${a * b}`;
+  const fb = $("feedback");
+  fb.innerHTML = `<span class="eq">${eq}</span>
+    <div class="dotgrid" style="grid-template-columns: repeat(${b}, 9px)">
+      ${"<i></i>".repeat(a * b)}
+    </div>`;
+  fb.hidden = false;
+}
+
+function endRound() {
+  const seconds = Math.round((Date.now() - t0) / 1000);
+  const { firstTryOk, total } = session.progress();
+  const stars = starsFor(firstTryOk, total, seconds);
+
+  // persist boxes + best stars (§10.4)
+  const full = boxesFromString(saved.box, POOL_COUNT);
+  Object.assign(full, session.boxes());
+  const starsObj = { ...(saved.stars ?? {}) };
+  const old = starDigit(starsObj[diff], table);
+  const improved = stars > old;
+  if (improved) starsObj[diff] = withStarDigit(starsObj[diff], table, stars);
+  setGame("einmaleins", { d: diff, t: table, box: boxesToString(full, POOL_COUNT), stars: starsObj });
+
+  const res = recordRound("einmaleins", { perfect: firstTryOk === total });
+
+  journey.finish();
+  setTimeout(() => {
+    $("sum-stars").textContent = stars > 0 ? "⭐".repeat(stars) : "🦊";
+    $("sum-score").textContent = t("roundDone", { ok: firstTryOk, total });
+    $("sum-time").textContent = t("timeTaken", { s: seconds });
+    $("sum-best").hidden = !improved;
+    $("sum-best").textContent = t("newBest");
+    const st = $("sum-sticker");
+    if (res.newStickers.length > 0) {
+      const s = res.newStickers[0];
+      st.innerHTML = `<span class="se-emoji">${s.e}</span>${t("stickerNew", { name: s[getLang()] })}`;
+      st.hidden = false;
+      sfx.sticker();
+    } else {
+      st.hidden = true;
+    }
+    $("sum-again").textContent = t("again");
+    $("sum-overlay").hidden = false;
+    $("sum-again").focus();
+    if (improved || stars === 3 || res.newStickers.length > 0) confetti();
+  }, 700);
+}
+
+$("sum-again").addEventListener("click", startRound);
+
+// --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------
+function renderPicker() {
+  const segEl = $("pick-diff");
+  segEl.innerHTML = "";
+  DIFF_KEYS.forEach((key, i) => {
+    const b = document.createElement("button");
+    b.textContent = t(key);
+    b.setAttribute("aria-pressed", String(i === diff));
+    b.addEventListener("click", () => {
+      diff = i;
+      renderPicker();
+    });
+    segEl.appendChild(b);
+  });
+
+  const grid = $("pick-tables");
+  grid.innerHTML = "";
+  const starStr = (getGame("einmaleins").stars ?? {})[diff];
+  for (const tbl of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0]) {
+    const b = document.createElement("button");
+    const s = starDigit(starStr, tbl);
+    b.innerHTML = `<span>${tbl2short(tbl)}</span><span class="tstars">${s > 0 ? "⭐".repeat(s) : "·"}</span>`;
+    b.disabled = diff === 0 && tbl !== 0 && !EASY_TABLES.includes(tbl);
+    b.addEventListener("click", () => {
+      table = tbl;
+      $("pick-overlay").hidden = true;
+      startRound();
+    });
+    grid.appendChild(b);
+  }
+}
+
+$("pickchip").addEventListener("click", () => {
+  renderPicker();
+  $("pick-overlay").hidden = false;
+});
+
+// --- settings overlay --------------------------------------------------------
+function renderSettings() {
+  $("set-sound").textContent = getSettings().sound !== false ? "🔊" : "🔇";
+  $("set-lang").textContent = getLang() === "de" ? "EN" : "DE";
+}
+
+$("gearbtn").addEventListener("click", () => {
+  renderSettings();
+  $("set-overlay").hidden = false;
+});
+$("set-close").addEventListener("click", () => ($("set-overlay").hidden = true));
+$("set-sound").addEventListener("click", () => {
+  setSettings({ sound: getSettings().sound === false });
+  sfx.click();
+  renderSettings();
+});
+$("set-lang").addEventListener("click", () => {
+  setLang(getLang() === "de" ? "en" : "de");
+  renderSettings();
+  updateChip();
+  renderQuestion();
+});
+// two-step confirm for the destructive per-game reset (§3.4)
+let resetArmed = false;
+$("set-reset").addEventListener("click", () => {
+  if (!resetArmed) {
+    resetArmed = true;
+    $("set-reset").textContent = "❗";
+    setTimeout(() => {
+      resetArmed = false;
+      $("set-reset").textContent = "🗑️";
+    }, 3000);
+    return;
+  }
+  resetGame("einmaleins");
+  location.reload();
+});
+
+for (const ov of ["pick-overlay", "set-overlay"]) {
+  $(ov).addEventListener("click", (e) => {
+    if (e.target === $(ov)) $(ov).hidden = true;
+  });
+}
+
+// Instant resume (§3.4): straight into a round, no menu.
+startRound();

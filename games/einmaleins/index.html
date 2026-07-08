@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Einmaleins — Schlaufuchs</title>
+  <link rel="icon" href="../../assets/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../../assets/css/schlaufuchs.css">
+</head>
+<body>
+  <div class="game">
+    <header class="topbar">
+      <a class="iconbtn" href="../../" data-i18n-label="back">🦊</a>
+      <button class="chip" id="pickchip"></button>
+      <span class="spacer"></span>
+      <button class="iconbtn" id="gearbtn" data-i18n-label="settings">⚙️</button>
+    </header>
+
+    <div class="journey-wrap" id="journey"></div>
+
+    <div class="stage">
+      <div class="hotstreak" id="hotstreak"></div>
+      <div class="question" id="question"></div>
+      <div class="feedback-aid" id="feedback" hidden></div>
+    </div>
+
+    <div class="answers" id="answers"></div>
+  </div>
+
+  <!-- table & difficulty picker (§3.3: overlay, never a separate page) -->
+  <div class="overlay" id="pick-overlay" hidden>
+    <div class="sheet" role="dialog" aria-modal="true">
+      <h2 data-i18n="emPickTitle">Reihe &amp; Schwierigkeit</h2>
+      <div class="seg" id="pick-diff"></div>
+      <div class="tilegrid" id="pick-tables"></div>
+    </div>
+  </div>
+
+  <!-- settings (§3.3) -->
+  <div class="overlay" id="set-overlay" hidden>
+    <div class="sheet" role="dialog" aria-modal="true">
+      <h2 data-i18n="settings">Einstellungen</h2>
+      <div class="setrow"><span data-i18n="sound">Ton</span><button class="iconbtn" id="set-sound">🔊</button></div>
+      <div class="setrow"><span data-i18n="language">Sprache</span><button class="iconbtn" id="set-lang">EN</button></div>
+      <div class="setrow"><span data-i18n="resetGame">Fortschritt löschen</span><button class="iconbtn" id="set-reset">🗑️</button></div>
+      <button class="primary" id="set-close" data-i18n="close">Schließen</button>
+    </div>
+  </div>
+
+  <!-- round summary (§10.1) -->
+  <div class="overlay" id="sum-overlay" hidden>
+    <div class="sheet summary" role="dialog" aria-modal="true">
+      <div class="bigstars" id="sum-stars"></div>
+      <p class="sline" id="sum-score"></p>
+      <p class="sline" id="sum-time"></p>
+      <p class="sline" id="sum-best" hidden></p>
+      <div class="sticker-earn" id="sum-sticker" hidden></div>
+      <button class="primary" id="sum-again"></button>
+    </div>
+  </div>
+
+  <script type="module" src="einmaleins.js"></script>
+</body>
+</html>
