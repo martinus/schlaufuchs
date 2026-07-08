@@ -174,7 +174,8 @@ A back-to-map button in the header (1 tap).
 
 A slim persistent mini-header:
 
-- **Fox/home button** → back to the map (1 tap).
+- **Map button (🗺️)** → back to the map (1 tap). The map icon, not the fox
+  — the fox is the player, the map is the place to go back to.
 - **Level/difficulty chip** showing the current difficulty (and table/level/
   pack where applicable); tapping opens the picker **as an overlay** on the
   same page, never a separate page.
@@ -198,7 +199,8 @@ Round summaries are overlays too. The browser back button always means
   starts the easiest difficulty immediately.
 - No confirmation dialogs on the happy path (only destructive resets).
 - Round summary has one primary button („Nochmal!" / "Again!") so replaying
-  is a single tap.
+  is a single tap, plus a secondary row with map, level/table picker and
+  settings buttons — the summary must never be a dead end.
 
 ---
 
