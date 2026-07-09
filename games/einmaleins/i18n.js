@@ -7,6 +7,8 @@ export default {
     emTableShort: "{t}er",
     emMixed: "Alle",
     emPickTitle: "Reihe & Schwierigkeit",
+    // German schools write division as ":" — Mara did not recognise "÷".
+    divSign: ":",
   },
   en: {
     emTitle: "Times tables",
@@ -14,5 +16,6 @@ export default {
     emTableShort: "×{t}",
     emMixed: "All",
     emPickTitle: "Table & difficulty",
+    divSign: "÷",
   },
 };

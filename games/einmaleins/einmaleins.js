@@ -107,7 +107,7 @@ function askNext() {
   const id = session.next();
   if (id === null) return endRound();
   currentId = id;
-  question = questionFor(id, diff);
+  question = questionFor(id, diff, Math.random, t("divSign"));
   input = buffer.slice(0, 3);
   buffer = "";
   phase = "answer";
@@ -257,8 +257,10 @@ function submit(value, mcButton) {
 // It stays until the child asks for the next question — a timer would take the
 // right answer away exactly from the child who needs longest to read it.
 function showFeedback() {
-  const { kind, t: a, f: b } = question;
-  const eq = kind === "div" ? `${a * b} ÷ ${b} = ${a}` : `${a} × ${b} = ${a * b}`;
+  const { t: a, f: b } = question;
+  // The equation the child was just shown, with the gap filled — never rebuilt
+  // from `t`/`f`, which would print a division sign this language does not use.
+  const eq = question.text.replace("?", question.answer);
   const fb = $("feedback");
   fb.innerHTML = `<span class="eq">${eq}</span>
     <div class="dotgrid" style="grid-template-columns: repeat(${b}, auto)">

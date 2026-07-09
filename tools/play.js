@@ -21,13 +21,15 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   // "a × b = ?" | "? × b = c" | "a × ? = c" | "c ÷ b = ?"  →  the missing number
+  // The division sign depends on the language: ":" in German, "÷" in English.
+  const DIV = [":", "÷"];
   function solveQuestion(text) {
     const [lhs, rhs] = String(text).split("=").map((s) => s.trim());
     if (rhs === undefined) throw new Error(`not an equation: "${text}"`);
     if (rhs === "?") {
       const [a, op, b] = lhs.split(/\s+/);
-      if (op !== "×" && op !== "÷") throw new Error(`unknown operator in "${text}"`);
-      return op === "÷" ? Number(a) / Number(b) : Number(a) * Number(b);
+      if (op !== "×" && !DIV.includes(op)) throw new Error(`unknown operator in "${text}"`);
+      return DIV.includes(op) ? Number(a) / Number(b) : Number(a) * Number(b);
     }
     const [a, , b] = lhs.split(/\s+/);
     return a === "?" ? Number(rhs) / Number(b) : Number(rhs) / Number(a);

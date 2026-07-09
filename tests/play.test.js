@@ -31,19 +31,27 @@ test("play.js loads without a DOM and exposes its solver", () => {
   assert.equal(typeof sandbox.readScene, "function");
 });
 
-test("the driver solves every question the game can ask", () => {
-  const rng = seeded(7);
-  const seen = new Set();
-  for (let i = 0; i < 3000; i++) {
-    const id = Math.floor(rng() * POOL_COUNT);
-    const diff = Math.floor(rng() * 3);
-    const q = questionFor(id, diff, rng);
-    seen.add(q.kind);
-    // the page renders `text` with "?" replaced by the gap span, whose text is
-    // "?" before anything is typed — so this is exactly what the driver reads
-    assert.equal(solveQuestion(q.text), q.answer, `${q.kind}: "${q.text}"`);
-  }
-  assert.deepEqual([...seen].sort(), ["div", "gap", "mul"], "all three shapes were exercised");
+// Both division signs, because the page picks one per language: ":" is what a
+// German child is taught, "÷" is what an English one reads.
+for (const divSign of ["÷", ":"]) {
+  test(`the driver solves every question the game can ask ("${divSign}")`, () => {
+    const rng = seeded(7);
+    const seen = new Set();
+    for (let i = 0; i < 3000; i++) {
+      const id = Math.floor(rng() * POOL_COUNT);
+      const diff = Math.floor(rng() * 3);
+      const q = questionFor(id, diff, rng, divSign);
+      seen.add(q.kind);
+      // the page renders `text` with "?" replaced by the gap span, whose text is
+      // "?" before anything is typed — so this is exactly what the driver reads
+      assert.equal(solveQuestion(q.text), q.answer, `${q.kind}: "${q.text}"`);
+    }
+    assert.deepEqual([...seen].sort(), ["div", "gap", "mul"], "all three shapes were exercised");
+  });
+}
+
+test("the driver reads a German division", () => {
+  assert.equal(solveQuestion("10 : 2 = ?"), 5);
 });
 
 test("the driver refuses what it cannot read, instead of guessing", () => {
