@@ -13,15 +13,21 @@ const keydown = [];
 let overlayFrom;
 let anyOverlayOpen;
 
-function node({ focusable = true, connected = true } = {}) {
+function node({ focusable = true, connected = true, named = {} } = {}) {
   const n = {
     hidden: true,
     focused: 0,
     isConnected: connected,
     closest: () => null,
     focus() { n.focused++; globalThis.document.activeElement = n; },
-    // the element is its own sheet here; anything else asked for is a control
-    querySelector: (sel) => (sel === ".sheet" ? null : focusable ? n.child : null),
+    // The element is its own sheet here. The long FOCUSABLE list finds the
+    // first control; any other selector finds only what the caller named,
+    // exactly as a real querySelector would.
+    querySelector(sel) {
+      if (sel === ".sheet") return null;
+      if (sel.includes("button:not")) return focusable ? n.child : null;
+      return named[sel] ?? null;
+    },
     addEventListener(type, fn) { (n.on[type] ??= []).push(fn); },
     on: {},
     fire(type, e) { for (const fn of n.on[type] ?? []) fn(e); },
@@ -88,6 +94,25 @@ test("a hidden opener is not focused, and onClose runs anyway", () => {
   o.close();
   assert.equal(opener.focused, 0, "focus must not go behind a backdrop");
   assert.equal(closed, 1, "onClose still runs");
+});
+
+// The round summary leads with a link to the album on the trophy it just gave
+// out. It is the first focusable thing in the sheet, so Enter — the key a child
+// leans on — would leave the game instead of starting the next round.
+test("initialFocus wins over the first control, and falls back to it", () => {
+  let wanted = 0;
+  const el = node({ named: { "#sum-ok": { focus: () => wanted++ } } });
+  const named = overlayFrom(el, { initialFocus: "#sum-ok" });
+  named.open();
+  assert.equal(wanted, 1, "the named control takes the focus");
+  assert.equal(el.focused, 0, "…and the first control does not");
+  named.close();
+
+  const bare = node();
+  const missing = overlayFrom(bare, { initialFocus: "#gone" });
+  missing.open();
+  assert.equal(bare.focused, 1, "a selector that matches nothing falls back");
+  missing.close();
 });
 
 test("Escape closes a dismissible overlay and nothing else", () => {
