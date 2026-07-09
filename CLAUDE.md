@@ -13,13 +13,27 @@ framework**. Progress is stored in a single cookie. Hosted on GitHub Pages.
 ## Commands
 
 ```sh
-python3 -m http.server 8000   # serve locally — ALWAYS use this, never file:// (ES modules)
-node --test                   # run unit tests (tests/*.test.js), needs Node 22+
-node --check <file.js>        # syntax-check a module
+sh tools/serve.sh               # serve on :8000 — ALWAYS, never file:// (ES modules)
+sh tools/kill-serve.sh          # stop it again
+node --test                     # run unit tests (tests/*.test.js), needs Node 22+
+node --check <file.js>          # syntax-check a module
 node tools/version-assets.js N  # bump asset version — REQUIRED before deploying a change
 node tools/shoot.mjs <url> …    # drive a real Chrome: screenshot + measure (--help)
 sh tools/install-hooks.sh       # pre-commit/pre-push guards (run once per clone)
 ```
+
+`serve.sh` is idempotent (call it again and it reports the server it already
+started) and refuses a port it does not own. It writes the PID to `.serve.pid`
+in the checkout, so each worktree owns its own server, and `kill-serve.sh`
+kills that PID only after `ps` confirms it is still a `python3 -m http.server`
+on this port serving this checkout — a PID alone is not proof, because PIDs are
+recycled.
+
+**Never `pkill -f "http.server"` and never `pgrep -f "http.server" | xargs
+kill`.** The pattern matches the command line of the very shell that runs it,
+so the shell kills itself — this has eaten a `git commit` mid-run — and on a
+shared machine it also kills someone else's server. Both forms were tried here;
+both misfired. Use `kill-serve.sh`.
 
 `tools/play.js` is the round driver for einmaleins — load it into a page with
 `--do 'eval @tools/play.js'`, then `--do 'eval play({ wrongAt: 1 })'`. It
@@ -49,8 +63,8 @@ workflow runs it before publishing.
 - **Make it testable, then test it.** When the defect is inside DOM code, pull
   the arithmetic out as a pure function and unit-test that
   (`fittedFontSize()` in `games/einmaleins/logic.js` is the pattern).
-- **Look at the page.** Serve it, then use `tools/shoot.mjs` to screenshot it at
-  390×844 and 360×640, and *read the image*. Every visual bug this project has
+- **Look at the page.** `sh tools/serve.sh`, then use `tools/shoot.mjs` to
+  screenshot it at 390×844 and 360×640, and *read the image*. Every visual bug this project has
   had — a floating mountain, a clipped gear button, art standing in the sea, a
   "cobbled" road that read as a river — was invisible in the diff and obvious
   in the screenshot. `node --test` passing is not evidence that the page looks
@@ -76,11 +90,11 @@ workflow runs it before publishing.
 - **Dead strings and stale comments accumulate.** When you remove a feature,
   remove its i18n keys and fix the comments that describe the old behaviour.
   The i18n tests now fail on both a missing and an unused key.
-- **A merged PR ends its branch.** PRs here are **squash-merged**, so the
-  branch's own commits never appear on `main` and the branch instantly looks
-  like it is 18 commits ahead of a `main` that already contains its work. Keep
-  committing there and the next PR silently reverts whatever landed on `main`
-  in the meantime — this nearly deleted `tests/svg-icon-validator.js` and
+- **A merged PR ends its branch.** PRs here are **not squashed** — the branch's
+  own commits land on `main` as they were, so write them as if they will be
+  read there, because they will be. Keep committing on a merged branch anyway
+  and the next PR silently reverts whatever landed on `main` in the meantime —
+  this nearly deleted `tests/svg-icon-validator.js` and
   `tests/graphics-assets.test.js` from a neighbouring PR. So, before the first
   change after a merge:
 
@@ -89,9 +103,9 @@ workflow runs it before publishing.
   git fetch origin && git checkout -b <new-branch> origin/main
   ```
 
-  Already committed onto the stale branch? `git rebase origin/main` (it skips
-  the squashed commits). Either way, **before opening the PR**, read what it
-  deletes — an unexpected name here means you are undoing someone's merge:
+  Already committed onto the stale branch? `git rebase origin/main`. Either
+  way, **before opening the PR**, read what it deletes — an unexpected name
+  here means you are undoing someone's merge:
 
   ```sh
   git diff --diff-filter=D --name-only origin/main..HEAD
