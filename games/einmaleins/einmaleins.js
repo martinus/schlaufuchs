@@ -317,6 +317,10 @@ function endRound() {
       sfx.trophy();
     }
     $("sum-again").textContent = t("again");
+    // The stars just changed. The chip was rendered at startRound() and nobody
+    // told it, so a child read "⭐ 0" in the top bar while three stars lit up
+    // beneath it — until they walked back to the map.
+    renderFoxChip($("foxchip"));
     showSummary();
     if (improved || stars === 3 || res.newTrophies.length > 0) confetti();
   }, 700);

@@ -67,10 +67,24 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* the display face is reserved for names, numbers and headings */
+/* The display face is reserved for names, numbers and headings. Everything
+   else — prose, data, URLs — is the body face, and that is a decision, not an
+   omission: Atkinson Hyperlegible exists to make `1 l I` and `0 O` impossible
+   to confuse, which is exactly what an email address, a URL and a column of
+   figures need. So the parents' table and the about page's links stay in it.
+   Audited in the browser, not by reading this list: every text-bearing element
+   on every page was checked against `getComputedStyle`. */
 h1, h2, .question, .region-label, .foxchip .lbl, .chip,
 .mc button, .keypad button, .tilegrid button, .primary,
-.summary .sline, .feedback-aid {
+.summary .sline, .feedback-aid,
+/* the summary's whole button row, not only its primary — "Nochmal" was set in
+   the display face and the two buttons beside it were not */
+.summary button, .summary .sum-link,
+/* a trophy's name is a name */
+.summary .trophy-earn .won,
+/* the parents' chips are chips, and its facts are the same equations the game
+   sets in the display face */
+.pchip, .factlist .fact {
   font-family: var(--font-display);
 }
 
