@@ -47,6 +47,12 @@
   </div>
   <p class="room-intro" data-i18n="roomIntro"></p>
   <main id="album"></main>
+  <!-- Mara could not get out of this room: the way back was a small button at
+       the very top, and she had scrolled past it. The icon lives in its own
+       span — translateDOM overwrites the textContent of a [data-i18n] node. -->
+  <a class="primary maplink" href="./">
+    <span class="nav-ico" aria-hidden="true">🗺️</span><span data-i18n="back">Zur Karte</span>
+  </a>
   <footer class="roomfoot footlinks">
     <a class="footlink" href="privacy.html" data-i18n="privacyLink">Datenschutz</a>
     <a class="footlink" href="about.html" data-i18n="aboutLink">Über mich</a>
