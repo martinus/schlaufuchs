@@ -454,18 +454,37 @@ per region and unlock the next trophy at fixed thresholds. The word *sticker*
 is retired; it does not appear anywhere.
 
 - A **perfect round** = every item in the round correct on the first try.
-- **Difficulty and mastery earn trophies; repetition does not.** A finished
-  round is worth `trophyCredit()` **points**: a perfect round pays its difficulty
-  (Leicht 0, Mittel 1, Schwer 2), and mastering a level — its third star, which
-  needs a perfect round under a minute — pays 1 more, once. So grinding the
-  easiest level forever earns nothing, while a young child who only plays
-  Leicht still fills the room by getting good rather than by repeating.
+- **Points come from progress, never from repetition.** Everything is derived
+  from a tile's best-star count before and after the round, so nothing extra is
+  stored (a *tile* = one table at one difficulty):
+
+  | Event | Points |
+  |---|---|
+  | each new star | +1 |
+  | your first mistake-free round on that tile | +1 Leicht / +2 Mittel / +3 Schwer |
+  | mastering the tile (its third star) | +2 |
+
+  An untouched tile is therefore worth 6 (Leicht), 7 (Mittel) or 8 (Schwer),
+  and a mastered tile is worth **nothing** — replaying the easiest table forever
+  earns not one point. "First mistake-free round" needs no flag of its own:
+  two stars *mean* 10/10 on the first try (§10.3), so crossing from below two
+  stars to two or more is exactly that round. See `roundPoints()`.
+- **The rules are shown, not written.** Every tile in the picker displays what
+  it still pays (`tilePointsLeft()`): `+8` on an untouched Schwer tile, `✓` on a
+  mastered one, which is also dimmed. A child never reads a rule; they see that
+  the hard and untouched tiles pay more, and go there (§10.2). The round summary
+  shows the points just earned next to the score.
 - Each region keeps a lifetime **point** counter (`rewards.pr`, §9.2). The
   field keeps its short name for the cookie budget (§9.2).
 - Each region has **12 fixed trophies** (emoji + translated name, defined in
   a `TROPHIES` table in `rewards.js`, themed per region — e.g. Wörterwald:
   🦊 🦉 🐿️ 🦡 🍄 🌰 …). Trophy *s* (1-indexed) is earned when the counter
-  reaches `THRESHOLDS[s] = [1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26, 30]` points.
+  reaches `THRESHOLDS[s] = [2, 5, 9, 15, 22, 30, 40, 52, 66, 82, 100, 120]` points.
+  **Balancing:** einmaleins has 27 tiles (Leicht offers only 4 tables + „Alle")
+  worth 195 points in total, so the twelfth trophy lands at ~62 % of everything
+  there is — finishing the collection is a realistic goal, not a grind. Leicht
+  alone caps at 30 points and cannot fill the room. A new game must offer a
+  comparable point economy, since the thresholds are shared.
   Deterministic — no randomness, fully derivable from the counter, so only
   the counter is stored.
 - Earning a trophy shows it in the round summary: the picture and its name,
