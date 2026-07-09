@@ -12,7 +12,10 @@ export const GAMES = ["einmaleins", "tippen", "rechnungen", "vokabeln", "lesen"]
 // Balanced against einmaleins, whose 27 tiles are worth 360 points in total
 // (§8.3): the last trophy lands at ~62 % of everything there is, so finishing
 // the collection is a realistic goal rather than a grind.
-export const THRESHOLDS = [3, 9, 18, 30, 46, 64, 86, 112, 142, 172, 200, 225];
+// The first trophy must land in the first sitting. The cheapest thing a child
+// can do — one Leicht tile taken to two stars — now pays 2, not 3, because the
+// old "first mistake-free round" bonus moved onto mastery (§8.3).
+export const THRESHOLDS = [2, 9, 18, 30, 46, 64, 86, 112, 142, 172, 200, 225];
 
 // 12 fixed trophies per region (§8.3), themed. {e: emoji, de/en: name}.
 export const TROPHIES = {
@@ -118,25 +121,22 @@ export function trophyCount(pr) {
 // tile's best-star count before and after, so nothing extra is stored:
 //
 //   · each NEW star                          1×   (play what you have not solved)
-//   · your FIRST mistake-free round there    1×
-//   · mastering the tile (its third star)    2×
+//   · mastering the tile (its third star)    3×   (a mistake-free round)
 //
 // each multiplied by the difficulty: Leicht ×1, Mittel ×2, Schwer ×3. A whole
 // tile is therefore worth 6, 12 or 18 — the hard work pays three times the easy
 // work, which is a gap a child can see on the tile and act on.
 //
 // A tile you have already mastered is worth nothing, so no amount of replaying
-// the easiest level fills the Pokalraum. The "first mistake-free round" needs no
-// flag of its own: two stars *mean* 10/10 on the first try (§10.3), so crossing
-// from below two stars to two or more is exactly that first perfect round.
+// the easiest level fills the Pokalraum. The mastery bonus needs no flag of its
+// own: three stars *mean* 10/10 on the first try (§10.3).
 //
 // difficulty: 0 = Leicht, 1 = Mittel, 2 = Schwer.
 export function roundPoints({ oldStars = 0, newStars = 0, difficulty = 0 } = {}) {
   if (!(newStars > oldStars)) return 0; // no improvement, no points
   const multiplier = difficulty + 1;
   let awards = newStars - oldStars;
-  if (oldStars < 2 && newStars >= 2) awards += 1;
-  if (oldStars < 3 && newStars === 3) awards += 2;
+  if (oldStars < 3 && newStars === 3) awards += 3;
   return awards * multiplier;
 }
 
