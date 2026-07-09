@@ -448,15 +448,21 @@ unique item** in the round and the fox token on the current node.
 ### 8.3 Stickers (perfect rounds → collection)
 
 - A **perfect round** = every item in the round correct on the first try.
-- Each region keeps a lifetime perfect-round counter (`rewards.pr`, §9.2).
+- **Difficulty and mastery earn stickers; repetition does not.** A finished
+  round is worth `stickerCredit()` points: a perfect round pays its difficulty
+  (Leicht 0, Mittel 1, Schwer 2), and mastering a level — its third star, which
+  needs a perfect round under a minute — pays 1 more, once. So grinding the
+  easiest level forever earns nothing, while a young child who only plays
+  Leicht still fills the room by getting good rather than by repeating.
+- Each region keeps a lifetime sticker-credit counter (`rewards.pr`, §9.2).
 - Each region has **12 fixed stickers** (emoji + translated name, defined in
   a `STICKERS` table in `rewards.js`, themed per region — e.g. Wörterwald:
   🦊 🦉 🐿️ 🦡 🍄 🌰 …). Sticker *s* (1-indexed) is earned when the counter
-  reaches `THRESHOLDS[s] = [1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26, 30]`.
+  reaches `THRESHOLDS[s] = [1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26, 30]` points.
   Deterministic — no randomness, fully derivable from the counter, so only
   the counter is stored.
-- Earning a sticker triggers a celebration overlay in the round summary
-  („Neuer Sticker: 🦉 Die kluge Eule!") with a link chip to the album.
+- Earning a sticker shows it in the round summary: the picture and its name,
+  no sentence (§10.1). A round can earn more than one at a time.
 - Total: 60 stickers. The album (§3.2) renders earned/unearned from the
   counters.
 
