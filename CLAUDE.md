@@ -46,6 +46,26 @@ workflow runs it before publishing.
 - **Dead strings and stale comments accumulate.** When you remove a feature,
   remove its i18n keys and fix the comments that describe the old behaviour.
   The i18n tests now fail on both a missing and an unused key.
+- **A merged PR ends its branch.** PRs here are **squash-merged**, so the
+  branch's own commits never appear on `main` and the branch instantly looks
+  like it is 18 commits ahead of a `main` that already contains its work. Keep
+  committing there and the next PR silently reverts whatever landed on `main`
+  in the meantime — this nearly deleted `tests/svg-icon-validator.js` and
+  `tests/graphics-assets.test.js` from a neighbouring PR. So, before the first
+  change after a merge:
+
+  ```sh
+  gh pr list --state merged --limit 3   # did my branch's PR land?
+  git fetch origin && git checkout -b <new-branch> origin/main
+  ```
+
+  Already committed onto the stale branch? `git rebase origin/main` (it skips
+  the squashed commits). Either way, **before opening the PR**, read what it
+  deletes — an unexpected name here means you are undoing someone's merge:
+
+  ```sh
+  git diff --diff-filter=D --name-only origin/main..HEAD
+  ```
 
 ## Conventions (do not violate)
 
