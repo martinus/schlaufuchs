@@ -700,7 +700,12 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .summary .sline { margin: 6px 0; font-weight: 700; }
 /* the next star's price: present, but never louder than the score */
 .summary .sline.goal { font-weight: 400; font-size: .82rem; color: var(--ink-soft); }
+/* A round can win several trophies at once, so this is a row, not a slot. */
 .summary .trophy-earn {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
   margin: 10px auto;
   padding: 10px;
   border-radius: var(--radius);
@@ -708,7 +713,19 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   box-shadow: var(--shadow);
   font-weight: 800;
 }
-.summary .trophy-earn .se-emoji { font-size: 2.8rem; display: block; }
+.summary .trophy-earn .won {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 5.5em;
+}
+/* Three at once is the most a round can win (18 points crosses 2, 9 and 18).
+   Long names like "Rechenschieber" would wrap the row 2+1 on a 360px phone. */
+.summary .trophy-earn:has(.won:nth-child(3)) .won {
+  min-width: 0;
+  font-size: 0.78rem;
+}
+.summary .trophy-earn .se-emoji { display: block; }
 
 /* ---- Pokalraum / Trophy Room (§3.2) ---- */
 /* The page is the room the map sends you to, so it should feel like one: a
