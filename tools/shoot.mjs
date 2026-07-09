@@ -34,13 +34,18 @@
 //                                      which keeps the shell out of your JS.
 //   --json FILE        write the probe report here (default: stdout)
 //   --full             capture the whole scrolling page, not one screenful
+//   --reduced-motion   emulate `prefers-reduced-motion: reduce`. This project
+//                      treats that as non-negotiable, so it must be testable.
 //   --allow-errors     do not fail when the page logs an error
 //   --keep             leave the browser open (debugging this script)
 //
-// An uncaught exception or a console.error in the page is reported and exits 1.
-// That is the shape of this project's worst bug: a stale index.html paired with
-// a fresh map.js throws, and the page still renders — just without its chips
-// and buttons. A screenshot alone would call that a success.
+// A run fails (exit 1) when the page does not load — a dead host, a 404 — and
+// when the page logs an uncaught exception or a console.error. The second is
+// the shape of this project's worst bug: a stale index.html paired with a fresh
+// map.js throws, and the page still renders, just without its chips and
+// buttons. The first is subtler: Chrome renders its *own* error page for a
+// dead server and fires `load` on it, so every page once "passed" while
+// nothing was serving them. A screenshot alone calls both a success.
 //
 // Example — is the wrong-answer aid clipped by the stage on a short phone?
 //
@@ -71,7 +76,7 @@ const CHROMES = [
 const die = (msg) => { throw new Error(msg); };
 
 export function parseArgs(argv) {
-  const opt = { sizes: [], cookies: [], probes: [], actions: [], out: null, json: null, clip: null, keep: false, help: false, allowErrors: false, full: false };
+  const opt = { sizes: [], cookies: [], probes: [], actions: [], out: null, json: null, clip: null, keep: false, help: false, allowErrors: false, full: false, reducedMotion: false };
   let url = null;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -87,6 +92,7 @@ export function parseArgs(argv) {
     else if (a === "--json") opt.json = next();
     else if (a === "--clip") opt.clip = next();
     else if (a === "--full") opt.full = true;
+    else if (a === "--reduced-motion") opt.reducedMotion = true;
     else if (a === "--allow-errors") opt.allowErrors = true;
     else if (a === "--keep") opt.keep = true;
     else if (a === "-h" || a === "--help") return { ...opt, help: true };
@@ -364,18 +370,35 @@ async function shoot(cdp, opt, size) {
   await cdp.send("Emulation.setDeviceMetricsOverride", {
     width: size.w, height: size.h, deviceScaleFactor: 2, mobile: true,
   }, sid);
+  if (opt.reducedMotion) {
+    await cdp.send("Emulation.setEmulatedMedia", {
+      features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+    }, sid);
+  }
 
   for (const c of opt.cookies) {
     await cdp.send("Network.setCookie", { name: c.name, value: c.value, url: opt.url }, sid);
   }
 
+  // The main document's HTTP status, before the load event can hide it.
+  let status = null;
+  cdp.on("Network.responseReceived", sid, (p) => {
+    if (p.type === "Document" && status === null) status = p.response.status;
+  });
+
   const loaded = cdp.once("Page.loadEventFired", sid);
-  await cdp.send("Page.navigate", { url: opt.url }, sid);
+  const nav = await cdp.send("Page.navigate", { url: opt.url }, sid);
+  // Chrome renders its own error page for a dead host or a 404 and fires
+  // `load` on it, so a run against a stopped server used to screenshot that
+  // error page, find no page errors, and exit 0. A shot of a page that never
+  // loaded is not a passing shot.
+  if (nav.errorText) throw new Error(`${opt.url}: ${nav.errorText}`);
   await loaded;
+  if (status !== null && status >= 400) throw new Error(`${opt.url}: HTTP ${status}`);
 
   // Whatever an `eval` returns is reported. A driver script that quietly did
   // nothing must not be able to look like one that did the work.
-  const report = { url: opt.url, size: `${size.w}x${size.h}` };
+  const report = { url: opt.url, size: `${size.w}x${size.h}`, status };
   for (const a of opt.actions) {
     const value = await runAction(cdp, sid, a);
     if (a.verb === "eval" && value !== undefined) (report.eval ??= []).push(value);

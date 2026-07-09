@@ -5,6 +5,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { parseArgs, parseSize, parseCookie, parseAction, keySpec, outName, VERBS } from "../tools/shoot.mjs";
 
 // Regression, learned the hard way in a previous session: a CDP keyDown without
@@ -46,15 +47,24 @@ test("parseArgs: a default viewport, repeatable flags, and a url it insists on",
   assert.deepEqual(d.sizes, [{ w: 390, h: 844 }]);
 
   const o = parseArgs(["http://x/", "--size", "360x640", "--size", "390x844",
-    "--probe", "#a", "--probe", "#b", "--clip", ".stage", "--keep", "--allow-errors"]);
+    "--probe", "#a", "--probe", "#b", "--clip", ".stage", "--keep", "--allow-errors",
+    "--full", "--reduced-motion"]);
   assert.equal(o.sizes.length, 2);
   assert.deepEqual(o.probes, ["#a", "#b"]);
   assert.equal(o.clip, ".stage");
   assert.equal(o.keep, true);
   assert.equal(o.allowErrors, true);
+  assert.equal(o.full, true);
+  assert.equal(o.reducedMotion, true);
 
-  // a page error fails the run unless it was asked to be tolerated
-  assert.equal(parseArgs(["http://x/"]).allowErrors, false);
+  // Each of these is off unless it is asked for. A run must not silently
+  // tolerate a page error, and it must not silently emulate a media feature —
+  // a screenshot taken under `prefers-reduced-motion` proves nothing about the
+  // page everyone else sees.
+  const d2 = parseArgs(["http://x/"]);
+  assert.equal(d2.allowErrors, false);
+  assert.equal(d2.full, false);
+  assert.equal(d2.reducedMotion, false);
 
   assert.throws(() => parseArgs([]), /needs a url/);
   assert.throws(() => parseArgs(["http://x/", "--bogus"]), /unknown option/);
@@ -71,4 +81,15 @@ test("outName keeps several viewports from overwriting each other", () => {
   assert.equal(outName("aid.png", size, true), "aid-360x640.png");
   assert.equal(outName("aid", size, true), "aid-360x640.png");
   assert.notEqual(outName("aid.png", { w: 390, h: 844 }, true), outName("aid.png", size, true));
+});
+
+// Regression, found while claiming "all pages are error-free": Chrome renders
+// its own error page for a dead host or a 404 and fires `load` on it, so a run
+// against a stopped server screenshotted that error page, found no page errors
+// and exited 0. Every page "passed" while nothing was serving them.
+test("a page that never loaded is not a passing shot", () => {
+  const src = readFileSync(new URL("../tools/shoot.mjs", import.meta.url), "utf8");
+  assert.match(src, /if \(nav\.errorText\) throw/, "a failed navigation must throw");
+  assert.match(src, /status >= 400\) throw/, "a 4xx/5xx main document must throw");
+  assert.match(src, /"Network\.responseReceived"/, "…which means the status must be captured");
 });
