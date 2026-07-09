@@ -32,6 +32,8 @@ test("budget check: realistic full state fits, oversized state is refused", () =
     einmaleins: {
       d: 2, t: 0, box: "3".repeat(100),
       stars: { 0: "3".repeat(11), 1: "3".repeat(11), 2: "3".repeat(11) },
+      // practice time for the parents' view (§20): three years of daily rounds
+      tm: [98765, 98765, 98765], rd: [1200, 1200, 1200],
     },
     tippen: {
       d: 1, lvl: { de: 20, en: 20 },

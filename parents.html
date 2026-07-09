@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pokalraum — Schlaufuchs</title>
+  <title>Für Eltern — Schlaufuchs</title>
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/css/schlaufuchs.css?v=24">
   <!-- cache coherence: see tools/version-assets.js -->
@@ -32,20 +32,39 @@
   }
   </script>
 </head>
-<body class="trophyroom">
+<body class="textpage">
   <header class="topbar">
     <a class="iconbtn" href="./" data-i18n-label="back" data-icon="ui-map" data-icon-size="22">🗺️</a>
-    <!-- one place, one name: this page IS the Pokalraum on the map (§3.2) -->
-    <h1 class="chip roomtitle" data-i18n="region_pokalraum">Pokalraum</h1>
+    <h1 class="chip roomtitle" data-i18n="parentsTitle">Für Eltern</h1>
     <span class="spacer"></span>
-    <span class="chip" id="totalcount"></span>
   </header>
-  <p class="room-intro" data-i18n="roomIntro"></p>
-  <main id="album"></main>
-  <!-- the Trophy Room has no gear, so the privacy page hangs off its foot -->
-  <footer class="roomfoot">
-    <a class="footlink" href="privacy.html" data-i18n="privacyLink">Datenschutz</a>
-  </footer>
-  <script type="module" src="assets/js/album.js?v=24"></script>
+
+  <main class="prose">
+    <p class="lede" data-i18n="parentsIntro"></p>
+    <p class="pchips" id="p-chips"></p>
+
+    <p class="empty" id="p-empty" data-i18n="parentsEmpty" hidden></p>
+
+    <div id="p-body" hidden>
+      <h2 data-i18n="parentsGameH"></h2>
+      <p class="muted" data-i18n="parentsOtherGames"></p>
+
+      <h2 data-i18n="parentsTimeH"></h2>
+      <div id="p-time"></div>
+      <p class="muted" id="p-pace-note"></p>
+
+      <h2 data-i18n="parentsHeatH"></h2>
+      <p class="muted" data-i18n="parentsHeatHint"></p>
+      <div id="p-heat"></div>
+
+      <h2 data-i18n="parentsHelpH"></h2>
+      <p id="p-help-body"></p>
+      <ul class="factlist" id="p-help-list"></ul>
+    </div>
+
+    <p><a class="footlink" href="privacy.html" data-i18n="privacyLink"></a></p>
+  </main>
+
+  <script type="module" src="assets/js/parents.js?v=24"></script>
 </body>
 </html>

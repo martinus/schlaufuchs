@@ -114,20 +114,41 @@ test("nextStarGoal is total: garbage in, a hidden row out — never a blank one"
   }
 });
 
-// Regression: the summary showed "9/10 · 46 s". Stars stopped counting seconds,
-// but the line still whispered "faster is better" at a child who is slow and
-// right. endRound() must not measure the round at all.
-test("the round summary never times the child", () => {
+// Regression: the summary showed "9/10 · 46 s", which whispers "faster is
+// better" at a child who is slow and right.
+//
+// The round IS timed again — the parents' view needs it (§20) — so the rule is
+// no longer "never look at the clock" but "never show it to the child". That is
+// a weaker invariant and an easier one to break, so it is pinned to the only
+// two places a duration could leak: the dictionaries, and the block that paints
+// the summary.
+test("the round is timed for the parents, and never shown to the child", () => {
   const src = readFileSync(
     fileURLToPath(new URL("../games/einmaleins/einmaleins.js", import.meta.url)),
     "utf8",
   );
   const endRound = src.slice(src.indexOf("function endRound()"));
-  assert.ok(endRound.includes('t("roundStat"'), "the summary must still report the score");
-  assert.ok(!endRound.includes("Date.now()"), "endRound() must not read the clock");
-  assert.ok(!/\bt0\b/.test(src), "the round's start time must not be recorded at all");
+
+  // the duration is banked, which means it must be measured
+  assert.ok(endRound.includes("addPractice("), "the round's duration must reach storage (§20)");
+  assert.ok(endRound.includes("Date.now()"), "…so it has to be read from the clock");
+
+  // the summary is everything the child sees of the round, and it must be mute
+  const painted = endRound.slice(endRound.indexOf("setTimeout("));
+  assert.ok(painted.includes('t("roundStat"'), "the summary must still report the score");
+  assert.ok(
+    !/Date\.now|seconds|\bt0\b|elapsed/i.test(painted),
+    "the summary must not mention the round's duration",
+  );
+  assert.match(
+    painted,
+    /t\("roundStat", \{ ok: firstTryOk, total \}\)/,
+    "roundStat takes the score and nothing else",
+  );
+
   for (const [lang, dict] of [["de", de], ["en", en]]) {
     assert.ok(!dict.roundStat.includes("{s}"), `${lang}.roundStat still has a seconds slot`);
+    assert.ok(!/\bs\b|sek|\bsec/i.test(dict.roundStat), `${lang}.roundStat names a unit of time`);
   }
 });
 

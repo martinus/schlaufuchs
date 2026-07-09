@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import {
   THRESHOLDS, TROPHIES, GAMES, trophyCount, foxLevel, updateStreak,
   gameStars, sumStars, regionState, ACHIEVABLE, starBadgeTier, nextTrophyInfo,
-  roundPoints, tilePointsLeft,
+  roundPoints, tilePointsLeft, addPractice, MAX_ROUND_SECONDS,
 } from "../assets/js/rewards.js";
 
 test("trophy thresholds match spec §8.3", () => {
@@ -216,4 +216,42 @@ test("one round can win several trophies, and the summary must show them all", (
     "showing only newTrophies[0] swallows the other prizes",
   );
   assert.ok(/\.map\(/.test(endRound), "the summary must render every won trophy");
+});
+
+// Practice time exists for the parents' view (§20) and is the only clock in
+// the product. It is aggregated per difficulty, never per question.
+test("addPractice banks seconds and rounds, per difficulty, and is pure", () => {
+  const first = addPractice({}, 1, 42.4);
+  assert.deepEqual(first, { tm: [0, 42, 0], rd: [0, 1, 0] });
+
+  const second = addPractice({ ...first }, 1, 17.6);
+  assert.deepEqual(second, { tm: [0, 60, 0], rd: [0, 2, 0] });
+  assert.deepEqual(first, { tm: [0, 42, 0], rd: [0, 1, 0] }, "must not mutate its input");
+
+  const third = addPractice(second, 2, 10);
+  assert.deepEqual(third, { tm: [0, 60, 10], rd: [0, 2, 1] });
+});
+
+test("addPractice refuses nonsense: a forgotten tab is not practice", () => {
+  // a round left open all afternoon must not count as four hours of times tables
+  assert.equal(addPractice({}, 0, 60 * 60 * 4).tm[0], MAX_ROUND_SECONDS);
+  assert.ok(MAX_ROUND_SECONDS <= 900, "cap a single round at fifteen minutes or less");
+
+  // negative, NaN and junk clocks bank a round but no time
+  for (const bad of [-5, NaN, undefined, "abc", Infinity]) {
+    const r = addPractice({}, 0, bad);
+    assert.equal(r.tm[0], 0, `seconds=${String(bad)} must bank no time`);
+    assert.equal(r.rd[0], 1, `seconds=${String(bad)} must still bank the round`);
+  }
+
+  // a corrupted cookie must not crash the parents' page
+  for (const junk of [null, "x", [1, 2], [1, 2, 3, 4], { 0: 1 }, [-1, "a", NaN]]) {
+    const r = addPractice({ tm: junk, rd: junk }, 0, 5);
+    assert.equal(r.tm.length, 3);
+    assert.ok(r.tm.every((n) => Number.isInteger(n) && n >= 0), `tm from ${JSON.stringify(junk)}`);
+    assert.ok(r.rd.every((n) => Number.isInteger(n) && n >= 0));
+  }
+
+  // an out-of-range difficulty lands in a real slot rather than growing the array
+  assert.equal(addPractice({}, 9, 5).tm.length, 3);
 });

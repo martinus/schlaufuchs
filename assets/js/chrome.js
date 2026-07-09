@@ -13,6 +13,7 @@ import { sfx } from "./audio.js";
 // hangs off it. Resolved from this module's own URL — an absolute "/privacy"
 // would break a subpath deploy, and "../privacy.html" is wrong from the map.
 const PRIVACY_URL = new URL("../../privacy.html", import.meta.url).href;
+const PARENTS_URL = new URL("../../parents.html", import.meta.url).href;
 
 // Render the fox + "level N · ⭐ total" chip with a progress bar and a
 // "N more stars to level N+1" sub-line. Call it again to refresh after a round.
@@ -46,6 +47,7 @@ export function initSettingsOverlay({ resetKind = null, game, onChange, onClose 
         <div class="langpick" id="cx-lang" role="group"></div>
       </div>
       ${resetKind ? `<div class="setrow"><span class="cx-l-reset"></span><button class="iconbtn" id="cx-reset"></button></div>` : ""}
+      <div class="setrow"><a class="cx-parents" href="${PARENTS_URL}"></a></div>
       <div class="setrow"><a class="cx-privacy" href="${PRIVACY_URL}"></a></div>
       <button class="primary" id="cx-close"></button>
     </div>`;
@@ -67,6 +69,7 @@ export function initSettingsOverlay({ resetKind = null, game, onChange, onClose 
       overlay.querySelector(".cx-l-reset").textContent = resetKind === "all" ? t("resetAll") : t("resetGame");
       if (!resetArmed) resetBtn.innerHTML = iconHTML("ui-trash", { size: 22 });
     }
+    overlay.querySelector(".cx-parents").textContent = t("parentsLink");
     overlay.querySelector(".cx-privacy").textContent = t("privacyLink");
     closeBtn.textContent = t("close");
   }

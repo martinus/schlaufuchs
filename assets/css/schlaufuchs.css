@@ -889,11 +889,58 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .roomfoot { text-align: center; padding: 6px 0 18px; }
 
 /* the privacy link sits in the settings overlay, the one screen every page has */
-.cx-privacy {
+.cx-privacy, .cx-parents {
   color: var(--depth);
   font-weight: 700;
   text-decoration: underline;
 }
+
+/* ---- Parents' view (§14) ---- */
+/* A grown-up screen: it may scroll, and it uses --depth for knowledge because
+   blue is what you HAVE. Orange stays with the fox and with actions. */
+.pchips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pchip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 999px;
+  background: var(--panel); box-shadow: var(--shadow);
+  font-weight: 700; font-size: 0.85rem;
+}
+.textpage .muted { color: var(--ink-soft); font-size: 0.85rem; }
+
+.ptable { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.ptable th, .ptable td { padding: 6px 4px; text-align: right; }
+.ptable th[scope="row"], .ptable thead th:first-child { text-align: left; }
+.ptable thead th { color: var(--ink-soft); font-size: 0.78rem; font-weight: 700; }
+.ptable tbody tr { border-top: 1px solid var(--orange-soft); }
+.ptable tfoot tr { border-top: 2px solid var(--orange-soft); font-weight: 800; }
+
+/* 10x10 + one header row and column: the times table a parent learned at school */
+.heat {
+  display: grid;
+  grid-template-columns: repeat(11, 1fr);
+  gap: 2px;
+  max-width: 24rem;
+  margin: 8px 0;
+}
+.heat .hh {
+  display: grid; place-items: center;
+  font-size: 0.65rem; font-weight: 700; color: var(--ink-soft);
+}
+.heat .hc { aspect-ratio: 1; border-radius: 3px; }
+.h-weak { background: #e8853c; }
+.h-open { background: #e6ded2; }
+.h-solid { background: var(--depth); }
+
+.legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.78rem; color: var(--ink-soft); }
+.legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
+
+.factlist { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; }
+.factlist .fact {
+  padding: 6px 10px; border-radius: var(--radius);
+  background: var(--panel); box-shadow: var(--shadow);
+  font-size: 0.9rem;
+}
+.factlist .fact b { color: var(--depth); }
 
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }

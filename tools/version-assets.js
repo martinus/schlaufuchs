@@ -22,7 +22,7 @@
 // Usage: node tools/version-assets.js <version>
 // Run this before committing whenever any file under assets/ or games/ changed.
 
-import { readFileSync, writeFileSync, readdirSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -33,11 +33,14 @@ if (!version) {
   process.exit(1);
 }
 
-// Every module that any page may pull in, directly or transitively.
+// Every module that any page may pull in, directly or transitively. A game's
+// `logic.js` is pure and belongs here too: the parents' view reads the times
+// tables through it rather than copying `pairOf` and letting the two drift.
 const shared = [
   ...readdirSync(join(ROOT, "assets/js")).map((f) => `assets/js/${f}`),
   ...readdirSync(join(ROOT, "assets/i18n")).map((f) => `assets/i18n/${f}`),
-].filter((p) => p.endsWith(".js"));
+  ...readdirSync(join(ROOT, "games")).map((g) => `games/${g}/logic.js`),
+].filter((p) => p.endsWith(".js") && existsSync(join(ROOT, p)));
 
 // Every root-level page, discovered — a page added to a hard-coded list only
 // when someone remembers is a page that ships unversioned.

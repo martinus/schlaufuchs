@@ -4,7 +4,7 @@
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString } from "../../assets/js/adaptive.js";
-import { recordRound, levelInfo, roundPoints, tilePointsLeft } from "../../assets/js/rewards.js";
+import { recordRound, levelInfo, roundPoints, tilePointsLeft, addPractice } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
@@ -59,6 +59,8 @@ let buffer = ""; // digits typed during the short post-correct transition
 let phase = "answer"; // answer | correct-wait | wrong-wait
 let roundOver = false;
 let hot = 0;
+// Only ever flows into the parents' view (§20). The child is never shown it.
+let t0 = 0;
 
 function tbl2short(tbl) {
   return tbl === 0 ? t("emMixed") : t("emTableShort", { t: tbl });
@@ -83,6 +85,7 @@ function startRound() {
   hot = 0;
   buffer = "";
   roundOver = false;
+  t0 = Date.now();
   $("sum-overlay").hidden = true;
   buildKeypad();
   askNext();
@@ -282,14 +285,18 @@ function endRound() {
   const { firstTryOk, total } = session.progress();
   const stars = starsFor(firstTryOk, total);
 
-  // persist boxes + best stars (§10.4)
+  // persist boxes + best stars (§10.4), and the round's duration for the
+  // parents' view (§20) — it is written, never rendered.
   const full = boxesFromString(saved.box, POOL_COUNT);
   Object.assign(full, session.boxes());
   const starsObj = { ...(saved.stars ?? {}) };
   const old = starDigit(starsObj[diff], table);
   const improved = stars > old;
   if (improved) starsObj[diff] = withStarDigit(starsObj[diff], table, stars);
-  setGame("einmaleins", { d: diff, t: table, box: boxesToString(full, POOL_COUNT), stars: starsObj });
+  const practice = addPractice(saved, diff, (Date.now() - t0) / 1000);
+  setGame("einmaleins", {
+    d: diff, t: table, box: boxesToString(full, POOL_COUNT), stars: starsObj, ...practice,
+  });
 
   // points come from progress, never from repetition (§8.3)
   const points = roundPoints({ oldStars: old, newStars: stars, difficulty: diff });

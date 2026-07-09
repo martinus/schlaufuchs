@@ -33,6 +33,7 @@
 //                                      'eval @file.js' reads it from a file,
 //                                      which keeps the shell out of your JS.
 //   --json FILE        write the probe report here (default: stdout)
+//   --full             capture the whole scrolling page, not one screenful
 //   --allow-errors     do not fail when the page logs an error
 //   --keep             leave the browser open (debugging this script)
 //
@@ -70,7 +71,7 @@ const CHROMES = [
 const die = (msg) => { throw new Error(msg); };
 
 export function parseArgs(argv) {
-  const opt = { sizes: [], cookies: [], probes: [], actions: [], out: null, json: null, clip: null, keep: false, help: false, allowErrors: false };
+  const opt = { sizes: [], cookies: [], probes: [], actions: [], out: null, json: null, clip: null, keep: false, help: false, allowErrors: false, full: false };
   let url = null;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -85,6 +86,7 @@ export function parseArgs(argv) {
     else if (a === "--out") opt.out = next();
     else if (a === "--json") opt.json = next();
     else if (a === "--clip") opt.clip = next();
+    else if (a === "--full") opt.full = true;
     else if (a === "--allow-errors") opt.allowErrors = true;
     else if (a === "--keep") opt.keep = true;
     else if (a === "-h" || a === "--help") return { ...opt, help: true };
@@ -383,7 +385,18 @@ async function shoot(cdp, opt, size) {
 
   if (opt.out) {
     const file = outName(opt.out, size, opt.sizes.length > 1);
-    const { data } = await cdp.send("Page.captureScreenshot", { format: "png" }, sid);
+    // A scrolling page (the privacy and parents views) is not one screenful,
+    // and a screenshot of its first screenful hides exactly what you came for.
+    const shot = { format: "png" };
+    if (opt.full) {
+      const h = await evaluate(cdp, sid, "document.documentElement.scrollHeight");
+      Object.assign(shot, {
+        captureBeyondViewport: true,
+        clip: { x: 0, y: 0, width: size.w, height: h, scale: 1 },
+      });
+      report.fullHeight = h;
+    }
+    const { data } = await cdp.send("Page.captureScreenshot", shot, sid);
     writeFileSync(file, Buffer.from(data, "base64"));
     report.screenshot = file;
   }
