@@ -9,7 +9,7 @@
 import { initI18n, t } from "./i18n.js";
 import { getGame, getRewards } from "./storage.js";
 import { boxesFromString } from "./adaptive.js";
-import { sumStars, totalTrophies } from "./rewards.js";
+import { totalPoints, totalTrophies } from "./rewards.js";
 import { iconHTML } from "./graphics.js";
 import { initTopBar } from "./chrome.js";
 import { heatOf, weakFacts, heatCounts, practiceSummary, minutesOf, secondsPerRound } from "./parentstats.js";
@@ -27,11 +27,10 @@ const practice = practiceSummary(saved);
 const rewards = getRewards();
 
 function renderChips() {
-  const state = { einmaleins: saved };
   const trophies = totalTrophies(rewards.pr);
   const streak = Array.isArray(rewards.streak) ? rewards.streak[1] : 0;
   $("p-chips").innerHTML = [
-    `<span class="pchip">${iconHTML("ui-star", { size: 16 })} ${sumStars(state)}</span>`,
+    `<span class="pchip">${iconHTML("ui-star", { size: 16 })} ${totalPoints(rewards.pr)}</span>`,
     `<span class="pchip">${iconHTML("deco-trophy", { size: 16 })} ${trophies}</span>`,
     streak >= 2 ? `<span class="pchip">${iconHTML("ui-flame", { size: 16 })} ${streak}</span>` : "",
   ].join("");

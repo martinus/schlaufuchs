@@ -50,8 +50,8 @@
 // Example — is the wrong-answer aid clipped by the stage on a short phone?
 //
 //   node tools/shoot.mjs http://localhost:8000/games/einmaleins/ \
-//     --size 360x640 --do 'click .tile' --do 'until #feedback' \
-//     --clip .stage --probe '#feedback' --probe '#fb-next' --out aid.png
+//     --size 360x640 --do 'click .tile' --do 'until #feedback:not([hidden])' \
+//     --clip .stage --probe '#feedback' --out aid.png
 //
 // A probe's clippedAbove/Below/Left/Right are pixels of overflow past that
 // edge of the clip box: positive means cut off. Check all four — a card can

@@ -77,7 +77,11 @@ export function sceneGeometry(nodes, theme = "village") {
 }
 
 // `stars` is what the basket holds: the stars this tile has already earned.
-export function createJourney(container, { nodes, theme = "village", stars = 0 }) {
+// `worth` is what each of them counts (§10.2): 1 on Leicht, 2 on Mittel, 3 on
+// Schwer. Mara could not see that the harder levels paid more, because the
+// claim only ever appeared inside the picker she never opened. Now the tag
+// rides on the star itself, and into the basket with it.
+export function createJourney(container, { nodes, theme = "village", stars = 0, worth = 1 }) {
   const th = THEMES[theme] ?? THEMES.village;
   const g = sceneGeometry(nodes, theme);
   const { width: w, basket } = g;
@@ -133,8 +137,14 @@ export function createJourney(container, { nodes, theme = "village", stars = 0 }
     const to = landing(i);
     const dx = to.x - skyX(i);
     const dy = to.y - skyY(i);
+    // The tag lives INSIDE the group, so the group's transform carries it to
+    // the basket. A keyframe of its own would never run under reduced motion.
+    const tag = worth > 1
+      ? `<text class="j-worth" x="${skyX(i)}" y="${skyY(i) + STAR_SIZE / 2 + 7}" text-anchor="middle">×${worth}</text>`
+      : "";
     svg += `<g class="j-star" data-s="${i}" style="--dx:${dx}px; --dy:${dy}px">`
       + iconSVG("ui-star", { x: skyX(i), y: skyY(i), size: STAR_SIZE })
+      + tag
       + "</g>";
   }
 
