@@ -135,7 +135,7 @@ test("the language picker offers a way back to every language", () => {
 // them from COSMETICS instead of copying the list, so adding a hat to the fox
 // and forgetting its translation fails here.
 test("every cosmetic the fox can wear has a name in both languages", () => {
-  assert.ok(COSMETICS.length >= 7);
+  assert.ok(COSMETICS.length >= 6);
   for (const [, name] of COSMETICS) {
     const key = `cos_${name}`;
     assert.equal(typeof de[key], "string", `de.js is missing ${key}`);

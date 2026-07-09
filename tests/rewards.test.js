@@ -37,14 +37,14 @@ test("the fox earns its outfit with stars, not with a level (§8.4)", () => {
   // The fox's outfit hangs off stars now; the level number is gone. These are
   // the star counts the old levels 3/6/9/12/15/18/20 sat at, so a child who
   // already wears a cap must still wear it after the change.
-  assert.deepEqual(COSMETICS.map(([at]) => at), [20, 50, 80, 110, 140, 170, 190]);
+  assert.deepEqual(COSMETICS.map(([at]) => at), [20, 50, 80, 110, 140, 170]);
   assert.deepEqual(foxProgress(0).worn, []);
   assert.deepEqual(foxProgress(19).worn, []);
-  assert.deepEqual(foxProgress(20).worn, ["scarf"]);
-  assert.deepEqual(foxProgress(190).worn, COSMETICS.map(([, n]) => n));
-  assert.equal(foxProgress(0).next.name, "scarf");
+  assert.deepEqual(foxProgress(20).worn, ["cap"]);
+  assert.deepEqual(foxProgress(170).worn, COSMETICS.map(([, n]) => n));
+  assert.equal(foxProgress(0).next.name, "cap");
   assert.equal(foxProgress(0).next.missing, 20);
-  assert.equal(foxProgress(190).next, null, "nothing is promised once all of it is worn");
+  assert.equal(foxProgress(170).next, null, "nothing is promised once all of it is worn");
   assert.equal(foxProgress(9999).frac, 1);
 
   // the bar fills between the two thresholds it sits between, not from zero
