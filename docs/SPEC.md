@@ -686,26 +686,47 @@ still have one star.
 
 ~160 bytes. The box string is shared across difficulties.
 
-### 10.5 The star basket (in-round)
+### 10.5 The round's scene (sky, meadow, basket, fox)
 
-A basket beside the fox's path, on the row the streak already owned, so the
-stage grows by nothing. It shows the stars **banked so far**, and beside it
-either the burning streak (`🔥 7`) or the price of the next star
-(„noch 2 richtig bis ⭐⭐⭐"). While the feedback aid is up the whole row hides.
+One picture, no prose. `createJourney()` in `journey.js` draws all of it:
+
+- **the sky** holds the stars still to be won on this tile;
+- **the meadow** holds a basket with the stars you already own;
+- **the path** carries the fox, who advances on every correct answer.
+
+An earned star flies from its sky slot into the basket and stays there, leaving
+a grey ghost behind. The flight is a CSS `transform` + `transition`, never a
+keyframe animation: the site-wide `prefers-reduced-motion` rule kills both
+`animation` and `transition`, so a transition degrades to *the star is already
+in the basket*, whereas an animation would leave it hanging in the sky for
+exactly the children who asked for calm.
+
+While the feedback aid is up the whole scene hides, which hands the aid ~50 px
+it never had.
 
 **The basket fills. It never spills.** This is the whole design:
 
-- It is driven by `firstTrySolved` (items solved without ever being missed),
-  which is monotone. `firstTryOk` — the best score still *reachable* — would
-  drop a star on the first mistake, and the first mistake usually arrives at
-  question two. A child would watch the round decay for nine more questions.
+- It is driven by `ownedStars(progress, best) = max(best, starsFor(firstTrySolved))`.
+  `best` is the tile's stored star count; `firstTrySolved` counts items solved
+  without ever being missed. Both terms are monotone, so a star can never leave
+  the basket.
+- `firstTryOk` — the best score still *reachable* — would drop a star on the
+  first mistake, and the first mistake usually arrives at question two. A child
+  would watch the round decay for nine more questions.
 - Under the 6/8/10 ladder a spilling basket would also lie: stars are lost on
-  the 1st, 3rd and 5th mistake, never on the 2nd or 4th. A basket that shook
-  at every error would teach a rule that does not exist.
+  the 1st, 3rd and 5th mistake, never on the 2nd or 4th. A basket that shook at
+  every error would teach a rule that does not exist.
 - Nothing is at stake anyway. `endRound()` keeps the best star count, never the
   last one (`improved = stars > old`), so a bad round takes nothing away.
-- The goal names only a star that is **still reachable**. Once three misses put
-  two stars out of reach it falls silent rather than dangle them.
+- **`best` is why the basket starts full on a mastered tile.** Without it the
+  round promised „noch 2 richtig bis ⭐⭐⭐" on a tile already at three stars and
+  then paid nothing, because `endRound()` only pays on `stars > old`. A full
+  basket under a grey sky says *this is all yours* without a word.
+- Stars this round can no longer reach **stay gold**. They are still winnable —
+  just not today — and dimming them would be the loss framing we refuse.
+
+There is **no streak counter**. A flame and a number beside the basket was one
+thing too many on the row, and it competed with the only count that matters.
 
 For the same reason there is **no mid-round restart button**: it would reward
 quitting after one mistake, and the Leitner boxes are only written in
