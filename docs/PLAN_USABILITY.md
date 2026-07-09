@@ -1,8 +1,30 @@
 # PLAN — Usability overhaul after Mara's playtest (age 8, non-reader)
 
-**Status: OPEN — not started.** This is the only open plan. When every step is
-done and verified, archive it as `docs/PLAN_USABILITY.md` alongside the other
-executed plans and update CLAUDE.md.
+**Status: DONE.** All ten steps landed. Kept for its reasoning; `docs/SPEC.md`
+wins wherever the two disagree.
+
+Two things were **not** built as written below, because the tree said otherwise:
+
+1. **Step 5 rested on a false premise.** It removed the summary's map link and
+   picker button on the grounds that "map/level stay reachable via topbar+chip".
+   They were not: `.overlay` is `position: fixed; inset: 0; z-index: 50`, so its
+   backdrop covered both, and the change as specified would have trapped a child
+   in an endless run of rounds with no way to the map. Verified with
+   `elementFromPoint` before touching anything. The summary therefore sits at
+   `z-index: 40` and the bar and chip at `45`, which makes the plan's own
+   sentence true. Every other overlay stays modal at `50`.
+2. **The hit-rect coordinates below are not the ones that shipped.** They were
+   derived from reading the SVG, and several swallowed a neighbour's label
+   (`pokalraum`'s would have taken the tail of "Number Village"). The shipped
+   rects were measured with `getBBox()` in a real browser and then hit-tested
+   over a grid of points, including the gap between the two Zahlendorf houses.
+   `tests/map.test.js` now enforces the invariant rather than the numbers.
+
+Smaller departures: `retryStep` rejects a digit the moment it can no longer
+become the answer (the plan waited until the input reached the answer's length);
+the shared trophy card was wired into both callers in step 3 rather than 5/8, so
+that its shared-usage test could be green from the start; and `roomIntro`'s
+reword needed a second pass — the first was circular German.
 
 ## How to work this plan (read first)
 
