@@ -311,7 +311,15 @@ from string dictionaries.
   saved setting (cookie) → `navigator.language` prefix match → `de`.
 - The header toggle switches instantly: re-translate in place, update
   `<html lang>`, persist.
-- Fallback chain: missing key → German string → the key itself.
+- Fallback chain: missing key → the default language (first entry of
+  `LANGUAGES`) → the key itself.
+- **`LANGUAGES` in `i18n.js` is the single declaration of a language**: code,
+  display name, and a graphics-registry flag name. Adding Spanish means writing
+  `es.js`, importing it, adding one row, and registering `flag-es` — validation,
+  the settings picker and the fallback chain all follow. The settings overlay
+  shows **every** language as a chip with its flag and its own endonym, the
+  active one marked with `aria-pressed` (a single button showing the *other*
+  language never told you which one you were reading).
 
 `i18n.js` API:
 

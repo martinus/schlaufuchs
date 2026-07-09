@@ -2,7 +2,7 @@
 // used identically by the map, the games and the stub pages so every screen
 // has the same top bar. Vanilla, no framework.
 
-import { t, getLang, setLang } from "./i18n.js";
+import { t, getLang, setLang, LANGUAGES } from "./i18n.js";
 import { getSettings, setSettings, resetAll, resetGame } from "./storage.js";
 import { levelInfo } from "./rewards.js";
 import { foxSVG } from "./fox.js";
@@ -36,14 +36,17 @@ export function initSettingsOverlay({ resetKind = null, game, onChange, onClose 
   overlay.innerHTML = `<div class="sheet" role="dialog" aria-modal="true">
       <h2 class="cx-title"></h2>
       <div class="setrow"><span class="cx-l-sound"></span><button class="iconbtn" id="cx-sound"></button></div>
-      <div class="setrow"><span class="cx-l-lang"></span><button class="iconbtn" id="cx-lang"></button></div>
+      <div class="setrow setrow-lang">
+        <span class="cx-l-lang"></span>
+        <div class="langpick" id="cx-lang" role="group"></div>
+      </div>
       ${resetKind ? `<div class="setrow"><span class="cx-l-reset"></span><button class="iconbtn" id="cx-reset"></button></div>` : ""}
       <button class="primary" id="cx-close"></button>
     </div>`;
   document.body.appendChild(overlay);
 
   const soundBtn = overlay.querySelector("#cx-sound");
-  const langBtn = overlay.querySelector("#cx-lang");
+  const langPick = overlay.querySelector("#cx-lang");
   const resetBtn = overlay.querySelector("#cx-reset");
   const closeBtn = overlay.querySelector("#cx-close");
   let resetArmed = false;
@@ -53,7 +56,7 @@ export function initSettingsOverlay({ resetKind = null, game, onChange, onClose 
     overlay.querySelector(".cx-l-sound").textContent = t("sound");
     overlay.querySelector(".cx-l-lang").textContent = t("language");
     soundBtn.innerHTML = iconHTML(getSettings().sound !== false ? "ui-sound-on" : "ui-sound-off", { size: 22 });
-    langBtn.textContent = getLang() === "de" ? "EN" : "DE";
+    renderLangPick();
     if (resetBtn) {
       overlay.querySelector(".cx-l-reset").textContent = resetKind === "all" ? t("resetAll") : t("resetGame");
       if (!resetArmed) resetBtn.innerHTML = iconHTML("ui-trash", { size: 22 });
@@ -76,8 +79,23 @@ export function initSettingsOverlay({ resetKind = null, game, onChange, onClose 
     renderRows();
     onChange?.();
   });
-  langBtn.addEventListener("click", () => {
-    setLang(getLang() === "de" ? "en" : "de"); // re-translates [data-i18n] on the page
+  // Every language is on screen and the active one is marked. A single button
+  // showing the *other* language never says which one you are reading now.
+  function renderLangPick() {
+    const active = getLang();
+    langPick.innerHTML = LANGUAGES.map((l) => `
+      <button class="langbtn" data-lang="${l.code}" lang="${l.code}"
+              aria-pressed="${l.code === active}">
+        <span class="flag">${iconHTML(l.flag, { size: 20 })}</span>
+        <span>${l.name}</span>
+      </button>`).join("");
+  }
+
+  langPick.addEventListener("click", (e) => {
+    const btn = e.target.closest(".langbtn");
+    if (!btn || btn.dataset.lang === getLang()) return;
+    setLang(btn.dataset.lang); // re-translates [data-i18n] on the page
+    sfx.click();
     renderRows();
     onChange?.();
   });

@@ -5,34 +5,49 @@ import de from "../i18n/de.js";
 import en from "../i18n/en.js";
 import { getSettings, setSettings } from "./storage.js";
 
+// The one place a language is declared. Adding Spanish means: write es.js,
+// import it, add a row here, and register "flag-es" in graphics.js. Everything
+// else — the settings picker, validation, the fallback chain — follows.
+export const LANGUAGES = [
+  { code: "de", name: "Deutsch", flag: "flag-de" },
+  { code: "en", name: "English", flag: "flag-en" },
+];
+
 const dicts = { de: { ...de }, en: { ...en } };
-let lang = "de";
+const CODES = LANGUAGES.map((l) => l.code);
+const DEFAULT_LANG = CODES[0];
+let lang = DEFAULT_LANG;
+
+export function isLang(l) {
+  return CODES.includes(l);
+}
 
 // Resolution order (§6.1): ?lang= param (persisted) → saved setting →
 // navigator.language → "de".
 export function initI18n(gameStrings) {
   if (gameStrings) {
-    for (const l of ["de", "en"]) Object.assign(dicts[l], gameStrings[l] ?? {});
+    for (const l of CODES) Object.assign(dicts[l], gameStrings[l] ?? {});
   }
   let resolved = null;
   if (typeof location !== "undefined") {
     const p = new URLSearchParams(location.search).get("lang");
-    if (p === "de" || p === "en") {
+    if (isLang(p)) {
       resolved = p;
       setSettings({ lang: p });
     }
   }
   if (!resolved) resolved = getSettings().lang;
   if (!resolved && typeof navigator !== "undefined" && navigator.language) {
-    resolved = navigator.language.toLowerCase().startsWith("en") ? "en" : "de";
+    const prefix = navigator.language.toLowerCase().split("-")[0];
+    if (isLang(prefix)) resolved = prefix;
   }
-  lang = resolved === "en" ? "en" : "de";
+  lang = isLang(resolved) ? resolved : DEFAULT_LANG;
   translateDOM();
 }
 
-// Fallback chain (§6.1): active language → German → the key itself.
+// Fallback chain (§6.1): active language → the default language → the key.
 export function t(key, params) {
-  let s = dicts[lang][key] ?? dicts.de[key] ?? key;
+  let s = dicts[lang][key] ?? dicts[DEFAULT_LANG][key] ?? key;
   if (params) {
     for (const [k, v] of Object.entries(params)) s = s.replaceAll(`{${k}}`, v);
   }
@@ -44,7 +59,7 @@ export function getLang() {
 }
 
 export function setLang(l) {
-  if (l !== "de" && l !== "en") return;
+  if (!isLang(l)) return;
   lang = l;
   setSettings({ lang: l });
   translateDOM();

@@ -21,6 +21,11 @@ export const GRAPHICS = {
   "ui-trash": { emoji: "🗑️" },
   "ui-lock": { emoji: "🔒" },
 
+  // Language flags — one per entry in LANGUAGES (i18n.js). Windows renders no
+  // flag emoji, so these are the first candidates for real SVGs.
+  "flag-de": { emoji: "🇩🇪" },
+  "flag-en": { emoji: "🇬🇧" },
+
   // Regions (mini symbols under the map / on nav buttons)
   "region-einmaleins": { emoji: "🏠" },
   "region-rechnungen": { emoji: "⛰️" },
