@@ -20,7 +20,11 @@ export function poolFor(table, difficulty) {
 
 // Question formats (§10.2): Leicht/Mittel plain multiplication; Schwer mixes
 // in gap questions and division. `text` uses "?" as the answer slot.
-export function questionFor(id, difficulty, rng = Math.random) {
+//
+// The division sign is injected, not chosen here: German schools write ":" and
+// a child who has never seen "÷" reads it as a decoration. This module stays
+// pure and i18n-free, so the caller passes `t("divSign")`.
+export function questionFor(id, difficulty, rng = Math.random, divSign = "÷") {
   const [t, f] = pairOf(id);
   if (difficulty < 2) {
     return { kind: "mul", t, f, text: `${t} × ${f} = ?`, answer: t * f };
@@ -34,7 +38,7 @@ export function questionFor(id, difficulty, rng = Math.random) {
       ? { kind: "gap", t, f, text: `? × ${f} = ${t * f}`, answer: t }
       : { kind: "gap", t, f, text: `${t} × ? = ${t * f}`, answer: f };
   }
-  return { kind: "div", t, f, text: `${t * f} ÷ ${f} = ?`, answer: t };
+  return { kind: "div", t, f, text: `${t * f} ${divSign} ${f} = ?`, answer: t };
 }
 
 // Four multiple-choice options for Leicht: the answer plus 3 plausible,

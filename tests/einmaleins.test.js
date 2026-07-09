@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import de from "../assets/i18n/de.js";
 import en from "../assets/i18n/en.js";
+import { read } from "./pages.js";
 import {
   POOL_COUNT, EASY_TABLES, pairIndex, pairOf, poolFor, questionFor,
   choicesFor, starsFor, nextStarGoal, ownedStars, STAR_SLOTS, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
@@ -45,6 +46,39 @@ test("questions always have the correct answer for every kind", () => {
     if (q.kind === "gap") assert.ok(q.answer === t || q.answer === f);
     assert.ok(q.text.includes("?"));
   }
+});
+
+// Mara has never seen "÷": her school writes division as ":". The sign is the
+// caller's to choose, so `logic.js` stays pure and free of i18n.
+test("the division sign is injected, and defaults to ÷", () => {
+  const rng = seeded(5);
+  let divs = 0;
+  for (let i = 0; i < 500; i++) {
+    const id = Math.floor(rng() * 100);
+    const q = questionFor(id, 2, rng, ":");
+    if (q.kind !== "div") continue;
+    divs++;
+    assert.ok(q.text.includes(" : "), `"${q.text}" must use the injected sign`);
+    assert.ok(!q.text.includes("÷"));
+  }
+  assert.ok(divs > 0, "the sample must contain divisions");
+
+  // Nothing else in the equation moves: same shape, same answer.
+  const withDefault = questionFor(23, 2, () => 0.9);
+  const withColon = questionFor(23, 2, () => 0.9, ":");
+  assert.equal(withDefault.kind, "div");
+  assert.equal(withDefault.text, withColon.text.replace(" : ", " ÷ "));
+  assert.equal(withDefault.answer, withColon.answer);
+});
+
+// A division question shown with ":" must not be explained with "÷" — the aid
+// used to rebuild the equation from `t` and `f` instead of from what was asked.
+test("the aid reprints the question that was asked, not a new one", () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  const fn = src.slice(src.indexOf("function showFeedback"));
+  assert.ok(!fn.slice(0, 600).includes("÷"), "showFeedback must not hardcode a division sign");
+  assert.match(fn.slice(0, 600), /question\.text\.replace/, "it builds from question.text");
+  assert.match(src, /questionFor\(id, diff, Math\.random, t\("divSign"\)\)/);
 });
 
 test("easy/medium difficulties only produce plain multiplication", () => {
