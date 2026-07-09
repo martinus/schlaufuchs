@@ -7,7 +7,6 @@ export default {
   resetGame: "Fortschritt dieses Spiels löschen",
   resetAll: "Fortschritt löschen",
   close: "Schließen",
-  footerPrivacy: "Deine Fortschritte werden nur auf diesem Gerät gespeichert.",
   parentsLink: "Für Eltern",
   parentsTitle: "Für Eltern",
   parentsIntro: "Alles hier stammt aus dem Fortschritt auf diesem Gerät. Nichts davon wird irgendwohin gesendet, und dein Kind sieht diese Seite im Spiel nicht.",

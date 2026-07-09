@@ -49,7 +49,7 @@ test("names, numbers and headings get the display face", () => {
 // are exactly where that matters and exactly where a rounded display face hurts.
 test("prose, data and URLs stay in the body face", () => {
   for (const sel of [
-    ".lede", ".muted", ".footnote", ".footlink", ".sub",
+    ".lede", ".muted", ".footlink", ".sub",
     ".ptable", ".legend", ".linklist a", ".mail", ".heat .hh",
   ]) {
     assert.ok(!assigns(sel), `${sel} must not be forced into the display face`);

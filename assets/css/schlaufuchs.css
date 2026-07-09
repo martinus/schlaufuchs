@@ -891,9 +891,8 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .textpage .prose p { color: var(--ink-soft); }
 .textpage .roomtitle { font-size: 1rem; }
 
-/* The footer whispers. The sentence is a legal courtesy, not a message a child
-   needs; the two links are what anyone actually goes there for. */
-.footnote { font-size: 0.68rem; color: var(--ink-soft); opacity: 0.8; }
+/* The footer is two links and nothing else. The sentence that used to sit here
+   said what privacy.html says properly, and it cost the map a strip of island. */
 .footlinks { display: flex; justify-content: center; gap: 16px; }
 .footlink { color: var(--ink-soft); font-size: 0.78rem; text-decoration: underline; }
 .roomfoot { text-align: center; padding: 6px 0 18px; }
