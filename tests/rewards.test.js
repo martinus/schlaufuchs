@@ -1,5 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import {
   THRESHOLDS, TROPHIES, GAMES, trophyCount, foxLevel, updateStreak,
   gameStars, sumStars, regionState, ACHIEVABLE, starBadgeTier, nextTrophyInfo,
@@ -189,4 +191,29 @@ test("balance: finishing einmaleins is possible, and 12 trophies come before the
   // playing only Leicht, perfectly, cannot finish the collection
   const easyOnly = 5 * tilePointsLeft(0, 0);
   assert.ok(trophyCount(easyOnly) < THRESHOLDS.length, "Leicht alone must not fill the room");
+});
+
+// Regression: the summary rendered `newTrophies[0]` and dropped the rest. A
+// round can cross several thresholds at once — a first Schwer round taken to
+// three stars pays 18 points, which passes 2, 9 and 18 in one go, so a child's
+// very first serious round silently lost two of its three prizes.
+test("one round can win several trophies, and the summary must show them all", () => {
+  const best = roundPoints({ oldStars: 0, newStars: 3, difficulty: 2 });
+  assert.equal(best, 18);
+  assert.equal(trophyCount(best) - trophyCount(0), 3, "18 points cross three thresholds");
+
+  // it is not a corner case of an empty account: mid-collection too
+  assert.ok(trophyCount(8 + best) - trophyCount(8) >= 2);
+
+  // ...and the round-summary code must iterate rather than index the first
+  const src = readFileSync(
+    fileURLToPath(new URL("../games/einmaleins/einmaleins.js", import.meta.url)),
+    "utf8",
+  );
+  const endRound = src.slice(src.indexOf("function endRound()"));
+  assert.ok(
+    !/newTrophies\[0\]/.test(endRound),
+    "showing only newTrophies[0] swallows the other prizes",
+  );
+  assert.ok(/\.map\(/.test(endRound), "the summary must render every won trophy");
 });

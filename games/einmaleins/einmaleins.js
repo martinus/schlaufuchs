@@ -287,15 +287,19 @@ function endRound() {
     if (goal) $("sum-goal").textContent = t(goal);
     $("sum-best").hidden = !improved;
     $("sum-best").textContent = t("newBest");
+    // One round can cross several thresholds at once — a first Schwer round to
+    // three stars is worth 18 points and passes 2, 9 and 18. Showing only the
+    // first would quietly swallow two prizes (§8.3).
     const st = $("sum-trophy");
-    if (res.newTrophies.length > 0) {
-      const s = res.newTrophies[0];
+    const won = res.newTrophies;
+    st.hidden = won.length === 0;
+    if (won.length > 0) {
       // the trophy speaks for itself: the picture, then its name
-      st.innerHTML = `<span class="se-emoji">${iconHTML(s.icon, { size: 44 })}</span>${s[getLang()]}`;
-      st.hidden = false;
+      const size = won.length > 1 ? 34 : 44;
+      st.innerHTML = won
+        .map((s) => `<span class="won"><span class="se-emoji">${iconHTML(s.icon, { size })}</span>${s[getLang()]}</span>`)
+        .join("");
       sfx.trophy();
-    } else {
-      st.hidden = true;
     }
     $("sum-again").textContent = t("again");
     showSummary();
