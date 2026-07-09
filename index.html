@@ -6,9 +6,9 @@
   <title>Schlaufuchs</title>
   <meta name="description" content="Spielerisch lernen und ein Schlaufuchs werden">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/css/schlaufuchs.css?v=4">
+  <link rel="stylesheet" href="assets/css/schlaufuchs.css?v=5">
 </head>
-<body>
+<body class="mappage">
   <header class="topbar">
     <div class="levelchip" id="levelchip"></div>
     <span class="chip streakchip" id="streakchip" hidden></span>
@@ -27,7 +27,7 @@
             C180 542 120 552 76 544 C34 536 8 512 12 470
             C16 410 6 350 12 292 C18 230 6 150 14 92 C18 52 30 20 64 14 Z"/>
         </defs>
-        <rect x="0" y="0" width="360" height="560" fill="var(--sky)"/>
+        <rect x="0" y="0" width="360" height="560" fill="var(--sea)"/>
         <!-- gentle waves in the sea -->
         <g stroke="#9fd0ea" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.9">
           <path d="M4 240 q6 -5 12 0"/>
@@ -50,16 +50,22 @@
           <polygon points="-15,0 0,-4 15,0 0,4" fill="#8d5524"/>
           <text x="0" y="-20" font-size="9" font-weight="800" text-anchor="middle" fill="#8d5524">N</text>
         </g>
-        <!-- roads between the regions -->
-        <g fill="none" stroke-linecap="round">
-          <path d="M180 388 q-48 -80 -92 -196 M180 388 q66 -76 102 -198
-                   M180 388 q52 -36 90 -68 M174 400 q-34 20 -56 46
-                   M188 402 q34 24 54 60"
-                stroke="#e2c79a" stroke-width="8"/>
-          <path d="M180 388 q-48 -80 -92 -196 M180 388 q66 -76 102 -198
-                   M180 388 q52 -36 90 -68 M174 400 q-34 20 -56 46
-                   M188 402 q34 24 54 60"
-                stroke="#fdf6e6" stroke-width="2" stroke-dasharray="6 8"/>
+        <!-- Roads from the village. A mastered region's road paves itself
+             (class `paved`, set by map.js) — the map records the child. -->
+        <g class="roads" fill="none" stroke-linecap="round">
+          <path class="road" id="road-vokabeln" d="M180 388 q-48 -80 -92 -196"/>
+          <path class="road" id="road-rechnungen" d="M180 388 q66 -76 102 -198"/>
+          <path class="road" id="road-tippen" d="M180 388 q52 -36 90 -68"/>
+          <path class="road" id="road-lesen" d="M148 414 q-24 8 -38 28"/>
+          <path class="road" id="road-pokalraum" d="M214 418 q16 22 24 44"/>
+        </g>
+        <!-- the dashed centre line of a dirt track; hidden once it is paved -->
+        <g class="roadlines" fill="none" stroke-linecap="round">
+          <use class="roadline" id="roadline-vokabeln" href="#road-vokabeln"/>
+          <use class="roadline" id="roadline-rechnungen" href="#road-rechnungen"/>
+          <use class="roadline" id="roadline-tippen" href="#road-tippen"/>
+          <use class="roadline" id="roadline-lesen" href="#road-lesen"/>
+          <use class="roadline" id="roadline-pokalraum" href="#road-pokalraum"/>
         </g>
 
         <!-- Rechenberg (Rechnungen) top right -->
@@ -130,6 +136,9 @@
             <rect x="188" y="400" width="10" height="10" fill="#5aa7d6"/>
             <rect x="210" y="400" width="10" height="10" fill="#5aa7d6"/>
             <rect x="197" y="410" width="14" height="17" fill="#6b4423"/>
+            <!-- the village is the crossroads, so it has no road of its own:
+                 mastering Zahlendorf cobbles its square instead (§3.1) -->
+            <ellipse class="plaza" id="plaza-einmaleins" cx="180" cy="433" rx="46" ry="8"/>
           </g>
           <g class="layer-thriving">
             <text data-icon="deco-sparkle" data-icon-size="13" x="125" y="375" font-size="13">✨</text>
@@ -179,7 +188,9 @@
       </svg>
     </div>
 
-    <nav class="fallback-nav" aria-label="Spiele">
+    <!-- The map already offers every destination. This list exists for
+         keyboard and screen-reader users only (§3.1) and appears on focus. -->
+    <nav class="fallback-nav visually-hidden" aria-label="Spiele">
       <a href="games/einmaleins/"><span class="nav-ico" data-icon="region-einmaleins" data-icon-size="20">🏠</span><span data-i18n="game_einmaleins">Einmaleins</span></a>
       <a href="games/rechnungen/"><span class="nav-ico" data-icon="region-rechnungen" data-icon-size="20">⛰️</span><span data-i18n="game_rechnungen">Rechnungen</span></a>
       <a href="games/tippen/"><span class="nav-ico" data-icon="region-tippen" data-icon-size="20">🌊</span><span data-i18n="game_tippen">Tippen</span></a>
@@ -189,20 +200,11 @@
     </nav>
   </main>
 
+  <!-- "delete all progress" lives in the settings overlay only; a second
+       copy in the footer cost a screenful and said the same thing. -->
   <footer>
     <p data-i18n="footerPrivacy">Deine Fortschritte werden nur auf diesem Gerät gespeichert.</p>
-    <button id="resetbtn" data-i18n="resetAll">Fortschritt löschen</button>
   </footer>
-
-  <div class="overlay" id="reset-overlay" hidden>
-    <div class="sheet" role="dialog" aria-modal="true">
-      <h2 data-i18n="confirmResetAll">Wirklich den ganzen Fortschritt löschen?</h2>
-      <div class="seg" style="grid-template-columns: 1fr 1fr;">
-        <button id="reset-cancel" data-i18n="cancel">Abbrechen</button>
-        <button id="reset-confirm" data-i18n="confirmDelete">Ja, löschen</button>
-      </div>
-    </div>
-  </div>
 
   <script type="module" src="assets/js/map.js"></script>
 </body>

@@ -2,7 +2,7 @@
 // states, the Trophy Room badge, fox placement, settings overlay, global reset.
 
 import { initI18n, t } from "./i18n.js";
-import { loadState, getRewards, resetAll } from "./storage.js";
+import { loadState, getRewards } from "./storage.js";
 import { gameStars, regionState, starBadgeTier, stickerCount, levelInfo, GAMES } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconHTML, iconSVG, applyIcons } from "./graphics.js";
@@ -26,6 +26,14 @@ function renderBadge(badgeEl, iconName, count, tier) {
     + `<text class="region-stars" x="2" y="0" text-anchor="start">${count}</text>`;
   badgeEl.classList.remove("badge-t1", "badge-t2", "badge-t3");
   if (tier) badgeEl.classList.add(`badge-t${tier}`);
+}
+
+// A region's road, its dashed centre line, and (for the village, which has no
+// road) its square all share one `paved` state. Missing ids are simply skipped.
+function pave(game, on) {
+  for (const id of [`road-${game}`, `roadline-${game}`, `plaza-${game}`]) {
+    document.getElementById(id)?.classList.toggle("paved", on);
+  }
 }
 
 function render() {
@@ -54,6 +62,8 @@ function render() {
       region.classList.remove("thriving", "mastered");
       const rs = regionState(state, game);
       if (rs !== "base") region.classList.add(rs);
+      // the island remembers: a mastered region's road turns to cobblestone
+      pave(game, rs === "mastered");
     }
   }
 
@@ -64,6 +74,7 @@ function render() {
   if (pkBadge) {
     const pkTier = totalStickers >= 60 ? 3 : totalStickers >= 20 ? 2 : totalStickers > 0 ? 1 : 0;
     renderBadge(pkBadge, "deco-trophy", totalStickers, pkTier);
+    pave("pokalraum", pkTier >= 2);
   }
   const pkRegion = document.getElementById("region-pokalraum");
   if (pkRegion) {
@@ -83,17 +94,5 @@ function render() {
 // settings overlay (gear) — global reset lives here as well as in the footer
 const settings = initSettingsOverlay({ resetKind: "all", onChange: render });
 document.getElementById("gearbtn").addEventListener("click", settings.open);
-
-// footer "delete all progress" with its own confirm sheet (unchanged)
-const overlay = document.getElementById("reset-overlay");
-document.getElementById("resetbtn").addEventListener("click", () => (overlay.hidden = false));
-document.getElementById("reset-cancel").addEventListener("click", () => (overlay.hidden = true));
-overlay.addEventListener("click", (e) => {
-  if (e.target === overlay) overlay.hidden = true;
-});
-document.getElementById("reset-confirm").addEventListener("click", () => {
-  resetAll();
-  location.reload();
-});
 
 render();
