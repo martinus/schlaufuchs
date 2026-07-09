@@ -70,19 +70,17 @@
   <!-- round summary (§10.1) -->
   <div class="overlay" id="sum-overlay" hidden>
     <!-- A child who just won reads almost nothing. Stars say how it went, the
-         trophy is the prize, one button says what happens next. Score and
-         time are one quiet line of numbers, not three sentences (§10.1). -->
+         trophy is the prize, ONE button says what happens next. Mara read the
+         three buttons that used to be here as a wall and tried to press the
+         chip behind the sheet; the map and the level picker live in the top bar
+         and the chip, which is where she looked for them anyway (§10.1). -->
     <div class="sheet summary" role="dialog" aria-modal="true">
       <div class="bigstars" id="sum-stars"></div>
       <p class="sline stat" id="sum-score"></p>
       <p class="sline goal" id="sum-goal" hidden></p>
       <p class="sline best" id="sum-best" hidden></p>
       <div class="trophy-earn" id="sum-trophy" hidden></div>
-      <button class="primary" id="sum-again"></button>
-      <div class="seg sum-secondary">
-        <a class="sum-link" href="../../">🗺️ <span data-i18n="back">Zur Karte</span></a>
-        <button id="sum-pick" data-i18n="emPickTitle">Reihe &amp; Schwierigkeit</button>
-      </div>
+      <button class="primary" id="sum-ok"></button>
     </div>
   </div>
 

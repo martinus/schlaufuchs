@@ -118,6 +118,59 @@ test("star criteria (§10.3): accuracy only, never the clock", () => {
   assert.equal(starsFor(10, 10, 999), 3);
 });
 
+// Mara finished a round, met three buttons, and pressed the chip *behind* the
+// sheet. The summary now offers exactly one thing to press, and the two ways
+// out — the map and the level picker — stay where she already reached for them.
+test("the round summary has one button and nothing else to press", () => {
+  const page = read("games/einmaleins/index.html");
+  const sheet = page.slice(page.indexOf('id="sum-overlay"'), page.indexOf("</div>\n\n  <script"));
+  assert.equal((sheet.match(/<button/g) ?? []).length, 1, "exactly one button");
+  assert.match(sheet, /id="sum-ok"/);
+  for (const gone of ["sum-again", "sum-pick", "sum-secondary", "sum-link"]) {
+    assert.ok(!sheet.includes(gone), `${gone} is still in the summary`);
+  }
+  // …and that one button must be the one the focus lands on: the trophy above
+  // it is a link to the album, so Enter would otherwise leave the game.
+  assert.match(read("games/einmaleins/einmaleins.js"), /initialFocus: "#sum-ok"/);
+});
+
+// The summary is the only overlay a child meets without asking for it, and the
+// only one with no dismiss. So it sits UNDER the bar and the chip that let her
+// leave; a backdrop over them would trap her in an endless run of rounds.
+test("the top bar and the chip stay above the round summary", () => {
+  const css = read("assets/css/schlaufuchs.css");
+  const z = (sel) => {
+    const block = css.slice(css.indexOf(`${sel} {`));
+    const m = block.slice(0, block.indexOf("}")).match(/z-index:\s*(\d+)/);
+    assert.ok(m, `${sel} needs a z-index`);
+    return Number(m[1]);
+  };
+  const overlay = z(".overlay");
+  assert.ok(z("#sum-overlay") < z(".topbar"), "the bar must stay reachable");
+  assert.ok(z("#sum-overlay") < z(".pickheading"), "the chip must stay reachable");
+  assert.ok(z(".topbar") < overlay, "a real modal sheet still covers the bar");
+  assert.ok(z(".pickheading") < overlay, "…and the chip");
+});
+
+test("the round summary congratulates in six ways, in both languages", () => {
+  // The dead-key scanner waves `sumOk*` through on a regex allowlist, so it can
+  // no longer notice one going missing. Name them here instead.
+  const src = read("games/einmaleins/einmaleins.js");
+  for (let i = 1; i <= 6; i++) {
+    assert.equal(typeof de[`sumOk${i}`], "string", `de.js is missing sumOk${i}`);
+    assert.equal(typeof en[`sumOk${i}`], "string", `en.js is missing sumOk${i}`);
+    assert.ok(src.includes(`"sumOk${i}"`), `einmaleins.js never offers sumOk${i}`);
+  }
+  assert.ok(!("again" in de) && !("again" in en), '"Nochmal" retired with the button');
+});
+
+test("the trophy in the summary is a link to the room it belongs in", () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  const block = src.slice(src.indexOf("if (won.length > 0)"));
+  assert.match(block.slice(0, 500), /href: "\.\.\/\.\.\/album\.html"/, "the trophy must be tappable");
+  assert.match(block.slice(0, 500), /cls: "won"/, "…and still readable by tools/play.js");
+});
+
 test("the summary names the price of the next star", () => {
   // A child who scores 9/10 keeps one star and is told nothing about why.
   // Every un-earned star must have a goal line; a mastered round must not.

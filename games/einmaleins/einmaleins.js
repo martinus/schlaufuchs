@@ -30,8 +30,14 @@ const picker = overlayFrom(document.getElementById("pick-overlay"), {
     if (roundOver) summary.open();
   },
 });
-const summary = overlayFrom(document.getElementById("sum-overlay"), { dismissible: false });
+// The summary leads with the trophy it just handed out, and that trophy is a
+// link to the album — so the button, not the link, must have the focus.
+const summary = overlayFrom(document.getElementById("sum-overlay"), {
+  dismissible: false,
+  initialFocus: "#sum-ok",
+});
 const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
+const SUM_OK_KEYS = ["sumOk1", "sumOk2", "sumOk3", "sumOk4", "sumOk5", "sumOk6"];
 const NEXT_MS = 250;
 
 // React on pointerdown for instant response on touch devices; the later
@@ -325,14 +331,21 @@ function endRound() {
     st.hidden = won.length === 0;
     if (won.length > 0) {
       // The very same card the album shelf shows, so the child can find it
-      // again: the cup, her emoji in it, its name.
+      // again: the cup, her emoji in it, its name. Mara tapped the trophy she
+      // had won and nothing happened — now it is the door to the room it
+      // belongs in.
       const size = won.length > 1 ? 34 : 44;
+      const lang = getLang();
       st.innerHTML = won
-        .map((s) => trophyCardHTML(s, { size, lang: getLang(), cls: "won" }))
+        .map((s) => trophyCardHTML(s, {
+          size, lang, cls: "won",
+          href: "../../album.html",
+          label: `${s[lang]} — ${t("region_pokalraum")}`,
+        }))
         .join("");
       sfx.trophy();
     }
-    $("sum-again").textContent = t("again");
+    $("sum-ok").textContent = t(SUM_OK_KEYS[Math.floor(Math.random() * SUM_OK_KEYS.length)]);
     // The stars just changed. The chip was rendered at startRound() and nobody
     // told it, so a child read "⭐ 0" in the top bar while three stars lit up
     // beneath it — until they walked back to the map.
@@ -342,11 +355,10 @@ function endRound() {
   }, 700);
 }
 
-$("sum-again").addEventListener("click", startRound);
-$("sum-pick").addEventListener("click", () => {
-  summary.close();
-  picker.open();
-});
+// The one button in the summary. The map lives in the top bar and the level
+// picker on the chip — both reachable while the summary is up, which is where
+// Mara reached for them.
+$("sum-ok").addEventListener("click", startRound);
 
 // --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------
 function renderPicker() {

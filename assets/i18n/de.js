@@ -67,7 +67,15 @@ export default {
   trophyNextIn: "Noch {n} Punkte bis zum nächsten Pokal",
   trophyNextIn1: "Noch 1 Punkt bis zum nächsten Pokal",
   trophyAllDone: "Alle Pokale gesammelt!",
-  again: "Nochmal",
+  // The round summary's one button. Picked at random so the round that follows
+  // feels like an answer and not a menu item; a child who reads nothing still
+  // sees a friendly word and one place to press.
+  sumOk1: "Super!",
+  sumOk2: "Weiter geht's!",
+  sumOk3: "Toll gemacht!",
+  sumOk4: "Klasse!",
+  sumOk5: "Stark!",
+  sumOk6: "Du schaffst das!",
   roundStat: "{ok}/{total}",
   gotIt: "Verstanden",
   newBest: "Neuer Rekord!",
