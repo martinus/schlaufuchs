@@ -3,12 +3,13 @@
 // themed goal at the end. The journey cannot be lost.
 
 import { foxSVG } from "./fox.js";
+import { iconSVG } from "./graphics.js";
 
 const THEMES = {
-  village: { goal: "🔔", obstacles: ["🧺", "🐓", "🚪"], path: "#d9b48f" },
-  mountain: { goal: "🚩", obstacles: ["🪨", "🌉", "🧌"], path: "#b0a99f" },
-  forest: { goal: "✨", obstacles: ["🍄", "🦔", "🚪"], path: "#8fbf7f" },
-  meadow: { goal: "📖", obstacles: ["🦋", "🌼", "🐝"], path: "#a8d08d" },
+  village: { goal: "j-goal-bell", obstacles: ["j-basket", "j-rooster", "j-door"], path: "#d9b48f" },
+  mountain: { goal: "j-goal-flag", obstacles: ["j-rock", "j-bridge", "j-troll"], path: "#b0a99f" },
+  forest: { goal: "j-goal-sparkle", obstacles: ["j-mushroom", "j-hedgehog", "j-door"], path: "#8fbf7f" },
+  meadow: { goal: "j-goal-book", obstacles: ["j-butterfly", "j-flower", "j-bee"], path: "#a8d08d" },
 };
 
 const OBSTACLE_AT = [2, 5, 8]; // 0-indexed: nodes 3, 6, 9 (§8.2)
@@ -34,14 +35,12 @@ export function createJourney(container, { nodes, theme = "village", level = 1 }
     const x = xOf(i);
     const y = yOf(i);
     if (i === nodes - 1) {
-      svg += `<text class="j-goal" data-j="${i}" x="${x}" y="${y + 7}"
-          font-size="22" text-anchor="middle">${th.goal}</text>`;
+      svg += iconSVG(th.goal, { x, y: y + 7, size: 22, cls: "j-goal", attrs: `data-j="${i}"` });
     } else {
       svg += `<circle class="j-node" data-j="${i}" cx="${x}" cy="${y}" r="6"/>`;
       const oi = OBSTACLE_AT.indexOf(i);
       if (oi >= 0 && i > 0) {
-        svg += `<text class="j-obstacle" data-j="${i}" x="${x}" y="${y - 12}"
-            font-size="14" text-anchor="middle">${th.obstacles[oi]}</text>`;
+        svg += iconSVG(th.obstacles[oi], { x, y: y - 12, size: 14, cls: "j-obstacle", attrs: `data-j="${i}"` });
       }
     }
   }
@@ -62,7 +61,12 @@ export function createJourney(container, { nodes, theme = "village", level = 1 }
       const prev = el.querySelector(`.j-node[data-j="${pos}"]`);
       if (prev) prev.classList.add("done");
       const obstacle = el.querySelector(`.j-obstacle[data-j="${pos + 1}"]`);
-      if (obstacle) obstacle.classList.add("cleared");
+      if (obstacle) {
+        // the fox reaches a milestone: a themed mini-celebration. The sound is
+        // the normal "correct" tone already played by the caller — no extra sfx.
+        const oi = OBSTACLE_AT.indexOf(pos + 1); // 0 | 1 | 2
+        obstacle.classList.add("cleared", `j-clear-${oi}`);
+      }
       pos = Math.min(pos + 1, nodes - 1);
       moveFox();
       fox.classList.remove("hop");

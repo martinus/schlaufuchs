@@ -6,16 +6,14 @@
   <title>Schlaufuchs</title>
   <meta name="description" content="Spielerisch lernen und ein Schlaufuchs werden">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/css/schlaufuchs.css?v=3">
+  <link rel="stylesheet" href="assets/css/schlaufuchs.css?v=4">
 </head>
 <body>
   <header class="topbar">
     <div class="levelchip" id="levelchip"></div>
     <span class="chip streakchip" id="streakchip" hidden></span>
     <span class="spacer"></span>
-    <a class="iconbtn" href="album.html" id="albumbtn" data-i18n-label="album">📖</a>
-    <button class="iconbtn" id="soundbtn" data-i18n-label="sound">🔊</button>
-    <button class="iconbtn" id="langbtn" data-i18n-label="language">EN</button>
+    <button class="iconbtn" id="gearbtn" data-i18n-label="settings" data-icon="ui-gear" data-icon-size="22">⚙️</button>
   </header>
 
   <main>
@@ -37,13 +35,13 @@
           <polygon points="235,185 300,55 360,185" fill="#9aa0a6"/>
           <polygon points="272,110 300,55 326,110 313,102 300,116 286,101" fill="#f5f2ec"/>
           <polygon points="205,185 250,105 292,185" fill="#7d858c"/>
-          <g class="layer-thriving"><text x="255" y="150" font-size="16">🐐</text></g>
+          <g class="layer-thriving"><text data-icon="deco-goat" data-icon-size="16" x="255" y="150" font-size="16">🐐</text></g>
           <g class="layer-mastered">
-            <text x="292" y="52" font-size="16">🚩</text>
-            <text x="330" y="120" font-size="14">🦅</text>
+            <text data-icon="deco-flag" data-icon-size="16" x="292" y="52" font-size="16">🚩</text>
+            <text data-icon="deco-eagle" data-icon-size="14" x="330" y="120" font-size="14">🦅</text>
           </g>
           <text class="region-label" x="290" y="205" data-i18n="region_rechnungen">Rechenberg</text>
-          <text class="region-stars" x="290" y="220" data-stars="rechnungen">⭐ 0</text>
+          <g class="region-badge" data-badge="rechnungen" transform="translate(290,220)"></g>
         </a>
 
         <!-- Wörterwald (Vokabeln) left -->
@@ -57,13 +55,13 @@
             <rect x="92" y="185" width="7" height="14" fill="#6b4423"/>
             <rect x="122" y="170" width="6" height="12" fill="#6b4423"/>
           </g>
-          <g class="layer-thriving"><text x="60" y="150" font-size="15">🦉</text></g>
+          <g class="layer-thriving"><text data-icon="deco-owl" data-icon-size="15" x="60" y="150" font-size="15">🦉</text></g>
           <g class="layer-mastered">
-            <text x="105" y="160" font-size="15">🦌</text>
-            <text x="35" y="120" font-size="13">✨</text>
+            <text data-icon="deco-deer" data-icon-size="15" x="105" y="160" font-size="15">🦌</text>
+            <text data-icon="deco-sparkle" data-icon-size="13" x="35" y="120" font-size="13">✨</text>
           </g>
           <text class="region-label" x="88" y="222" data-i18n="region_vokabeln">Wörterwald</text>
-          <text class="region-stars" x="88" y="237" data-stars="vokabeln">⭐ 0</text>
+          <g class="region-badge" data-badge="vokabeln" transform="translate(88,237)"></g>
         </a>
 
         <!-- Tippsee (Tippen) right middle -->
@@ -73,10 +71,10 @@
           <ellipse cx="285" cy="290" rx="65" ry="38" fill="none" stroke="#3d8ab8" stroke-width="3"/>
           <rect x="238" y="240" width="34" height="22" rx="2" fill="#b06f3c"/>
           <polygon points="234,241 255,226 276,241" fill="#8d5524"/>
-          <g class="layer-thriving"><text x="290" y="288" font-size="15">⛵</text></g>
-          <g class="layer-mastered"><text x="312" y="302" font-size="15">🦢</text></g>
+          <g class="layer-thriving"><text data-icon="deco-sailboat" data-icon-size="15" x="290" y="288" font-size="15">⛵</text></g>
+          <g class="layer-mastered"><text data-icon="deco-swan" data-icon-size="15" x="312" y="302" font-size="15">🦢</text></g>
           <text class="region-label" x="285" y="348" data-i18n="region_tippen">Tippsee</text>
-          <text class="region-stars" x="285" y="363" data-stars="tippen">⭐ 0</text>
+          <g class="region-badge" data-badge="tippen" transform="translate(285,363)"></g>
         </a>
 
         <!-- Zahlendorf (Einmaleins) center -->
@@ -94,12 +92,12 @@
             <rect x="197" y="410" width="14" height="17" fill="#6b4423"/>
           </g>
           <g class="layer-thriving">
-            <text x="125" y="375" font-size="13">✨</text>
-            <text x="228" y="368" font-size="13">✨</text>
+            <text data-icon="deco-sparkle" data-icon-size="13" x="125" y="375" font-size="13">✨</text>
+            <text data-icon="deco-sparkle" data-icon-size="13" x="228" y="368" font-size="13">✨</text>
           </g>
-          <g class="layer-mastered"><text x="172" y="360" font-size="15">🎪</text></g>
+          <g class="layer-mastered"><text data-icon="deco-circus" data-icon-size="15" x="172" y="360" font-size="15">🎪</text></g>
           <text class="region-label" x="180" y="448" data-i18n="region_einmaleins">Zahlendorf</text>
-          <text class="region-stars" x="180" y="463" data-stars="einmaleins">⭐ 0</text>
+          <g class="region-badge" data-badge="einmaleins" transform="translate(180,463)"></g>
         </a>
 
         <!-- Lesewiese (Lesen) bottom left -->
@@ -108,14 +106,31 @@
           <ellipse cx="80" cy="495" rx="70" ry="34" fill="#a8d08d"/>
           <rect x="70" y="465" width="12" height="30" fill="#6b4423"/>
           <circle cx="76" cy="452" r="26" fill="#3f7d3a"/>
-          <text x="76" y="460" font-size="16" text-anchor="middle">📖</text>
+          <text data-icon="deco-book" data-icon-size="16" x="76" y="460" font-size="16" text-anchor="middle">📖</text>
           <g class="layer-thriving">
-            <text x="35" y="505" font-size="13">🌼</text>
-            <text x="115" y="510" font-size="13">🌼</text>
+            <text data-icon="deco-flower" data-icon-size="13" x="35" y="505" font-size="13">🌼</text>
+            <text data-icon="deco-flower" data-icon-size="13" x="115" y="510" font-size="13">🌼</text>
           </g>
-          <g class="layer-mastered"><text x="110" y="470" font-size="15">🌈</text></g>
+          <g class="layer-mastered"><text data-icon="deco-rainbow" data-icon-size="15" x="110" y="470" font-size="15">🌈</text></g>
           <text class="region-label" x="80" y="546" data-i18n="region_lesen">Lesewiese</text>
-          <text class="region-stars" x="80" y="559" data-stars="lesen">⭐ 0</text>
+          <g class="region-badge" data-badge="lesen" transform="translate(80,559)"></g>
+        </a>
+
+        <!-- Pokalraum (Trophy Room) bottom right -> sticker album -->
+        <a href="album.html" class="region" id="region-pokalraum" data-game="pokalraum">
+          <rect x="245" y="418" width="112" height="142" fill="transparent"/>
+          <rect x="255" y="520" width="90" height="8" fill="#c9b79c"/>
+          <rect x="263" y="468" width="74" height="52" fill="#f5f2ec"/>
+          <rect x="269" y="470" width="7" height="46" fill="#d9cbb8"/>
+          <rect x="287" y="470" width="7" height="46" fill="#d9cbb8"/>
+          <rect x="305" y="470" width="7" height="46" fill="#d9cbb8"/>
+          <rect x="323" y="470" width="7" height="46" fill="#d9cbb8"/>
+          <polygon points="256,468 300,438 344,468" fill="#b06f3c"/>
+          <text data-icon="deco-trophy" data-icon-size="16" x="300" y="434" font-size="16" text-anchor="middle">🏆</text>
+          <g class="layer-thriving"><text data-icon="deco-sparkle" data-icon-size="13" x="268" y="458" font-size="13">✨</text></g>
+          <g class="layer-mastered"><text data-icon="deco-party" data-icon-size="15" x="333" y="458" font-size="15">🎉</text></g>
+          <text class="region-label" x="300" y="544" data-i18n="region_pokalraum">Pokalraum</text>
+          <g class="region-badge" data-badge="pokalraum" transform="translate(300,557)"></g>
         </a>
 
         <!-- the fox, placed by map.js at the last-played region -->
@@ -124,12 +139,12 @@
     </div>
 
     <nav class="fallback-nav" aria-label="Spiele">
-      <a href="games/einmaleins/" data-i18n="game_einmaleins">Einmaleins</a>
-      <a href="games/rechnungen/" data-i18n="game_rechnungen">Rechnungen</a>
-      <a href="games/tippen/" data-i18n="game_tippen">Tippen</a>
-      <a href="games/vokabeln/" data-i18n="game_vokabeln">Vokabeln</a>
-      <a href="games/lesen/" data-i18n="game_lesen">Lesen</a>
-      <a href="album.html" data-i18n="album">Stickeralbum</a>
+      <a href="games/einmaleins/"><span class="nav-ico" data-icon="region-einmaleins" data-icon-size="20">🏠</span><span data-i18n="game_einmaleins">Einmaleins</span></a>
+      <a href="games/rechnungen/"><span class="nav-ico" data-icon="region-rechnungen" data-icon-size="20">⛰️</span><span data-i18n="game_rechnungen">Rechnungen</span></a>
+      <a href="games/tippen/"><span class="nav-ico" data-icon="region-tippen" data-icon-size="20">🌊</span><span data-i18n="game_tippen">Tippen</span></a>
+      <a href="games/vokabeln/"><span class="nav-ico" data-icon="region-vokabeln" data-icon-size="20">🌲</span><span data-i18n="game_vokabeln">Vokabeln</span></a>
+      <a href="games/lesen/"><span class="nav-ico" data-icon="region-lesen" data-icon-size="20">📖</span><span data-i18n="game_lesen">Lesen</span></a>
+      <a href="album.html"><span class="nav-ico" data-icon="region-pokalraum" data-icon-size="20">🏆</span><span data-i18n="album">Stickeralbum</span></a>
     </nav>
   </main>
 

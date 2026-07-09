@@ -84,6 +84,10 @@ export const STICKERS = {
   ],
 };
 
+// Stamp a stable icon name on every sticker (used by the graphics registry).
+// Additive only — the {e, de, en} fields are untouched.
+for (const g of GAMES) STICKERS[g].forEach((s, i) => { s.icon = `sticker-${g}-${i + 1}`; });
+
 // Achievable stars per game, for map region states (§3.1).
 export const ACHIEVABLE = { einmaleins: 99, rechnungen: 45, tippen: 120, vokabeln: 54, lesen: 9 };
 
@@ -137,6 +141,23 @@ export function regionState(state, game) {
   if (frac >= 1) return "mastered";
   if (frac >= 1 / 3) return "thriving";
   return "base";
+}
+
+// Badge tier for the map star badges: 0 = none, 1 = some stars,
+// 2 = >= 1/3 of achievable (gold), 3 = 100 % (glowing).
+export function starBadgeTier(state, game) {
+  const n = gameStars(state, game);
+  if (n <= 0) return 0;
+  const frac = n / ACHIEVABLE[game];
+  return frac >= 1 ? 3 : frac >= 1 / 3 ? 2 : 1;
+}
+
+// Progress toward the next sticker of one game (pr = lifetime perfect rounds).
+// Returns null once all 12 stickers are earned.
+export function nextStickerInfo(pr) {
+  const earned = stickerCount(pr);
+  if (earned >= THRESHOLDS.length) return null;
+  return { earned, threshold: THRESHOLDS[earned], remaining: THRESHOLDS[earned] - (pr ?? 0) };
 }
 
 // Daily streak (§8.5): consecutive local calendar days.
