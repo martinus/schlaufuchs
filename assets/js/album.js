@@ -7,6 +7,7 @@ import {
   GAMES, TROPHIES, THRESHOLDS, TOTAL_TROPHIES, TROPHIES_PER_GAME, trophyCount, nextTrophyInfo,
 } from "./rewards.js";
 import { iconHTML } from "./graphics.js";
+import { trophyCardHTML } from "./trophycard.js";
 import { initTopBar } from "./chrome.js";
 
 initI18n();
@@ -35,9 +36,7 @@ function render() {
     section.className = "album-section";
     const slots = TROPHIES[game]
       .map((s, i) => {
-        if (i < earned) {
-          return `<div class="slot">${iconHTML(s.icon, { size: 34 })}<span class="sname">${s[lang]}</span></div>`;
-        }
+        if (i < earned) return trophyCardHTML(s, { size: 34, lang, cls: "slot" });
         // A locked slot shows the trophy as a silhouette: you can see what is
         // missing, which is the whole reason to keep collecting. The name stays
         // hidden — the shape is the tease.

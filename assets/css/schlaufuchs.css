@@ -754,32 +754,24 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .summary .sline { margin: 6px 0; font-weight: 700; }
 /* the next star's price: present, but never louder than the score */
 .summary .sline.goal { font-weight: 400; font-size: .82rem; color: var(--ink-soft); }
-/* A round can win several trophies at once, so this is a row, not a slot. */
+/* A round can win several trophies at once, so this is a row, not a slot. The
+   cards inside it carry the panel and the frame (see .tcard); the row is only
+   the arrangement. */
 .summary .trophy-earn {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 4px 14px;
+  gap: 8px;
   margin: 10px auto;
-  padding: 10px;
-  border-radius: var(--radius);
-  background: var(--panel);
-  box-shadow: var(--shadow);
   font-weight: 800;
 }
-.summary .trophy-earn .won {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 5.5em;
-}
+.summary .trophy-earn .won { width: 5.5em; }
 /* Three at once is the most a round can win (18 points crosses 2, 9 and 18).
    Long names like "Rechenschieber" would wrap the row 2+1 on a 360px phone. */
 .summary .trophy-earn:has(.won:nth-child(3)) .won {
-  min-width: 0;
+  width: 4.6em;
   font-size: 0.78rem;
 }
-.summary .trophy-earn .se-emoji { display: block; }
 
 /* ---- Pokalraum / Trophy Room (§3.2) ---- */
 /* The page is the room the map sends you to, so it should feel like one: a
@@ -839,6 +831,10 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   gap: 8px;
 }
 
+/* One trophy card, used on the album shelf and in the round summary. A child
+   must recognise the trophy she just won when she finds it on the shelf, so
+   both places draw it identically: the cup, her emoji in its bowl, the name. */
+.tcard,
 .trophies .slot {
   aspect-ratio: 1;
   border-radius: var(--radius);
@@ -852,6 +848,25 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   font-size: 1.9rem;
 }
 
+.tcard { text-decoration: none; }
+
+/* the emoji rides in the cup, so the cup needs to be the frame it sits in */
+.tcard .t-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+
+.tcard .t-theme {
+  position: absolute;
+  /* the bowl of a 🏆 glyph, not its middle */
+  top: 26%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tcard .sname,
 .trophies .slot .sname {
   font-size: 0.62rem;
   font-weight: 700;
@@ -873,7 +888,9 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 
 /* what you own is stated in --depth, the ownership colour */
+.tcard,
 .trophies .slot:not(.locked) { outline: 2px solid var(--depth-soft); }
+.tcard .sname,
 .trophies .slot .sname { color: var(--depth); }
 
 @media (min-width: 600px) {
