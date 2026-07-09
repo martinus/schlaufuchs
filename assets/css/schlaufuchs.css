@@ -133,11 +133,18 @@ button, .iconbtn, .chip, a.region {
   width: 100%;
 }
 
-.topbar .spacer { flex: 1 1 0; min-width: 0; }
-
-/* icon buttons keep their size; the text chips give way when space runs out */
+/* The fox chip takes the middle and centres itself between the two icon
+   buttons, which keep their size. Map and game therefore look identical. */
 .topbar .iconbtn { flex: 0 0 auto; }
-.topbar .chip, .topbar .foxchip { min-width: 0; flex: 0 1 auto; overflow: hidden; }
+.topbar .foxchip { flex: 1 1 auto; min-width: 0; overflow: hidden; justify-content: center; }
+
+/* the map's own map button: same shape, no affordance — you are already here */
+.iconbtn.flat {
+  background: none;
+  box-shadow: none;
+  cursor: default;
+  opacity: 0.55;
+}
 
 .topbar h1 {
   font-size: 1.15rem;
@@ -204,10 +211,10 @@ a.chip { color: var(--ink); text-decoration: none; }
 .foxchip .bar { display: block; }
 .foxchip .lbl { font-size: 0.9rem; font-weight: 800; white-space: nowrap; }
 .foxchip .sub { display: block; font-size: 0.65rem; color: var(--ink-soft); white-space: nowrap; }
+.foxchip .streak { display: inline-flex; align-items: center; gap: 2px; margin-left: 8px; }
 .game .foxchip .sub { display: none; }
 @media (max-width: 430px) { .game .foxchip .bar { display: none; } }
 
-.streakchip { font-weight: 800; font-size: 1rem; }
 
 /* ---- world map (§3.1) ---- */
 /* the island claims the whole viewport below the header; nothing scrolls (§5.1) */
@@ -446,6 +453,16 @@ footer p { margin: 0; }
 /* While the aid is up it owns the stage: up to ten rows of dots plus a 48px
    button. The status row yields, whether or not it has anything to say. */
 .stage:has(#feedback:not([hidden])) .journey-wrap { display: none; }
+
+/* The round's title: same width as the scene beneath it, so the two read as
+   one block rather than as a chip that wandered out of the top bar. */
+.pickheading {
+  display: block;
+  width: 100%;
+  margin: 0 auto 4px;
+  padding: 6px 10px;
+  min-height: 0;
+}
 
 /* ---- the round's scene: sky, meadow, basket, fox (§10.5) ---- */
 .journey .j-sky { fill: #e8f3fa; }

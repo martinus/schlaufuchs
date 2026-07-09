@@ -40,14 +40,15 @@
     <header class="topbar">
       <a class="iconbtn" href="../../" data-i18n-label="back" data-icon="ui-map" data-icon-size="22">🗺️</a>
       <div class="foxchip" id="foxchip"></div>
-      <button class="chip" id="pickchip"></button>
-      <span class="spacer"></span>
       <button class="iconbtn" id="gearbtn" data-i18n-label="settings" data-icon="ui-gear" data-icon-size="22">⚙️</button>
     </header>
 
     <!-- the path and the question are one group: "here is how far you are,
          here is what is next". The answers sit under the thumb. -->
     <div class="stage">
+      <!-- The table and difficulty read as the round's title, so they sit above
+           the scene and share its width instead of crowding the top bar. -->
+      <button class="chip pickheading" id="pickchip"></button>
       <!-- one picture, no words: sky = stars still to win, basket = stars you
            own, path = the fox. See §10.5. -->
       <div class="journey-wrap" id="journey" role="img"></div>

@@ -5,7 +5,7 @@ import { initI18n, t } from "./i18n.js";
 import { loadState, getRewards } from "./storage.js";
 import { gameStars, regionState, starBadgeTier, trophyCount, foxInfo, GAMES, isPlayable } from "./rewards.js";
 import { foxSVG } from "./fox.js";
-import { iconHTML, iconSVG, applyIcons } from "./graphics.js";
+import { iconSVG, applyIcons } from "./graphics.js";
 import { renderFoxChip, initSettingsOverlay } from "./chrome.js";
 
 // Fox anchor per region (map coordinates, §3.1).
@@ -91,17 +91,6 @@ function render() {
   const rewards = getRewards();
 
   renderFoxChip(document.getElementById("foxchip"));
-
-  // daily streak chip
-  const streak = rewards.streak;
-  const streakEl = document.getElementById("streakchip");
-  if (Array.isArray(streak) && streak[1] >= 2) {
-    streakEl.hidden = false;
-    streakEl.innerHTML = `${iconHTML("ui-flame", { size: 18 })} ${streak[1]}`;
-    streakEl.setAttribute("title", t("streakDays", { n: streak[1] }));
-  } else {
-    streakEl.hidden = true;
-  }
 
   // region star badges and visual states
   for (const game of GAMES) {
