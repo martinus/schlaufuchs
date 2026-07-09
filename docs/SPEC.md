@@ -124,8 +124,9 @@ in HTML/CSS/JS — never absolute paths like `/assets/...`.
 ### 3.1 The world map (`index.html`)
 
 The landing page is a single **inline SVG map** in portrait orientation
-(viewBox `0 0 360 560`, scaling to the viewport width, centered with sky/
-grass fill bleeding to the edges on wider screens). It shows five themed
+(viewBox `0 0 360 560`, scaling to the viewport width). The world is drawn
+as an **island**: sea, a sandy coastline, land, a compass rose, and dashed
+roads linking the regions from the village crossroads. It shows five themed
 regions; **each region is one big tap target that immediately launches its
 game** (instant resume, §3.4) — there is no walking and no intermediate page.
 

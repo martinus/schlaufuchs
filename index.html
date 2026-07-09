@@ -19,35 +19,71 @@
   <main>
     <div class="worldmap-wrap">
       <svg class="worldmap" viewBox="0 0 360 560" role="group" aria-label="Schlaufuchs">
-        <!-- backdrop -->
-        <rect x="0" y="0" width="360" height="200" fill="var(--sky)"/>
-        <circle cx="50" cy="48" r="22" fill="#f4b400" opacity="0.9"/>
-        <path d="M0 200 h360 v360 h-360 z" fill="var(--grass)"/>
-        <path d="M0 200 q90 -34 180 0 t180 0 v14 h-360 z" fill="var(--grass)" opacity="0.7"/>
-        <!-- decorative connecting paths -->
-        <path d="M180 390 q-40 -80 -100 -160 M180 390 q60 -60 105 -125 M180 390 q60 -30 110 -95 M180 400 q-55 30 -105 65"
-              stroke="#d9b48f" stroke-width="7" fill="none" stroke-linecap="round"
-              stroke-dasharray="1 12" opacity="0.85"/>
+        <!-- the world is an island: sea, beach, land (§3.1) -->
+        <defs>
+          <path id="coast" d="M64 14 C140 6 240 8 302 18 C336 24 350 46 348 84
+            C346 130 352 170 348 210 C344 262 352 320 348 372
+            C344 424 352 480 336 516 C322 546 280 552 236 548
+            C180 542 120 552 76 544 C34 536 8 512 12 470
+            C16 410 6 350 12 292 C18 230 6 150 14 92 C18 52 30 20 64 14 Z"/>
+        </defs>
+        <rect x="0" y="0" width="360" height="560" fill="var(--sky)"/>
+        <!-- gentle waves in the sea -->
+        <g stroke="#9fd0ea" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.9">
+          <path d="M4 240 q6 -5 12 0"/>
+          <path d="M354 300 q-6 -5 -12 0"/>
+          <path d="M120 556 q6 -5 12 0"/>
+          <path d="M170 8 q6 -5 12 0"/>
+        </g>
+        <use href="#coast" fill="none" stroke="#f0dcac" stroke-width="13"/>
+        <use href="#coast" fill="var(--grass)"/>
+        <!-- soft hills for texture -->
+        <g fill="#a6cd8f" opacity="0.3">
+          <ellipse cx="110" cy="300" rx="70" ry="26"/>
+          <ellipse cx="316" cy="384" rx="42" ry="18"/>
+          <ellipse cx="52" cy="370" rx="40" ry="17"/>
+        </g>
+        <!-- compass rose -->
+        <g transform="translate(44,48)">
+          <circle r="19" fill="#fdf6e6" stroke="#c9a978" stroke-width="2"/>
+          <polygon points="0,-15 4,0 0,15 -4,0" fill="#e07a3f"/>
+          <polygon points="-15,0 0,-4 15,0 0,4" fill="#8d5524"/>
+          <text x="0" y="-20" font-size="9" font-weight="800" text-anchor="middle" fill="#8d5524">N</text>
+        </g>
+        <!-- roads between the regions -->
+        <g fill="none" stroke-linecap="round">
+          <path d="M180 388 q-48 -80 -92 -196 M180 388 q66 -76 102 -198
+                   M180 388 q52 -36 90 -68 M174 400 q-34 20 -56 46
+                   M188 402 q34 24 54 60"
+                stroke="#e2c79a" stroke-width="8"/>
+          <path d="M180 388 q-48 -80 -92 -196 M180 388 q66 -76 102 -198
+                   M180 388 q52 -36 90 -68 M174 400 q-34 20 -56 46
+                   M188 402 q34 24 54 60"
+                stroke="#fdf6e6" stroke-width="2" stroke-dasharray="6 8"/>
+        </g>
 
         <!-- Rechenberg (Rechnungen) top right -->
         <a href="games/rechnungen/" class="region" id="region-rechnungen" data-game="rechnungen">
-          <rect x="200" y="45" width="160" height="180" fill="transparent"/>
-          <polygon points="235,185 300,55 360,185" fill="#9aa0a6"/>
-          <polygon points="272,110 300,55 326,110 313,102 300,116 286,101" fill="#f5f2ec"/>
-          <polygon points="205,185 250,105 292,185" fill="#7d858c"/>
+          <rect x="196" y="45" width="150" height="180" fill="transparent"/>
+          <!-- foothills seat the peaks on the ground — nothing floats (§3.1) -->
+          <ellipse cx="278" cy="188" rx="80" ry="14" fill="#96c47f"/>
+          <polygon points="232,188 294,60 348,188" fill="#9aa0a6"/>
+          <polygon points="268,112 294,60 320,112 307,104 294,118 281,103" fill="#f5f2ec"/>
+          <polygon points="204,188 246,108 288,188" fill="#7d858c"/>
           <g class="layer-thriving"><text data-icon="deco-goat" data-icon-size="16" x="255" y="150" font-size="16">🐐</text></g>
           <g class="layer-mastered">
-            <text data-icon="deco-flag" data-icon-size="16" x="292" y="52" font-size="16">🚩</text>
-            <text data-icon="deco-eagle" data-icon-size="14" x="330" y="120" font-size="14">🦅</text>
+            <text data-icon="deco-flag" data-icon-size="16" x="286" y="58" font-size="16">🚩</text>
+            <text data-icon="deco-eagle" data-icon-size="14" x="322" y="122" font-size="14">🦅</text>
           </g>
-          <text class="region-label" x="290" y="205" data-i18n="region_rechnungen">Rechenberg</text>
-          <g class="region-badge" data-badge="rechnungen" transform="translate(290,220)"></g>
+          <text class="region-label" x="282" y="208" data-i18n="region_rechnungen">Rechenberg</text>
+          <g class="region-badge" data-badge="rechnungen" transform="translate(282,222)"></g>
         </a>
 
         <!-- Wörterwald (Vokabeln) left -->
         <a href="games/vokabeln/" class="region" id="region-vokabeln" data-game="vokabeln">
           <rect x="15" y="95" width="145" height="147" fill="transparent"/>
           <g>
+            <ellipse cx="86" cy="190" rx="70" ry="13" fill="#96c47f"/>
             <polygon points="30,175 55,105 80,175" fill="#3f7d3a"/>
             <polygon points="70,185 95,110 120,185" fill="#2f6e2b"/>
             <polygon points="105,170 125,115 145,170" fill="#3f7d3a"/>
@@ -66,21 +102,25 @@
 
         <!-- Tippsee (Tippen) right middle -->
         <a href="games/tippen/" class="region" id="region-tippen" data-game="tippen">
-          <rect x="215" y="222" width="140" height="146" fill="transparent"/>
-          <ellipse cx="285" cy="290" rx="65" ry="38" fill="#5aa7d6"/>
-          <ellipse cx="285" cy="290" rx="65" ry="38" fill="none" stroke="#3d8ab8" stroke-width="3"/>
-          <rect x="238" y="240" width="34" height="22" rx="2" fill="#b06f3c"/>
-          <polygon points="234,241 255,226 276,241" fill="#8d5524"/>
-          <g class="layer-thriving"><text data-icon="deco-sailboat" data-icon-size="15" x="290" y="288" font-size="15">⛵</text></g>
-          <g class="layer-mastered"><text data-icon="deco-swan" data-icon-size="15" x="312" y="302" font-size="15">🦢</text></g>
-          <text class="region-label" x="285" y="348" data-i18n="region_tippen">Tippsee</text>
-          <g class="region-badge" data-badge="tippen" transform="translate(285,363)"></g>
+          <rect x="215" y="222" width="128" height="146" fill="transparent"/>
+          <!-- hut first, lake on top: the shore reads as being in front (§3.1) -->
+          <ellipse cx="248" cy="264" rx="26" ry="9" fill="#96c47f"/>
+          <rect x="238" y="242" width="30" height="20" rx="2" fill="#b06f3c"/>
+          <polygon points="234,243 253,229 272,243" fill="#8d5524"/>
+          <ellipse cx="282" cy="294" rx="60" ry="36" fill="#f0dcac"/>
+          <ellipse cx="282" cy="294" rx="55" ry="31" fill="#5aa7d6"/>
+          <ellipse cx="282" cy="294" rx="55" ry="31" fill="none" stroke="#3d8ab8" stroke-width="2"/>
+          <g class="layer-thriving"><text data-icon="deco-sailboat" data-icon-size="15" x="286" y="292" font-size="15">⛵</text></g>
+          <g class="layer-mastered"><text data-icon="deco-swan" data-icon-size="15" x="306" y="304" font-size="15">🦢</text></g>
+          <text class="region-label" x="282" y="346" data-i18n="region_tippen">Tippsee</text>
+          <g class="region-badge" data-badge="tippen" transform="translate(282,361)"></g>
         </a>
 
         <!-- Zahlendorf (Einmaleins) center -->
         <a href="games/einmaleins/" class="region" id="region-einmaleins" data-game="einmaleins">
           <rect x="115" y="352" width="130" height="116" fill="transparent"/>
           <g>
+            <ellipse cx="180" cy="428" rx="62" ry="11" fill="#96c47f"/>
             <rect x="130" y="395" width="38" height="32" fill="#f3d9b1"/>
             <polygon points="126,396 149,376 172,396" fill="#c1121f"/>
             <rect x="143" y="410" width="12" height="17" fill="#6b4423"/>
@@ -102,35 +142,36 @@
 
         <!-- Lesewiese (Lesen) bottom left -->
         <a href="games/lesen/" class="region" id="region-lesen" data-game="lesen">
-          <rect x="10" y="452" width="135" height="108" fill="transparent"/>
-          <ellipse cx="80" cy="495" rx="70" ry="34" fill="#a8d08d"/>
-          <rect x="70" y="465" width="12" height="30" fill="#6b4423"/>
-          <circle cx="76" cy="452" r="26" fill="#3f7d3a"/>
-          <text data-icon="deco-book" data-icon-size="16" x="76" y="460" font-size="16" text-anchor="middle">📖</text>
+          <rect x="24" y="428" width="126" height="112" fill="transparent"/>
+          <ellipse cx="88" cy="472" rx="62" ry="30" fill="#a8d08d"/>
+          <rect x="78" y="442" width="12" height="30" fill="#6b4423"/>
+          <circle cx="84" cy="429" r="26" fill="#3f7d3a"/>
+          <text data-icon="deco-book" data-icon-size="16" x="84" y="437" font-size="16" text-anchor="middle">📖</text>
           <g class="layer-thriving">
-            <text data-icon="deco-flower" data-icon-size="13" x="35" y="505" font-size="13">🌼</text>
-            <text data-icon="deco-flower" data-icon-size="13" x="115" y="510" font-size="13">🌼</text>
+            <text data-icon="deco-flower" data-icon-size="13" x="46" y="482" font-size="13">🌼</text>
+            <text data-icon="deco-flower" data-icon-size="13" x="120" y="486" font-size="13">🌼</text>
           </g>
-          <g class="layer-mastered"><text data-icon="deco-rainbow" data-icon-size="15" x="110" y="470" font-size="15">🌈</text></g>
-          <text class="region-label" x="80" y="546" data-i18n="region_lesen">Lesewiese</text>
-          <g class="region-badge" data-badge="lesen" transform="translate(80,559)"></g>
+          <g class="layer-mastered"><text data-icon="deco-rainbow" data-icon-size="15" x="116" y="446" font-size="15">🌈</text></g>
+          <text class="region-label" x="88" y="516" data-i18n="region_lesen">Lesewiese</text>
+          <g class="region-badge" data-badge="lesen" transform="translate(88,530)"></g>
         </a>
 
         <!-- Pokalraum (Trophy Room) bottom right -> sticker album -->
         <a href="album.html" class="region" id="region-pokalraum" data-game="pokalraum">
-          <rect x="245" y="418" width="112" height="142" fill="transparent"/>
-          <rect x="255" y="520" width="90" height="8" fill="#c9b79c"/>
-          <rect x="263" y="468" width="74" height="52" fill="#f5f2ec"/>
-          <rect x="269" y="470" width="7" height="46" fill="#d9cbb8"/>
-          <rect x="287" y="470" width="7" height="46" fill="#d9cbb8"/>
-          <rect x="305" y="470" width="7" height="46" fill="#d9cbb8"/>
-          <rect x="323" y="470" width="7" height="46" fill="#d9cbb8"/>
-          <polygon points="256,468 300,438 344,468" fill="#b06f3c"/>
-          <text data-icon="deco-trophy" data-icon-size="16" x="300" y="434" font-size="16" text-anchor="middle">🏆</text>
-          <g class="layer-thriving"><text data-icon="deco-sparkle" data-icon-size="13" x="268" y="458" font-size="13">✨</text></g>
-          <g class="layer-mastered"><text data-icon="deco-party" data-icon-size="15" x="333" y="458" font-size="15">🎉</text></g>
-          <text class="region-label" x="300" y="544" data-i18n="region_pokalraum">Pokalraum</text>
-          <g class="region-badge" data-badge="pokalraum" transform="translate(300,557)"></g>
+          <rect x="222" y="392" width="112" height="140" fill="transparent"/>
+          <ellipse cx="278" cy="498" rx="60" ry="12" fill="#96c47f"/>
+          <rect x="233" y="494" width="90" height="8" fill="#c9b79c"/>
+          <rect x="241" y="442" width="74" height="52" fill="#f5f2ec"/>
+          <rect x="247" y="444" width="7" height="46" fill="#d9cbb8"/>
+          <rect x="265" y="444" width="7" height="46" fill="#d9cbb8"/>
+          <rect x="283" y="444" width="7" height="46" fill="#d9cbb8"/>
+          <rect x="301" y="444" width="7" height="46" fill="#d9cbb8"/>
+          <polygon points="234,442 278,412 322,442" fill="#b06f3c"/>
+          <text data-icon="deco-trophy" data-icon-size="16" x="278" y="408" font-size="16" text-anchor="middle">🏆</text>
+          <g class="layer-thriving"><text data-icon="deco-sparkle" data-icon-size="13" x="246" y="432" font-size="13">✨</text></g>
+          <g class="layer-mastered"><text data-icon="deco-party" data-icon-size="15" x="311" y="432" font-size="15">🎉</text></g>
+          <text class="region-label" x="278" y="518" data-i18n="region_pokalraum">Pokalraum</text>
+          <g class="region-badge" data-badge="pokalraum" transform="translate(278,532)"></g>
         </a>
 
         <!-- the fox, placed by map.js at the last-played region -->

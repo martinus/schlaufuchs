@@ -10,11 +10,11 @@ import { renderLevelChip, initSettingsOverlay } from "./chrome.js";
 
 // Fox anchor per region (map coordinates, §3.1).
 const ANCHORS = {
-  einmaleins: [180, 330],
-  rechnungen: [300, 178],
-  tippen: [285, 228],
-  vokabeln: [78, 178],
-  lesen: [78, 432],
+  einmaleins: [180, 372],
+  rechnungen: [282, 196],
+  tippen: [300, 266],
+  vokabeln: [88, 198],
+  lesen: [88, 480],
 };
 
 initI18n();
