@@ -91,8 +91,8 @@ function render() {
   fox.setAttribute("transform", `translate(${x - 22}, ${y - 40})`);
 }
 
-// settings overlay (gear) — global reset lives here as well as in the footer
+// settings overlay (gear) — the only place the global reset lives
 const settings = initSettingsOverlay({ resetKind: "all", onChange: render });
-document.getElementById("gearbtn").addEventListener("click", settings.open);
+document.getElementById("gearbtn")?.addEventListener("click", settings.open);
 
 render();
