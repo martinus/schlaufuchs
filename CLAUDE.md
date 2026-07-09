@@ -76,7 +76,7 @@ workflow runs it before publishing.
   ```sh
   node tools/shoot.mjs http://localhost:8000/games/einmaleins/ \
     --cookie "schlaufuchs=$(node -e 'process.stdout.write(encodeURIComponent(JSON.stringify({einmaleins:{d:1,t:10}})))')" \
-    --size 360x640 --do 'eval @play.js' --do 'until #fb-next' \
+    --size 360x640 --do 'eval @play.js' --do 'eval play({ wrongAt: 1, stopAt: 1 })' \
     --clip .stage --probe '#feedback' --out aid.png
   ```
 
@@ -146,15 +146,22 @@ Shared modules in `assets/js/`:
   3500-byte budget** (`BUDGET`); writes over budget are refused. Do not add
   persistent state casually.
 - `rewards.js` — stars, trophies, streak, region/badge state. Pure functions are
-  exported and unit-tested: `trophyCount(game, points)`, `totalTrophies`,
-  `starBadgeTier`, `nextTrophyInfo(game, points)`. **The trophy ladder is per
-  game**: `THRESHOLDS[game]`, scaled by `ladderFor(MAX_POINTS[game])` from the
-  einmaleins curve. `foxInfo()` reads the cookie and returns the two numbers the
-  top bar shows: `{stars, trophies}`.
+  exported and unit-tested: `trophyCount(game, pr)`, `totalTrophies`,
+  `totalPoints(pr)`, `starBadgeTier(pr, game)`, `nextTrophyInfo(game, pr)`.
+  **The trophy ladder is per game**: `THRESHOLDS[game]`, scaled by
+  `ladderFor(MAX_POINTS[game])` from the einmaleins curve. `foxInfo()` reads the
+  cookie and returns the two numbers the top bar shows: `{stars, trophies}`.
+  **⭐ is the site's only currency.** `rewards.pr` is the weighted star counter
+  (Leicht 1, Mittel 2, Schwer 3); internally the code says `points`, the UI
+  never does. `MAX_POINTS` is its denominator everywhere and is a **guess** for
+  the four unbuilt games — recompute when one ships.
 - `journey.js` — the round's scene; `sceneGeometry(nodes, theme)` is the pure
   arithmetic (tested), `createJourney` is the DOM around it.
 - `graphics.js` — the icon registry (see below). `applyIcons` only matters where
   a page has static `[data-icon]` markup, which today is `index.html` alone.
+- `trophycard.js` — `trophyCardHTML(trophy, {size, lang, href, cls, label})`,
+  the ONE way a trophy is drawn. The album shelf and the round summary both
+  call it, so a child recognises what she won when she meets it again.
 - `chrome.js` — the one top bar: `topBarHTML` (pure, tested), `initTopBar`,
   `renderFoxChip` (fox, stars, trophies — nothing else, §3.3) and
   `initSettingsOverlay` (sound/language/reset).
@@ -206,12 +213,9 @@ Shared modules in `assets/js/`:
 ## Where things live
 
 - `docs/SPEC.md` — full product specification (authoritative).
-- `docs/PLAN.md` — **the open plan**: the usability overhaul derived from
-  Mara's playtest (age 8). Not started; read it in full before touching
-  anything it names.
 - `docs/PLAN_*.md` — past plans, all fully implemented and archived. Kept for
   their reasoning (the colour/type tokens live in the UI design one); SPEC wins
-  wherever they disagree.
+  wherever they disagree. There is no open plan.
 - `docs/GRAPHICS_BRIEF.md` — brief to hand an LLM to generate the ~102
   replacement SVG icons. Paths in it are repo-root-relative. **Unexecuted:**
   `AVAILABLE` in `graphics.js` is empty, so every icon still renders as emoji.

@@ -147,16 +147,30 @@ collected across all games and it evolves (thriving ≥ 20, mastered = 60).
 Map requirements:
 
 - Each region is an SVG `<a>` group (real link, keyboard-focusable,
-  `aria-label` = translated game name) with a tap target ≥ 64×64 px, a
-  translated name label, and a small `region-badge` group showing that game's
-  star count. The badge has three tiers via CSS class: `badge-t1` (plain),
-  `badge-t2` (gold, ≥ ⅓ of achievable), `badge-t3` (glowing gold, 100 %).
+  `aria-label` = translated game name) with a translated name label and a small
+  `region-badge` group showing that game's star count. The badge has three
+  tiers via CSS class: `badge-t1` (plain), `badge-t2` (gold, ≥ ⅓ of
+  `MAX_POINTS[game]`), `badge-t3` (glowing gold, 100 %).
+- **Exactly one `<rect class="hit" fill="transparent">` per region**, the first
+  child of its `<a>`, ≥ 64×64 px, spanning that region's art and its own label
+  anchor — and never a neighbour's, because SVG paints in document order and
+  the later region would steal the tap. The art alone is not a target: an
+  8-year-old tapped the gap between the two village houses and nothing
+  happened. The rect is bounded on purpose; the earlier, unbounded hotspots
+  tiled 42 % of the island and turned open grass and sea into links. The fill
+  is an attribute, not a CSS rule, so a stylesheet that fails to load cannot
+  leave six black boxes on the island.
+- **A region a child can enter says so.** Its name sits on a white
+  `label-plate` (built in `render()` from the label's measured bbox, so a
+  language change resizes it), and the whole region bobs ±1.5 px on an idle
+  loop. Fogged regions get neither. Under `prefers-reduced-motion` the global
+  kill switch stops the bob and the plate carries the affordance alone.
 - **The fox stands on the region that was last played** (`rewards.at`,
   §9.2); first visit: at Zahlendorf. Position = fixed anchor coordinates per
   region, defined in the SVG.
 - **Regions visibly evolve with mastery.** Each region has 3 visual states as
-  toggled SVG layers: *base* → *thriving* (≥ ⅓ of the game's achievable stars,
-  per difficulty currently reachable) → *mastered* (100 %): flag on the
+  toggled SVG layers: *base* → *thriving* (≥ ⅓ of `MAX_POINTS[game]`, the stars
+  that game can pay) → *mastered* (100 %): flag on the
   summit, more animals in the forest, lanterns in the village, etc. The state
   is computed by `rewards.js` on load; layers are shown/hidden by CSS class.
 - Header strip above the map (shared with the game pages, §3.3): the fox chip
@@ -173,15 +187,23 @@ Map requirements:
   Zahlendorf is the crossroads and has no road of its own, so mastering it
   cobbles the village square instead. The Trophy Room road paves at 20
   trophies. See `.road` / `.roadline` / `.plaza` and `pave()` in `map.js`.
-- **Unbuilt games sit under fog.** A region whose game is a stub is veiled by
-  code-generated mist (`fogRegion()` in `map.js`, driven by `PLAYABLE` in
-  `rewards.js`), so the island never promises what the site cannot deliver.
-  The link stays — its page says "coming soon" in words, and the region's
-  `aria-label` carries `lockedHint` for screen readers. Two invariants: the
-  fog is `pointer-events: none` (the map is hit-tested by its art, and a blob
-  over the bounding box would restore the invisible hotspot), and **playable
-  regions are painted last** in the SVG, because fog drawn later would grey
-  out the label of the one village a child can walk into.
+- **Unbuilt games sit under fog, and do not open.** A region whose game is a
+  stub is veiled by code-generated mist (`fogRegion()` in `map.js`, driven by
+  `PLAYABLE` in `rewards.js`), so the island never promises what the site
+  cannot deliver. Tapping it **stays on the map**: the click is
+  `preventDefault`ed, the fog wiggles, and a transient "Bald!" / "Soon!" bubble
+  appears above the label. It is removed by a timer, never by `animationend` —
+  under `prefers-reduced-motion` no animation starts, so no event would ever
+  fire. The `href` stays (deep links to the stub pages still work) and the
+  region carries `aria-disabled="true"` plus `lockedHint` in its `aria-label`.
+  Sending a child who reads almost nothing to a page that explains itself in a
+  sentence simply lost her.
+  Three invariants: the fog is `pointer-events: none` and is measured from the
+  art only (never from the `.hit` rect, which is larger and would balloon it);
+  the tap handler is registered **once at module scope**, not inside `render()`,
+  which re-runs on every settings change; and **playable regions are painted
+  last** in the SVG, because fog drawn later would grey out the label of the one
+  village a child can walk into.
 - Footer: „Deine Fortschritte werden nur auf diesem Gerät gespeichert."
   The global reset lives in the settings overlay only — a second copy in the
   footer said the same thing twice.
@@ -197,19 +219,29 @@ one place, one name (it reuses the `region_pokalraum` string). It is styled as
 a room: a warm wall, and a wooden shelf under each game's collection.
 
 One page, five sections (one per region, translated heading). Each section
-shows **12 trophy slots** in a grid: earned trophies as large emoji with a
-name caption; unearned slots as **silhouettes** of the trophy you have not
-won yet — you can see what is missing, which is the whole reason to keep
-collecting. Earned count per region, and the size of the whole collection
-beside the room's heading. An intro line (`roomIntro`) says what the room is
-and how to fill it, and each section shows how many perfect rounds remain until
-its next trophy. Trophies are earned via perfect rounds (§8.3). Reached from
-the map via the **Pokalraum** region (§3.1).
+shows **12 trophy slots** in a grid: earned trophies as the shared **trophy
+card** (`trophycard.js` — the cup with the trophy's own emoji riding in its
+bowl, name underneath); unearned slots as **silhouettes** of the trophy you
+have not won yet — you can see what is missing, which is the whole reason to
+keep collecting. The round summary draws the same card (§3.4), so a child
+recognises the trophy she just won when she meets it on the shelf.
+
+**A locked slot states its price where a child can see it**: `⭐ 62` under the
+silhouette, and for the next slot to fall, a small progress bar instead. It
+used to live in a `title` tooltip, which no child on a phone will ever see.
+
+Earned count per region, and the size of the whole collection beside the room's
+heading. An intro line (`roomIntro`) says what the room is and how to fill it,
+and each section shows how many stars remain until its next trophy. Trophies
+are earned via stars (§8.3). Reached from the map via the **Pokalraum** region
+(§3.1).
 
 The room carries the same top bar as every other page (§3.3), gear included —
-its settings offer no reset, because the global one belongs on the map. The
-shelves are built as markup, not as `[data-i18n]` nodes, so a language change
-rebuilds them instead of translating them in place.
+its settings offer no reset, because the global one belongs on the map. The bar
+is **sticky**, and the page ends with a **big button back to the map**: the
+shelves scroll for several screens, and the only exit used to scroll away with
+them. The shelves are built as markup, not as `[data-i18n]` nodes, so a
+language change rebuilds them instead of translating them in place.
 
 ### 3.3 The top bar (every page)
 
@@ -262,9 +294,18 @@ open, it owns the keyboard: the game behind it must not receive a keystroke.
   running round at their last difficulty/level/table/pack. First visit
   starts the easiest difficulty immediately.
 - No confirmation dialogs on the happy path (only destructive resets).
-- Round summary has one primary button („Nochmal!" / "Again!") so replaying
-  is a single tap, plus a secondary row with map, level/table picker and
-  settings buttons — the summary must never be a dead end.
+- **The round summary has exactly ONE button**, carrying a randomly chosen
+  congratulation („Super!", "Well done!", …); pressing it starts the next
+  round. A wall of three buttons made an 8-year-old reach past the sheet for
+  the chip behind it. Any trophy it hands out is the shared trophy card
+  (§3.2), and it links to the album — a trophy that does nothing when tapped
+  is a picture, not a prize.
+- The summary must never be a dead end, and its one button is not the way out:
+  **the top bar and the level chip stay above it** (`z-index` 45 vs the
+  summary's 40) and remain tappable, so the map and the picker are always one
+  press away. Every other overlay is genuinely modal (`z-index` 50) and covers
+  them. Consequently the summary's focus goes to its button, not to the trophy
+  link above it, or Enter would leave the game.
 
 ### 3.5 The privacy page (`privacy.html`)
 
@@ -518,10 +559,21 @@ anything, no lives, no damage, no losing.
 - Correct: green flash, cheerful sound, fox reaction pose (happy / cheering /
   thumbs-up, rotating). From 3 correct in a row, a hot-streak counter appears
   („5 richtig hintereinander! 🔥").
-- Wrong: soft neutral sound (no harsh buzzer), the correct answer is shown
-  for 2 s with a visual aid where the game defines one, tone „Gleich
-  nochmal!". The fox pauses to "catch its breath" — it never falls, never
-  gets hurt.
+- Wrong: soft neutral sound (no harsh buzzer). The fox pauses to "catch its
+  breath" — it never falls, never gets hurt. The aid card then shows, in this
+  order: **the child's own answer, struck through in red**; the true equation
+  in green, with the answer highlighted; a visual aid where the game defines
+  one (§10.1's dot grid).
+- **The child leaves the aid by entering the correct answer**, not by
+  dismissing it. On multiple choice the same four options return and a wrong
+  tap shakes; on a keypad she types, and the answer completes itself the
+  instant it matches — no OK to hunt for — while a digit that can no longer
+  become the answer is refused at once and the gap clears. A soft chime and the
+  round goes on.
+  There is no timer (it took the answer away from exactly the child who reads
+  slowest) and no "Verstanden" button (an 8-year-old pressed it every time
+  without ever registering that she had erred). The arithmetic is `retryStep()`
+  in `games/einmaleins/logic.js` — pure, and unit-tested against every answer.
 
 ### 8.2 The journey (round framing, `journey.js`)
 
@@ -548,25 +600,33 @@ unique item** in the round and the fox token on the current node.
   meadow`. Tippen does not use the journey (the text line itself is the
   progress display).
 
-### 8.3 Trophies and points
+### 8.3 Trophies and stars
 
 **Vocabulary (use these words everywhere, in code, UI and docs):** a **trophy**
 (DE „Pokal") is one of the 60 collectibles displayed in the Pokalraum (§3.2).
-**Points** (DE „Punkte") are the currency you spend nothing on — they accumulate
-per region and unlock the next trophy at fixed thresholds. The word *sticker*
-is retired; it does not appear anywhere.
+The **star** (⭐) is the site's **one and only currency**: it accumulates per
+region and unlocks the next trophy at fixed thresholds. The words *sticker* and
+*Punkte / points* are retired; **neither appears anywhere a child can read**.
+
+Internally the counter is still called `pr`, and the functions still say
+`roundPoints`, `starValue`, `MAX_POINTS` — those names are cheap and the cookie
+field is budget-critical (§9.2). The UI says ⭐ and nothing else. There used to
+be two numbers, both called stars: a raw count of three per tile, and this
+weighted one shown as „Punkte". They stood in different places, never agreed,
+and an 8-year-old understood neither.
 
 - A **perfect round** = every item in the round correct on the first try.
-- **Points come from progress, never from repetition.** Everything is derived
+- **Stars come from progress, never from repetition.** Everything is derived
   from a tile's best-star count before and after the round, so nothing extra is
   stored (a *tile* = one table at one difficulty).
 
-  **Points are linear.** One star is worth `difficulty + 1` points: **1 on
+  **A star's worth is its difficulty.** One star counts `difficulty + 1`: **1 on
   Leicht, 2 on Mittel, 3 on Schwer**. Every star inside a difficulty is worth
   the same, so a whole tile is **3, 6 or 9**. Hard work pays three times what
-  easy work pays — a gap a child can see and act on. A mastered tile is worth
-  **nothing**: replaying the easiest table forever earns not one point. See
-  `roundPoints()` and `starValue()`.
+  easy work pays — a gap a child can see and act on, and one the round's scene
+  now states outright (§10.5). A mastered tile is worth **nothing**: replaying
+  the easiest table forever earns not one star. See `roundPoints()` and
+  `starValue()`.
 
   The third star used to carry a `+3 × difficulty` mastery bonus, so three
   equal-looking stars were worth 1, 1 and 4 on Leicht. It made the picker's
@@ -575,12 +635,13 @@ is retired; it does not appear anywhere.
   **three stars**, gold for taken and grey for still open — the same language
   the sky speaks above the round (§10.5). It does not show a point total: what a
   star is *worth* belongs to the difficulty, and the difficulty says so itself
-  („Mittel ×2 ⭐"). Three tile states, three looks: **open** (grey stars),
-  **mastered** (green-ringed, three gold stars, may be replayed for nothing),
-  **locked** (a table Leicht does not teach — faded, padlock, promises nothing).
-  The round summary shows the points just earned next to the score; that is the
-  only place a number appears.
-- Each region keeps a lifetime **point** counter (`rewards.pr`, §9.2). The
+  („Mittel ×2 ⭐") — a claim that is now literally true, because the counter it
+  refers to *is* the star count. Three tile states, three looks: **open** (grey
+  stars), **mastered** (green-ringed, three gold stars, may be replayed for
+  nothing), **locked** (a table Leicht does not teach — faded, padlock, promises
+  nothing). The round summary shows the stars just earned next to the score
+  („+6 ⭐"); that is the only place a number appears.
+- Each region keeps a lifetime **star** counter (`rewards.pr`, §9.2). The
   field keeps its short name for the cookie budget (§9.2).
 - Each region has **12 fixed trophies** (emoji + translated name, defined in
   a `TROPHIES` table in `rewards.js`, themed per region — e.g. Wörterwald:
@@ -604,21 +665,28 @@ is retired; it does not appear anywhere.
   are ever bought with the same point.
 
   `MAX_POINTS` is exact for einmaleins (27 tiles: 5×3 + 11×6 + 11×9 = 180) and
-  **provisional** for the four unbuilt games (`ACHIEVABLE × 2`). Recompute a
-  game's maximum from its real tiles when it ships.
+  **a guess** for the four unbuilt games — it was once "achievable stars × 2",
+  from a raw star count that no longer exists. It is now the sole denominator of
+  a region's badge tier and its thriving/mastered state (§3.1), so **recompute a
+  game's maximum from its real tiles the day it ships**, exactly as einmaleins'
+  180 was computed. Until then those four regions are scaled against a number
+  nobody has checked.
 
   Deterministic — no randomness, fully derivable from the counter, so only
   the counter is stored.
-- Earning a trophy shows it in the round summary: the picture and its name,
-  no sentence (§10.1). A round can earn more than one at a time.
+- Earning a trophy shows it in the round summary as the shared trophy card
+  (§3.2): the cup, its emoji, its name, no sentence (§10.1) — and it links to
+  the Pokalraum. A round can earn more than one at a time.
 - Total: 60 trophies. The Pokalraum (§3.2) renders earned/unearned from the
   counters.
 
 ### 8.4 Fuchs-Status (site-wide)
 
-- `totalStars` = sum of all stars across all games/difficulties.
+- `totalPoints(pr)` = the child's stars, summed over the five games — the one
+  currency (§8.3), weighted by the difficulty each was won at.
 - `totalTrophies` = trophies earned across all games (§8.3), of 60.
-- Both are shown in the top bar beside the fox (§3.3), and nowhere else.
+- Both are shown in the top bar beside the fox (§3.3), and nowhere else. The
+  parents' view shows the same two numbers (§20) — never a second star count.
 - The fox itself never changes with progress. It had a level number (a second
   name for the star count), then a progress bar toward cosmetic layers — a
   scarf, a cap, glasses, a backpack, a medal, two crowns. The fox is who the
@@ -667,9 +735,10 @@ URL-encoded compact JSON with a version field:
 ```
 
 - `rewards.at` = game key of the last game played (fox map position).
-- `rewards.pr` = perfect-round counters per game (trophies derive from
-  these, §8.3). Fox level derives from stars stored in the game keys —
-  nothing extra to store.
+- `rewards.pr` = the lifetime **star** counter per game, weighted by the
+  difficulty each star was won at (trophies derive from these, §8.3; the top
+  bar's star total is their sum). The short field name is a cookie-budget
+  decision; the UI never says "points".
 
 Rules:
 
@@ -712,18 +781,23 @@ walks the village lane; goal node: ringing the school bell.
 1. Region tap → instantly into a round at the last difficulty & table
    (first visit: Leicht, 2er-Reihe).
 2. Round of 10 (per §7.3): `7 × 8 = ?`, journey strip on top (§8.2).
-3. Wrong → correct answer shown **with a dot-grid visual aid** (7 rows of
-   8 dots), box drops, re-queue per §7. It stays until the child presses
-   „Verstanden" — a timer would take the answer away from exactly the child who
-   needs longest to read it. The card can hold ten rows of dots, so the dots
-   scale with the viewport and the streak line yields its row.
+3. Wrong → her own answer struck through in red, the correct equation in green
+   under it, **a dot-grid visual aid** (7 rows of 8 dots), box drops, re-queue
+   per §7. It stays until **she enters the correct answer herself** (§8.1) —
+   a timer would take the answer away from exactly the child who needs longest
+   to read it, and a "Verstanden" button was pressed without being read. The
+   card can hold ten rows of dots, so the dots scale with the viewport and the
+   scene yields its row.
 4. Summary overlay, kept deliberately quiet: stars, one muted line of numbers
-   (`{ok}/{total}`), the price of the next star (§10.3), the trophy if
-   one was earned, one primary „Nochmal" button, and two secondary actions (map, table picker). A child
-   who has just won reads almost nothing — the stars say how it went and the
-   trophy is the prize, so neither gets a sentence of its own. Table picker
-   via the header chip: an 11-tile overlay (Reihen 1–10 + „Alle") each showing
-   its star state.
+   (`{ok}/{total}` and `+6 ⭐`), the price of the next star (§10.3), the trophy
+   if one was earned, and **one** button carrying a random congratulation,
+   which starts the next round (§3.4). A child who has just won reads almost
+   nothing — the stars say how it went and the trophy is the prize, so neither
+   gets a sentence of its own. The map and the table picker stay reachable
+   above the sheet, in the bar and on the chip. Table picker via that chip
+   (which wears a border and a caret, because it read as a caption and was
+   never pressed): an 11-tile overlay (Reihen 1–10 + „🎲 Alle") each showing its
+   star state.
 
 ### 10.2 Difficulties
 
@@ -734,6 +808,13 @@ walks the village lane; goal node: ringing the school bell.
 | Schwer | mixed, gap questions (`_ × 7 = 42`), division sprinkled in | keypad |
 
 „Alle gemischt" draws across tables weighted by the adaptive boxes.
+
+**The division sign follows the language**: `":"` in German, because that is
+what German schools write and a child who has only ever seen `:` reads `÷` as a
+decoration; `"÷"` in English. It is the `divSign` key, injected into the pure
+`questionFor(id, difficulty, rng, divSign)` — `logic.js` stays free of i18n.
+Anything that reprints the equation (the aid card) must build it from
+`question.text`, never from `t` and `f`.
 
 ### 10.3 Stars (per table & difficulty)
 
@@ -777,9 +858,16 @@ One picture, no prose. `createJourney()` in `journey.js` draws all of it:
 - **the path** carries the fox, who advances on every correct answer.
 
 A round awards at most **three** stars in every difficulty; what scales with
-difficulty is *points* (×1 / ×2 / ×3, §8.3), not stars. The sky therefore always
-holds three slots. (Leicht offers fewer stars across the whole game — 5 tiles
-instead of 11 — but never more than three in one round.)
+difficulty is what each star *counts* (×1 / ×2 / ×3, §8.3). The sky therefore
+always holds three slots. (Leicht offers fewer stars across the whole game —
+5 tiles instead of 11 — but never more than three in one round.)
+
+**On Mittel and Schwer each sky star carries its worth** as a small `×2` / `×3`
+tag (`createJourney(…, { worth })`). It is drawn *inside* the star's own group,
+so the group's transform carries it into the basket; given a keyframe of its
+own it would never move under reduced motion. On Leicht the tag is omitted —
+"×1" is noise on every round. Until this existed, the claim that harder work
+pays more appeared only inside a picker a child never opened.
 
 An earned star flies from its sky slot into the basket and stays there, leaving
 a grey ghost behind. The flight is a CSS `transform` + `transition`, never a
