@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   THRESHOLDS, STICKERS, GAMES, stickerCount, foxLevel, updateStreak,
   gameStars, sumStars, regionState, ACHIEVABLE, starBadgeTier, nextStickerInfo,
+  stickerCredit,
 } from "../assets/js/rewards.js";
 
 test("sticker thresholds match spec §8.3", () => {
@@ -84,4 +85,51 @@ test("region states at 0 / one third / 100 % (§3.1)", () => {
   };
   assert.equal(gameStars(full, "einmaleins"), ACHIEVABLE.einmaleins);
   assert.equal(regionState(full, "einmaleins"), "mastered");
+});
+
+// §8.3: stickers must reward difficulty and mastery, not repetition. Without
+// this, a child collects all 60 by replaying Leicht until the counter fills.
+test("stickerCredit(): grinding the easiest level earns nothing", () => {
+  assert.equal(stickerCredit({ perfect: true, difficulty: 0 }), 0);
+  assert.equal(stickerCredit({ perfect: false, difficulty: 0 }), 0);
+});
+
+test("stickerCredit(): harder rounds are worth more", () => {
+  assert.equal(stickerCredit({ perfect: true, difficulty: 1 }), 1);
+  assert.equal(stickerCredit({ perfect: true, difficulty: 2 }), 2);
+});
+
+test("stickerCredit(): an imperfect round is worth nothing, however hard", () => {
+  for (const difficulty of [0, 1, 2]) {
+    assert.equal(stickerCredit({ perfect: false, difficulty }), 0);
+  }
+});
+
+test("stickerCredit(): mastering a level pays, even on Leicht", () => {
+  // the escape hatch for a young child who only ever plays Leicht: the third
+  // star needs 10/10 under a minute, which is skill and not repetition
+  assert.equal(stickerCredit({ perfect: true, difficulty: 0, masteredNew: true }), 1);
+  // and it stacks with the difficulty credit
+  assert.equal(stickerCredit({ perfect: true, difficulty: 2, masteredNew: true }), 3);
+  // mastery is awarded once; a later replay of the same table pays only the
+  // difficulty credit, because the caller stops passing masteredNew
+  assert.equal(stickerCredit({ perfect: true, difficulty: 2, masteredNew: false }), 2);
+});
+
+test("stickerCredit(): missing arguments never invent credit", () => {
+  assert.equal(stickerCredit(), 0);
+  assert.equal(stickerCredit({}), 0);
+});
+
+test("a Leicht-only grind cannot fill the Pokalraum", () => {
+  // 200 perfect Leicht rounds, no table ever mastered
+  let pr = 0;
+  for (let i = 0; i < 200; i++) pr += stickerCredit({ perfect: true, difficulty: 0 });
+  assert.equal(stickerCount(pr), 0, "grinding Leicht must not earn a single sticker");
+
+  // 30 perfect Schwer rounds fill the collection, as THRESHOLDS intends
+  let hard = 0;
+  for (let i = 0; i < 15; i++) hard += stickerCredit({ perfect: true, difficulty: 2 });
+  assert.equal(hard, 30);
+  assert.equal(stickerCount(hard), THRESHOLDS.length);
 });

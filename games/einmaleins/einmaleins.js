@@ -246,7 +246,12 @@ function endRound() {
   if (improved) starsObj[diff] = withStarDigit(starsObj[diff], table, stars);
   setGame("einmaleins", { d: diff, t: table, box: boxesToString(full, POOL_COUNT), stars: starsObj });
 
-  const res = recordRound("einmaleins", { perfect: firstTryOk === total });
+  // mastering a table = its third star, awarded once (§8.3)
+  const res = recordRound("einmaleins", {
+    perfect: firstTryOk === total,
+    difficulty: diff,
+    masteredNew: stars === 3 && old < 3,
+  });
 
   journey.finish();
   setTimeout(() => {
