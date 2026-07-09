@@ -442,7 +442,22 @@ footer p { margin: 0; }
 
 /* Reserving its line keeps the question from jumping when a streak starts, but
    the aid needs every pixel: an empty streak line takes none. */
-.stage:has(#feedback:not([hidden])) .hotstreak:empty { display: none; }
+/* While the aid is up it owns the stage: up to ten rows of dots plus a 48px
+   button. The status row yields, whether or not it has anything to say. */
+.stage:has(#feedback:not([hidden])) .statusrow { display: none; }
+
+/* basket + streak/goal share one row, so the stage grows by nothing (§10.5) */
+.statusrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 22px;
+}
+.statusrow .basket { display: inline-flex; align-items: center; gap: 3px; }
+.statusrow .basket .bstars { letter-spacing: -2px; font-size: 13px; }
+.statusrow .hotstreak { display: inline-flex; align-items: center; gap: 2px; }
+.statusrow .goalline { color: var(--ink-soft); font-size: 0.8rem; }
 
 .feedback-aid {
   background: var(--panel);

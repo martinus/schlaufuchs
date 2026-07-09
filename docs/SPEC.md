@@ -685,6 +685,32 @@ still have one star.
 
 ~160 bytes. The box string is shared across difficulties.
 
+### 10.5 The star basket (in-round)
+
+A basket beside the fox's path, on the row the streak already owned, so the
+stage grows by nothing. It shows the stars **banked so far**, and beside it
+either the burning streak (`🔥 7`) or the price of the next star
+(„noch 2 richtig bis ⭐⭐⭐"). While the feedback aid is up the whole row hides.
+
+**The basket fills. It never spills.** This is the whole design:
+
+- It is driven by `firstTrySolved` (items solved without ever being missed),
+  which is monotone. `firstTryOk` — the best score still *reachable* — would
+  drop a star on the first mistake, and the first mistake usually arrives at
+  question two. A child would watch the round decay for nine more questions.
+- Under the 6/8/10 ladder a spilling basket would also lie: stars are lost on
+  the 1st, 3rd and 5th mistake, never on the 2nd or 4th. A basket that shook
+  at every error would teach a rule that does not exist.
+- Nothing is at stake anyway. `endRound()` keeps the best star count, never the
+  last one (`improved = stars > old`), so a bad round takes nothing away.
+- The goal names only a star that is **still reachable**. Once three misses put
+  two stars out of reach it falls silent rather than dangle them.
+
+For the same reason there is **no mid-round restart button**: it would reward
+quitting after one mistake, and the Leitner boxes are only written in
+`endRound()`, so a restart would hide the child's misses from the adaptive
+engine and from the parents' view. „Nochmal" after the round is enough.
+
 ---
 
 ## 11. Game 2: Tippen — region **Tippsee**
