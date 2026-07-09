@@ -1,3 +1,5 @@
 node_modules/
 Screenshot_*.png
 .tmp/*
+.serve.pid
+.*.kate-swp
