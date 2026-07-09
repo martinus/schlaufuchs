@@ -30,13 +30,18 @@ export const TROPHIES_PER_GAME = 12;
 // generator honest.
 const EINMALEINS_LADDER = [2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112];
 
-// What a game is worth if a child masters every tile it offers (§8.3).
+// What a game is worth in stars if a child masters every tile it offers (§8.3).
+// It is the denominator of everything the map says about a region, so it must
+// be right.
 //
-// einmaleins is exact: 5 Leicht tiles × 3 + 11 Mittel × 6 + 11 Schwer × 9. The
-// other four games do not exist yet, and neither does their tile structure, so
-// their maxima are `ACHIEVABLE × 2` — every star at the middle difficulty's
-// worth. **Provisional**: recompute a game's maximum from its real tiles when
-// it ships, exactly as einmaleins' 180 was computed.
+// einmaleins is exact: 5 Leicht tiles × 3 + 11 Mittel × 6 + 11 Schwer × 9 — a
+// star is worth 1, 2 or 3 depending on the difficulty that won it.
+//
+// **The other four are guesses.** Those games do not exist, and neither does
+// their tile structure; these numbers were once "achievable stars × 2", from a
+// star count that no longer exists. RECOMPUTE a game's maximum from its real
+// tiles the day it ships, exactly as einmaleins' 180 was computed — until then
+// its badge tiers and region states are scaled against a number nobody checked.
 export const MAX_POINTS = {
   einmaleins: 180,
   rechnungen: 90,
@@ -150,12 +155,6 @@ export const TROPHIES = {
 // Additive only — the {e, de, en} fields are untouched.
 for (const g of GAMES) TROPHIES[g].forEach((s, i) => { s.icon = `trophy-${g}-${i + 1}`; });
 
-// Achievable stars per game, for map region states (§3.1). einmaleins: 27 tiles
-// (Leicht offers only 4 tables + "Alle"; Mittel and Schwer offer all 10 + "Alle")
-// × 3 stars = 81. It was 99, which counted tiles Leicht never shows — so the
-// region could never reach "mastered" and its road could never pave itself.
-export const ACHIEVABLE = { einmaleins: 81, rechnungen: 45, tippen: 120, vokabeln: 54, lesen: 9 };
-
 // Practice time, for the parents' view only (§20) — the child is never shown a
 // clock (§10.3). Aggregated per difficulty, never per question: a per-fact
 // timer would eat the cookie budget and tell a parent nothing the Leitner box
@@ -238,27 +237,22 @@ export function tilePointsLeft(stars = 0, difficulty = 0) {
   return roundPoints({ oldStars: stars, newStars: 3, difficulty });
 }
 
-function sumDigits(str) {
-  let sum = 0;
-  for (const ch of String(str)) {
-    const d = Number.parseInt(ch, 10);
-    if (Number.isInteger(d)) sum += d;
-  }
-  return sum;
+// The site has exactly ONE number a child collects (§8.3), and it is the star.
+//
+// There used to be two: a raw star count (three per tile, whatever the
+// difficulty) and a weighted "Punkte" counter, `pr`. Mara understood neither,
+// and could not see that Mittel and Schwer paid more — the two numbers stood in
+// different places and never met. So the weighted counter IS the star count:
+// a star won on Leicht counts 1, on Mittel 2, on Schwer 3, which is precisely
+// what the picker has always claimed with its "×2 ⭐". The cookie is unchanged;
+// only the word "Punkte" is gone.
+export function gameStarsOf(pr, game) {
+  const n = pr?.[game];
+  return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-// Stars of one game: its "stars" field is a digit string or an object whose
-// values are digit strings (§9.2 per-game shapes).
-export function gameStars(state, game) {
-  const s = state?.[game]?.stars;
-  if (!s) return 0;
-  if (typeof s === "string") return sumDigits(s);
-  if (typeof s === "object") return Object.values(s).reduce((a, v) => a + sumDigits(v), 0);
-  return 0;
-}
-
-export function sumStars(state) {
-  return GAMES.reduce((a, g) => a + gameStars(state, g), 0);
+export function totalPoints(pr) {
+  return GAMES.reduce((a, g) => a + gameStarsOf(pr, g), 0);
 }
 
 // Everything the top bar says about the fox (§3.3): the two counters a child
@@ -269,27 +263,29 @@ export function sumStars(state) {
 // star count, printed beside the star count. What is left is what was actually
 // earned: stars, and the trophies they bought.
 export function foxInfo() {
-  const state = loadState(); // one cookie parse, two counters
+  const rewards = getRewards(loadState()); // one cookie parse, two counters
   return {
-    stars: sumStars(state),
-    trophies: totalTrophies(getRewards(state).pr),
+    stars: totalPoints(rewards.pr),
+    trophies: totalTrophies(rewards.pr),
   };
 }
 
+// A region's progress, as a fraction of everything its game can pay.
+const fractionOf = (pr, game) => gameStarsOf(pr, game) / MAX_POINTS[game];
+
 // Region visual state (§3.1): base → thriving (≥ 1/3) → mastered (100 %).
-export function regionState(state, game) {
-  const frac = gameStars(state, game) / ACHIEVABLE[game];
+export function regionState(pr, game) {
+  const frac = fractionOf(pr, game);
   if (frac >= 1) return "mastered";
   if (frac >= 1 / 3) return "thriving";
   return "base";
 }
 
 // Badge tier for the map star badges: 0 = none, 1 = some stars,
-// 2 = >= 1/3 of achievable (gold), 3 = 100 % (glowing).
-export function starBadgeTier(state, game) {
-  const n = gameStars(state, game);
-  if (n <= 0) return 0;
-  const frac = n / ACHIEVABLE[game];
+// 2 = >= 1/3 of what the game can pay (gold), 3 = 100 % (glowing).
+export function starBadgeTier(pr, game) {
+  if (gameStarsOf(pr, game) <= 0) return 0;
+  const frac = fractionOf(pr, game);
   return frac >= 1 ? 3 : frac >= 1 / 3 ? 2 : 1;
 }
 

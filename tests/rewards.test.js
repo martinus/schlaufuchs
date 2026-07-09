@@ -4,10 +4,11 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
   THRESHOLDS, TROPHIES, GAMES, trophyCount, totalTrophies, TOTAL_TROPHIES, updateStreak,
-  gameStars, sumStars, regionState, ACHIEVABLE, starBadgeTier, nextTrophyInfo,
+  gameStarsOf, totalPoints, regionState, starBadgeTier, nextTrophyInfo,
   roundPoints, tilePointsLeft, starValue, addPractice, MAX_ROUND_SECONDS,
   ladderFor, MAX_POINTS, TROPHIES_PER_GAME,
 } from "../assets/js/rewards.js";
+import { read } from "./pages.js";
 
 // einmaleins' ladder is the one a real child has been climbing, so it is spelled
 // out here rather than imported: if it ever changes, this file must say so.
@@ -112,26 +113,41 @@ test("daily streak: same day, next day, gap (§8.5)", () => {
   assert.deepEqual(updateStreak(["2026-06-30", 2], "2026-07-01"), ["2026-07-01", 3]);
 });
 
-test("gameStars sums digit strings and objects of digit strings", () => {
-  const state = {
-    einmaleins: { stars: { 0: "30200000000", 1: "111" } },
-    tippen: { stars: { de: "332" } },
-  };
-  assert.equal(gameStars(state, "einmaleins"), 8);
-  assert.equal(gameStars(state, "tippen"), 8);
-  assert.equal(gameStars(state, "lesen"), 0);
-  assert.equal(sumStars(state), 16);
+// The site has ONE number a child collects. `pr` — once called "Punkte" —
+// counts a Leicht star as 1, a Mittel star as 2 and a Schwer star as 3, which
+// is exactly what the picker has always promised with its "×2 ⭐".
+test("totalPoints adds up the one currency there is", () => {
+  assert.equal(totalPoints(undefined), 0, "an empty cookie owns nothing");
+  assert.equal(totalPoints({}), 0);
+  assert.equal(totalPoints({ einmaleins: 12, tippen: 4 }), 16);
+  assert.equal(totalPoints({ einmaleins: 12, nosuchgame: 999 }), 12, "only the five games count");
+  // junk in the cookie must not print "NaN ⭐" in the top bar
+  for (const junk of [null, "7", NaN, -3, Infinity, {}, []]) {
+    assert.equal(totalPoints({ einmaleins: junk }), 0, `pr.einmaleins = ${String(junk)}`);
+  }
+  assert.equal(gameStarsOf({ einmaleins: 5 }, "einmaleins"), 5);
+  assert.equal(gameStarsOf(undefined, "einmaleins"), 0);
+});
+
+test("the fox chip counts stars, not a second currency", () => {
+  // Regression: the bar showed a raw star count while the album counted `pr`.
+  // The two numbers were both called "stars" and never agreed.
+  const src = read("assets/js/rewards.js");
+  const fox = src.slice(src.indexOf("export function foxInfo"), src.indexOf("const fractionOf"));
+  assert.match(fox, /stars: totalPoints\(rewards\.pr\)/);
+  for (const dead of ["gameStars(", "sumStars", "ACHIEVABLE"]) {
+    assert.ok(!src.includes(dead), `${dead} survived the unification`);
+  }
 });
 
 test("starBadgeTier: none / some / gold / glowing (§3.1)", () => {
   assert.equal(starBadgeTier({}, "einmaleins"), 0);
-  assert.equal(starBadgeTier({ einmaleins: { stars: { 0: "1" } } }, "einmaleins"), 1);
-  const third = { einmaleins: { stars: { 0: "3".repeat(11) } } }; // 33 of 99
-  assert.equal(starBadgeTier(third, "einmaleins"), 2);
-  const full = {
-    einmaleins: { stars: { 0: "3".repeat(11), 1: "3".repeat(11), 2: "3".repeat(11) } },
-  };
-  assert.equal(starBadgeTier(full, "einmaleins"), 3);
+  assert.equal(starBadgeTier({ einmaleins: 1 }, "einmaleins"), 1);
+  assert.equal(starBadgeTier({ einmaleins: 59 }, "einmaleins"), 1, "just under a third");
+  assert.equal(starBadgeTier({ einmaleins: 60 }, "einmaleins"), 2, "a third of 180");
+  assert.equal(starBadgeTier({ einmaleins: 179 }, "einmaleins"), 2);
+  assert.equal(starBadgeTier({ einmaleins: MAX_POINTS.einmaleins }, "einmaleins"), 3);
+  assert.equal(starBadgeTier({ einmaleins: 1000 }, "einmaleins"), 3, "and it cannot go higher");
 });
 
 test("nextTrophyInfo: progress toward the next trophy (§8.3)", () => {
@@ -150,20 +166,19 @@ test("nextTrophyInfo: progress toward the next trophy (§8.3)", () => {
 
 test("region states at 0 / one third / 100 % (§3.1)", () => {
   assert.equal(regionState({}, "einmaleins"), "base");
+  assert.equal(regionState({ einmaleins: 59 }, "einmaleins"), "base");
+  assert.equal(regionState({ einmaleins: 60 }, "einmaleins"), "thriving", "a third of 180");
+  assert.equal(regionState({ einmaleins: 179 }, "einmaleins"), "thriving");
+  assert.equal(regionState({ einmaleins: 180 }, "einmaleins"), "mastered");
 
-  // Leicht only ever offers tables 1, 2, 5, 10 and "Alle" (index 10), so a
-  // fully starred Leicht is 5 tiles, not 11. Counting the tiles Leicht never
-  // shows is what made ACHIEVABLE 99 and the region impossible to master.
-  // tables 1, 2, 5, 10 → digits 0, 1, 4, 9; "Alle" → digit 10
-  const easyFull = "33003000033";
-  const third = { einmaleins: { stars: { 1: "3".repeat(9) } } }; // 27 of 81
-  assert.equal(regionState(third, "einmaleins"), "thriving");
-
-  const full = {
-    einmaleins: { stars: { 0: easyFull, 1: "3".repeat(11), 2: "3".repeat(11) } },
-  };
-  assert.equal(gameStars(full, "einmaleins"), ACHIEVABLE.einmaleins);
-  assert.equal(regionState(full, "einmaleins"), "mastered");
+  // Mastering einmaleins is exactly what MAX_POINTS says it is: 5 Leicht tiles
+  // at 3 points + 11 Mittel at 6 + 11 Schwer at 9. If this drifts, a child can
+  // never pave the village square, or paves it before she is done.
+  assert.equal(5 * 3 + 11 * 6 + 11 * 9, MAX_POINTS.einmaleins);
+  for (const game of GAMES) {
+    assert.ok(MAX_POINTS[game] > 0, `${game}: a zero maximum divides by zero`);
+    assert.equal(regionState({ [game]: MAX_POINTS[game] }, game), "mastered");
+  }
 });
 
 // §8.3: points reward progress and difficulty. They must never reward

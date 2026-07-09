@@ -33,7 +33,7 @@ export default {
   privacyTitle: "Datenschutz & Cookies",
   privacyIntro: "Schlaufuchs ist eine reine Lernseite für Kinder. Es gibt keine Anmeldung, kein Benutzerkonto und keinen Server, der etwas über dich speichert.",
   privacyCookieH: "Der eine Cookie",
-  privacyCookieBody: "Diese Seite speichert einen einzigen Cookie namens „schlaufuchs“ auf deinem Gerät. Darin stehen deine Sterne, Punkte, Pokale, die Tagesserie und deine Einstellungen (Sprache, Ton). Er ist ein Jahr gültig und verlässt dein Gerät nie. Ohne ihn wäre dein Fortschritt nach jedem Schließen weg — er ist für die Funktion der Seite erforderlich, deshalb fragt sie nicht um Erlaubnis.",
+  privacyCookieBody: "Diese Seite speichert einen einzigen Cookie namens „schlaufuchs“ auf deinem Gerät. Darin stehen deine Sterne, Pokale, die Tagesserie und deine Einstellungen (Sprache, Ton). Er ist ein Jahr gültig und verlässt dein Gerät nie. Ohne ihn wäre dein Fortschritt nach jedem Schließen weg — er ist für die Funktion der Seite erforderlich, deshalb fragt sie nicht um Erlaubnis.",
   privacyNoTrackH: "Kein Tracking",
   privacyNoTrackBody: "Es gibt keine Statistik, keine Werbung und keine Cookies von Dritten. Die Seite lädt nichts von fremden Servern nach: Schriften, Bilder und Code liegen alle hier. Niemand erfährt, welche Aufgaben du rechnest.",
   privacyHostingH: "Wo die Seite liegt",
@@ -62,10 +62,10 @@ export default {
   soonBubble: "Bald!",
   comingSoon: "Dieses Spiel gibt es noch nicht. Im Zahlendorf kannst du schon üben.",
   region_pokalraum: "Pokalraum",
-  roomIntro: "Hier steht, was du gewonnen hast. Punkte gibt es für neue Sterne — je schwerer die Aufgabe, desto mehr.",
+  roomIntro: "Hier steht, was du gewonnen hast. Pokale bekommst du für Sterne — und je schwerer die Aufgabe, desto mehr zählt jeder Stern.",
   trophyLocked: "Noch nicht freigespielt",
-  trophyNextIn: "Noch {n} Punkte bis zum nächsten Pokal",
-  trophyNextIn1: "Noch 1 Punkt bis zum nächsten Pokal",
+  trophyNextIn: "Noch {n} ⭐ bis zum nächsten Pokal",
+  trophyNextIn1: "Noch 1 ⭐ bis zum nächsten Pokal",
   trophyAllDone: "Alle Pokale gesammelt!",
   // The round summary's one button. Picked at random so the round that follows
   // feels like an answer and not a menu item; a child who reads nothing still

@@ -103,6 +103,7 @@ function startRound() {
     nodes: session.items().length,
     theme: "village",
     stars: best,
+    worth: starValue(diff), // a Schwer star says "×3" on its way to the basket
   });
   buffer = "";
   roundOver = false;
@@ -354,9 +355,9 @@ function endRound() {
   journey.finish();
   setTimeout(() => {
     $("sum-stars").textContent = stars > 0 ? "⭐".repeat(stars) : "🦊";
-    // the points you just earned, next to the numbers that earned them
+    // the stars you just earned, next to the numbers that earned them
     $("sum-score").innerHTML = t("roundStat", { ok: firstTryOk, total })
-      + (points > 0 ? ` <span class="gain">+${points}</span>` : "");
+      + (points > 0 ? ` <span class="gain">+${points} ⭐</span>` : "");
     // what the next star costs — the rule is invisible otherwise (§10.3)
     const goal = nextStarGoal(stars);
     $("sum-goal").hidden = goal === null;

@@ -3,7 +3,7 @@
 
 import { initI18n, t } from "./i18n.js";
 import { loadState, getRewards } from "./storage.js";
-import { gameStars, regionState, starBadgeTier, totalTrophies, GAMES, isPlayable } from "./rewards.js";
+import { gameStarsOf, regionState, starBadgeTier, totalTrophies, GAMES, isPlayable } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconSVG, applyIcons } from "./graphics.js";
 import { initTopBar } from "./chrome.js";
@@ -163,11 +163,11 @@ function render() {
   // region star badges and visual states
   for (const game of GAMES) {
     const badge = document.querySelector(`[data-badge="${game}"]`);
-    if (badge) renderBadge(badge, "ui-star", gameStars(state, game), starBadgeTier(state, game));
+    if (badge) renderBadge(badge, "ui-star", gameStarsOf(rewards.pr, game), starBadgeTier(rewards.pr, game));
     const region = document.getElementById(`region-${game}`);
     if (region) {
       region.classList.remove("thriving", "mastered");
-      const rs = regionState(state, game);
+      const rs = regionState(rewards.pr, game);
       if (rs !== "base") region.classList.add(rs);
       // the island remembers: a mastered region's road turns to cobblestone
       pave(game, rs === "mastered");

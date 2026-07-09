@@ -33,6 +33,24 @@ test("a star reaches the basket even with prefers-reduced-motion", () => {
   assert.match(css, /\.journey \.j-star\.landed \{[^}]*transform: translate/, "landing is a transform");
 });
 
+// Mara could not tell that Mittel and Schwer pay more: the claim only ever
+// appeared inside a picker she never opened. Now each sky star carries what it
+// counts, and carries it into the basket.
+test("a star that counts double says so, and says it all the way down", () => {
+  const loop = journey.slice(journey.indexOf("const tag = worth > 1"), journey.indexOf('+ "</g>"'));
+  assert.match(loop, /j-worth/, "the tag must exist");
+  assert.match(loop, /×\$\{worth\}/);
+  // INSIDE the group: the group is what moves, so the tag rides the transition.
+  // Given its own keyframe it would never move under prefers-reduced-motion.
+  assert.ok(loop.indexOf("j-star") < loop.indexOf("+ tag"), "the tag is a child of the flying star");
+  assert.ok(!/animation/.test(css.slice(css.indexOf(".journey .j-worth {"), css.indexOf("}", css.indexOf(".journey .j-worth {")))));
+
+  // worth 1 is the default and prints nothing: "×1" is noise on every Leicht round
+  assert.match(journey, /worth = 1/, "the default must be silent");
+  assert.match(journey, /worth > 1\s*\n?\s*\?/, "…and only >1 draws a tag");
+  assert.match(game, /worth: starValue\(diff\)/, "the round tells the scene what its stars are worth");
+});
+
 // The scene is the tallest thing in the stage after the aid card, and the aid
 // card holds ten rows of dots. They must never be on screen together.
 test("the scene yields the stage to the feedback aid", () => {

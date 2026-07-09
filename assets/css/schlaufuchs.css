@@ -562,6 +562,16 @@ footer p { margin: 0; }
 .journey .j-star.landed { transform: translate(var(--dx), var(--dy)) scale(0.52); }
 .journey .j-star.j-instant { transition: none; }
 
+/* What this star counts (§10.2). Mittel and Schwer pay double and triple, and
+   the only place that ever said so was inside a picker Mara never opened. It is
+   inside the star's own group, so it flies into the basket with it. */
+.journey .j-worth {
+  fill: var(--depth);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .feedback-aid {
   background: var(--panel);
   border-radius: var(--radius);
