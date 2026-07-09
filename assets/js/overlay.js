@@ -42,7 +42,10 @@ const FOCUSABLE = "button:not([disabled]), a[href], input, select, [tabindex]:no
 // Wrap an overlay element that already sits in the page markup.
 // `dismissible` allows the backdrop and Escape to close it.
 // `onClose` fires after the focus has gone home, so it may move it elsewhere.
-export function overlayFrom(el, { dismissible = true, onClose, onOpen } = {}) {
+// `initialFocus` is a selector for the control that should take the focus
+// instead of the first one — the round summary leads with a trophy link, and
+// Enter on it would send the child to the album instead of the next round.
+export function overlayFrom(el, { dismissible = true, onClose, onOpen, initialFocus } = {}) {
   if (!el) return { open() {}, close() {}, isOpen: () => false, el: null };
 
   const sheet = el.querySelector(".sheet") ?? el;
@@ -60,8 +63,10 @@ export function overlayFrom(el, { dismissible = true, onClose, onOpen } = {}) {
       onOpen?.();
       // The first control, not the sheet: a child tabbing forward should land
       // on something they can press, and a screen reader should read the title
-      // it is already inside.
-      sheet.querySelector(FOCUSABLE)?.focus();
+      // it is already inside. `initialFocus` overrides the choice when the
+      // first control is not the one to press.
+      const wanted = initialFocus ? sheet.querySelector(initialFocus) : null;
+      (wanted ?? sheet.querySelector(FOCUSABLE))?.focus();
     },
     close() {
       if (!handle.isOpen()) return;
