@@ -2,9 +2,9 @@
 // shared engines (adaptive, journey, rewards, storage, i18n, audio).
 
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
-import { getGame, setGame, getRewards } from "../../assets/js/storage.js";
+import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString } from "../../assets/js/adaptive.js";
-import { recordRound, levelInfo, nextStickerInfo } from "../../assets/js/rewards.js";
+import { recordRound, levelInfo } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
@@ -254,30 +254,19 @@ function endRound() {
   journey.finish();
   setTimeout(() => {
     $("sum-stars").textContent = stars > 0 ? "⭐".repeat(stars) : "🦊";
-    $("sum-score").textContent = t("roundDone", { ok: firstTryOk, total });
-    $("sum-time").textContent = t("timeTaken", { s: seconds });
+    $("sum-score").textContent = t("roundStat", { ok: firstTryOk, total, s: seconds });
     $("sum-best").hidden = !improved;
     $("sum-best").textContent = t("newBest");
     const st = $("sum-sticker");
     if (res.newStickers.length > 0) {
       const s = res.newStickers[0];
-      st.innerHTML = `<span class="se-emoji">${iconHTML(s.icon, { size: 40 })}</span>${t("stickerNew", { name: s[getLang()] })}`;
+      // the sticker speaks for itself: the picture, then its name
+      st.innerHTML = `<span class="se-emoji">${iconHTML(s.icon, { size: 44 })}</span>${s[getLang()]}`;
       st.hidden = false;
       sfx.sticker();
     } else {
       st.hidden = true;
     }
-    // next-sticker progress — doubles as the in-game explanation of stickers
-    const ns = $("sum-nextsticker");
-    const info = nextStickerInfo((getRewards().pr ?? {}).einmaleins);
-    if (!info) {
-      ns.textContent = t("stickerAllDone");
-    } else {
-      ns.textContent = info.remaining === 1
-        ? t("stickerNextIn1")
-        : t("stickerNextIn", { n: info.remaining });
-    }
-    ns.hidden = false;
     $("sum-again").textContent = t("again");
     showSummary();
     if (improved || stars === 3 || res.newStickers.length > 0) confetti();
@@ -293,10 +282,6 @@ $("sum-again").addEventListener("click", startRound);
 $("sum-pick").addEventListener("click", () => {
   $("sum-overlay").hidden = true;
   openPicker();
-});
-$("sum-settings").addEventListener("click", () => {
-  $("sum-overlay").hidden = true;
-  settings.open();
 });
 
 // --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------

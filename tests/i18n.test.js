@@ -24,7 +24,7 @@ test("game dictionaries: every key exists in every language (§6.3)", () => {
 });
 
 test("t(): placeholder substitution and fallback to key", () => {
-  assert.equal(t("roundDone", { ok: 9, total: 10 }), "9 von 10 beim ersten Versuch richtig!");
+  assert.equal(t("roundStat", { ok: 9, total: 10, s: 46 }), "9/10 · 46 s");
   assert.equal(t("nonexistent-key"), "nonexistent-key");
 });
 
