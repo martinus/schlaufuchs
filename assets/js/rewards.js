@@ -137,12 +137,14 @@ export function addPractice(saved = {}, difficulty = 0, seconds = 0) {
   return { tm, rd };
 }
 
-// Cosmetic fox upgrades, keyed by total stars (§8.4). These are the star counts
-// the old levels 3/6/9/12/15/18/20 sat at — `(level - 1) * 10` — so nobody who
-// already wears a cap loses it.
+// Cosmetic fox upgrades, keyed by total stars (§8.4).
+//
+// The scarf is gone (it needed a neck the fox does not have), and the rest move
+// up one place rather than leaving the first reward at 50 stars — a child at 29
+// stars would otherwise have watched their only clothing disappear.
 export const COSMETICS = [
-  [20, "scarf"], [50, "cap"], [80, "glasses"], [110, "backpack"],
-  [140, "medal"], [170, "crown"], [190, "goldcrown"],
+  [20, "cap"], [50, "glasses"], [80, "backpack"],
+  [110, "medal"], [140, "crown"], [170, "goldcrown"],
 ];
 
 export const STREAK_MILESTONES = [3, 7, 14, 30];

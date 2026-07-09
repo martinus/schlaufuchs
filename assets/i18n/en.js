@@ -57,7 +57,6 @@ export default {
   starsOwned: "{n} of 3 stars collected",
   foxNext: "{n} more ⭐: {item}",
   foxMax: "All collected!",
-  cos_scarf: "scarf",
   cos_cap: "cap",
   cos_glasses: "glasses",
   cos_backpack: "backpack",
