@@ -45,4 +45,5 @@ for (const game of GAMES) {
   main.appendChild(section);
 }
 
-document.getElementById("totalcount").textContent = t("stickerCount", { n: total, total: 60 });
+const totalEl = document.getElementById("totalcount");
+if (totalEl) totalEl.textContent = t("stickerCount", { n: total, total: 60 });
