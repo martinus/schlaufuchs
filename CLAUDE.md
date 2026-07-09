@@ -206,9 +206,12 @@ Shared modules in `assets/js/`:
 ## Where things live
 
 - `docs/SPEC.md` — full product specification (authoritative).
+- `docs/PLAN.md` — **the open plan**: the usability overhaul derived from
+  Mara's playtest (age 8). Not started; read it in full before touching
+  anything it names.
 - `docs/PLAN_*.md` — past plans, all fully implemented and archived. Kept for
   their reasoning (the colour/type tokens live in the UI design one); SPEC wins
-  wherever they disagree. There is no open plan.
+  wherever they disagree.
 - `docs/GRAPHICS_BRIEF.md` — brief to hand an LLM to generate the ~102
   replacement SVG icons. Paths in it are repo-root-relative. **Unexecuted:**
   `AVAILABLE` in `graphics.js` is empty, so every icon still renders as emoji.
