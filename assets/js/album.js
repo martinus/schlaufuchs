@@ -4,11 +4,10 @@
 import { initI18n, t, getLang } from "./i18n.js";
 import { getRewards } from "./storage.js";
 import { GAMES, TROPHIES, THRESHOLDS, TOTAL_TROPHIES, trophyCount, nextTrophyInfo } from "./rewards.js";
-import { iconHTML, applyIcons } from "./graphics.js";
-import { renderFoxChip, initSettingsOverlay } from "./chrome.js";
+import { iconHTML } from "./graphics.js";
+import { initTopBar } from "./chrome.js";
 
 initI18n();
-applyIcons(document);
 
 // One progress line per game: how many perfect rounds until the next trophy.
 function progressLine(pr, game) {
@@ -24,8 +23,6 @@ function render() {
   const pr = getRewards().pr ?? {};
   const lang = getLang();
   let total = 0;
-
-  renderFoxChip(document.getElementById("foxchip"));
 
   const main = document.getElementById("album");
   main.textContent = "";
@@ -59,7 +56,6 @@ function render() {
 
 // The room has no game of its own, so its gear offers no reset (§3.4): the
 // global one lives on the map, where the fox can see what it costs.
-const settings = initSettingsOverlay({ resetKind: null, onChange: render });
-document.getElementById("gearbtn")?.addEventListener("click", settings.open);
+initTopBar({ back: "./", resetKind: null, onChange: render });
 
 render();

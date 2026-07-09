@@ -133,10 +133,23 @@ button, .iconbtn, .chip, a.region {
   width: 100%;
 }
 
-/* The fox chip takes the middle and centres itself between the two icon
-   buttons, which keep their size. Map and game therefore look identical. */
+/* The middle of the bar takes what the two icon buttons leave, and the buttons
+   keep their size. Map, game and Pokalraum therefore look identical. */
 .topbar .iconbtn { flex: 0 0 auto; }
 .topbar .foxchip { flex: 1 1 auto; min-width: 0; overflow: hidden; justify-content: center; }
+
+/* The reader's bar carries a heading where the child's carries the chip: no
+   panel, no shadow — a title is not a button (§3.3). */
+.topbar .roomtitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding-left: 4px;
+  font-size: 1.15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* the map's own map button: same shape, no affordance — you are already here */
 .iconbtn.flat {
@@ -776,8 +789,6 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
     linear-gradient(180deg, #fdf1de 0, var(--bg) 260px),
     var(--bg);
 }
-.roomtitle { box-shadow: none; background: none; padding-left: 4px; }
-
 /* The room's name and the size of the collection, on one line under the bar.
    The name was a chip in the top bar; it is a heading, and the bar has room
    for exactly three things (§3.3). */

@@ -2,7 +2,7 @@
 // state: a page that says who runs the site must not depend on the cookie.
 
 import { initI18n } from "./i18n.js";
-import { applyIcons } from "./graphics.js";
+import { initTopBar } from "./chrome.js";
 
 initI18n();
-applyIcons(document);
+initTopBar({ back: "./", title: "aboutTitle" });

@@ -6,7 +6,7 @@ import { loadState, getRewards } from "./storage.js";
 import { gameStars, regionState, starBadgeTier, totalTrophies, GAMES, isPlayable } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconSVG, applyIcons } from "./graphics.js";
-import { renderFoxChip, initSettingsOverlay } from "./chrome.js";
+import { initTopBar } from "./chrome.js";
 
 // Fox anchor per region (map coordinates, §3.1).
 const ANCHORS = {
@@ -88,9 +88,8 @@ function fogRegion(region) {
 
 function render() {
   const state = loadState();
-  const rewards = getRewards();
-
-  renderFoxChip(document.getElementById("foxchip"));
+  // one cookie parse for the whole map, not one per section
+  const rewards = getRewards(state);
 
   // region star badges and visual states
   for (const game of GAMES) {
@@ -138,8 +137,10 @@ function render() {
   fox.setAttribute("transform", `translate(${x - 22}, ${y - 40})`);
 }
 
-// settings overlay (gear) — the only place the global reset lives
-const settings = initSettingsOverlay({ resetKind: "all", onChange: render });
-document.getElementById("gearbtn")?.addEventListener("click", settings.open);
+// The map wears the shared bar with a flat map button — you are already here —
+// and its gear is the only place the global reset lives (§3.4). initTopBar
+// repaints the fox chip itself on every settings change; `render` only has to
+// redraw the island.
+initTopBar({ back: null, resetKind: "all", onChange: render });
 
 render();

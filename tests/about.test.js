@@ -4,19 +4,10 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 import de from "../assets/i18n/de.js";
 import en from "../assets/i18n/en.js";
-
-const root = new URL("../", import.meta.url);
-const abs = (p) => fileURLToPath(new URL(p, root));
-const read = (p) => readFileSync(abs(p), "utf8");
-
-const PAGES = [
-  ...readdirSync(abs(".")).filter((f) => f.endsWith(".html")),
-  ...readdirSync(abs("games")).map((g) => `games/${g}/index.html`),
-];
+import { abs, read, PAGES, hasFoxBar } from "./pages.js";
 
 test("the about page exists and is bilingual", () => {
   assert.ok(existsSync(abs("about.html")));
@@ -45,8 +36,8 @@ test("every outbound link is absolute and https", () => {
   }
 });
 
-// The gear covers the map, the games and the stubs. The two text pages and the
-// Trophy Room have no gear, so they carry links. No page may be a dead end.
+// The gear covers every page that wears the child's bar. The reader's pages
+// have no gear and carry links instead. No page may be a dead end.
 test("every page can reach the about page", () => {
   const chrome = read("assets/js/chrome.js");
   assert.match(chrome, /<a class="cx-about" href="\$\{ABOUT_URL\}"><\/a>/);
@@ -60,9 +51,7 @@ test("every page can reach the about page", () => {
   for (const page of PAGES) {
     if (page === "about.html") continue;
     const html = read(page);
-    const viaGear = html.includes('id="gearbtn"');
-    const viaLink = html.includes('href="about.html"');
-    assert.ok(viaGear || viaLink, `${page} has no route to the about page`);
+    assert.ok(hasFoxBar(page) || html.includes('href="about.html"'), `${page} has no route to the about page`);
     assert.ok(!html.includes('href="/about'), `${page}: absolute path`);
   }
 });

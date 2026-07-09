@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { encodeState, decodeState, overBudget, BUDGET } from "../assets/js/storage.js";
+import { encodeState, decodeState, overBudget, patchSection, BUDGET } from "../assets/js/storage.js";
+import { read } from "./pages.js";
 
 test("state roundtrips through the cookie encoding (§9.2)", () => {
   const state = {
@@ -53,4 +54,35 @@ test("budget check: realistic full state fits, oversized state is refused", () =
 
   const oversized = { blob: "x".repeat(BUDGET) };
   assert.ok(overBudget(oversized));
+});
+
+// The settings, the rewards and each game were three copies of one merge. The
+// copies agreed; the next one would not have.
+test("patchSection merges into one section and copies the rest", () => {
+  const state = { v: 1, settings: { sound: false }, einmaleins: { d: 1, t: 7 } };
+  const next = patchSection(state, "settings", { lang: "en" });
+
+  assert.deepEqual(next.settings, { sound: false, lang: "en" }, "the patch merges, it does not replace");
+  assert.deepEqual(next.einmaleins, { d: 1, t: 7 }, "the other sections are untouched");
+  assert.equal(next.v, 1);
+
+  // A writer that mutates the state it was handed turns every read into a
+  // write: `loadState()` hands out the object the next reader will see.
+  assert.deepEqual(state.settings, { sound: false }, "the caller's state was mutated");
+  assert.notEqual(next, state);
+  assert.notEqual(next.settings, state.settings);
+
+  // an absent section is created, not crashed into
+  assert.deepEqual(patchSection({}, "rewards", { at: "einmaleins" }).rewards, { at: "einmaleins" });
+});
+
+// Regression: `readRaw` matched a hard-coded "schlaufuchs=" while every write
+// used the NAME constant. Renaming the cookie would have made the site forget
+// everything on the next deploy, silently, and only for people who had played.
+test("the cookie is read under the same name it is written", () => {
+  const src = read("assets/js/storage.js");
+  const literals = [...src.matchAll(/"schlaufuchs/g)];
+  assert.equal(literals.length, 1, "the cookie's name is written once, as NAME");
+  assert.match(src, /const NAME = "schlaufuchs"/);
+  assert.ok(!/document\.cookie\.match\(\/[^/]*schlaufuchs/.test(src), "the reader hard-codes the name");
 });

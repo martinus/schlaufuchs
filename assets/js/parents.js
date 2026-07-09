@@ -9,13 +9,14 @@
 import { initI18n, t } from "./i18n.js";
 import { getGame, getRewards } from "./storage.js";
 import { boxesFromString } from "./adaptive.js";
-import { sumStars, trophyCount, GAMES } from "./rewards.js";
-import { iconHTML, applyIcons } from "./graphics.js";
+import { sumStars, totalTrophies } from "./rewards.js";
+import { iconHTML } from "./graphics.js";
+import { initTopBar } from "./chrome.js";
 import { heatOf, weakFacts, heatCounts, practiceSummary, minutesOf, secondsPerRound } from "./parentstats.js";
 import { POOL_COUNT, pairIndex, pairOf } from "../../games/einmaleins/logic.js";
 
 initI18n();
-applyIcons(document);
+initTopBar({ back: "./", title: "parentsTitle" });
 
 const $ = (id) => document.getElementById(id);
 const DIFFS = ["diffEasy", "diffMedium", "diffHard"];
@@ -27,7 +28,7 @@ const rewards = getRewards();
 
 function renderChips() {
   const state = { einmaleins: saved };
-  const trophies = GAMES.reduce((a, g) => a + trophyCount((rewards.pr ?? {})[g]), 0);
+  const trophies = totalTrophies(rewards.pr);
   const streak = Array.isArray(rewards.streak) ? rewards.streak[1] : 0;
   $("p-chips").innerHTML = [
     `<span class="pchip">${iconHTML("ui-star", { size: 16 })} ${sumStars(state)}</span>`,
