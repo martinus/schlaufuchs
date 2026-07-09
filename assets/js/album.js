@@ -3,7 +3,9 @@
 
 import { initI18n, t, getLang } from "./i18n.js";
 import { getRewards } from "./storage.js";
-import { GAMES, TROPHIES, THRESHOLDS, TOTAL_TROPHIES, trophyCount, nextTrophyInfo } from "./rewards.js";
+import {
+  GAMES, TROPHIES, THRESHOLDS, TOTAL_TROPHIES, TROPHIES_PER_GAME, trophyCount, nextTrophyInfo,
+} from "./rewards.js";
 import { iconHTML } from "./graphics.js";
 import { initTopBar } from "./chrome.js";
 
@@ -11,7 +13,7 @@ initI18n();
 
 // One progress line per game: how many perfect rounds until the next trophy.
 function progressLine(pr, game) {
-  const info = nextTrophyInfo(pr[game]);
+  const info = nextTrophyInfo(game, pr[game]);
   if (!info) return t("trophyAllDone");
   return info.remaining === 1 ? t("trophyNextIn1") : t("trophyNextIn", { n: info.remaining });
 }
@@ -27,7 +29,7 @@ function render() {
   const main = document.getElementById("album");
   main.textContent = "";
   for (const game of GAMES) {
-    const earned = trophyCount(pr[game]);
+    const earned = trophyCount(game, pr[game]);
     total += earned;
     const section = document.createElement("section");
     section.className = "album-section";
@@ -39,12 +41,12 @@ function render() {
         // A locked slot shows the trophy as a silhouette: you can see what is
         // missing, which is the whole reason to keep collecting. The name stays
         // hidden — the shape is the tease.
-        return `<div class="slot locked" title="${THRESHOLDS[i]}×" aria-label="${t("trophyLocked")}">
+        return `<div class="slot locked" title="${THRESHOLDS[game][i]}×" aria-label="${t("trophyLocked")}">
           <span class="silhouette" aria-hidden="true">${iconHTML(s.icon, { size: 34 })}</span></div>`;
       })
       .join("");
     section.innerHTML = `
-      <h2>${t(`region_${game}`)} · ${t(`game_${game}`)} — ${earned}/12</h2>
+      <h2>${t(`region_${game}`)} · ${t(`game_${game}`)} — ${earned}/${TROPHIES_PER_GAME}</h2>
       <p class="album-progress">${progressLine(pr, game)}</p>
       <div class="trophies">${slots}</div>`;
     main.appendChild(section);

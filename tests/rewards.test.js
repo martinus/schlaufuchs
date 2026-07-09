@@ -6,25 +6,76 @@ import {
   THRESHOLDS, TROPHIES, GAMES, trophyCount, totalTrophies, TOTAL_TROPHIES, updateStreak,
   gameStars, sumStars, regionState, ACHIEVABLE, starBadgeTier, nextTrophyInfo,
   roundPoints, tilePointsLeft, starValue, addPractice, MAX_ROUND_SECONDS,
+  ladderFor, MAX_POINTS, TROPHIES_PER_GAME,
 } from "../assets/js/rewards.js";
 
-test("trophy thresholds match spec §8.3", () => {
-  assert.deepEqual(THRESHOLDS, [2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112]);
-  assert.equal(THRESHOLDS.length, 12);
-  for (let i = 1; i < THRESHOLDS.length; i++) {
-    assert.ok(THRESHOLDS[i] > THRESHOLDS[i - 1], "thresholds must climb");
+// einmaleins' ladder is the one a real child has been climbing, so it is spelled
+// out here rather than imported: if it ever changes, this file must say so.
+const EM = [2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112];
+
+test("einmaleins keeps the ladder its players have been climbing (§8.3)", () => {
+  // No child may lose a trophy they have already won: the counter in the cookie
+  // is points, and the trophies are derived from it on every load.
+  assert.deepEqual(THRESHOLDS.einmaleins, EM);
+});
+
+test("every game has its own ladder, and every ladder climbs", () => {
+  for (const g of GAMES) {
+    const ladder = THRESHOLDS[g];
+    assert.equal(ladder.length, TROPHIES_PER_GAME, g);
+    for (let i = 1; i < ladder.length; i++) {
+      assert.ok(ladder[i] > ladder[i - 1], `${g}: threshold ${i} does not climb`);
+    }
+    assert.ok(ladder[0] >= 1, `${g}: a trophy for nothing`);
   }
 });
 
-test("trophyCount maps counters to earned trophies", () => {
-  assert.equal(trophyCount(undefined), 0);
-  assert.equal(trophyCount(0), 0);
-  assert.equal(trophyCount(1), 0);
-  assert.equal(trophyCount(2), 1);
-  assert.equal(trophyCount(11), 2);
-  assert.equal(trophyCount(12), 3);
-  assert.equal(trophyCount(112), 12);
-  assert.equal(trophyCount(9999), 12, "there are only twelve");
+// Regression: one ladder served all five games, tuned to einmaleins' 180-point
+// economy. `lesen` is worth 18 points in total, so its thresholds 29 through
+// 112 — trophies five to twelve — could never be reached, and its shelf in the
+// Pokalraum could never fill. The child would never learn why.
+test("every game's twelfth trophy is reachable by mastering that game", () => {
+  for (const g of GAMES) {
+    const max = MAX_POINTS[g];
+    const last = THRESHOLDS[g].at(-1);
+    assert.ok(last <= max, `${g}: the last trophy costs ${last} of ${max} obtainable points`);
+    assert.equal(trophyCount(g, max), TROPHIES_PER_GAME, `${g}: mastering it must fill its shelf`);
+
+    // and it must still be a goal, not a participation prize
+    assert.ok(last / max > 0.4, `${g}: the last trophy at ${last}/${max} is given away`);
+    assert.ok(last / max <= 0.7, `${g}: the last trophy at ${last}/${max} is a grind`);
+  }
+});
+
+// The generator's shape IS the einmaleins ladder. Saying so in a test is what
+// keeps the four generated ladders honest: they are the same curve, not a
+// second opinion about what a trophy should cost.
+test("ladderFor reproduces the hand-tuned einmaleins ladder", () => {
+  assert.deepEqual(ladderFor(MAX_POINTS.einmaleins), EM);
+  assert.equal(MAX_POINTS.einmaleins, 180);
+
+  // a game too small to hold twelve climbing thresholds must say so, loudly,
+  // rather than hand out two trophies for the same point
+  assert.throws(() => ladderFor(TROPHIES_PER_GAME - 1), RangeError);
+  assert.deepEqual(ladderFor(TROPHIES_PER_GAME), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+});
+
+test("trophyCount maps a game's counter to its earned trophies", () => {
+  assert.equal(trophyCount("einmaleins", undefined), 0);
+  assert.equal(trophyCount("einmaleins", 0), 0);
+  assert.equal(trophyCount("einmaleins", 1), 0);
+  assert.equal(trophyCount("einmaleins", 2), 1);
+  assert.equal(trophyCount("einmaleins", 11), 2);
+  assert.equal(trophyCount("einmaleins", 12), 3);
+  assert.equal(trophyCount("einmaleins", 112), 12);
+  assert.equal(trophyCount("einmaleins", 9999), 12, "there are only twelve");
+
+  // the same points buy different trophies in different regions
+  assert.equal(trophyCount("lesen", 12), 12, "lesen is a small game; 12 points is all of it");
+  assert.equal(trophyCount("tippen", 12), 2, "tippen is a big one; 12 points is barely a start");
+
+  assert.equal(trophyCount("nosuchgame", 9999), 0, "an unknown game has no shelf");
+  assert.equal(trophyCount(undefined, 9999), 0);
 });
 
 test("every game has exactly 12 trophies with de+en names (§8.3)", () => {
@@ -40,14 +91,15 @@ test("every game has exactly 12 trophies with de+en names (§8.3)", () => {
 // NaN: `pr` is absent on a first visit and holds only the games ever played.
 test("trophies are counted across every game (§8.3)", () => {
   assert.equal(TOTAL_TROPHIES, 60, "five games × twelve trophies");
-  assert.equal(TOTAL_TROPHIES, GAMES.length * THRESHOLDS.length);
+  assert.equal(TOTAL_TROPHIES, GAMES.length * TROPHIES_PER_GAME);
 
   for (const empty of [undefined, null, {}]) assert.equal(totalTrophies(empty), 0);
-  assert.equal(totalTrophies({ einmaleins: THRESHOLDS[0] }), 1);
-  assert.equal(totalTrophies({ einmaleins: THRESHOLDS[0], tippen: THRESHOLDS[2] }), 4);
+  assert.equal(totalTrophies({ einmaleins: THRESHOLDS.einmaleins[0] }), 1);
+  assert.equal(totalTrophies({ einmaleins: THRESHOLDS.einmaleins[0], tippen: THRESHOLDS.tippen[2] }), 4);
   assert.equal(totalTrophies({ nosuchgame: 9999 }), 0, "an unknown game earns nothing");
 
-  const maxed = Object.fromEntries(GAMES.map((g) => [g, THRESHOLDS.at(-1)]));
+  // each game is counted against its own ladder, not against einmaleins'
+  const maxed = Object.fromEntries(GAMES.map((g) => [g, MAX_POINTS[g]]));
   assert.equal(totalTrophies(maxed), TOTAL_TROPHIES);
 });
 
@@ -83,11 +135,17 @@ test("starBadgeTier: none / some / gold / glowing (§3.1)", () => {
 });
 
 test("nextTrophyInfo: progress toward the next trophy (§8.3)", () => {
-  assert.deepEqual(nextTrophyInfo(undefined), { earned: 0, threshold: 2, remaining: 2 });
-  assert.deepEqual(nextTrophyInfo(3), { earned: 1, threshold: 6, remaining: 3 });
-  assert.deepEqual(nextTrophyInfo(11), { earned: 2, threshold: 12, remaining: 1 });
-  assert.equal(nextTrophyInfo(111).remaining, 1);
-  assert.equal(nextTrophyInfo(112), null);
+  assert.deepEqual(nextTrophyInfo("einmaleins", undefined), { earned: 0, threshold: 2, remaining: 2 });
+  assert.deepEqual(nextTrophyInfo("einmaleins", 3), { earned: 1, threshold: 6, remaining: 3 });
+  assert.deepEqual(nextTrophyInfo("einmaleins", 11), { earned: 2, threshold: 12, remaining: 1 });
+  assert.equal(nextTrophyInfo("einmaleins", 111).remaining, 1);
+  assert.equal(nextTrophyInfo("einmaleins", 112), null);
+
+  // the same counter, a different promise, because the region is different
+  assert.equal(nextTrophyInfo("lesen", 1).threshold, 2);
+  assert.equal(nextTrophyInfo("tippen", 1).threshold, 3);
+  assert.equal(nextTrophyInfo("lesen", 12), null, "a small game can finish");
+  assert.equal(nextTrophyInfo("nosuchgame", 0), null);
 });
 
 test("region states at 0 / one third / 100 % (§3.1)", () => {
@@ -178,7 +236,7 @@ test("tilePointsLeft(): a tile is exactly the sum of its three stars", () => {
 test("grinding a mastered tile can never fill the Pokalraum", () => {
   let pr = 0;
   for (let i = 0; i < 1000; i++) pr += roundPoints({ oldStars: 3, newStars: 3, difficulty: 0 });
-  assert.equal(trophyCount(pr), 0);
+  assert.equal(trophyCount("einmaleins", pr), 0);
 });
 
 test("balance: finishing einmaleins is possible, and 12 trophies come before the end", () => {
@@ -186,19 +244,17 @@ test("balance: finishing einmaleins is possible, and 12 trophies come before the
   const tiles = [[0, 5], [1, 11], [2, 11]];
   const total = tiles.reduce((sum, [d, n]) => sum + n * tilePointsLeft(0, d), 0);
   assert.equal(total, 180, "the einmaleins point economy, after points went linear");
+  assert.equal(total, MAX_POINTS.einmaleins, "…and MAX_POINTS must agree with the tiles");
 
-  assert.equal(trophyCount(total), THRESHOLDS.length, "mastering everything must fill the room");
-  const last = THRESHOLDS.at(-1);
-  assert.ok(last / total < 0.7, `the last trophy at ${last}/${total} is a grind`);
-  assert.ok(last / total > 0.4, `the last trophy at ${last}/${total} is given away`);
+  assert.equal(trophyCount("einmaleins", total), TROPHIES_PER_GAME, "mastering everything must fill the room");
 
   // the first trophy must arrive in the first sitting: one Leicht tile taken to
   // two stars pays 2, which is exactly the first threshold
-  assert.ok(trophyCount(roundPoints({ oldStars: 0, newStars: 2, difficulty: 0 })) >= 1);
+  assert.ok(trophyCount("einmaleins", roundPoints({ oldStars: 0, newStars: 2, difficulty: 0 })) >= 1);
 
   // playing only Leicht, perfectly, cannot finish the collection
   const easyOnly = 5 * tilePointsLeft(0, 0);
-  assert.ok(trophyCount(easyOnly) < THRESHOLDS.length, "Leicht alone must not fill the room");
+  assert.ok(trophyCount("einmaleins", easyOnly) < TROPHIES_PER_GAME, "Leicht alone must not fill the room");
 });
 
 // Regression: the summary rendered `newTrophies[0]` and dropped the rest. A
@@ -211,10 +267,10 @@ test("one round can win several trophies, and the summary must show them all", (
   // points make the best round worth 9, which crosses 2 and 6.
   const best = roundPoints({ oldStars: 0, newStars: 3, difficulty: 2 });
   assert.equal(best, 9);
-  assert.equal(trophyCount(best) - trophyCount(0), 2, "9 points cross two thresholds");
+  assert.equal(trophyCount("einmaleins", best) - trophyCount("einmaleins", 0), 2, "9 points cross two thresholds");
 
   // not a corner case of an empty account: it happens mid-collection too
-  assert.ok(trophyCount(11 + best) - trophyCount(11) >= 2);
+  assert.ok(trophyCount("einmaleins", 11 + best) - trophyCount("einmaleins", 11) >= 2);
 
   // ...and the round-summary code must iterate rather than index the first
   const src = readFileSync(

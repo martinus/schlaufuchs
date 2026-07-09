@@ -146,9 +146,11 @@ Shared modules in `assets/js/`:
   3500-byte budget** (`BUDGET`); writes over budget are refused. Do not add
   persistent state casually.
 - `rewards.js` — stars, trophies, streak, region/badge state. Pure functions are
-  exported and unit-tested: trophy `THRESHOLDS`, `trophyCount`, `totalTrophies`,
-  `starBadgeTier`, `nextTrophyInfo`. `foxInfo()` reads the cookie and returns
-  the two numbers the top bar shows: `{stars, trophies}`.
+  exported and unit-tested: `trophyCount(game, points)`, `totalTrophies`,
+  `starBadgeTier`, `nextTrophyInfo(game, points)`. **The trophy ladder is per
+  game**: `THRESHOLDS[game]`, scaled by `ladderFor(MAX_POINTS[game])` from the
+  einmaleins curve. `foxInfo()` reads the cookie and returns the two numbers the
+  top bar shows: `{stars, trophies}`.
 - `journey.js` — the round's scene; `sceneGeometry(nodes, theme)` is the pure
   arithmetic (tested), `createJourney` is the DOM around it.
 - `graphics.js` — the icon registry (see below). `applyIcons` only matters where
