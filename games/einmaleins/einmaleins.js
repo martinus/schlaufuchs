@@ -59,7 +59,6 @@ let buffer = ""; // digits typed during the short post-correct transition
 let phase = "answer"; // answer | correct-wait | wrong-wait
 let roundOver = false;
 let hot = 0;
-let t0 = 0;
 
 function tbl2short(tbl) {
   return tbl === 0 ? t("emMixed") : t("emTableShort", { t: tbl });
@@ -84,7 +83,6 @@ function startRound() {
   hot = 0;
   buffer = "";
   roundOver = false;
-  t0 = Date.now();
   $("hotstreak").textContent = "";
   $("sum-overlay").hidden = true;
   buildKeypad();
@@ -261,7 +259,6 @@ function continueRound() {
 
 function endRound() {
   roundOver = true;
-  const seconds = Math.round((Date.now() - t0) / 1000);
   const { firstTryOk, total } = session.progress();
   const stars = starsFor(firstTryOk, total);
 
@@ -282,7 +279,7 @@ function endRound() {
   setTimeout(() => {
     $("sum-stars").textContent = stars > 0 ? "⭐".repeat(stars) : "🦊";
     // the points you just earned, next to the numbers that earned them
-    $("sum-score").innerHTML = t("roundStat", { ok: firstTryOk, total, s: seconds })
+    $("sum-score").innerHTML = t("roundStat", { ok: firstTryOk, total })
       + (points > 0 ? ` <span class="gain">+${points}</span>` : "");
     // what the next star costs — the rule is invisible otherwise (§10.3)
     const goal = nextStarGoal(stars);
