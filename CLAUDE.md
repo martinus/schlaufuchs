@@ -16,6 +16,7 @@ framework**. Progress is stored in a single cookie. Hosted on GitHub Pages.
 python3 -m http.server 8000   # serve locally — ALWAYS use this, never file:// (ES modules)
 node --test                   # run unit tests (tests/*.test.js), needs Node 22+
 node --check <file.js>        # syntax-check a module
+node tools/version-assets.js 7  # bump asset version — REQUIRED before deploying a change
 ```
 
 There is no lint/format/build step. `node --test` is the only gate; the deploy
@@ -60,6 +61,15 @@ Shared modules in `assets/js/`:
   cosmetics), `confetti.js`.
 
 ## Key invariants & gotchas
+
+- **Bump the asset version on every deploy** (`node tools/version-assets.js N`).
+  GitHub Pages serves everything with `Cache-Control: max-age=86400` and each
+  file expires on its own clock, so a browser can pair a cached old
+  `index.html` with a freshly fetched `map.js`. They disagree about element
+  ids, the JS throws, and the page renders without its chips and buttons —
+  invisible in incognito, which has an empty cache. Every URL a page loads
+  therefore carries the page's version, propagated to nested imports by an
+  import map in each HTML file. Read the header of `tools/version-assets.js`.
 
 - **Graphics registry** (`graphics.js`): all icon-like art is a named entry
   with an emoji fallback. A name renders as an SVG file
