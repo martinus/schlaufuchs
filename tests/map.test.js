@@ -71,6 +71,17 @@ test("Tippsee: the lake is painted after the hut, so the shore is in front", () 
   assert.ok(hut < lake, "the hut must be painted before the lake");
 });
 
+test("regions are hit-tested by their art, not by an invisible box", () => {
+  // Regression: each region wrapped its art in a large `fill="transparent"`
+  // rect as a touch target. Once the map filled the viewport those boxes tiled
+  // 42% of it, so the cursor turned into a hand over open grass and sea and
+  // stayed there. The art itself is 90×90 px or larger — target enough.
+  assert.ok(
+    !/<rect[^>]*fill="transparent"/.test(html),
+    "an invisible hotspot rect makes empty land look clickable",
+  );
+});
+
 // The island's coast runs a little inside the viewBox, so region art that
 // reaches an edge is already standing in the sea. Regions carry no transform,
 // which is why their raw coordinates can be read directly (the compass rose,

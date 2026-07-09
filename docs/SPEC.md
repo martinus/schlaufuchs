@@ -627,6 +627,13 @@ walks the village lane; goal node: ringing the school bell.
 
 ⭐ ≥ 8/10 first-try · ⭐⭐ 10/10 first-try · ⭐⭐⭐ 10/10 first-try in < 60 s.
 
+A wrong answer leaves its item unsolved, so the round asks it again: a round
+ends after ten *solved* items, and only the first try counts for stars.
+
+The summary names the price of the next star (`nextStarGoal`), quietly, under
+the score — otherwise a child who scores 9/10 has no way to learn why they
+still have one star.
+
 ### 10.4 Cookie state (`einmaleins`)
 
 ```json

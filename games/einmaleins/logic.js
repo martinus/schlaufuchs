@@ -72,6 +72,12 @@ export function starsFor(firstTryOk, total, seconds) {
   return firstTryOk / total >= 0.8 ? 1 : 0;
 }
 
+// The i18n key naming what the *next* star costs, so a child who scored 9/10
+// can see why they still have one star. Null once all three are earned.
+export function nextStarGoal(stars) {
+  return stars >= 3 ? null : ["starGoal1", "starGoal2", "starGoal3"][stars];
+}
+
 // Index into the 11-digit per-difficulty star string: tables 1..10 → 0..9,
 // "Alle gemischt" → 10.
 export const tableStarIndex = (table) => (table === 0 ? 10 : table - 1);

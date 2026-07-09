@@ -13,7 +13,7 @@ import { renderLevelChip, initSettingsOverlay } from "../../assets/js/chrome.js"
 import strings from "./i18n.js";
 import {
   POOL_COUNT, EASY_TABLES, poolFor, questionFor, choicesFor,
-  starsFor, starDigit, withStarDigit, fittedFontSize,
+  starsFor, nextStarGoal, starDigit, withStarDigit, fittedFontSize,
 } from "./logic.js";
 
 initI18n(strings);
@@ -262,6 +262,10 @@ function endRound() {
     // the points you just earned, next to the numbers that earned them
     $("sum-score").innerHTML = t("roundStat", { ok: firstTryOk, total, s: seconds })
       + (points > 0 ? ` <span class="gain">+${points}</span>` : "");
+    // what the next star costs — the rule is invisible otherwise (§10.3)
+    const goal = nextStarGoal(stars);
+    $("sum-goal").hidden = goal === null;
+    if (goal) $("sum-goal").textContent = t(goal);
     $("sum-best").hidden = !improved;
     $("sum-best").textContent = t("newBest");
     const st = $("sum-trophy");
