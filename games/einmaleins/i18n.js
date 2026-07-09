@@ -5,14 +5,14 @@ export default {
     emTitle: "Einmaleins",
     emTable: "{t}er-Reihe",
     emTableShort: "{t}er",
-    emMixed: "Alle gemischt",
+    emMixed: "Alle",
     emPickTitle: "Reihe & Schwierigkeit",
   },
   en: {
     emTitle: "Times tables",
     emTable: "{t} times table",
     emTableShort: "×{t}",
-    emMixed: "All mixed",
+    emMixed: "All",
     emPickTitle: "Table & difficulty",
   },
 };

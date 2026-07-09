@@ -106,13 +106,32 @@ function askNext() {
   if (diff === 0) renderChoices();
 }
 
+// The question never wraps: a two-line equation reads as two thoughts. When the
+// CSS size would overflow, shrink this one question until it fits on one line.
+function fitQuestion() {
+  const el = $("question");
+  el.style.fontSize = "";
+  const avail = el.clientWidth;
+  if (!avail) return;
+  const width = el.scrollWidth;
+  if (width <= avail) return;
+  const size = parseFloat(getComputedStyle(el).fontSize);
+  el.style.fontSize = `${Math.floor((size * avail) / width)}px`;
+}
+
 function renderQuestion() {
   const shown = input === "" ? "?" : input;
   $("question").innerHTML = question.text.replace(
     "?",
     `<span class="gap">${shown}</span>`
   );
+  fitQuestion();
 }
+
+// the wish size is viewport-relative, so a rotation needs a re-fit; the display
+// face may also arrive after the first paint and change the measured width
+window.addEventListener("resize", () => question && fitQuestion());
+document.fonts?.ready.then(() => question && fitQuestion());
 
 // Multiple choice (Leicht): rebuilt per question.
 function renderChoices() {
