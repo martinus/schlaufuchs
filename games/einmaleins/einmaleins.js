@@ -184,11 +184,17 @@ function keyPress(k) {
   renderQuestion();
 }
 
+// Tapping a keypad button focuses it. Enter would then, on top of the keyPress
+// below, fire the browser's default "activate the focused button" click, which
+// re-enters that digit. During the post-correct transition it lands in `buffer`
+// and reappears prefilled in the next question. Handling a key means owning it.
 document.addEventListener("keydown", (e) => {
   if (diff === 0 || !$("sum-overlay").hidden) return;
   if (/^[0-9]$/.test(e.key)) keyPress(e.key);
   else if (e.key === "Backspace") keyPress("⌫");
   else if (e.key === "Enter") keyPress("OK");
+  else return;
+  e.preventDefault();
 });
 
 function submit(value, mcButton) {
