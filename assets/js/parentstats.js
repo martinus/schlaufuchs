@@ -1,0 +1,64 @@
+// The arithmetic behind the parents' view (§20). Pure — no DOM, no storage —
+// so the numbers a parent reads can be tested rather than eyeballed.
+//
+// Everything here is derived from state the site already keeps. The Leitner
+// box of a fact is the diagnosis; nothing extra is stored to produce it.
+
+// Box semantics (§7.1). `clampBox` defaults an unknown fact to 2, and a fact
+// leaves box 2 the moment it is asked (correct → 3, wrong → 0). So box 2 means
+// "not practised yet" in all but one case: a fact climbing back out of box 1.
+// We therefore call it *open* rather than *unseen* — a claim we can defend.
+export const HEAT = { 0: "weak", 1: "weak", 2: "open", 3: "solid", 4: "solid" };
+
+export const heatOf = (box) => HEAT[box] ?? "open";
+
+// The facts a parent should sit down with: box 0 or 1, hardest first, then in
+// table order so the list reads like a times table and not like a shuffle.
+export function weakFacts(boxes, count) {
+  const out = [];
+  for (let id = 0; id < count; id++) {
+    const box = boxes[id];
+    if (box === 0 || box === 1) out.push({ id, box });
+  }
+  return out.sort((a, b) => a.box - b.box || a.id - b.id);
+}
+
+// How the 100 facts are spread across the three states.
+export function heatCounts(boxes, count) {
+  const tally = { weak: 0, open: 0, solid: 0 };
+  for (let id = 0; id < count; id++) tally[heatOf(boxes[id])]++;
+  return tally;
+}
+
+const triple = (v) =>
+  Array.isArray(v) && v.length === 3
+    ? v.map((n) => (Number.isFinite(n) && n > 0 ? Math.round(n) : 0))
+    : [0, 0, 0];
+
+// Practice time per difficulty, plus totals. Reads whatever the cookie holds,
+// including nothing at all: a parent opening this page before the child has
+// played must see zeroes, not a crash.
+export function practiceSummary(saved = {}) {
+  const seconds = triple(saved.tm);
+  const rounds = triple(saved.rd);
+  return {
+    perDiff: seconds.map((s, i) => ({ seconds: s, rounds: rounds[i] })),
+    totalSeconds: seconds.reduce((a, b) => a + b, 0),
+    totalRounds: rounds.reduce((a, b) => a + b, 0),
+  };
+}
+
+// Whole minutes, rounded to nearest, but never rounded down to a bare "0 min"
+// for a child who did practise: some practice is not no practice.
+export function minutesOf(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return 0;
+  return Math.max(1, Math.round(seconds / 60));
+}
+
+// Seconds per solved round — the honest measure of pace, and the one number a
+// parent can act on ("she is racing" / "he is stuck"). Null when nothing is
+// known, because a made-up average is worse than a blank.
+export function secondsPerRound(seconds, rounds) {
+  if (!rounds || rounds <= 0 || !Number.isFinite(seconds) || seconds <= 0) return null;
+  return Math.round(seconds / rounds);
+}

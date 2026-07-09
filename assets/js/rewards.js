@@ -107,6 +107,36 @@ for (const g of GAMES) TROPHIES[g].forEach((s, i) => { s.icon = `trophy-${g}-${i
 // region could never reach "mastered" and its road could never pave itself.
 export const ACHIEVABLE = { einmaleins: 81, rechnungen: 45, tippen: 120, vokabeln: 54, lesen: 9 };
 
+// Practice time, for the parents' view only (§20) — the child is never shown a
+// clock (§10.3). Aggregated per difficulty, never per question: a per-fact
+// timer would eat the cookie budget and tell a parent nothing the Leitner box
+// does not already say.
+//
+// A round left open on a forgotten tab is not practice, so a single round can
+// never contribute more than this.
+export const MAX_ROUND_SECONDS = 900;
+
+const triple = (v) =>
+  Array.isArray(v) && v.length === 3
+    ? v.map((n) => (Number.isFinite(n) && n > 0 ? Math.round(n) : 0))
+    : [0, 0, 0];
+
+// Pure: takes the game's stored state, returns the `tm`/`rd` to write back.
+//
+// A broken clock banks no time, but still banks the round. Capping a NaN or an
+// Infinity to MAX_ROUND_SECONDS would quietly credit fifteen minutes of
+// practice that never happened, and a parent would read it as fact.
+export function addPractice(saved = {}, difficulty = 0, seconds = 0) {
+  const d = [0, 1, 2].includes(difficulty) ? difficulty : 0;
+  const tm = triple(saved.tm);
+  const rd = triple(saved.rd);
+  tm[d] += Number.isFinite(seconds) && seconds > 0
+    ? Math.min(Math.round(seconds), MAX_ROUND_SECONDS)
+    : 0;
+  rd[d] += 1;
+  return { tm, rd };
+}
+
 // Cosmetic fox upgrades at fixed levels (§8.4).
 export const COSMETICS = [
   [3, "scarf"], [6, "cap"], [9, "glasses"], [12, "backpack"],

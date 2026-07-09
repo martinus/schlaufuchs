@@ -68,10 +68,11 @@ the browser.
 Deployment is done by a workflow, not by publishing the branch directly:
 on every push to `main`, `deploy.yml` runs the unit tests and — only if they
 pass — assembles a curated `_site/` artifact containing **site files only**
-(`index.html`, `album.html`, `CNAME`, `assets/`, `games/`) and deploys it via
-`actions/deploy-pages`. Development files (`SPEC.md`, `README.md`, `tests/`,
-`package.json`, `.github/`) are never published. A new game directory or
-top-level page must be added to the `cp` list in `deploy.yml`.
+(every root `*.html`, `CNAME`, `assets/`, `games/`) and deploys it via
+`actions/deploy-pages`. Development files (`docs/`, `README.md`, `tests/`,
+`tools/`, `package.json`, `.github/`) are never published. Root pages are
+copied by glob, so a new one cannot be perfect on localhost and 404 in
+production; `tests/cache.test.js` guards the glob.
 
 Setup steps:
 
@@ -1046,3 +1047,28 @@ speakable on tap; rounds of 6; iOS speech works from tap handlers.
 service worker for offline play, `prefers-reduced-motion` audit.
 
 **M8 — Adventure mode.** Per §18.7.
+
+---
+
+## 20. The parents' view (`parents.html`)
+
+Children's learning apps show parents streaks and stars, because engagement is
+all they have. This site has the **knowledge**, so it shows that.
+
+- Reachable from the settings overlay on every screen, and from the map's foot.
+  Not linked from inside a round: it is not for the child.
+- **Read-only.** It imports no setter, writes no state, sends nothing anywhere.
+  `tests/parents.test.js` enforces that it never imports `setGame`/`setRewards`.
+- **The Leitner box is the diagnosis** (§7.1), and it is already stored. Boxes
+  0–1 render as *slips*, 2 as *not practised yet*, 3–4 as *solid*, laid out as
+  the 10×10 times table a parent learned at school. `clampBox` defaults an
+  unknown fact to **2**, not 0, which is why a beginner's grid shows no red:
+  reporting an unasked fact as one the child got wrong would be a lie.
+- „Hier hilfst du am meisten" lists boxes 0–1, hardest first, capped at twelve.
+- **Practice time is the one clock in the product** (§10.3 keeps it away from
+  the child). Aggregated per difficulty as `tm`/`rd`, never per question: a
+  per-fact timer would cost cookie budget and tell a parent nothing the box does
+  not already say. `addPractice()` caps one round at `MAX_ROUND_SECONDS` (a
+  forgotten tab is not practice) and banks **no** time for a non-finite clock —
+  capping a NaN to fifteen minutes would credit practice that never happened.
+  The pace line says out loud that time is not a goal.
