@@ -26,10 +26,49 @@ test("the game owns the keys it handles, so Enter cannot re-click a focused key"
     handler.includes("e.preventDefault()"),
     "a handled key must be consumed, or its default action fires as well",
   );
-  // and the guard must come after the dispatch, not swallow unhandled keys
+  // and the guard must come after the dispatch, not swallow unhandled keys.
+  // (The aid's own Enter branch preventDefaults earlier, so look at the last one.)
   assert.ok(
-    handler.indexOf("else return;") < handler.indexOf("e.preventDefault()"),
+    handler.indexOf("else return;") < handler.lastIndexOf("e.preventDefault()"),
     "unhandled keys (Tab, F5, …) must keep their default behaviour",
+  );
+});
+
+// Regression: a wrong answer showed the right one for 2000 ms and then took it
+// away on a timer. A child who reads slowly never got to see it.
+test("the feedback aid waits for a button, not for a clock", () => {
+  const submit = einmaleins.slice(
+    einmaleins.indexOf("function submit("),
+    einmaleins.indexOf("function showFeedback()"),
+  );
+  // the wrong-answer branch is everything from `} else {` to the end of submit()
+  const wrongBranch = submit.slice(submit.indexOf("} else {"));
+  assert.ok(wrongBranch.includes("showFeedback()"), "a wrong answer must show the aid");
+  assert.ok(
+    !wrongBranch.includes("setTimeout"),
+    "the wrong-answer branch must not schedule anything on a timer",
+  );
+  assert.ok(einmaleins.includes('$("fb-next")'), "the aid must offer a continue button");
+  assert.ok(
+    einmaleins.includes("function continueRound()"),
+    "only continueRound() leaves the aid",
+  );
+});
+
+// Regression: the continue button made the card taller than the stage, and the
+// stage clips. The card holds up to ten rows of dots (the 10× table), so its
+// parts have to scale with the viewport instead of sitting at fixed sizes.
+test("the feedback card is sized to fit the shortest phone", () => {
+  const css = readFileSync(abs("assets/css/schlaufuchs.css"), "utf8");
+  const dot = css.slice(css.indexOf(".dotgrid i {"), css.indexOf("}", css.indexOf(".dotgrid i {")));
+  assert.ok(/width:\s*clamp\(/.test(dot), "the dot must scale with the viewport height");
+  assert.ok(
+    css.includes(".stage:has(#feedback:not([hidden])) .hotstreak:empty"),
+    "the empty streak line must not steal a row from the aid",
+  );
+  assert.ok(
+    einmaleins.includes("repeat(${b}, auto)"),
+    "fixed 8px columns would clip a dot that grew past them",
   );
 });
 

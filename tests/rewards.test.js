@@ -7,13 +7,14 @@ import {
 } from "../assets/js/rewards.js";
 
 test("trophy thresholds match spec §8.3", () => {
-  assert.deepEqual(THRESHOLDS, [3, 9, 18, 30, 46, 64, 86, 112, 142, 172, 200, 225]);
+  assert.deepEqual(THRESHOLDS, [2, 9, 18, 30, 46, 64, 86, 112, 142, 172, 200, 225]);
 });
 
 test("trophyCount maps counters to earned trophies", () => {
   assert.equal(trophyCount(0), 0);
-  assert.equal(trophyCount(2), 0);
-  assert.equal(trophyCount(3), 1);
+  assert.equal(trophyCount(1), 0);
+  assert.equal(trophyCount(2), 1);
+  assert.equal(trophyCount(8), 1);
   assert.equal(trophyCount(17), 2);
   assert.equal(trophyCount(18), 3);
   assert.equal(trophyCount(225), 12);
@@ -70,7 +71,7 @@ test("starBadgeTier: none / some / gold / glowing (§3.1)", () => {
 });
 
 test("nextTrophyInfo: progress toward the next trophy (§8.3)", () => {
-  assert.deepEqual(nextTrophyInfo(undefined), { earned: 0, threshold: 3, remaining: 3 });
+  assert.deepEqual(nextTrophyInfo(undefined), { earned: 0, threshold: 2, remaining: 2 });
   assert.deepEqual(nextTrophyInfo(3), { earned: 1, threshold: 9, remaining: 6 });
   assert.deepEqual(nextTrophyInfo(17), { earned: 2, threshold: 18, remaining: 1 });
   assert.equal(nextTrophyInfo(224).remaining, 1);
@@ -113,18 +114,20 @@ test("roundPoints(): every new star is worth an award, times the difficulty", ()
   assert.equal(roundPoints({ oldStars: 0, newStars: 1, difficulty: 0 }), 1);
   assert.equal(roundPoints({ oldStars: 0, newStars: 1, difficulty: 1 }), 2);
   assert.equal(roundPoints({ oldStars: 0, newStars: 1, difficulty: 2 }), 3);
-  assert.equal(roundPoints({ oldStars: 1, newStars: 2, difficulty: 0 }), (1 + 1) * 1);
-  assert.equal(roundPoints({ oldStars: 2, newStars: 3, difficulty: 0 }), (1 + 2) * 1);
+  assert.equal(roundPoints({ oldStars: 1, newStars: 2, difficulty: 0 }), 1);
+  assert.equal(roundPoints({ oldStars: 2, newStars: 3, difficulty: 0 }), (1 + 3) * 1);
 });
 
-test("roundPoints(): the first mistake-free round pays by difficulty", () => {
-  // two stars means 10/10 on the first try (§10.3) — that IS the first
-  // perfect round, so it needs no stored flag of its own
-  assert.equal(roundPoints({ oldStars: 0, newStars: 2, difficulty: 0 }), (2 + 1) * 1);
-  assert.equal(roundPoints({ oldStars: 0, newStars: 2, difficulty: 1 }), (2 + 1) * 2);
-  assert.equal(roundPoints({ oldStars: 0, newStars: 2, difficulty: 2 }), (2 + 1) * 3);
-  // and only the first time: going 2 → 3 does not pay it again
-  assert.equal(roundPoints({ oldStars: 2, newStars: 3, difficulty: 2 }), (1 + 2) * 3);
+test("roundPoints(): the mistake-free round pays by difficulty", () => {
+  // three stars means 10/10 on the first try (§10.3) — that IS the mistake-free
+  // round, so the bonus needs no stored flag of its own
+  assert.equal(roundPoints({ oldStars: 2, newStars: 3, difficulty: 0 }), (1 + 3) * 1);
+  assert.equal(roundPoints({ oldStars: 2, newStars: 3, difficulty: 1 }), (1 + 3) * 2);
+  assert.equal(roundPoints({ oldStars: 2, newStars: 3, difficulty: 2 }), (1 + 3) * 3);
+  // and only the first time: a mastered tile pays nothing, ever again
+  assert.equal(roundPoints({ oldStars: 3, newStars: 3, difficulty: 2 }), 0);
+  // two stars is a near-miss, not a mastery: no bonus
+  assert.equal(roundPoints({ oldStars: 0, newStars: 2, difficulty: 0 }), 2);
 });
 
 test("roundPoints(): mastering a tile pays a bonus, once", () => {

@@ -21,7 +21,6 @@ applyIcons(document); // upgrade back-link / gear icons if SVGs exist
 
 const $ = (id) => document.getElementById(id);
 const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
-const FEEDBACK_MS = 2000;
 const NEXT_MS = 250;
 
 // React on pointerdown for instant response on touch devices; the later
@@ -189,7 +188,16 @@ function keyPress(k) {
 // re-enters that digit. During the post-correct transition it lands in `buffer`
 // and reappears prefilled in the next question. Handling a key means owning it.
 document.addEventListener("keydown", (e) => {
-  if (diff === 0 || !$("sum-overlay").hidden) return;
+  if (!$("sum-overlay").hidden) return;
+  // While the aid is up, Enter means "I have looked at it" on every difficulty.
+  if (phase === "wrong-wait") {
+    if (e.key === "Enter") {
+      continueRound();
+      e.preventDefault();
+    }
+    return;
+  }
+  if (diff === 0) return;
   if (/^[0-9]$/.test(e.key)) keyPress(e.key);
   else if (e.key === "Backspace") keyPress("⌫");
   else if (e.key === "Enter") keyPress("OK");
@@ -217,31 +225,45 @@ function submit(value, mcButton) {
     sfx.wrong();
     journey.stumble();
     hot = 0;
-    $("hotstreak").textContent = t("tryAgainSoon");
+    // The aid already says everything, and up to ten rows of dots need the room.
+    $("hotstreak").textContent = "";
     showFeedback();
-    setTimeout(askNext, FEEDBACK_MS);
   }
 }
 
 // Wrong answer: the question is replaced by the full equation plus a
 // dot-grid visual aid (§10.1), so the screen never grows past the viewport.
+// It stays until the child asks for the next question — a timer would take the
+// right answer away exactly from the child who needs longest to read it.
 function showFeedback() {
   const { kind, t: a, f: b } = question;
   const eq = kind === "div" ? `${a * b} ÷ ${b} = ${a}` : `${a} × ${b} = ${a * b}`;
   const fb = $("feedback");
   fb.innerHTML = `<span class="eq">${eq}</span>
-    <div class="dotgrid" style="grid-template-columns: repeat(${b}, 8px)">
+    <div class="dotgrid" style="grid-template-columns: repeat(${b}, auto)">
       ${"<i></i>".repeat(a * b)}
-    </div>`;
+    </div>
+    <button class="primary" id="fb-next"></button>`;
+  $("fb-next").textContent = t("gotIt");
+  fastPress($("fb-next"), continueRound);
   $("question").hidden = true;
   fb.hidden = false;
+  // We run from the answer button's pointerdown, but the browser focuses that
+  // button on the *later* mouseup — focusing here would be silently undone.
+  setTimeout(() => phase === "wrong-wait" && $("fb-next")?.focus(), 0);
+}
+
+function continueRound() {
+  if (phase !== "wrong-wait") return;
+  sfx.click();
+  askNext();
 }
 
 function endRound() {
   roundOver = true;
   const seconds = Math.round((Date.now() - t0) / 1000);
   const { firstTryOk, total } = session.progress();
-  const stars = starsFor(firstTryOk, total, seconds);
+  const stars = starsFor(firstTryOk, total);
 
   // persist boxes + best stars (§10.4)
   const full = boxesFromString(saved.box, POOL_COUNT);

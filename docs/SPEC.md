@@ -469,16 +469,14 @@ is retired; it does not appear anywhere.
   | Award | Value |
   |---|---|
   | each new star | 1× |
-  | your first mistake-free round on that tile | 1× |
-  | mastering the tile (its third star) | 2× |
+  | mastering the tile (its third star) | 3× |
 
   …each multiplied by the difficulty: **Leicht ×1, Mittel ×2, Schwer ×3**. An
   untouched tile is therefore worth 6, 12 or 18 — hard work pays **three times**
   what easy work pays, a gap a child can see on the tile and act on. A mastered
   tile is worth **nothing**: replaying the easiest table forever earns not one
-  point. "First mistake-free round" needs no flag of its own:
-  two stars *mean* 10/10 on the first try (§10.3), so crossing from below two
-  stars to two or more is exactly that round. See `roundPoints()`.
+  point. The mastery bonus needs no flag of its own: three stars *mean* 10/10 on
+  the first try (§10.3). See `roundPoints()`.
 - **The rules are shown, not written.** Every tile in the picker displays what
   it still pays (`tilePointsLeft()`). Three states, three looks, never
   confusable: **open** shows `+18`; **mastered** is green-ringed with `✓` and
@@ -603,11 +601,14 @@ walks the village lane; goal node: ringing the school bell.
 1. Region tap → instantly into a round at the last difficulty & table
    (first visit: Leicht, 2er-Reihe).
 2. Round of 10 (per §7.3): `7 × 8 = ?`, journey strip on top (§8.2).
-3. Wrong → correct answer shown 2 s **with a dot-grid visual aid** (7 rows of
-   8 dots), box drops, re-queue per §7.
+3. Wrong → correct answer shown **with a dot-grid visual aid** (7 rows of
+   8 dots), box drops, re-queue per §7. It stays until the child presses
+   „Verstanden" — a timer would take the answer away from exactly the child who
+   needs longest to read it. The card can hold ten rows of dots, so the dots
+   scale with the viewport and the streak line yields its row.
 4. Summary overlay, kept deliberately quiet: stars, one muted line of numbers
-   (`{ok}/{total} · {s} s`), the trophy if one was earned, one primary
-   „Nochmal!" button, and two secondary actions (map, table picker). A child
+   (`{ok}/{total} · {s} s`), the price of the next star (§10.3), the trophy if
+   one was earned, one primary „Nochmal" button, and two secondary actions (map, table picker). A child
    who has just won reads almost nothing — the stars say how it went and the
    trophy is the prize, so neither gets a sentence of its own. Table picker
    via the header chip: an 11-tile overlay (Reihen 1–10 + „Alle") each showing
@@ -619,13 +620,18 @@ walks the village lane; goal node: ringing the school bell.
 |---|---|---|
 | Leicht | Reihen 1, 2, 5, 10; dot-grid hint always visible | multiple choice (4 buttons) |
 | Mittel | all Reihen 1–10 | on-screen keypad |
-| Schwer | mixed, gap questions (`_ × 7 = 42`), division sprinkled in | keypad; optional 60 s challenge toggle |
+| Schwer | mixed, gap questions (`_ × 7 = 42`), division sprinkled in | keypad |
 
 „Alle gemischt" draws across tables weighted by the adaptive boxes.
 
 ### 10.3 Stars (per table & difficulty)
 
-⭐ ≥ 8/10 first-try · ⭐⭐ 10/10 first-try · ⭐⭐⭐ 10/10 first-try in < 60 s.
+8/10 → ⭐ · 9/10 → ⭐⭐ · 10/10 → ⭐⭐⭐, counting first tries only.
+
+**Accuracy is the only criterion.** Speed is not: a child who reads or taps
+slowly knows the times tables just as well, and a clock is not something they
+can act on. The round's duration is still shown in the summary as a fact, never
+as a threshold.
 
 A wrong answer leaves its item unsolved, so the round asks it again: a round
 ends after ten *solved* items, and only the first try counts for stars.

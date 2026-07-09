@@ -65,21 +65,25 @@ test("multiple choice: 4 unique positive options including the answer", () => {
   }
 });
 
-test("star criteria (§10.3)", () => {
-  assert.equal(starsFor(10, 10, 45), 3);
-  assert.equal(starsFor(10, 10, 60), 2);
-  assert.equal(starsFor(9, 10, 30), 1);
-  assert.equal(starsFor(8, 10, 30), 1);
-  assert.equal(starsFor(7, 10, 30), 0);
+test("star criteria (§10.3): accuracy only, never the clock", () => {
+  assert.equal(starsFor(10, 10), 3);
+  assert.equal(starsFor(9, 10), 2);
+  assert.equal(starsFor(8, 10), 1);
+  assert.equal(starsFor(7, 10), 0);
+  // Regression: stars used to depend on the round's duration, which punished a
+  // child for reading or tapping slowly. starsFor takes no time argument, and a
+  // stray third argument must not be able to change the outcome.
+  assert.equal(starsFor.length, 2);
+  assert.equal(starsFor(10, 10, 999), 3);
 });
 
 test("the summary names the price of the next star", () => {
   // A child who scores 9/10 keeps one star and is told nothing about why.
   // Every un-earned star must have a goal line; a mastered round must not.
   assert.equal(nextStarGoal(0), "starGoal1");
-  assert.equal(nextStarGoal(starsFor(9, 10, 30)), "starGoal2");
-  assert.equal(nextStarGoal(starsFor(10, 10, 90)), "starGoal3");
-  assert.equal(nextStarGoal(starsFor(10, 10, 20)), null);
+  assert.equal(nextStarGoal(starsFor(8, 10)), "starGoal2");
+  assert.equal(nextStarGoal(starsFor(9, 10)), "starGoal3");
+  assert.equal(nextStarGoal(starsFor(10, 10)), null);
 });
 
 test("star digit string: 11 slots, mixed table at index 10", () => {
