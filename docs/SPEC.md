@@ -315,6 +315,32 @@ without touching the call sites.
 
 - CSS baseline targets a **360 px-wide portrait phone**; wider layouts only
   via `min-width` media queries.
+
+  **360 is a current number, not a legacy one.** These are CSS pixels, not
+  hardware pixels: a Samsung Galaxy A- or S-series phone has a 1080 px panel
+  and reports **360 × 800** to the browser, which makes 360 the single most
+  common width on Android today. The narrowest current iPhone (SE 3) reports
+  375. Raising the baseline to 375 or 390 would drop exactly the phones this
+  audience is most likely to hold. Below 360 there is essentially only the
+  first-generation iPhone SE (320), stranded on iOS 15.
+
+  **The 640 in the `360×640` test size is not a device height.** No current
+  phone is that short. It stands for the *visible* height of a 360 px-wide
+  phone once the browser's own chrome is on screen: Chrome for Android's
+  address bar takes ~100–130 px of an 800 px viewport, and iOS Safari adds its
+  bars plus `env(safe-area-inset-bottom)`. Testing at 640 is therefore a
+  deliberately pessimistic stand-in for a modern phone, not a museum piece.
+  Do not "modernise" it away.
+
+  Measured 2026-07-09 with `tools/shoot.mjs`: the Einmaleins screen never
+  scrolls and its OK key never leaves the viewport at 320×568, 360×568/600/
+  640/700/740/800, 375×667, 390×844 or 412×915, and the tallest state — the
+  ten-row dot-grid aid on the 10× table — clears both edges of `.stage` at
+  every one of them (29 px of headroom even at 320×568). Nothing in the layout
+  is pinned to a height: `.stage` is a flex child, the question uses
+  `clamp(2.6rem, 19vw, 5rem)` and the dots `clamp(5px, 1.05vh, 9px)`.
+  A zero gap between `.stage` and the keypad is that flexbox at rest, **not**
+  an overflow — do not read it as one.
 - Touch targets ≥ 48×48 px; primary game actions in the lower half of the
   screen (thumb reach).
 - Answer input via large on-screen keypads/answer buttons; the OS keyboard
