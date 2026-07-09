@@ -86,3 +86,12 @@ export function withStarDigit(starString, table, value) {
   s[tableStarIndex(table)] = String(value);
   return s.join("");
 }
+
+// The question must always stay on one line (§10.1). Given the size the CSS
+// wishes for, the width the text needs at that size, and the width available,
+// return the size to use: unchanged when it already fits, otherwise shrunk to
+// the largest size that does. Pure so it can be tested without a DOM.
+export function fittedFontSize(size, avail, width) {
+  if (!(size > 0) || !(avail > 0) || !(width > 0) || width <= avail) return size;
+  return Math.floor((size * avail) / width);
+}

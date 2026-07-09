@@ -13,7 +13,7 @@ import { renderLevelChip, initSettingsOverlay } from "../../assets/js/chrome.js"
 import strings from "./i18n.js";
 import {
   POOL_COUNT, EASY_TABLES, poolFor, questionFor, choicesFor,
-  starsFor, starDigit, withStarDigit,
+  starsFor, starDigit, withStarDigit, fittedFontSize,
 } from "./logic.js";
 
 initI18n(strings);
@@ -111,12 +111,9 @@ function askNext() {
 function fitQuestion() {
   const el = $("question");
   el.style.fontSize = "";
-  const avail = el.clientWidth;
-  if (!avail) return;
-  const width = el.scrollWidth;
-  if (width <= avail) return;
   const size = parseFloat(getComputedStyle(el).fontSize);
-  el.style.fontSize = `${Math.floor((size * avail) / width)}px`;
+  const fitted = fittedFontSize(size, el.clientWidth, el.scrollWidth);
+  if (fitted !== size) el.style.fontSize = `${fitted}px`;
 }
 
 function renderQuestion() {

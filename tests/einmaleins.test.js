@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   POOL_COUNT, EASY_TABLES, pairIndex, pairOf, poolFor, questionFor,
-  choicesFor, starsFor, starDigit, withStarDigit, tableStarIndex,
+  choicesFor, starsFor, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
 } from "../games/einmaleins/logic.js";
 
 const seeded = (seed = 1) => () => {
@@ -84,4 +84,35 @@ test("star digit string: 11 slots, mixed table at index 10", () => {
   s = withStarDigit(s, 0, 3);
   assert.equal(starDigit(s, 0), 3);
   assert.equal(starDigit(s, 7), 2);
+});
+
+// Regression: at 19vw the longest equation wrapped to two lines on a phone.
+// The rendered width of a question in the display face is ~5.1em for the
+// shortest ("2 × 2 = ?") and ~7.5em for the longest ("100 ÷ 10 = 100").
+test("fittedFontSize(): the question never needs a second line", () => {
+  const EM_SHORT = 5.07;
+  const EM_LONG = 7.51;
+
+  // a short question at the wished-for size already fits: leave it alone
+  const wish = 76; // 19vw at 402px
+  assert.equal(fittedFontSize(wish, 388, EM_SHORT * wish), wish);
+
+  // the long one does not fit, so it shrinks — and then it does fit
+  const fitted = fittedFontSize(wish, 388, EM_LONG * wish);
+  assert.ok(fitted < wish, "long question must shrink");
+  assert.ok(EM_LONG * fitted <= 388, "shrunk question must fit the line");
+
+  // every phone width we target, for the longest question
+  for (const avail of [292, 332, 388, 532]) {
+    const size = fittedFontSize(wish, avail, EM_LONG * wish);
+    assert.ok(EM_LONG * size <= avail, `overflows at ${avail}px`);
+    assert.ok(size > 0, `nonsense size at ${avail}px`);
+  }
+});
+
+test("fittedFontSize(): degenerate measurements never change the size", () => {
+  // an element that is not laid out yet reports 0 — do not divide by it
+  assert.equal(fittedFontSize(76, 0, 0), 76);
+  assert.equal(fittedFontSize(76, 388, 0), 76);
+  assert.equal(fittedFontSize(76, 0, 500), 76);
 });
