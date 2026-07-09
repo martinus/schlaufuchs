@@ -101,6 +101,7 @@
 
         <!-- Rechenberg (Rechnungen) top right -->
         <a href="games/rechnungen/" class="region" id="region-rechnungen" data-game="rechnungen">
+          <rect class="hit" fill="transparent" x="202" y="40" width="148" height="190"/>
           <!-- foothills seat the peaks on the ground — nothing floats (§3.1) -->
           <ellipse cx="276" cy="188" rx="66" ry="14" fill="#96c47f"/>
           <polygon points="232,188 294,60 348,188" fill="#9aa0a6"/>
@@ -117,6 +118,7 @@
 
         <!-- Wörterwald (Vokabeln) left -->
         <a href="games/vokabeln/" class="region" id="region-vokabeln" data-game="vokabeln">
+          <rect class="hit" fill="transparent" x="14" y="102" width="144" height="142"/>
           <g>
             <ellipse cx="86" cy="190" rx="70" ry="13" fill="#96c47f"/>
             <polygon points="30,175 55,105 80,175" fill="#3f7d3a"/>
@@ -137,6 +139,7 @@
 
         <!-- Tippsee (Tippen) right middle -->
         <a href="games/tippen/" class="region" id="region-tippen" data-game="tippen">
+          <rect class="hit" fill="transparent" x="218" y="226" width="126" height="146"/>
           <!-- hut first, lake on top: the shore reads as being in front (§3.1) -->
           <ellipse cx="248" cy="264" rx="26" ry="9" fill="#96c47f"/>
           <rect x="238" y="242" width="30" height="20" rx="2" fill="#b06f3c"/>
@@ -153,6 +156,7 @@
 
         <!-- Lesewiese (Lesen) bottom left -->
         <a href="games/lesen/" class="region" id="region-lesen" data-game="lesen">
+          <rect class="hit" fill="transparent" x="24" y="400" width="128" height="138"/>
           <ellipse cx="88" cy="472" rx="62" ry="30" fill="#a8d08d"/>
           <rect x="78" y="442" width="12" height="30" fill="#6b4423"/>
           <circle cx="84" cy="429" r="26" fill="#3f7d3a"/>
@@ -168,6 +172,8 @@
 
         <!-- Zahlendorf (Einmaleins) center -->
         <a href="games/einmaleins/" class="region" id="region-einmaleins" data-game="einmaleins">
+          <!-- Mara tapped the gap between the two houses and nothing happened. -->
+          <rect class="hit" fill="transparent" x="122" y="350" width="110" height="120"/>
           <g>
             <ellipse cx="180" cy="428" rx="62" ry="11" fill="#96c47f"/>
             <rect x="130" y="395" width="38" height="32" fill="#f3d9b1"/>
@@ -194,15 +200,17 @@
 
         <!-- Pokalraum (Trophy Room) bottom right -> trophy album -->
         <a href="album.html" class="region" id="region-pokalraum" data-game="pokalraum">
+          <rect class="hit" fill="transparent" x="246" y="406" width="96" height="136"/>
           <ellipse cx="278" cy="498" rx="60" ry="12" fill="#96c47f"/>
           <rect x="233" y="494" width="90" height="8" fill="#c9b79c"/>
           <rect x="241" y="442" width="74" height="52" fill="#f5f2ec"/>
+          <!-- two columns, not four: the 11px gaps between four of them left no
+               room to seat a trophy big enough to recognise from arm's length -->
           <rect x="247" y="444" width="7" height="46" fill="#d9cbb8"/>
-          <rect x="265" y="444" width="7" height="46" fill="#d9cbb8"/>
-          <rect x="283" y="444" width="7" height="46" fill="#d9cbb8"/>
           <rect x="301" y="444" width="7" height="46" fill="#d9cbb8"/>
           <polygon points="234,442 278,412 322,442" fill="#b06f3c"/>
-          <text data-icon="deco-trophy" data-icon-size="16" x="278" y="408" font-size="16" text-anchor="middle">🏆</text>
+          <!-- the room says what it holds: a trophy on its own facade -->
+          <text data-icon="deco-trophy" data-icon-size="24" x="278" y="484" font-size="24" text-anchor="middle">🏆</text>
           <g class="layer-thriving"><text data-icon="deco-sparkle" data-icon-size="13" x="246" y="432" font-size="13">✨</text></g>
           <g class="layer-mastered"><text data-icon="deco-party" data-icon-size="15" x="311" y="432" font-size="15">🎉</text></g>
           <text class="region-label" x="278" y="518" data-i18n="region_pokalraum">Pokalraum</text>

@@ -41,16 +41,17 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 // Four of the five games are stubs. Their regions are drawn under fog so the
 // island never promises what the site cannot deliver (§3.1). The fog is built
 // from the region's own art, so it fits a mountain as well as a lake, and it
-// is `pointer-events: none` — regions are hit-tested by their art, and a fog
-// blob spanning the bounding box would quietly hand back the invisible
-// hotspot that was removed from this map on purpose.
+// is `pointer-events: none` — the tap belongs to the region's own `.hit` rect,
+// which is bounded; a fog blob is not, and it would grey out its neighbours.
 function fogRegion(region) {
   if (region.querySelector(".fog")) return; // render() runs again after a reset
   const label = region.querySelector(".region-label");
 
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   for (const el of region.children) {
-    if (el === label || el.classList.contains("region-badge")) continue;
+    // The hit rect is deliberately larger than the art. Fogging its bbox would
+    // blow the fog out over the label, the badge and the region next door.
+    if (el === label || el.classList.contains("region-badge") || el.classList.contains("hit")) continue;
     const b = el.getBBox();
     if (b.width === 0 || b.height === 0) continue; // hidden thriving/mastered layers
     x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y);
@@ -86,6 +87,74 @@ function fogRegion(region) {
   region.insertBefore(g, label); // over the art, under the label and badge
 }
 
+// A region's name, on a plate, so it reads as a button. Mara tapped the fog and
+// the empty grass and never once tried a house: nothing on this map said "press
+// me". The plate is measured from the label on every render, because switching
+// language makes "Times tables" out of "Einmaleins" and a plate cut to the old
+// name would sit under half of the new one.
+function ensurePlate(region) {
+  const label = region.querySelector(".region-label");
+  let plate = region.querySelector(".label-plate");
+  if (!plate) {
+    plate = document.createElementNS(SVG_NS, "rect");
+    plate.setAttribute("class", "label-plate");
+    plate.setAttribute("rx", "9");
+    region.insertBefore(plate, label);
+  }
+  const b = label.getBBox();
+  plate.setAttribute("x", (b.x - 7).toFixed(1));
+  plate.setAttribute("y", (b.y - 4).toFixed(1));
+  plate.setAttribute("width", (b.width + 14).toFixed(1));
+  plate.setAttribute("height", (b.height + 8).toFixed(1));
+}
+
+// A fogged region is not a door. It used to be one: the tap navigated to a stub
+// page that explained, in a sentence, that the game does not exist yet — and
+// Mara, who reads almost nothing, was simply gone from the map. Now the fog
+// wiggles and says "Bald!", and she is still standing where she was.
+//
+// The bubble is removed by a timer, never by `animationend`: under
+// `prefers-reduced-motion` no animation ever starts, so no event ever fires and
+// the bubble would stay on the map forever.
+const BUBBLE_MS = 1300;
+let bubbleTimer = 0;
+
+function soonBubble(region) {
+  const svg = region.ownerSVGElement;
+  clearTimeout(bubbleTimer);
+  svg.querySelector(".soon-bubble")?.remove();
+  for (const f of svg.querySelectorAll(".fog.wiggle")) f.classList.remove("wiggle");
+
+  const b = region.querySelector(".region-label").getBBox();
+  const cx = b.x + b.width / 2;
+  const top = b.y - 30;
+  const text = t("soonBubble");
+  const w = Math.max(48, text.length * 10 + 18);
+
+  const g = document.createElementNS(SVG_NS, "g");
+  g.setAttribute("class", "soon-bubble");
+  g.innerHTML = `<rect x="${(cx - w / 2).toFixed(1)}" y="${top}" width="${w}" height="26" rx="13"/>
+    <text x="${cx.toFixed(1)}" y="${top + 18}" text-anchor="middle">${text}</text>`;
+  // after #map-fox, so a region painted later cannot cover it
+  svg.appendChild(g);
+
+  const fog = region.querySelector(".fog");
+  fog?.classList.add("wiggle");
+  bubbleTimer = setTimeout(() => {
+    g.remove();
+    fog?.classList.remove("wiggle");
+  }, BUBBLE_MS);
+}
+
+// Registered once, on the map itself: `render()` runs again on every settings
+// change, and a listener added there would fire twice, then three times.
+document.querySelector(".worldmap")?.addEventListener("click", (e) => {
+  const region = e.target.closest?.("a.region.locked");
+  if (!region) return;
+  e.preventDefault();
+  soonBubble(region);
+});
+
 function render() {
   const state = loadState();
   // one cookie parse for the whole map, not one per section
@@ -103,13 +172,16 @@ function render() {
       // the island remembers: a mastered region's road turns to cobblestone
       pave(game, rs === "mastered");
 
-      // a region whose game does not exist yet sits under fog. The link stays:
-      // its page says so in words, and a screen reader hears it before the tap.
+      // A region whose game does not exist yet sits under fog and does not open:
+      // the href stays for the deep link, the click is cancelled (see above).
       const locked = !isPlayable(game);
       region.classList.toggle("locked", locked);
       if (locked) {
         fogRegion(region);
         region.setAttribute("aria-label", `${t(`region_${game}`)} — ${t("lockedHint")}`);
+        region.setAttribute("aria-disabled", "true");
+      } else {
+        ensurePlate(region);
       }
     }
   }
@@ -127,6 +199,7 @@ function render() {
     pkRegion.classList.remove("thriving", "mastered");
     if (trophies >= 60) pkRegion.classList.add("mastered");
     else if (trophies >= 20) pkRegion.classList.add("thriving");
+    ensurePlate(pkRegion);
   }
 
   // the fox stands on the last-played region (§3.1)

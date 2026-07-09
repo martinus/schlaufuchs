@@ -58,6 +58,8 @@ export default {
   diffWorth: "{d} — jeder Stern zählt {n}×",
   starsTotal: "{n} Sterne",
   lockedHint: "Noch nicht verfügbar",
+  // shown in a bubble when a child taps a fogged region — she stays on the map
+  soonBubble: "Bald!",
   comingSoon: "Dieses Spiel gibt es noch nicht. Im Zahlendorf kannst du schon üben.",
   region_pokalraum: "Pokalraum",
   roomIntro: "Hier steht, was du gewonnen hast. Punkte gibt es für neue Sterne — je schwerer die Aufgabe, desto mehr.",
