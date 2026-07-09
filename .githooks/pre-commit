@@ -1,0 +1,38 @@
+#!/bin/sh
+# Two things that have actually gone wrong in this repo.
+#
+# 1. A commit that does not pass `node --test`. It is the only gate there is.
+# 2. A bulk edit of a test file that silently *deletes* tests. This happened:
+#    a string-slice rewrite of tests/einmaleins.test.js dropped the two
+#    fittedFontSize tests, the suite went green with fewer tests, and nothing
+#    said a word.
+#
+# Override either with:  SKIP_TEST_GUARD=1 git commit ...
+#
+# Install with: tools/install-hooks.sh
+
+set -e
+
+if [ -n "$SKIP_TEST_GUARD" ]; then
+  echo "pre-commit: guards skipped (SKIP_TEST_GUARD is set)"
+  exit 0
+fi
+
+if ! node --test >/dev/null 2>&1; then
+  echo "pre-commit: node --test fails. Run it to see why." >&2
+  exit 1
+fi
+
+# Net change in the number of `test(...)` declarations in the staged diff.
+added=$(git diff --cached -U0 -- tests/ | grep -c '^+test(' || true)
+removed=$(git diff --cached -U0 -- tests/ | grep -c '^-test(' || true)
+net=$((added - removed))
+
+if [ "$net" -lt 0 ]; then
+  echo "pre-commit: this commit removes $((-net)) more test(...) than it adds." >&2
+  echo "            Deleting a test is a real decision. If you meant it, say so" >&2
+  echo "            in the commit message and re-run with SKIP_TEST_GUARD=1." >&2
+  exit 1
+fi
+
+exit 0

@@ -1,0 +1,38 @@
+#!/bin/sh
+# PRs here are squash-merged, so a branch that keeps committing after its PR
+# landed silently reverts whatever reached `main` in the meantime. This nearly
+# deleted tests/svg-icon-validator.js and tests/graphics-assets.test.js once.
+#
+# So: before a push, run the suite, and *name every file this branch would
+# delete from main*. Deleting a file is sometimes right — it is never a thing
+# to discover after the merge.
+#
+# Override with: SKIP_TEST_GUARD=1 git push ...
+#
+# Install with: tools/install-hooks.sh
+
+set -e
+
+if [ -n "$SKIP_TEST_GUARD" ]; then
+  echo "pre-push: guards skipped (SKIP_TEST_GUARD is set)"
+  exit 0
+fi
+
+if ! node --test >/dev/null 2>&1; then
+  echo "pre-push: node --test fails. The deploy workflow runs it too." >&2
+  exit 1
+fi
+
+if git rev-parse --verify --quiet origin/main >/dev/null; then
+  deleted=$(git diff --diff-filter=D --name-only origin/main..HEAD || true)
+  if [ -n "$deleted" ]; then
+    echo "pre-push: this branch DELETES these files from main:" >&2
+    echo "$deleted" | sed 's/^/    /' >&2
+    echo "" >&2
+    echo "          If that is intended, push with SKIP_TEST_GUARD=1." >&2
+    echo "          If a name here surprises you, you are undoing someone's merge." >&2
+    exit 1
+  fi
+fi
+
+exit 0
