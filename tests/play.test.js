@@ -54,6 +54,14 @@ test("the driver reads a German division", () => {
   assert.equal(solveQuestion("10 : 2 = ?"), 5);
 });
 
+// The aid lost its "Verstanden" button: the driver leaves it the way a child
+// does now, by answering correctly.
+test("the driver leaves the aid by answering, not by pressing a button", () => {
+  assert.ok(!src.includes("fb-next"), "the driver still reaches for a button that is gone");
+  const aid = src.slice(src.indexOf("if (aidUp())"));
+  assert.match(aid.slice(0, 700), /await answer\(want\)/, "it must enter the right answer");
+});
+
 test("the driver refuses what it cannot read, instead of guessing", () => {
   assert.throws(() => solveQuestion("7 x 8 = ?"), /unknown operator/);
   assert.throws(() => solveQuestion("nonsense"), /not an equation/);

@@ -73,7 +73,6 @@ export default {
   sumOk5: "Strong!",
   sumOk6: "You've got this!",
   roundStat: "{ok}/{total}",
-  gotIt: "Got it",
   newBest: "New best!",
   starGoal1: "⭐ for 6 out of 10 right",
   starGoal2: "⭐⭐ for 8 out of 10 right",

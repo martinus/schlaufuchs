@@ -8,7 +8,15 @@ import { read } from "./pages.js";
 import {
   POOL_COUNT, EASY_TABLES, pairIndex, pairOf, poolFor, questionFor,
   choicesFor, starsFor, nextStarGoal, ownedStars, STAR_SLOTS, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
+  retryStep,
 } from "../games/einmaleins/logic.js";
+
+// Type a whole string through retryStep, returning the final step.
+function typeAll(keys, answer, start = "") {
+  let step = { input: start, state: "typing" };
+  for (const k of keys) step = retryStep(step.input, k, answer);
+  return step;
+}
 
 const seeded = (seed = 1) => () => {
   seed = (seed * 1664525 + 1013904223) % 4294967296;
@@ -187,6 +195,70 @@ test("the chip looks like the button it is", () => {
 test('the "Alle" tile says with a picture that it mixes the tables', () => {
   const src = read("games/einmaleins/einmaleins.js");
   assert.match(src, /tbl === 0 \? `🎲 \$\{tbl2short\(tbl\)\}`/);
+});
+
+// Mara clicked "Verstanden" after a wrong answer without ever registering that
+// she had erred. Now the aid asks her to enter the right answer herself, which
+// is the smallest act that proves she read it (§8.1).
+test("retryStep: typing the answer ends the aid, at the last digit", () => {
+  for (let answer = 1; answer <= 100; answer++) {
+    const digits = [...String(answer)];
+    // every prefix but the last keeps typing; the last one is done
+    for (let i = 1; i < digits.length; i++) {
+      const step = typeAll(digits.slice(0, i), answer);
+      assert.equal(step.state, "typing", `${answer}: prefix "${step.input}"`);
+    }
+    const done = typeAll(digits, answer);
+    assert.deepEqual(done, { input: String(answer), state: "done" },
+      `${answer}: the answer must be accepted without an OK`);
+  }
+});
+
+test("retryStep: a digit that cannot become the answer is refused at once", () => {
+  // 30: "4" is refused immediately, not after a second digit
+  assert.deepEqual(retryStep("", "4", 30), { input: "", state: "reject" });
+  // 30: "3" is a prefix, "1" then kills it
+  assert.deepEqual(retryStep("", "3", 30), { input: "3", state: "typing" });
+  assert.deepEqual(retryStep("3", "1", 30), { input: "", state: "reject" });
+  // a rejected input is cleared, so the child starts from an empty gap
+  assert.equal(typeAll(["4", "9"], 30).input, "");
+
+  for (let answer = 1; answer <= 100; answer++) {
+    for (const d of "0123456789") {
+      const step = retryStep("", d, answer);
+      const wanted = String(answer).startsWith(d);
+      assert.equal(step.state === "reject", !wanted, `${answer}: first digit ${d}`);
+    }
+  }
+});
+
+test("retryStep: backspace, OK and junk keys never strand the child", () => {
+  assert.deepEqual(retryStep("4", "⌫", 42), { input: "", state: "typing" });
+  assert.deepEqual(retryStep("", "⌫", 42), { input: "", state: "typing" }, "backspace on empty is harmless");
+
+  // OK is redundant — the answer completes itself — but it must still behave
+  assert.deepEqual(retryStep("42", "OK", 42), { input: "42", state: "done" });
+  assert.deepEqual(retryStep("", "OK", 42), { input: "", state: "typing" }, "OK on empty does nothing");
+  assert.deepEqual(retryStep("4", "OK", 42), { input: "", state: "reject" });
+
+  for (const junk of ["x", "", "-", "1.5", "Enter", " "]) {
+    const step = retryStep("4", junk, 42);
+    assert.deepEqual(step, { input: "4", state: "typing" }, `junk key ${JSON.stringify(junk)}`);
+  }
+  // and the input never grows past what a two-digit answer could need
+  assert.ok(typeAll(["1", "0", "0", "0"], 100).input.length <= 3);
+});
+
+test("the aid shows the child's own wrong answer, struck through", () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  const fn = src.slice(src.indexOf("function showFeedback"), src.indexOf("function continueRound"));
+  assert.match(fn, /eq-wrong/, "the wrong answer must be marked as wrong");
+  assert.match(fn, /<s>/, "…and struck through, so it reads as retracted");
+  assert.match(fn, /retry-gap/, "…and the child gets a gap to fill");
+  assert.ok(!fn.includes("fb-next"), "the 'Verstanden' button is retired");
+  assert.ok(!src.includes("fb-next"), "…everywhere");
+  assert.ok(!("gotIt" in de) && !("gotIt" in en), "…and so is its string");
+  assert.match(src, /retryStep/, "the aid is driven by the pure retryStep");
 });
 
 test("the summary names the price of the next star", () => {

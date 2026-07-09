@@ -112,7 +112,11 @@
 
       if (aidUp()) {
         trace.push({ q: n, text, gave: want + 1, aid: true, ...readScene() });
-        $("fb-next").click();
+        // The aid has no button any more: the way out is entering the right
+        // answer. On Leicht that is a tap on the correct choice; on the keypad
+        // the answer completes itself at the last digit, and `answer()`'s
+        // trailing OK click lands in `correct-wait`, where OK does nothing.
+        await answer(want);
         await sleep(160);
       } else {
         trace.push({ q: n, text, gave: want, ...readScene() });

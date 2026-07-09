@@ -27,7 +27,6 @@ test("the game owns the keys it handles, so Enter cannot re-click a focused key"
     "a handled key must be consumed, or its default action fires as well",
   );
   // and the guard must come after the dispatch, not swallow unhandled keys.
-  // (The aid's own Enter branch preventDefaults earlier, so look at the last one.)
   assert.ok(
     handler.indexOf("else return;") < handler.lastIndexOf("e.preventDefault()"),
     "unhandled keys (Tab, F5, …) must keep their default behaviour",
@@ -35,23 +34,32 @@ test("the game owns the keys it handles, so Enter cannot re-click a focused key"
 });
 
 // Regression: a wrong answer showed the right one for 2000 ms and then took it
-// away on a timer. A child who reads slowly never got to see it.
-test("the feedback aid waits for a button, not for a clock", () => {
+// away on a timer. A child who reads slowly never got to see it. Then it grew a
+// "Verstanden" button, and Mara pressed it without ever noticing she had erred.
+// The aid now waits for the child to enter the right answer herself.
+test("the feedback aid waits for the correct answer, not for a clock or a button", () => {
   const submit = einmaleins.slice(
     einmaleins.indexOf("function submit("),
-    einmaleins.indexOf("function showFeedback()"),
+    einmaleins.indexOf("function showFeedback("),
   );
   // the wrong-answer branch is everything from `} else {` to the end of submit()
   const wrongBranch = submit.slice(submit.indexOf("} else {"));
-  assert.ok(wrongBranch.includes("showFeedback()"), "a wrong answer must show the aid");
+  assert.ok(wrongBranch.includes("showFeedback(value)"), "a wrong answer must show the aid");
   assert.ok(
     !wrongBranch.includes("setTimeout"),
     "the wrong-answer branch must not schedule anything on a timer",
   );
-  assert.ok(einmaleins.includes('$("fb-next")'), "the aid must offer a continue button");
+  assert.ok(!einmaleins.includes("fb-next"), "the aid must not offer a way past the answer");
+  assert.ok(einmaleins.includes("retryStep"), "it is driven by the pure retryStep");
   assert.ok(
     einmaleins.includes("function continueRound()"),
     "only continueRound() leaves the aid",
+  );
+  // …and it is reached from exactly two places: the keypad path and the tap path
+  assert.equal(
+    (einmaleins.match(/continueRound\(\)/g) ?? []).length - 1, // minus the definition
+    2,
+    "the aid has one exit, used by the keypad and by the multiple-choice tap",
   );
 });
 
@@ -60,6 +68,7 @@ test("the feedback aid waits for a button, not for a clock", () => {
 // parts have to scale with the viewport instead of sitting at fixed sizes.
 test("the feedback card is sized to fit the shortest phone", () => {
   const css = readFileSync(abs("assets/css/schlaufuchs.css"), "utf8");
+  assert.ok(!css.includes("#fb-next"), "a rule for a button that no longer exists");
   const dot = css.slice(css.indexOf(".dotgrid i {"), css.indexOf("}", css.indexOf(".dotgrid i {")));
   assert.ok(/width:\s*clamp\(/.test(dot), "the dot must scale with the viewport height");
   // The stars, the basket and the fox are one scene now, and the whole scene

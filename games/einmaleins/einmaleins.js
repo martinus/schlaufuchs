@@ -15,7 +15,7 @@ import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
 import strings from "./i18n.js";
 import {
   POOL_COUNT, EASY_TABLES, poolFor, questionFor, choicesFor,
-  starsFor, nextStarGoal, ownedStars, starDigit, withStarDigit, fittedFontSize,
+  starsFor, nextStarGoal, ownedStars, starDigit, withStarDigit, fittedFontSize, retryStep,
 } from "./logic.js";
 
 initI18n(strings);
@@ -73,6 +73,8 @@ let question = null;
 let currentId = null;
 let input = "";
 let buffer = ""; // digits typed during the short post-correct transition
+let retry = ""; // the answer the child re-enters after getting it wrong
+let choices = []; // Leicht: this question's four options, so the aid can reuse them
 let phase = "answer"; // answer | correct-wait | wrong-wait
 let best = 0; // stars already won on this tile, before the round
 let roundOver = false;
@@ -117,12 +119,19 @@ function askNext() {
   question = questionFor(id, diff, Math.random, t("divSign"));
   input = buffer.slice(0, 3);
   buffer = "";
+  retry = "";
   phase = "answer";
   $("feedback").hidden = true;
   $("question").hidden = false;
   renderQuestion();
   renderStatus();
-  if (diff === 0) renderChoices();
+  if (diff === 0) {
+    // drawn once per question: the aid re-renders the SAME four options, and a
+    // reshuffle between the answer and the retry would move them under the
+    // finger that is already going for one
+    choices = choicesFor(question);
+    renderChoices();
+  }
 }
 
 // The scene says it all: the basket holds what you own, the sky what is left.
@@ -157,18 +166,27 @@ function renderQuestion() {
 window.addEventListener("resize", () => question && fitQuestion());
 document.fonts?.ready.then(() => question && fitQuestion());
 
-// Multiple choice (Leicht): rebuilt per question.
+// Multiple choice (Leicht): rebuilt per question, and again by the aid — where
+// the same four options come back and only the right one lets the round go on.
 function renderChoices() {
   const box = $("answers");
   box.innerHTML = "";
   const mc = document.createElement("div");
   mc.className = "mc";
-  for (const opt of choicesFor(question)) {
+  for (const opt of choices) {
     const b = document.createElement("button");
     b.textContent = opt;
     fastPress(b, () => {
-      if (phase !== "answer") return;
-      submit(opt, b);
+      if (phase === "answer") {
+        submit(opt, b);
+      } else if (phase === "wrong-wait") {
+        if (opt === question.answer) {
+          b.classList.add("flash-ok");
+          continueRound();
+        } else {
+          rejectRetry(b);
+        }
+      }
     });
     mc.appendChild(b);
   }
@@ -196,7 +214,16 @@ function buildKeypad() {
 
 function keyPress(k) {
   if (roundOver) return;
-  if (phase === "wrong-wait") return; // feedback is being shown
+  if (phase === "wrong-wait") {
+    if (diff === 0) return; // Leicht re-answers by tapping a choice, not typing
+    const step = retryStep(retry, k, question.answer);
+    if (step.state === "reject") return rejectRetry();
+    retry = step.input;
+    renderRetry();
+    if (step.state === "done") continueRound();
+    else sfx.click();
+    return;
+  }
   if (phase === "correct-wait") {
     // fast typists: digits pressed during the transition carry over
     if (/^[0-9]$/.test(k)) buffer = (buffer + k).slice(0, 3);
@@ -220,14 +247,8 @@ document.addEventListener("keydown", (e) => {
   // summary was up, so with the settings sheet or the picker open, digits went
   // into the question behind it and Enter submitted the answer.
   if (anyOverlayOpen()) return;
-  // While the aid is up, Enter means "I have looked at it" on every difficulty.
-  if (phase === "wrong-wait") {
-    if (e.key === "Enter") {
-      continueRound();
-      e.preventDefault();
-    }
-    return;
-  }
+  // The aid is answered with the keypad too, so its keys go the same way:
+  // keyPress() dispatches on the phase.
   if (diff === 0) return;
   if (/^[0-9]$/.test(e.key)) keyPress(e.key);
   else if (e.key === "Backspace") keyPress("⌫");
@@ -252,41 +273,60 @@ function submit(value, mcButton) {
     setTimeout(askNext, NEXT_MS);
   } else {
     phase = "wrong-wait";
+    retry = "";
     sfx.wrong();
     journey.stumble();
     // The aid needs the room; the whole scene hides while it is up.
-    showFeedback();
+    showFeedback(value);
   }
 }
 
-// Wrong answer: the question is replaced by the full equation plus a
-// dot-grid visual aid (§10.1), so the screen never grows past the viewport.
-// It stays until the child asks for the next question — a timer would take the
-// right answer away exactly from the child who needs longest to read it.
-function showFeedback() {
+// Wrong answer (§8.1): the child's own answer, struck through in red; the true
+// equation under it in green; a dot grid that shows why. It stays until she
+// enters the right answer herself — Mara pressed "Verstanden" without ever
+// registering that she had erred, and a timer would take the answer away from
+// exactly the child who needs longest to read it.
+function showFeedback(wrong) {
   const { t: a, f: b } = question;
-  // The equation the child was just shown, with the gap filled — never rebuilt
-  // from `t`/`f`, which would print a division sign this language does not use.
-  const eq = question.text.replace("?", question.answer);
+  // Both lines are built from the question that was asked, never rebuilt from
+  // `t`/`f`, which would print a division sign this language does not use.
+  const wrongEq = question.text.replace("?", wrong);
+  const rightEq = question.text.replace("?", `<b class="ans">${question.answer}</b>`);
   const fb = $("feedback");
-  fb.innerHTML = `<span class="eq">${eq}</span>
+  fb.innerHTML = `<span class="eq eq-wrong"><s>${wrongEq}</s></span>
+    <span class="eq">${rightEq}</span>
     <div class="dotgrid" style="grid-template-columns: repeat(${b}, auto)">
       ${"<i></i>".repeat(a * b)}
     </div>
-    <button class="primary" id="fb-next"></button>`;
-  $("fb-next").textContent = t("gotIt");
-  fastPress($("fb-next"), continueRound);
+    ${diff === 0 ? "" : `<span class="gap" id="retry-gap">?</span>`}`;
   $("question").hidden = true;
   fb.hidden = false;
-  // We run from the answer button's pointerdown, but the browser focuses that
-  // button on the *later* mouseup — focusing here would be silently undone.
-  setTimeout(() => phase === "wrong-wait" && $("fb-next")?.focus(), 0);
+  if (diff === 0) renderChoices(); // the same four options, in retry mode
 }
 
+function renderRetry() {
+  const gap = $("retry-gap");
+  if (gap) gap.textContent = retry === "" ? "?" : retry;
+}
+
+// The child typed (or tapped) something that cannot become the answer.
+function rejectRetry(el) {
+  retry = "";
+  renderRetry();
+  sfx.wrong();
+  const shake = el ?? $("retry-gap");
+  if (!shake) return;
+  shake.classList.remove("stumbling");
+  void shake.offsetWidth; // restart the animation on a second wrong try
+  shake.classList.add("stumbling");
+}
+
+// The only way out of the aid, on every difficulty: the right answer, entered.
 function continueRound() {
   if (phase !== "wrong-wait") return;
-  sfx.click();
-  askNext();
+  phase = "correct-wait";
+  sfx.correct();
+  setTimeout(askNext, NEXT_MS);
 }
 
 function endRound() {
