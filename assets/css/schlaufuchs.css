@@ -851,6 +851,35 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .stub .stub-emoji { font-size: 4rem; }
 .stub h1 { margin: 0; }
 
+/* ---- Privacy page (§3.5) ---- */
+/* Long prose, so this is the one page allowed to scroll. Everything else in
+   this site fits 100dvh; a legal text that hides half its sentences does not. */
+.textpage { min-height: 100dvh; overflow-y: auto; }
+.textpage .prose {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 8px 16px 32px;
+  line-height: 1.55;
+}
+.textpage .prose .lede { font-size: 1.05rem; color: var(--ink); }
+.textpage .prose h2 {
+  margin: 22px 0 6px;
+  font-size: 1.1rem;
+  color: var(--depth);
+}
+.textpage .prose p { color: var(--ink-soft); }
+.textpage .roomtitle { font-size: 1rem; }
+
+.footlink { color: var(--ink-soft); font-size: 0.8rem; text-decoration: underline; }
+.roomfoot { text-align: center; padding: 6px 0 18px; }
+
+/* the privacy link sits in the settings overlay, the one screen every page has */
+.cx-privacy {
+  color: var(--depth);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }

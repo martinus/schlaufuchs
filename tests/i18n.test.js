@@ -88,7 +88,8 @@ test("no dictionary key is dead", () => {
   };
   walk("assets/js");
   walk("games");
-  for (const page of ["index.html", "album.html"]) {
+  // discovered, so a new root page's strings are not mistaken for dead ones
+  for (const page of readdirSync(abs(".")).filter((f) => f.endsWith(".html"))) {
     const src = readFileSync(abs(page), "utf8");
     for (const [, k] of src.matchAll(/data-i18n(?:-label)?="([a-zA-Z0-9_]+)"/g)) used.add(k);
   }
