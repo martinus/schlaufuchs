@@ -3,19 +3,10 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 import de from "../assets/i18n/de.js";
 import en from "../assets/i18n/en.js";
-
-const root = new URL("../", import.meta.url);
-const abs = (p) => fileURLToPath(new URL(p, root));
-const read = (p) => readFileSync(abs(p), "utf8");
-
-const PAGES = [
-  ...readdirSync(abs(".")).filter((f) => f.endsWith(".html")),
-  ...readdirSync(abs("games")).map((g) => `games/${g}/index.html`),
-];
+import { abs, read, PAGES, hasFoxBar } from "./pages.js";
 
 test("the privacy page exists and says the things it must say", () => {
   assert.ok(existsSync(abs("privacy.html")));
@@ -29,8 +20,8 @@ test("the privacy page exists and says the things it must say", () => {
   assert.match(en.privacyCookieBody, /schlaufuchs/);
 });
 
-// The gear reaches it on the map, the games and the stubs. The Trophy Room has
-// no gear — it and the map carry a footer link instead. Every page needs one.
+// The gear reaches it from every page that wears the child's bar. The reader's
+// pages have no gear and carry a footer link instead. No page is a dead end.
 test("every page can reach the privacy page", () => {
   const chrome = read("assets/js/chrome.js");
   // Both halves, named separately. Asserting only that "cx-privacy" appears
@@ -49,10 +40,8 @@ test("every page can reach the privacy page", () => {
 
   for (const page of PAGES) {
     if (page === "privacy.html") continue;
-    const html = read(page);
-    const viaGear = html.includes('id="gearbtn"');
-    const viaFoot = html.includes('href="privacy.html"');
-    assert.ok(viaGear || viaFoot, `${page} has no route to the privacy page`);
+    const viaFoot = read(page).includes('href="privacy.html"');
+    assert.ok(hasFoxBar(page) || viaFoot, `${page} has no route to the privacy page`);
   }
 });
 

@@ -23,9 +23,15 @@ export function overBudget(state) {
   return encodeState(state).length >= BUDGET;
 }
 
+// Merge `patch` into `state[key]`, without touching the caller's objects. The
+// three sections of the cookie used to each carry their own copy of this.
+export function patchSection(state, key, patch) {
+  return { ...state, [key]: { ...(state[key] ?? {}), ...patch } };
+}
+
 function readRaw() {
   if (typeof document === "undefined") return "";
-  const m = document.cookie.match(/(?:^|;\s*)schlaufuchs=([^;]*)/);
+  const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${NAME}=([^;]*)`));
   return m ? m[1] : "";
 }
 
@@ -37,8 +43,7 @@ function writeRaw(value) {
 }
 
 function save(state) {
-  state.v = 1;
-  const enc = encodeState(state);
+  const enc = encodeState({ ...state, v: 1 });
   if (enc.length >= BUDGET) {
     console.warn(`schlaufuchs: cookie budget exceeded (${enc.length} >= ${BUDGET}), write refused`);
     return false;
@@ -51,34 +56,22 @@ export function loadState() {
   return decodeState(readRaw());
 }
 
+// One reader and one writer per section of the cookie. `getGame` takes the
+// game's name because games are the only section that has more than one.
+const sectionOf = (key) => (state = loadState()) => state[key] ?? {};
+const writeSection = (key) => (patch) => save(patchSection(loadState(), key, patch));
+
+export const getSettings = sectionOf("settings");
+export const setSettings = writeSection("settings");
+export const getRewards = sectionOf("rewards");
+export const setRewards = writeSection("rewards");
+
 export function getGame(name) {
   return loadState()[name] ?? {};
 }
 
 export function setGame(name, data) {
-  const state = loadState();
-  state[name] = { ...(state[name] ?? {}), ...data };
-  return save(state);
-}
-
-export function getSettings() {
-  return loadState().settings ?? {};
-}
-
-export function setSettings(patch) {
-  const state = loadState();
-  state.settings = { ...(state.settings ?? {}), ...patch };
-  return save(state);
-}
-
-export function getRewards() {
-  return loadState().rewards ?? {};
-}
-
-export function setRewards(patch) {
-  const state = loadState();
-  state.rewards = { ...(state.rewards ?? {}), ...patch };
-  return save(state);
+  return save(patchSection(loadState(), name, data));
 }
 
 export function resetGame(name) {

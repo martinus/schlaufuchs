@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { GRAPHICS, AVAILABLE, iconHTML, iconSVG } from "../assets/js/graphics.js";
 import { THEMES } from "../assets/js/journey.js";
 import { GAMES, TROPHIES } from "../assets/js/rewards.js";
+import { PAGES, read, sourcesOf } from "./pages.js";
 
 test("every GRAPHICS entry has an emoji fallback", () => {
   for (const [name, g] of Object.entries(GRAPHICS)) {
@@ -71,4 +72,18 @@ test("iconSVG fallback is a centered <text>", () => {
   assert.match(svg, /⭐/);
   assert.match(svg, /x="10"/);
   assert.match(svg, /y="20"/);
+});
+
+// `applyIcons` upgrades static `[data-icon]` markup to real SVGs once they
+// exist. It used to run on six pages; five of them had no such markup, because
+// their icons come from `iconHTML` at render time. A page that grows a
+// data-icon and never calls applyIcons would keep its emoji forever, silently.
+test("static [data-icon] markup exists only where applyIcons runs", () => {
+  for (const page of PAGES) {
+    const hasMarkup = read(page).includes("data-icon=");
+    const upgrades = /applyIcons\(/.test(sourcesOf(page));
+    assert.equal(hasMarkup, upgrades, hasMarkup
+      ? `${page} has [data-icon] markup that nothing upgrades`
+      : `${page} calls applyIcons but has no [data-icon] to upgrade`);
+  }
 });

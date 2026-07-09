@@ -1,12 +1,97 @@
-Beim Testen sind mir einige sachen aufgefallen. Lies dir meine sachen durch, und generiere dann mit mir einen Plan wie das Sonnet am besten umsetzen kann:
-* die Buttons unter der Karte sollen die Symbole von der karte auch anzeigen in klein, damit man weiß dass z.b Zahlendorf das Einmaleins ist.
-* beim Fuchs-level, wie ergibt sich der? Aus der gesamtanzahl der Sterne? Das sollte besser ersichtlich sein, damit man z.b. weiß wieviel Sterne man noch für den nächsten level sammeln muss.
-* Die anzeige der sterne unter dem Level ist etwas schwach, da ist nur ein stern und eine Zahl. Kann man das etwas prunkvoller machen wenn man mehr sterne hat?
-* am Desktop sind die Buttons auf der Hauptseite ganz links und ganz rechts, im Spiel aber zentriert
-* haben die Symbole auf den 10 plätzen des fuchses (der Korb, der Hahn, die Tür...) eine Bedeutung?
-* Wann bekommt man die Sticker, das ist auch unklar
-* Mach die Grafiken leicht austauschbar.
-* Ich möchte die Symbole und alle grafiken durch andere ersetzen. Erstelle ein Dokument das ich einer anderen LLM geben kann damit mir diese passende Grafikkarte erstellt. Beschreibe auch den Stil: Kinderfreundlich, zielgruppe 5-15 Jährige. 
-* Hauptseite und Spielseite sollen praktisch die gleiche topleiste haben: Fuchs-level, Einstellungsrad rechts. Zumindest nicht die einzelnen einstellbuttons.
-* Statt dem Sickeralbum mit Icon hab lieber ein Gebiet auf der Karte, sowas wie ein Pokalraum
-* Hast du noch andere Ideen für Spiele?
+* Update CLAUDE.md mit lessons-learned dieser session: e.g. schreibe immer einen test, spätestens wenn ein bug gefunden wurde, um regressionen so gut wie möglich abfangen zu können
+* Eine Inkonsistenz: Auf der Karte ist ein "Pokalraum", aber in diesem steht "Stickeralbum". Baue das Stickeralbum um, wie wäre es wenn das einfach "Trophäen" heist? Eventuell auch die Seite anpassen damit es wie Ein Trophäenraum wirkt...
+
+------
+
+Zu den Pokalregeln, ist das fairer?
+* Jeder neue Stern gibt einen Punkt (soll motivieren alle Aufgaben zu lösen)
+* Meistern einer Aufgabe (3 Sterne) gibt 2 Punkte
+* Fehlerfreie Runde gibt 1 Punkt auf leicht, 2 auf mittel, 3 auf schwer
+* gemeisterte Levels sollen angezeigt werden (vielleicht leicht ausgegraut?) Ich hätte die regeln gerne irgendwie visuell ersichtlich, die kinder sollen intuitiv sehen dass sie mehr von den schweren und ungelösten Aufgaben bekommen. Zumindest möchte ich die Kinder motivieren eher die nicht gemachten Levels zu machen, kein Mensch wird die Regeln lesen wenn man sie im Pokalraum genau beschreibt.
+* Ich finde die Levelsteigerung auf 30 zu schwer, es soll schon gut möglich sein alles zu schaffen. Arbeite am balancing.
+
+------
+
+Die Sprauchauswahl im  Menü ist nicht intuitiv, zeige statdessn alle Sprachen an die verfügbar sind, und die momentan ausgewählte hervorgehoben (vielleicht kommt z.b. spanisch oder Französisch noch dazu, idealerweise mit einer Flagge)
+
+-------
+
+wie bekommt man den 2. Stern? Ich habe auf mittel bei einer session 9 von 10 richtig (hatte da vorher einen Stern bekommen) und mir erwartet jetzt den 2. stern zu bekommen
+
+------
+
+* Man kann mehr als einen Pokal pro Runde gewinnen, zeig alle gewonnenen Pokale an, nicht nur den letzten
+* Bau irgendwo einen Link auf einen Disclaimer ein (in den Einstellungen? oder ganz unten?) Im Disclaimer kommt cookie disclaimer. Ich werde noch google analytics einbauen, brauch ich da einen cookie consent auch?
+* Erzeuge eine eltern view mit statistiken zum Lernerfolg, so dass Eltern gut wissen wieviel Zeit mit welchen Aufgaben verbracht wird und wo es Probleme/Bedarf gibt, vor alle auch wo Eltern noch helfen sollten
+* Zeichne die Spiele die noch nicht verfügbar sind auf der Karte hinter einer Nebelschwades (oder anders visuell), so dass man jedenfalls sieht dass es noch nicht erreichbar ist
+* Die anzahl der Sterne die noch zu holen sind könnten bei einer Runde beim Weg des Fuchses im angezeigt werden. Hier eine Idee zur visualisierung, bevor du das baust möchte ich dazu dein Feedback: Z.b. als Sterne in einem Korb? Bei jedem Fehler wackelt der Korb und es fallen Sterne heraus, im Korb sieht man immer wieviele Sterne noch zu holen sind, daneben liegen die verlorenen. Ist das motivierend oder eher demotivierend? Ich möchte nicht dass Kinder deswegen eine Runde gleich abbrechen wenn sie gleich zu Beginn einen Fehler machen. Oder man gibt ihnen gleich einen Retry knopf (Zurück zum Start?)
+
+
+----
+* Mir gefällt die Schrift beim Korb und die Anzeige nicht. Die schrift ist zu klein und scheint nicht die richtige Schriftart zu sein. Entferne die Feuer-logik und die anzeige, das ist zuviel. Ausserdem soll angezeigt werden wieviel Sterne wirklich noch zu holen sind, wenn man eine Aufgabe schon fertig gesammelt hat dann soll auch gezeigt werden dass man keine Sterne mehr bekommen kann.
+
+* Ich hätte die Anzeige der gesammelten Sterne gerne viel besser: Z.b. ein Himmel oben der die verfügbaren Sterne anzeigt, und die Sterne grau wenn man sie schon eingesammelt hat. Darunter einen größeren Korb in einer Wiese. Wenn man sich einen oder mehr Sterne verdient hat, sollen die in einer Animation zum Korb fliegen und oben im Himmel grau werden. Bau den Fuchs weg in die Grafik ein.  Das ganze soll möglichst ohne Text auskommen.
+
+-----
+Committe jede Änderung separat. Hier kommen viele teils aufwändige Aufgaben.
+
+* Nimm die 360x640 Spec-Änderung in einem neuen commit.
+
+Zur neuen Himmelgrafik, ein paar Vorschläge:
+* Der Korb soll am Ende der Reise angezeit werden, statt der Glocke, und etwas höher damit er voll zu sehen ist. Der Fuchs endet dann genau beim Korb in der letzten Runde.
+* Bei Mittel/Schwer sind ja mehr Sterne zu holen, das soll auch so am Himmen angezeigt werden? Am besten als Sternengruppe, weil dann bekommt man ja bis zu 3 auf einmal
+* Verteile die Sterne besser oben am den Himmel, nicht einfach so nebeneinander
+Die ganze Grafik kann ruhig etwas höher sein denke ich
+
+Weitere Änderungen:
+* Erstelle sowas wie ein Impressum / About Me. Das soll kurz Informationen zu mir beinhalten: Martin Leitner-Ankerl, email martin.ankerl@gmail.com, Das ich Software entwickler bin, und ein Link auf Keto-calculator und meine anderen Projekte.
+
+* Ich denke Level für den Fuchs ist unnötig, die Sterne reichen. Oder gibt das eventuell zusätzliche Motivation? Ich glaube vereinfachen ist wichtiger. Ausserdem kann man die Fuchs + Sterne Ansicht nicht klicken, es wird aber auf der Karte und im Spiel wie ein Button angezeigt.
+
+* Baue alle tools die dir helfen, wie im letzten Handoff beschrieben.
+
+* Mit dem frontend-design skill: Stelle sicher dass überall die richtige Schriftart verwendet wird und alle Seitendesigns gut aussehen und konsistent sind. Mach die Zeile mit "Deine Fortschritte werden nur..." kleiner. Hier reicht der Link auf Datenschutz und "Über mich".
+
+
+----
+Weitere Aufgaben:
+
+* Entferne die Zeile "Deine Fortshritte werden nur auf diesem Gerät gespeichert", das steht eh im Datenschutz und macht den Bereich kleiner.
+
+* Ich denke es ist besser im Spiel den Button für das Level aus der Top reihe rauszunehmen und über dem Bild zu platzieren und so breit wie der Himmelsweg zu sein. Das wirkt passender, quasi wie eine Überschrift. Oben der Fuchs und die Sterne sollte zentriert sein
+
+* Die Karte und die Spiele sollen die gleiche Topleiste haben  (Kartenbutton, Fuchstatus, Einstellungen). Einziger Unterschied: Im Kartenansicht ist der Kartenbutton flach weil nicht klickbar.
+
+* Bei der Levelauswahl schreib bei Mittel 2xStern, bei Schwer 3xStern damit klarer ist dass es dafür mehr Sterne gibt. Entferne dafür die grünen +12 etc. Zahlen. Stattdessen zeige überall 3 Sterne , als Gelb oder Grau je nachdem wieviele man davon schnon hat (So wie beim Himmel). Damit das logisch passt, mach die Sterne linear; also der erste, zweite, und letzte Stern bringt gleich viel Punkte (Also bei leicht: 1, 1, 2; bei mittel: 2, 2, 2; bei schwer: 3, 3, 3). Berechne dazu das Balancing neu damit es einem Kind möglich ist alle Pokale zu sammeln
+
+Mir gefallen die Kosmetika am Fuchs nicht, entferne alle und auch die Logik dazu. Oben die Anzeige soll nur den Fuchs, die Sterne, und die Anzahl der Pokale anzeigen. Das soll so auf Karte und im Spiel gleich aussehen.
+--------
+
+Es ist Zeit für ein großes cleanup. Analysiere die gesamte codebasis und mach ein großes Refactoring. Ziel ist es den Code zu vereinfachen, duplizierungen zu verringern, teile wiederverwenden wo möglich: Z.b. sollen Spiele und Karte den gleichen Header verwenden, das könnte eine Codebasis sein. Schau auch dass der Code modern und testbar ist, finde Lücken und unsicherheiten und bessere nach. 
+
+-------
+Ich habe das Spiel an meiner 8 Jährigen Tochter Mara getested, das Resultat war schon ernüchternd. Es gab sehr viele Usability probleme und unklarheiten. Ich habe versucht möglichst nichts zu sagen und sie einfach spielen lassen. Hier ist das Ergebnis. Leite daraus einen neuen Plan ab und versuche sämtliche Punkte viel intuitiver zu gestalten:
+
+* Mara weiß nicht worauf sie auf der Karte klicken kann. Sie hat sämtliche Nebel geklickt, aber nicht auf die Häuser in der Mitte und wusste dann nicht was sie tun soll. Sie hat praktisch nichs gelesen und einfach nur auf die Buttons gedruckt, daher hat sie auch die Hinweise bei den fehlenden Spielen nicht gelesen und wuste nicht dass sie auf die Häuser klicken kann.
+
+* Sie wusste nicht wie man aus dem Pokalraum wieder raus kommt, bzw was das ist. Sie hat keinen Text gelesen. Nachdem sie nach unten gescrollt hat wusste Sie auch nicht wie sie wieder rauf kommt (ok, sie hat im browserfenster in der Handysimulation gespielt, am Handy hätte sie das vielleicht gewusst.)
+
+* Ich habe sie darauf hingewiesen, dass sie auf die Häuser klicken muss um das Einmaleins zu spielen. Daraufhin hat sie genau zwischen die Häuser geklickt und es ist nichts passiert.
+
+* Im Spiel: weiß nicht wie man
+Weiß nicht was ein Pokal ist
+Weiß nicht wie man Spiel anderes einstellt so dass andere Reihen können
+Klickt auf Pokal aber nichts passiert
+Sieht nicht leicht Mittel schwer 
+Findet nicht pokalraum, weiß nicht dass man drauf drücken kann
+Weiß nicht wie sie ihre Pokale sehen kann
+Weiß nicht was z.b. 20x im pokalraum bedeutet 
+Weiß nicht dass es bei schwer und Mittel mehr Sterne gibt
+Kennt das Division symbol nicht (, der Strich in der Mitte)
+Hat nicht verstanden dass sie einen Fehler gemacht hat 
+Sieht nicht "Alle"
+Markt nicht wenn sie einen Fehler gehabt hat, klickt einfach auf 'verstehen
+
+Fehler Ansicht sollte zeigen was sie falsch abgegeben hat und darunter die richtige Lösung sehen. Das Fenster soll wie ein Pop-up sein Hund darunter alle Knöpfe ausgrauen
+
+Wenn das Spiel zu ende ist, Zeig nur einen "Ok" button, oder "Super!" oder vielleicht eine andere zufällige Gratulation. Kein Buttons.. Nach Drücken auf den Button kann eh die Level geändert werden und auf die Karte geklickt werden.

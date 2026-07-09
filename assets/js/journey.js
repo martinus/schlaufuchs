@@ -46,25 +46,48 @@ const SLOTS = 3;
 // survives a round with a different number of questions.
 const SKY = [[0.28, 52], [0.47, 32], [0.68, 48]];
 
-// `stars` is what the basket holds: the stars this tile has already earned.
-export function createJourney(container, { nodes, theme = "village", stars = 0 }) {
-  const th = THEMES[theme] ?? THEMES.village;
+// Where everything stands, for a round of `nodes` questions. Pure: it takes a
+// count and returns coordinates, so the arithmetic that decides whether a star
+// lands in the basket or beside it can be checked without a browser.
+//
+// A ten-question round is 26+9×28+30+34 = 342 units wide; a shorter round is a
+// narrower scene, not a stretched one, because the fox's stride is fixed.
+export function sceneGeometry(nodes, theme = "village") {
+  const n = Math.max(1, Math.floor(nodes) || 1);
   const xOf = (i) => PATH_X0 + i * STEP_;
+  // the mountain path climbs; every other theme is flat
   const yOf = (i) =>
-    theme === "mountain" ? PATH_Y - 4 - Math.round((i * 22) / Math.max(nodes - 1, 1)) : PATH_Y;
+    theme === "mountain" ? PATH_Y - 4 - Math.round((i * 22) / Math.max(n - 1, 1)) : PATH_Y;
 
   // The basket stands at the end of the path, raised clear of it so the whole
   // basket is visible, and the fox's last step lands beside it. The reward and
   // the finish line are the same object.
-  const endX = xOf(nodes - 1);
-  const bx = endX + 30;
-  const by = yOf(nodes - 1) - 2; // text baseline: the basket stands *on* the path
-  const w = bx + 34;
+  const basket = { x: xOf(n - 1) + 30, y: yOf(n - 1) - 2 }; // y is a text baseline
+  const width = basket.x + 34;
 
-  const skyX = (i) => Math.round(SKY[i][0] * w);
-  const skyY = (i) => SKY[i][1];
-  // three abreast in the basket's mouth
-  const landing = (i) => ({ x: bx - 12 + i * 12, y: by - 24 });
+  return {
+    width,
+    height: H,
+    nodes: Array.from({ length: n }, (_, i) => ({ x: xOf(i), y: yOf(i) })),
+    basket,
+    sky: SKY.map(([fx, y]) => ({ x: Math.round(fx * width), y })),
+    // three abreast in the basket's mouth
+    landing: [0, 1, 2].map((i) => ({ x: basket.x - 12 + i * 12, y: basket.y - 24 })),
+  };
+}
+
+// `stars` is what the basket holds: the stars this tile has already earned.
+export function createJourney(container, { nodes, theme = "village", stars = 0 }) {
+  const th = THEMES[theme] ?? THEMES.village;
+  const g = sceneGeometry(nodes, theme);
+  const { width: w, basket } = g;
+  const xOf = (i) => g.nodes[i].x;
+  const yOf = (i) => g.nodes[i].y;
+  const bx = basket.x;
+  const by = basket.y;
+  const skyX = (i) => g.sky[i].x;
+  const skyY = (i) => g.sky[i].y;
+  const landing = (i) => g.landing[i];
 
   let svg = `<svg class="journey journey-${theme}" viewBox="0 0 ${w} ${H}"
       preserveAspectRatio="xMidYMid meet" aria-hidden="true">`;

@@ -81,6 +81,8 @@ test("no dictionary key is dead", () => {
         const src = readFileSync(abs(`${dir}/${f.name}`), "utf8");
         for (const [, k] of src.matchAll(/\bt\(\s*["'`]([a-zA-Z0-9_]+)["'`]/g)) used.add(k);
         for (const [, k] of src.matchAll(/data-i18n(?:-label)?="([a-zA-Z0-9_]+)"/g)) used.add(k);
+        // the reader's pages name their heading's key when they build the bar
+        for (const [, k] of src.matchAll(/\btitle:\s*["']([a-zA-Z0-9_]+)["']/g)) used.add(k);
         // keys built at runtime, e.g. `region_${game}` or DIFF_KEYS
         for (const [, k] of src.matchAll(/["'`](region_|game_|diff|starGoal)[a-zA-Z0-9]*["'`]/g)) used.add(k);
       }

@@ -8,8 +8,9 @@ import { recordRound, roundPoints, starValue, addPractice } from "../../assets/j
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
-import { iconHTML, applyIcons } from "../../assets/js/graphics.js";
-import { renderFoxChip, initSettingsOverlay } from "../../assets/js/chrome.js";
+import { iconHTML } from "../../assets/js/graphics.js";
+import { initTopBar } from "../../assets/js/chrome.js";
+import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
 import strings from "./i18n.js";
 import {
   POOL_COUNT, EASY_TABLES, poolFor, questionFor, choicesFor,
@@ -17,9 +18,18 @@ import {
 } from "./logic.js";
 
 initI18n(strings);
-applyIcons(document); // upgrade back-link / gear icons if SVGs exist
 
 const $ = (id) => document.getElementById(id);
+
+// The two overlays this page owns. The picker can be waved away — the summary
+// cannot: closing it would leave a finished round with nothing to press (§3.3).
+const picker = overlayFrom(document.getElementById("pick-overlay"), {
+  onOpen: renderPicker,
+  onClose() {
+    if (roundOver) summary.open();
+  },
+});
+const summary = overlayFrom(document.getElementById("sum-overlay"), { dismissible: false });
 const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
 const NEXT_MS = 250;
 
@@ -73,7 +83,7 @@ function updateChip() {
 function startRound() {
   coerceTable();
   updateChip();
-  renderFoxChip($("foxchip"));
+  bar.refresh();
   saved = getGame("einmaleins");
   const boxes = boxesFromString(saved.box, POOL_COUNT);
   session = createSession(poolFor(table, diff), boxes, { roundSize: 10 });
@@ -88,7 +98,7 @@ function startRound() {
   buffer = "";
   roundOver = false;
   t0 = Date.now();
-  $("sum-overlay").hidden = true;
+  summary.close();
   buildKeypad();
   askNext();
 }
@@ -199,7 +209,10 @@ function keyPress(k) {
 // re-enters that digit. During the post-correct transition it lands in `buffer`
 // and reappears prefilled in the next question. Handling a key means owning it.
 document.addEventListener("keydown", (e) => {
-  if (!$("sum-overlay").hidden) return;
+  // Any open overlay owns the keyboard. This used to ask only whether the
+  // summary was up, so with the settings sheet or the picker open, digits went
+  // into the question behind it and Enter submitted the answer.
+  if (anyOverlayOpen()) return;
   // While the aid is up, Enter means "I have looked at it" on every difficulty.
   if (phase === "wrong-wait") {
     if (e.key === "Enter") {
@@ -319,21 +332,16 @@ function endRound() {
     // The stars just changed. The chip was rendered at startRound() and nobody
     // told it, so a child read "⭐ 0" in the top bar while three stars lit up
     // beneath it — until they walked back to the map.
-    renderFoxChip($("foxchip"));
-    showSummary();
+    bar.refresh();
+    summary.open();
     if (improved || stars === 3 || res.newTrophies.length > 0) confetti();
   }, 700);
 }
 
-function showSummary() {
-  $("sum-overlay").hidden = false;
-  $("sum-again").focus();
-}
-
 $("sum-again").addEventListener("click", startRound);
 $("sum-pick").addEventListener("click", () => {
-  $("sum-overlay").hidden = true;
-  openPicker();
+  summary.close();
+  picker.open();
 });
 
 // --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------
@@ -381,40 +389,31 @@ function renderPicker() {
     }
     b.addEventListener("click", () => {
       table = tbl;
-      $("pick-overlay").hidden = true;
+      // the new round is the answer to the picker; it must not reopen the
+      // summary of the old one behind it
+      roundOver = false;
+      picker.close();
       startRound();
     });
     grid.appendChild(b);
   }
 }
 
-function openPicker() {
-  renderPicker();
-  $("pick-overlay").hidden = false;
-}
+$("pickchip").addEventListener("click", picker.open);
 
-$("pickchip").addEventListener("click", openPicker);
-
-// --- settings overlay (shared chrome §3.3) ----------------------------------
-const settings = initSettingsOverlay({
+// --- the shared top bar (§3.3) ----------------------------------------------
+// Its gear resets this game only; the global reset lives on the map.
+const bar = initTopBar({
+  back: "../../",
   resetKind: "game",
   game: "einmaleins",
   onChange() {
-    renderFoxChip($("foxchip"));
     updateChip();
     if (!roundOver) renderQuestion();
   },
   onClose() {
-    if (roundOver) showSummary();
+    if (roundOver) summary.open();
   },
-});
-$("gearbtn").addEventListener("click", settings.open);
-
-// closing the picker after the round ended returns to the summary
-$("pick-overlay").addEventListener("click", (e) => {
-  if (e.target !== $("pick-overlay")) return;
-  $("pick-overlay").hidden = true;
-  if (roundOver) showSummary();
 });
 
 // Instant resume (§3.4): straight into a round, no menu.

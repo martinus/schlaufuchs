@@ -211,28 +211,43 @@ its settings offer no reset, because the global one belongs on the map. The
 shelves are built as markup, not as `[data-i18n]` nodes, so a language change
 rebuilds them instead of translating them in place.
 
-### 3.3 In-game chrome (every game page)
+### 3.3 The top bar (every page)
 
-A slim persistent mini-header, unified with the map header (§3.1). Every page
-a child can reach (map, Pokalraum, games, stubs) uses the same top bar — three
-things, in the same order, always — and the bar is width-matched to the
-560px game column (`max-width:560px; margin-inline:auto`) so it aligns on
-desktop instead of spanning the full viewport.
+One bar, one function: `initTopBar()` in `chrome.js` fills the page's empty
+`<header id="topbar">`. No page writes the bar as markup — seven copies drifted
+apart once, and only a screenshot noticed. It is width-matched to the 560px
+game column (`max-width:560px; margin-inline:auto`) so it aligns on desktop
+instead of spanning the full viewport.
+
+The bar has exactly two shapes:
+
+- **The child's bar** (map, Pokalraum, games, stubs): map button · fox chip ·
+  gear. Three things, in the same order, always.
+- **The reader's bar** (privacy, about, parents): map button · page title. No
+  star count, no settings — these pages are for adults.
 
 - **Map button (🗺️)** → back to the map (1 tap). The map icon, not the fox
-  — the fox is the player, the map is the place to go back to.
-- **Fox chip** (shared `renderFoxChip`, `chrome.js`): the fox, the total star
-  count, the total trophy count. Three things, identical on the map and inside
-  a game. It is a readout, not a control: no panel, no shadow, no tap target.
-- **Level/difficulty chip** showing the current difficulty (and table/level/
-  pack where applicable); tapping opens the picker **as an overlay** on the
-  same page, never a separate page.
+  — the fox is the player, the map is the place to go back to. On the map
+  itself it stays, flat and unpressable: a bar whose shape shifts between the
+  map and the place it sends you is two bars.
+- **Fox chip** (`renderFoxChip`): the fox, the total star count, the total
+  trophy count. It is a readout, not a control: no panel, no shadow, no tap
+  target.
+- **Level/difficulty chip** (inside a game, below the bar) showing the current
+  difficulty and table; tapping opens the picker **as an overlay** on the same
+  page, never a separate page.
 - **Settings gear** → shared overlay (`initSettingsOverlay`, `chrome.js`):
   sound toggle, language toggle, and reset (global on the map, per-game inside
   a game; two-step confirm on the destructive action).
 
 Round summaries are overlays too. The browser back button always means
 "back to the map".
+
+**Every overlay obeys one contract** (`overlay.js`): the focus moves into the
+sheet on open and back to the button that opened it on close; Escape and a
+backdrop tap close it — *unless* it is the round summary, which a child must
+not be able to dismiss into an empty finished round. While any overlay is
+open, it owns the keyboard: the game behind it must not receive a keystroke.
 
 ### 3.4 Navigation rules (hard requirements)
 

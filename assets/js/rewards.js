@@ -216,9 +216,10 @@ export function sumStars(state) {
 // star count, printed beside the star count. What is left is what was actually
 // earned: stars, and the trophies they bought.
 export function foxInfo() {
+  const state = loadState(); // one cookie parse, two counters
   return {
-    stars: sumStars(loadState()),
-    trophies: totalTrophies(getRewards().pr),
+    stars: sumStars(state),
+    trophies: totalTrophies(getRewards(state).pr),
   };
 }
 

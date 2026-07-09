@@ -43,7 +43,9 @@ workflow runs it before publishing.
   and no linter, so the test suite is the only thing standing between a change
   and a child staring at a blank page. Regression tests live next to their
   subject: `tests/map.test.js` (SVG structure), `tests/cache.test.js` (asset
-  versioning), `tests/i18n.test.js` (string liveness).
+  versioning), `tests/i18n.test.js` (string liveness), `tests/topbar.test.js`
+  (the shared header). `tests/pages.js` is the shared page-discovery helper —
+  a new root page joins every test the moment it exists.
 - **Make it testable, then test it.** When the defect is inside DOM code, pull
   the arithmetic out as a pure function and unit-test that
   (`fittedFontSize()` in `games/einmaleins/logic.js` is the pattern).
@@ -113,24 +115,37 @@ Pages (each an entry point):
 - `album.html` — trophy album, driven by `assets/js/album.js`.
 - `games/<name>/index.html` + `<name>.js` — one folder per game. Only
   `einmaleins` is fully implemented; `rechnungen`, `tippen`, `vokabeln`,
-  `lesen` are stubs.
+  `lesen` are stubs and share one module: their page is a `<body data-game>`
+  and `assets/js/stub.js` is the rest.
+
+**Every page contributes an empty `<header class="topbar" id="topbar">` and
+nothing else.** The bar is built by `initTopBar()` (`chrome.js`), in one of two
+shapes — the child's (map button, fox chip, gear) or the reader's (map button,
+title). Never write bar markup into a page; `tests/topbar.test.js` fails on it.
 
 Shared modules in `assets/js/`:
 - `i18n.js` — `initI18n`, `t(key, params)`, `setLang`; `translateDOM` sets
   `textContent` on `[data-i18n]` and `aria-label` on `[data-i18n-label]`.
-- `storage.js` — the single cookie `schlaufuchs`. Pure encode/decode + typed
-  getters/setters. **Hard 3500-byte budget** (`BUDGET`); writes over budget are
-  refused. Do not add persistent state casually.
+- `storage.js` — the single cookie `schlaufuchs`. Pure encode/decode +
+  `patchSection` + typed section readers (`getSettings`/`getRewards` take an
+  optional already-loaded state, so a page parses the cookie once). **Hard
+  3500-byte budget** (`BUDGET`); writes over budget are refused. Do not add
+  persistent state casually.
 - `rewards.js` — stars, trophies, streak, region/badge state. Pure functions are
   exported and unit-tested: trophy `THRESHOLDS`, `trophyCount`, `totalTrophies`,
   `starBadgeTier`, `nextTrophyInfo`. `foxInfo()` reads the cookie and returns
   the two numbers the top bar shows: `{stars, trophies}`.
-- `journey.js` — per-round path strip; fox advances on each correct answer;
-  friendly obstacles at nodes 3/6/9 with bounce/wiggle/pop animations.
-- `graphics.js` — the icon registry (see below).
-- `chrome.js` — shared top-bar chrome: `renderFoxChip` (fox, stars, trophies —
-  nothing else, §3.3) + `initSettingsOverlay` (sound/language/reset), used by
-  the map, games, and stubs.
+- `journey.js` — the round's scene; `sceneGeometry(nodes, theme)` is the pure
+  arithmetic (tested), `createJourney` is the DOM around it.
+- `graphics.js` — the icon registry (see below). `applyIcons` only matters where
+  a page has static `[data-icon]` markup, which today is `index.html` alone.
+- `chrome.js` — the one top bar: `topBarHTML` (pure, tested), `initTopBar`,
+  `renderFoxChip` (fox, stars, trophies — nothing else, §3.3) and
+  `initSettingsOverlay` (sound/language/reset).
+- `overlay.js` — the overlay contract, used by all three overlays: focus in on
+  open and back to the opener on close, Escape/backdrop close unless
+  `dismissible: false`, and `anyOverlayOpen()` — which is how a game knows the
+  keyboard is not its own. Never toggle an overlay's `.hidden` by hand.
 - `adaptive.js` (Leitner-light practice engine), `audio.js` (synth WebAudio
   sfx, respects mute), `fox.js` (code-generated mascot SVG; the pose is its
   only variable), `confetti.js`.
