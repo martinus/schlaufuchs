@@ -6,7 +6,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { GAMES } from "../assets/js/rewards.js";
+import { GAMES, PLAYABLE, isPlayable } from "../assets/js/rewards.js";
 
 const root = new URL("../", import.meta.url);
 const read = (p) => readFileSync(fileURLToPath(new URL(p, root)), "utf8");
@@ -117,4 +117,44 @@ test("no region art is drawn at the edge of the viewBox", () => {
       check(Number(cx) + Number(rx), Number(cy) + Number(ry), "ellipse");
     }
   }
+});
+
+// Four of the five games are stubs. A map that shows six inviting regions and
+// delivers one is a map that lies, so the unbuilt ones sit under fog.
+test("every region without a game is fogged, and every playable one is not", () => {
+  assert.deepEqual(PLAYABLE, ["einmaleins"], "update this test when a game ships");
+  assert.ok(html.includes('id="fog-blur"'), "the fog needs its blur filter in <defs>");
+  assert.ok(mapJs.includes("fogRegion"), "map.js must build the fog");
+  assert.ok(mapJs.includes("isPlayable"), "and it must ask which games exist");
+  for (const g of GAMES) assert.equal(typeof isPlayable(g), "boolean");
+  assert.ok(!isPlayable("lesen") && isPlayable("einmaleins"));
+});
+
+// Regression: the fog is drawn inside its own <a>, and SVG paints in document
+// order — so Lesewiese's fog bank greyed out "Zahlendorf", the one region a
+// child can actually walk into. Playable regions must be painted last.
+test("playable regions are painted after the fogged ones", () => {
+  const at = (id) => {
+    const i = html.indexOf(`id="region-${id}"`);
+    assert.notEqual(i, -1, `region-${id} is missing from the map`);
+    return i;
+  };
+  const lockedLast = Math.max(...GAMES.filter((g) => !isPlayable(g)).map(at));
+  const playableFirst = Math.min(...PLAYABLE.map(at), at("pokalraum"));
+  assert.ok(
+    lockedLast < playableFirst,
+    "a fogged region painted after a playable one washes out its label",
+  );
+});
+
+// The map is hit-tested by its art. A fog blob spans the region's bounding box,
+// so if it ever took pointer events it would hand back the invisible hotspot
+// that was deliberately deleted from this map.
+test("fog never takes the tap", () => {
+  const css = read("assets/css/schlaufuchs.css");
+  assert.match(
+    css,
+    /\.worldmap \.region \.fog \{[^}]*pointer-events:\s*none/,
+    "fog must be pointer-events: none, or empty land becomes clickable again",
+  );
 });

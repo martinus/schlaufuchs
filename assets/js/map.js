@@ -3,7 +3,7 @@
 
 import { initI18n, t } from "./i18n.js";
 import { loadState, getRewards } from "./storage.js";
-import { gameStars, regionState, starBadgeTier, trophyCount, levelInfo, GAMES } from "./rewards.js";
+import { gameStars, regionState, starBadgeTier, trophyCount, levelInfo, GAMES, isPlayable } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconHTML, iconSVG, applyIcons } from "./graphics.js";
 import { renderLevelChip, initSettingsOverlay } from "./chrome.js";
@@ -36,6 +36,56 @@ function pave(game, on) {
   }
 }
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+// Four of the five games are stubs. Their regions are drawn under fog so the
+// island never promises what the site cannot deliver (§3.1). The fog is built
+// from the region's own art, so it fits a mountain as well as a lake, and it
+// is `pointer-events: none` — regions are hit-tested by their art, and a fog
+// blob spanning the bounding box would quietly hand back the invisible
+// hotspot that was removed from this map on purpose.
+function fogRegion(region) {
+  if (region.querySelector(".fog")) return; // render() runs again after a reset
+  const label = region.querySelector(".region-label");
+
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const el of region.children) {
+    if (el === label || el.classList.contains("region-badge")) continue;
+    const b = el.getBBox();
+    if (b.width === 0 || b.height === 0) continue; // hidden thriving/mastered layers
+    x0 = Math.min(x0, b.x); y0 = Math.min(y0, b.y);
+    x1 = Math.max(x1, b.x + b.width); y1 = Math.max(y1, b.y + b.height);
+  }
+  if (!Number.isFinite(x0)) return; // nothing to fog
+
+  const g = document.createElementNS(SVG_NS, "g");
+  g.setAttribute("class", "fog");
+  g.setAttribute("filter", "url(#fog-blur)");
+
+  // A veil over the whole art, then three banks for texture. The veil is what
+  // makes the region read as *closed*: with banks alone the treetops and the
+  // book poked through and Lesewiese looked open for business. Fog spilling
+  // onto a neighbour is harmless — playable regions are painted last (§3.1),
+  // so nothing can grey out the one village a child can walk into.
+  const w = x1 - x0, h = y1 - y0, cx = x0 + w / 2, cy = y0 + h / 2;
+  const banks = [
+    [0.00, 0.00, 0.52, 0.52, 0.55], // the veil
+    [-0.15, 0.02, 0.32, 0.24, 0.72],
+    [0.16, -0.05, 0.30, 0.22, 0.70],
+    [0.00, 0.14, 0.38, 0.20, 0.76],
+  ];
+  for (const [dx, dy, rx, ry, o] of banks) {
+    const e = document.createElementNS(SVG_NS, "ellipse");
+    e.setAttribute("cx", (cx + dx * w).toFixed(1));
+    e.setAttribute("cy", (cy + dy * h).toFixed(1));
+    e.setAttribute("rx", (rx * w).toFixed(1));
+    e.setAttribute("ry", (ry * h).toFixed(1));
+    e.setAttribute("opacity", o);
+    g.appendChild(e);
+  }
+  region.insertBefore(g, label); // over the art, under the label and badge
+}
+
 function render() {
   const state = loadState();
   const rewards = getRewards();
@@ -64,6 +114,15 @@ function render() {
       if (rs !== "base") region.classList.add(rs);
       // the island remembers: a mastered region's road turns to cobblestone
       pave(game, rs === "mastered");
+
+      // a region whose game does not exist yet sits under fog. The link stays:
+      // its page says so in words, and a screen reader hears it before the tap.
+      const locked = !isPlayable(game);
+      region.classList.toggle("locked", locked);
+      if (locked) {
+        fogRegion(region);
+        region.setAttribute("aria-label", `${t(`region_${game}`)} — ${t("lockedHint")}`);
+      }
     }
   }
 

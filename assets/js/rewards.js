@@ -6,6 +6,12 @@ import { loadState, getRewards, setRewards } from "./storage.js";
 
 export const GAMES = ["einmaleins", "tippen", "rechnungen", "vokabeln", "lesen"];
 
+// Which of them a child can actually play. The other four are stubs, and the
+// map must not promise what the site cannot deliver: their regions are drawn
+// under fog (§3.1). Move a name here the moment its game exists.
+export const PLAYABLE = ["einmaleins"];
+export const isPlayable = (game) => PLAYABLE.includes(game);
+
 // Trophy s (1-indexed) is earned when the game's lifetime point counter reaches
 // THRESHOLDS[s-1] (§8.3). Deterministic, no randomness.
 //

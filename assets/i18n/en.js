@@ -8,6 +8,7 @@ export default {
   resetAll: "Delete progress",
   close: "Close",
   footerPrivacy: "Your progress is only stored on this device.",
+  lockedHint: "Not available yet",
   comingSoon: "This game isn't built yet. Number Village is ready to play.",
   foxLevel: "Level {lvl}",
   levelNext: "{n} more stars to level {lvl}",
