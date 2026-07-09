@@ -4,7 +4,7 @@
 
 import { t, getLang, setLang, LANGUAGES } from "./i18n.js";
 import { getSettings, setSettings, resetAll, resetGame } from "./storage.js";
-import { levelInfo } from "./rewards.js";
+import { foxInfo } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconHTML } from "./graphics.js";
 import { sfx } from "./audio.js";
@@ -17,15 +17,20 @@ const PARENTS_URL = new URL("../../parents.html", import.meta.url).href;
 
 // Render the fox + "level N · ⭐ total" chip with a progress bar and a
 // "N more stars to level N+1" sub-line. Call it again to refresh after a round.
-export function renderLevelChip(el) {
-  const info = levelInfo();
-  const sub = info.nextAt == null
-    ? t("levelMax")
-    : t("levelNext", { n: info.nextAt - info.total, lvl: info.level + 1 });
+// The fox chip: the mascot, the star count, and a bar toward the next thing the
+// fox will wear. It is a status readout, not a control — it carries no panel
+// and no shadow, because a chip that looks like the buttons beside it and does
+// nothing when tapped is a small lie told on every screen.
+export function renderFoxChip(el) {
+  if (!el) return;
+  const info = foxInfo();
+  const sub = info.next === null
+    ? t("foxMax")
+    : t("foxNext", { n: info.next.missing, item: t(`cos_${info.next.name}`) });
   el.innerHTML = `
-    ${foxSVG({ pose: "neutral", size: 40, level: info.level })}
+    ${foxSVG({ pose: "neutral", size: 40, stars: info.total })}
     <span>
-      <span class="lbl">${t("foxLevel", { lvl: info.level })} · ⭐ ${info.total}</span>
+      <span class="lbl">⭐ ${info.total}</span>
       <span class="bar"><i style="width:${Math.round(info.frac * 100)}%"></i></span>
       <span class="sub">${sub}</span>
     </span>`;

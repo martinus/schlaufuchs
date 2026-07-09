@@ -137,10 +137,12 @@ export function addPractice(saved = {}, difficulty = 0, seconds = 0) {
   return { tm, rd };
 }
 
-// Cosmetic fox upgrades at fixed levels (§8.4).
+// Cosmetic fox upgrades, keyed by total stars (§8.4). These are the star counts
+// the old levels 3/6/9/12/15/18/20 sat at — `(level - 1) * 10` — so nobody who
+// already wears a cap loses it.
 export const COSMETICS = [
-  [3, "scarf"], [6, "cap"], [9, "glasses"], [12, "backpack"],
-  [15, "medal"], [18, "crown"], [20, "goldcrown"],
+  [20, "scarf"], [50, "cap"], [80, "glasses"], [110, "backpack"],
+  [140, "medal"], [170, "crown"], [190, "goldcrown"],
 ];
 
 export const STREAK_MILESTONES = [3, 7, 14, 30];
@@ -205,9 +207,30 @@ export function sumStars(state) {
   return GAMES.reduce((a, g) => a + gameStars(state, g), 0);
 }
 
-// Level = min(20, 1 + floor(totalStars / 10)) (§8.4).
-export function foxLevel(totalStars) {
-  return Math.min(20, 1 + Math.floor(totalStars / 10));
+// What the fox is wearing, and what it earns next (§8.4).
+//
+// There used to be a "level" here, which was `1 + floor(stars / 10)` — a second
+// name for the star count, printed beside the star count. It is gone. What it
+// really gated was the fox's outfit, so the outfit now hangs directly off stars
+// at exactly the counts the old levels reached, and a child sees a scarf coming
+// instead of a number going up.
+export function foxProgress(totalStars = 0) {
+  const total = Number.isFinite(totalStars) && totalStars > 0 ? Math.floor(totalStars) : 0;
+  const worn = COSMETICS.filter(([at]) => total >= at).map(([, name]) => name);
+  const next = COSMETICS.find(([at]) => total < at) ?? null;
+  const from = worn.length > 0 ? COSMETICS[worn.length - 1][0] : 0;
+  return {
+    total,
+    worn,
+    next: next ? { at: next[0], name: next[1], missing: next[0] - total } : null,
+    frac: next ? (total - from) / (next[0] - from) : 1,
+  };
+}
+
+// The same, read from the cookie. Kept out of `foxProgress` so the arithmetic
+// stays pure and testable.
+export function foxInfo() {
+  return foxProgress(sumStars(loadState()));
 }
 
 // Region visual state (§3.1): base → thriving (≥ 1/3) → mastered (100 %).
@@ -250,18 +273,6 @@ export function todayLocalISO(d = new Date()) {
 }
 
 // ---- storage-backed functions ---------------------------------------------
-
-export function levelInfo() {
-  const total = sumStars(loadState());
-  const level = foxLevel(total);
-  const base = (level - 1) * 10;
-  return {
-    total,
-    level,
-    nextAt: level < 20 ? level * 10 : null,
-    frac: level < 20 ? (total - base) / 10 : 1,
-  };
-}
 
 // Called by games at the end of every round (§8). Updates fox map position,
 // streak and perfect-round counters; returns what to celebrate.

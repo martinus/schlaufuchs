@@ -68,7 +68,7 @@ html, body {
 }
 
 /* the display face is reserved for names, numbers and headings */
-h1, h2, .question, .region-label, .levelchip .lbl, .chip,
+h1, h2, .question, .region-label, .foxchip .lbl, .chip,
 .mc button, .keypad button, .tilegrid button, .primary,
 .summary .sline, .feedback-aid {
   font-family: var(--font-display);
@@ -123,7 +123,7 @@ button, .iconbtn, .chip, a.region {
 
 /* icon buttons keep their size; the text chips give way when space runs out */
 .topbar .iconbtn { flex: 0 0 auto; }
-.topbar .chip, .topbar .levelchip { min-width: 0; flex: 0 1 auto; overflow: hidden; }
+.topbar .chip, .topbar .foxchip { min-width: 0; flex: 0 1 auto; overflow: hidden; }
 
 .topbar h1 {
   font-size: 1.15rem;
@@ -164,41 +164,34 @@ a.chip { color: var(--ink); text-decoration: none; }
 
 .game .topbar .chip { padding: 0 10px; font-size: 0.9rem; }
 
-.levelchip {
+/* The fox chip is a readout, not a control (§3.3). It carries no panel and no
+   shadow: it used to look exactly like the .chip buttons beside it and did
+   nothing when tapped. */
+.foxchip {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--panel);
-  border-radius: 24px;
-  padding: 4px 12px 4px 4px;
-  box-shadow: var(--shadow);
+  padding: 4px 8px 4px 0;
   min-height: 48px;
 }
-
-/* progress is ownership, not action — hence --depth, never orange */
-.levelchip .bar {
+.foxchip .bar {
   width: 64px;
-  height: 8px;
-  border-radius: 4px;
+  height: 6px;
+  border-radius: 3px;
   background: var(--depth-soft);
   overflow: hidden;
 }
-
-.levelchip .bar > i {
+.foxchip .bar > i {
   display: block;
   height: 100%;
   background: var(--depth);
-  border-radius: 4px;
 }
-
-.levelchip > span { display: inline-flex; flex-direction: column; gap: 1px; align-items: flex-start; }
-.levelchip .bar { display: block; }
-.levelchip .lbl { font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
-.levelchip .sub { display: block; font-size: 0.65rem; color: var(--ink-soft); white-space: nowrap; }
-
-/* game screens are narrow — drop the chip's extra lines to save width (§3.3) */
-.game .levelchip .sub { display: none; }
-@media (max-width: 430px) { .game .levelchip .bar { display: none; } }
+.foxchip > span { display: inline-flex; flex-direction: column; gap: 1px; align-items: flex-start; }
+.foxchip .bar { display: block; }
+.foxchip .lbl { font-size: 0.9rem; font-weight: 800; white-space: nowrap; }
+.foxchip .sub { display: block; font-size: 0.65rem; color: var(--ink-soft); white-space: nowrap; }
+.game .foxchip .sub { display: none; }
+@media (max-width: 430px) { .game .foxchip .bar { display: none; } }
 
 .streakchip { font-weight: 800; font-size: 1rem; }
 

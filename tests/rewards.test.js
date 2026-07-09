@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
-  THRESHOLDS, TROPHIES, GAMES, trophyCount, foxLevel, updateStreak,
+  THRESHOLDS, TROPHIES, GAMES, trophyCount, foxProgress, COSMETICS, updateStreak,
   gameStars, sumStars, regionState, ACHIEVABLE, starBadgeTier, nextTrophyInfo,
   roundPoints, tilePointsLeft, addPractice, MAX_ROUND_SECONDS,
 } from "../assets/js/rewards.js";
@@ -33,12 +33,31 @@ test("every game has exactly 12 trophies with de+en names (§8.3)", () => {
   }
 });
 
-test("fox level formula (§8.4)", () => {
-  assert.equal(foxLevel(0), 1);
-  assert.equal(foxLevel(9), 1);
-  assert.equal(foxLevel(10), 2);
-  assert.equal(foxLevel(190), 20);
-  assert.equal(foxLevel(9999), 20);
+test("the fox earns its outfit with stars, not with a level (§8.4)", () => {
+  // The fox's outfit hangs off stars now; the level number is gone. These are
+  // the star counts the old levels 3/6/9/12/15/18/20 sat at, so a child who
+  // already wears a cap must still wear it after the change.
+  assert.deepEqual(COSMETICS.map(([at]) => at), [20, 50, 80, 110, 140, 170, 190]);
+  assert.deepEqual(foxProgress(0).worn, []);
+  assert.deepEqual(foxProgress(19).worn, []);
+  assert.deepEqual(foxProgress(20).worn, ["scarf"]);
+  assert.deepEqual(foxProgress(190).worn, COSMETICS.map(([, n]) => n));
+  assert.equal(foxProgress(0).next.name, "scarf");
+  assert.equal(foxProgress(0).next.missing, 20);
+  assert.equal(foxProgress(190).next, null, "nothing is promised once all of it is worn");
+  assert.equal(foxProgress(9999).frac, 1);
+
+  // the bar fills between the two thresholds it sits between, not from zero
+  assert.equal(foxProgress(20).frac, 0);
+  assert.equal(foxProgress(35).frac, 0.5);
+  assert.ok(foxProgress(49).frac > 0.9);
+
+  // junk in, a fox that still renders out
+  for (const bad of [undefined, null, -5, NaN, "12", Infinity]) {
+    const p = foxProgress(bad);
+    assert.ok(Number.isInteger(p.total) && p.total >= 0, `foxProgress(${String(bad)})`);
+    assert.ok(Array.isArray(p.worn));
+  }
 });
 
 test("daily streak: same day, next day, gap (§8.5)", () => {
