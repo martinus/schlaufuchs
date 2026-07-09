@@ -2,7 +2,7 @@
 
 ## Resume prompt
 Paste this into a fresh session:
-> Read `handoff/2026-07-09_0005-playtest-feedback-impl.md` and continue the work described there.
+> Read `docs/handoff/2026-07-09_0005-playtest-feedback-impl.md` and continue the work described there.
 
 ## Goal
 Implement `PLAN.md` — the playtest-feedback overhaul of the Schlaufuchs kids'
