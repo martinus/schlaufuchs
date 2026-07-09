@@ -626,7 +626,7 @@ walks the village lane; goal node: ringing the school bell.
 
 ### 10.3 Stars (per table & difficulty)
 
-8/10 → ⭐ · 9/10 → ⭐⭐ · 10/10 → ⭐⭐⭐, counting first tries only.
+6/10 → ⭐ · 8/10 → ⭐⭐ · 10/10 → ⭐⭐⭐, counting first tries only.
 
 **Accuracy is the only criterion.** Speed is not: a child who reads or taps
 slowly knows the times tables just as well, and a clock is not something they
@@ -774,8 +774,9 @@ settings.
 ### 13.3 Adaptive & stars
 
 Leitner boxes per word pair (§7). Rounds of 10 from the selected pack (or
-„Alle"). Stars per pack & difficulty: ⭐ ≥ 8/10 first-try · ⭐⭐ 10/10 ·
-⭐⭐⭐ 10/10 **and** every pack word at box ≥ 3 („Pack gemeistert").
+„Alle"). Stars per pack & difficulty follow §10.3: 6/10 · 8/10 · 10/10 first-try,
+the third star additionally requiring every pack word at box ≥ 3
+(„Pack gemeistert").
 
 ### 13.4 Cookie state (`vokabeln`) — budget-critical
 

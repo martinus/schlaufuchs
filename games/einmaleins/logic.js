@@ -66,14 +66,14 @@ export function choicesFor(q, rng = Math.random) {
   return opts;
 }
 
-// Stars per round (§10.3): 8/10 → ⭐, 9/10 → ⭐⭐, 10/10 → ⭐⭐⭐, first try each.
+// Stars per round (§10.3): 6/10 → ⭐, 8/10 → ⭐⭐, 10/10 → ⭐⭐⭐, first try each.
 // Speed is deliberately not a criterion: a child who reads or taps slowly knows
 // the times tables just as well, and a clock is not something they can act on.
 export function starsFor(firstTryOk, total) {
-  const missed = total - firstTryOk;
-  if (missed === 0) return 3;
-  if (missed === 1) return 2;
-  return missed === 2 ? 1 : 0;
+  const ratio = total > 0 ? firstTryOk / total : 0;
+  if (ratio >= 1) return 3;
+  if (ratio >= 0.8) return 2;
+  return ratio >= 0.6 ? 1 : 0;
 }
 
 // The i18n key naming what the *next* star costs, so a child who scored 9/10
