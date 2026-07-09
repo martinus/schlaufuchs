@@ -3,7 +3,7 @@
 // has the same top bar. Vanilla, no framework.
 
 import { t, getLang, setLang, LANGUAGES } from "./i18n.js";
-import { getSettings, setSettings, resetAll, resetGame } from "./storage.js";
+import { getSettings, setSettings, resetAll, resetGame, getRewards } from "./storage.js";
 import { foxInfo } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconHTML } from "./graphics.js";
@@ -28,10 +28,19 @@ export function renderFoxChip(el) {
   const sub = info.next === null
     ? t("foxMax")
     : t("foxNext", { n: info.next.missing, item: t(`cos_${info.next.name}`) });
+  // The daily streak used to be its own chip on the map alone. It belongs to
+  // the fox, not to a page, so it rides with the star count — and the map and
+  // the games now carry exactly the same three things in the top bar (§3.3).
+  const streak = getRewards().streak;
+  const days = Array.isArray(streak) ? streak[1] : 0;
+  const flame = days >= 2
+    ? `<span class="streak" title="${t("streakDays", { n: days })}">${iconHTML("ui-flame", { size: 14 })}${days}</span>`
+    : "";
+
   el.innerHTML = `
     ${foxSVG({ pose: "neutral", size: 40, stars: info.total })}
     <span>
-      <span class="lbl">⭐ ${info.total}</span>
+      <span class="lbl">⭐ ${info.total}${flame}</span>
       <span class="bar"><i style="width:${Math.round(info.frac * 100)}%"></i></span>
       <span class="sub">${sub}</span>
     </span>`;

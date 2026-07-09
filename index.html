@@ -35,10 +35,13 @@
   </script>
 </head>
 <body class="mappage">
+  <!-- The map and the games carry the same three things: a map button, the
+       fox's status, the gear. Nothing else earns a place up here (§3.3). -->
   <header class="topbar">
+    <!-- The map's own map button: the same shape as everywhere else, flat,
+         because you are already here. It is decoration, not a control. -->
+    <span class="iconbtn flat" data-icon="ui-map" data-icon-size="22" aria-hidden="true">🗺️</span>
     <div class="foxchip" id="foxchip"></div>
-    <span class="chip streakchip" id="streakchip" hidden></span>
-    <span class="spacer"></span>
     <button class="iconbtn" id="gearbtn" data-i18n-label="settings" data-icon="ui-gear" data-icon-size="22">⚙️</button>
   </header>
 
