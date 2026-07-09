@@ -582,7 +582,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .summary { text-align: center; }
 
 /* the numbers are for the grown-up looking over the shoulder, not for the
-   child — quiet, one line, out of the way of the stars and the sticker */
+   child — quiet, one line, out of the way of the stars and the trophy */
 .summary .stat {
   font-size: 0.9rem;
   font-weight: 700;
@@ -613,7 +613,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 .summary .bigstars { font-size: 2.6rem; letter-spacing: 4px; }
 .summary .sline { margin: 6px 0; font-weight: 700; }
-.summary .sticker-earn {
+.summary .trophy-earn {
   margin: 10px auto;
   padding: 10px;
   border-radius: var(--radius);
@@ -621,7 +621,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   box-shadow: var(--shadow);
   font-weight: 800;
 }
-.summary .sticker-earn .se-emoji { font-size: 2.8rem; display: block; }
+.summary .trophy-earn .se-emoji { font-size: 2.8rem; display: block; }
 
 /* ---- Pokalraum / Trophy Room (§3.2) ---- */
 /* The page is the room the map sends you to, so it should feel like one: a
@@ -633,7 +633,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 .roomtitle { box-shadow: none; background: none; padding-left: 4px; }
 
-.album-how {
+.room-intro {
   max-width: 560px;
   margin: 0 auto;
   padding: 4px 14px 10px;
@@ -648,7 +648,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   padding: 10px 14px 0;
 }
 
-/* the shelf board the stickers stand on */
+/* the shelf board the trophies stand on */
 .album-section::after {
   content: "";
   display: block;
@@ -662,13 +662,13 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .album-section h2 { font-size: 1.05rem; margin: 4px 0 6px; }
 .album-progress { margin: 0 0 10px; font-size: 0.8rem; color: var(--ink-soft); font-weight: 700; }
 
-.stickers {
+.trophies {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
-.stickers .slot {
+.trophies .slot {
   aspect-ratio: 1;
   border-radius: var(--radius);
   background: var(--panel);
@@ -681,7 +681,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   font-size: 1.9rem;
 }
 
-.stickers .slot .sname {
+.trophies .slot .sname {
   font-size: 0.62rem;
   font-weight: 700;
   color: var(--ink-soft);
@@ -689,24 +689,24 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   padding: 0 3px;
 }
 
-.stickers .slot.locked {
+.trophies .slot.locked {
   background: transparent;
   box-shadow: none;
   border: 2px dashed var(--depth-soft);
 }
 
 /* not yet yours: the shape without the colour */
-.stickers .slot.locked .silhouette {
+.trophies .slot.locked .silhouette {
   filter: grayscale(1) contrast(0) brightness(0.72);
   opacity: 0.38;
 }
 
 /* what you own is stated in --depth, the ownership colour */
-.stickers .slot:not(.locked) { outline: 2px solid var(--depth-soft); }
-.stickers .slot .sname { color: var(--depth); }
+.trophies .slot:not(.locked) { outline: 2px solid var(--depth-soft); }
+.trophies .slot .sname { color: var(--depth); }
 
 @media (min-width: 600px) {
-  .stickers { grid-template-columns: repeat(6, 1fr); }
+  .trophies { grid-template-columns: repeat(6, 1fr); }
 }
 
 /* ---- confetti ---- */

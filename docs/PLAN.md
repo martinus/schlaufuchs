@@ -24,10 +24,10 @@ Everything else on that page is in the way.
    bottom, ~300px of nothing between, question floating in it. Reads as a
    layout accident, not as calm. Question and answers must group.
 4. **One accent colour carries everything.** Orange is the focus ring, the
-   question gap, the fox, button rims, the level bar and the sticker borders at
+   question gap, the fox, button rims, the level bar and the trophy borders at
    once — so orange means nothing. Progress and ownership have no colour.
 5. **The album is correct and joyless.** Sixty identical dashed boxes holding
-   `?`. Nothing to want. Silhouettes of the unearned stickers create the pull.
+   `?`. Nothing to want. Silhouettes of the unearned trophies create the pull.
 6. **`.layer-thriving` / `.layer-mastered` exist and spend themselves on 🦉 and
    ✨.** The island should visibly change because of the child.
 7. **Copy leaks the system.** The album's empty state states a rule
@@ -51,7 +51,7 @@ Everything else on that page is in the way.
 | `--ok` / `--err` | `#2f9e44` / `#c1121f` | right / wrong, momentary only |
 
 `--depth` is the island's deep water. It takes over the level bar, star badges,
-earned stickers and mastered regions, so that colour finally carries
+earned trophies and mastered regions, so that colour finally carries
 information: *orange is what you do, blue is what you have.*
 
 ### Type — the deliberate pair

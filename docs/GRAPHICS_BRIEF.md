@@ -63,7 +63,7 @@ Mini emblems for each map area; also shown on the nav buttons under the map.
 | region-tippen.svg | 🌊 | gentle lake wave (Typing Lake) |
 | region-vokabeln.svg | 🌲 | friendly fir tree (Word Forest) |
 | region-lesen.svg | 📖 | open book (Reading Meadow) |
-| region-pokalraum.svg | 🏆 | trophy (Trophy Room / sticker album) |
+| region-pokalraum.svg | 🏆 | trophy (Trophy Room / trophy album) |
 
 ### Map decorations (14)
 
@@ -109,12 +109,12 @@ obstacles are cheerful milestones, never threatening.
 | j-goal-sparkle.svg | ✨ | sparkles (forest goal) |
 | j-goal-book.svg | 📖 | open book (meadow goal) |
 
-### Stickers (60)
+### Trophies (60)
 
-12 collectible stickers per game, themed to its region. Filenames follow
-`sticker-<game>-<n>` where n is 1–12.
+12 collectible trophies per game, themed to its region. Filenames follow
+`trophy-<game>-<n>` where n is 1–12.
 
-**Note on the crowns:** sticker #12 of every game is a 👑, but each must be a
+**Note on the crowns:** trophy #12 of every game is a 👑, but each must be a
 **distinct, region-themed crown** (village / mountain / lake / forest / reading),
 not the same crown five times.
 
@@ -122,86 +122,86 @@ not the same crown five times.
 
 | Filename | Emoji | Description |
 |---|---|---|
-| sticker-einmaleins-1.svg | 🔔 | School Bell |
-| sticker-einmaleins-2.svg | 🏠 | Little House |
-| sticker-einmaleins-3.svg | 🧮 | Abacus |
-| sticker-einmaleins-4.svg | 🥨 | Pretzel |
-| sticker-einmaleins-5.svg | 🐓 | Village Rooster |
-| sticker-einmaleins-6.svg | 🪁 | Kite |
-| sticker-einmaleins-7.svg | 🎺 | Trumpet |
-| sticker-einmaleins-8.svg | 🐴 | Pony |
-| sticker-einmaleins-9.svg | ⛲ | Village Fountain |
-| sticker-einmaleins-10.svg | 🎪 | Village Fair |
-| sticker-einmaleins-11.svg | 🌟 | Village Star |
-| sticker-einmaleins-12.svg | 👑 | Number King (village-themed crown) |
+| trophy-einmaleins-1.svg | 🔔 | School Bell |
+| trophy-einmaleins-2.svg | 🏠 | Little House |
+| trophy-einmaleins-3.svg | 🧮 | Abacus |
+| trophy-einmaleins-4.svg | 🥨 | Pretzel |
+| trophy-einmaleins-5.svg | 🐓 | Village Rooster |
+| trophy-einmaleins-6.svg | 🪁 | Kite |
+| trophy-einmaleins-7.svg | 🎺 | Trumpet |
+| trophy-einmaleins-8.svg | 🐴 | Pony |
+| trophy-einmaleins-9.svg | ⛲ | Village Fountain |
+| trophy-einmaleins-10.svg | 🎪 | Village Fair |
+| trophy-einmaleins-11.svg | 🌟 | Village Star |
+| trophy-einmaleins-12.svg | 👑 | Number King (village-themed crown) |
 
 #### rechnungen (Math Mountain)
 
 | Filename | Emoji | Description |
 |---|---|---|
-| sticker-rechnungen-1.svg | 🥾 | Hiking Boots |
-| sticker-rechnungen-2.svg | 🪨 | Lucky Stone |
-| sticker-rechnungen-3.svg | ⛺ | Tent |
-| sticker-rechnungen-4.svg | 🐐 | Mountain Goat |
-| sticker-rechnungen-5.svg | 🦅 | Eagle |
-| sticker-rechnungen-6.svg | ❄️ | Snowflake |
-| sticker-rechnungen-7.svg | 🌄 | Sunrise |
-| sticker-rechnungen-8.svg | 🦌 | Deer |
-| sticker-rechnungen-9.svg | 🧗 | Climbing Pro |
-| sticker-rechnungen-10.svg | 🏔️ | Summit |
-| sticker-rechnungen-11.svg | 🚩 | Summit Flag |
-| sticker-rechnungen-12.svg | 👑 | Mountain King (mountain-themed crown) |
+| trophy-rechnungen-1.svg | 🥾 | Hiking Boots |
+| trophy-rechnungen-2.svg | 🪨 | Lucky Stone |
+| trophy-rechnungen-3.svg | ⛺ | Tent |
+| trophy-rechnungen-4.svg | 🐐 | Mountain Goat |
+| trophy-rechnungen-5.svg | 🦅 | Eagle |
+| trophy-rechnungen-6.svg | ❄️ | Snowflake |
+| trophy-rechnungen-7.svg | 🌄 | Sunrise |
+| trophy-rechnungen-8.svg | 🦌 | Deer |
+| trophy-rechnungen-9.svg | 🧗 | Climbing Pro |
+| trophy-rechnungen-10.svg | 🏔️ | Summit |
+| trophy-rechnungen-11.svg | 🚩 | Summit Flag |
+| trophy-rechnungen-12.svg | 👑 | Mountain King (mountain-themed crown) |
 
 #### tippen (Typing Lake)
 
 | Filename | Emoji | Description |
 |---|---|---|
-| sticker-tippen-1.svg | 💧 | Water Drop |
-| sticker-tippen-2.svg | 🐸 | Frog |
-| sticker-tippen-3.svg | 🦆 | Duck |
-| sticker-tippen-4.svg | 🐟 | Fish |
-| sticker-tippen-5.svg | 🐚 | Seashell |
-| sticker-tippen-6.svg | 🛶 | Canoe |
-| sticker-tippen-7.svg | 🎣 | Fishing Rod |
-| sticker-tippen-8.svg | ⛵ | Sailboat |
-| sticker-tippen-9.svg | 🌊 | Wave |
-| sticker-tippen-10.svg | 🦢 | Swan |
-| sticker-tippen-11.svg | 🚤 | Speedy Boat |
-| sticker-tippen-12.svg | 👑 | Lake King (lake-themed crown) |
+| trophy-tippen-1.svg | 💧 | Water Drop |
+| trophy-tippen-2.svg | 🐸 | Frog |
+| trophy-tippen-3.svg | 🦆 | Duck |
+| trophy-tippen-4.svg | 🐟 | Fish |
+| trophy-tippen-5.svg | 🐚 | Seashell |
+| trophy-tippen-6.svg | 🛶 | Canoe |
+| trophy-tippen-7.svg | 🎣 | Fishing Rod |
+| trophy-tippen-8.svg | ⛵ | Sailboat |
+| trophy-tippen-9.svg | 🌊 | Wave |
+| trophy-tippen-10.svg | 🦢 | Swan |
+| trophy-tippen-11.svg | 🚤 | Speedy Boat |
+| trophy-tippen-12.svg | 👑 | Lake King (lake-themed crown) |
 
 #### vokabeln (Word Forest)
 
 | Filename | Emoji | Description |
 |---|---|---|
-| sticker-vokabeln-1.svg | 🍄 | Toadstool |
-| sticker-vokabeln-2.svg | 🌰 | Chestnut |
-| sticker-vokabeln-3.svg | 🐿️ | Squirrel |
-| sticker-vokabeln-4.svg | 🦔 | Hedgehog |
-| sticker-vokabeln-5.svg | 🦉 | Owl |
-| sticker-vokabeln-6.svg | 🦡 | Badger |
-| sticker-vokabeln-7.svg | 🫐 | Berries |
-| sticker-vokabeln-8.svg | 🦊 | Fox Friend |
-| sticker-vokabeln-9.svg | 🐺 | Wolf |
-| sticker-vokabeln-10.svg | 🌲 | Fir Tree |
-| sticker-vokabeln-11.svg | 🧚 | Forest Fairy |
-| sticker-vokabeln-12.svg | 👑 | Forest King (forest-themed crown) |
+| trophy-vokabeln-1.svg | 🍄 | Toadstool |
+| trophy-vokabeln-2.svg | 🌰 | Chestnut |
+| trophy-vokabeln-3.svg | 🐿️ | Squirrel |
+| trophy-vokabeln-4.svg | 🦔 | Hedgehog |
+| trophy-vokabeln-5.svg | 🦉 | Owl |
+| trophy-vokabeln-6.svg | 🦡 | Badger |
+| trophy-vokabeln-7.svg | 🫐 | Berries |
+| trophy-vokabeln-8.svg | 🦊 | Fox Friend |
+| trophy-vokabeln-9.svg | 🐺 | Wolf |
+| trophy-vokabeln-10.svg | 🌲 | Fir Tree |
+| trophy-vokabeln-11.svg | 🧚 | Forest Fairy |
+| trophy-vokabeln-12.svg | 👑 | Forest King (forest-themed crown) |
 
 #### lesen (Reading Meadow)
 
 | Filename | Emoji | Description |
 |---|---|---|
-| sticker-lesen-1.svg | 🌼 | Flower |
-| sticker-lesen-2.svg | 🐝 | Bee |
-| sticker-lesen-3.svg | 🦋 | Butterfly |
-| sticker-lesen-4.svg | 🐞 | Ladybug |
-| sticker-lesen-5.svg | 🐌 | Snail |
-| sticker-lesen-6.svg | 🐇 | Rabbit |
-| sticker-lesen-7.svg | ☀️ | Sun |
-| sticker-lesen-8.svg | 🎈 | Balloon |
-| sticker-lesen-9.svg | 🌈 | Rainbow |
-| sticker-lesen-10.svg | 📖 | Favorite Book |
-| sticker-lesen-11.svg | ⭐ | Reading Star |
-| sticker-lesen-12.svg | 👑 | Reading King (reading-themed crown) |
+| trophy-lesen-1.svg | 🌼 | Flower |
+| trophy-lesen-2.svg | 🐝 | Bee |
+| trophy-lesen-3.svg | 🦋 | Butterfly |
+| trophy-lesen-4.svg | 🐞 | Ladybug |
+| trophy-lesen-5.svg | 🐌 | Snail |
+| trophy-lesen-6.svg | 🐇 | Rabbit |
+| trophy-lesen-7.svg | ☀️ | Sun |
+| trophy-lesen-8.svg | 🎈 | Balloon |
+| trophy-lesen-9.svg | 🌈 | Rainbow |
+| trophy-lesen-10.svg | 📖 | Favorite Book |
+| trophy-lesen-11.svg | ⭐ | Reading Star |
+| trophy-lesen-12.svg | 👑 | Reading King (reading-themed crown) |
 
 ## Out of scope
 

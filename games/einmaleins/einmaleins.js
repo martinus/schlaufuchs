@@ -259,19 +259,19 @@ function endRound() {
     $("sum-score").textContent = t("roundStat", { ok: firstTryOk, total, s: seconds });
     $("sum-best").hidden = !improved;
     $("sum-best").textContent = t("newBest");
-    const st = $("sum-sticker");
-    if (res.newStickers.length > 0) {
-      const s = res.newStickers[0];
-      // the sticker speaks for itself: the picture, then its name
+    const st = $("sum-trophy");
+    if (res.newTrophies.length > 0) {
+      const s = res.newTrophies[0];
+      // the trophy speaks for itself: the picture, then its name
       st.innerHTML = `<span class="se-emoji">${iconHTML(s.icon, { size: 44 })}</span>${s[getLang()]}`;
       st.hidden = false;
-      sfx.sticker();
+      sfx.trophy();
     } else {
       st.hidden = true;
     }
     $("sum-again").textContent = t("again");
     showSummary();
-    if (improved || stars === 3 || res.newStickers.length > 0) confetti();
+    if (improved || stars === 3 || res.newTrophies.length > 0) confetti();
   }, 700);
 }
 
