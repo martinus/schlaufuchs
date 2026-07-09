@@ -3,10 +3,10 @@
 
 import { initI18n, t } from "./i18n.js";
 import { loadState, getRewards } from "./storage.js";
-import { gameStars, regionState, starBadgeTier, trophyCount, levelInfo, GAMES, isPlayable } from "./rewards.js";
+import { gameStars, regionState, starBadgeTier, trophyCount, foxInfo, GAMES, isPlayable } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconHTML, iconSVG, applyIcons } from "./graphics.js";
-import { renderLevelChip, initSettingsOverlay } from "./chrome.js";
+import { renderFoxChip, initSettingsOverlay } from "./chrome.js";
 
 // Fox anchor per region (map coordinates, §3.1).
 const ANCHORS = {
@@ -90,7 +90,7 @@ function render() {
   const state = loadState();
   const rewards = getRewards();
 
-  renderLevelChip(document.getElementById("levelchip"));
+  renderFoxChip(document.getElementById("foxchip"));
 
   // daily streak chip
   const streak = rewards.streak;
@@ -146,7 +146,7 @@ function render() {
   const at = ANCHORS[rewards.at] ? rewards.at : "einmaleins";
   const [x, y] = ANCHORS[at];
   const fox = document.getElementById("map-fox");
-  fox.innerHTML = foxSVG({ pose: "happy", size: 44, level: levelInfo().level });
+  fox.innerHTML = foxSVG({ pose: "happy", size: 44, stars: foxInfo().total });
   fox.setAttribute("transform", `translate(${x - 22}, ${y - 40})`);
 }
 

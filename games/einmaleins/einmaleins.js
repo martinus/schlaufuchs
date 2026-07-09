@@ -4,12 +4,12 @@
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString } from "../../assets/js/adaptive.js";
-import { recordRound, levelInfo, roundPoints, tilePointsLeft, addPractice } from "../../assets/js/rewards.js";
+import { recordRound, foxInfo, roundPoints, tilePointsLeft, addPractice } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
 import { iconHTML, applyIcons } from "../../assets/js/graphics.js";
-import { renderLevelChip, initSettingsOverlay } from "../../assets/js/chrome.js";
+import { renderFoxChip, initSettingsOverlay } from "../../assets/js/chrome.js";
 import strings from "./i18n.js";
 import {
   POOL_COUNT, EASY_TABLES, poolFor, questionFor, choicesFor,
@@ -73,7 +73,7 @@ function updateChip() {
 function startRound() {
   coerceTable();
   updateChip();
-  renderLevelChip($("levelchip"));
+  renderFoxChip($("foxchip"));
   saved = getGame("einmaleins");
   const boxes = boxesFromString(saved.box, POOL_COUNT);
   session = createSession(poolFor(table, diff), boxes, { roundSize: 10 });
@@ -83,7 +83,7 @@ function startRound() {
   journey = createJourney($("journey"), {
     nodes: session.items().length,
     theme: "village",
-    level: levelInfo().level,
+    foxStars: foxInfo().total,
     stars: best,
   });
   buffer = "";
@@ -396,7 +396,7 @@ const settings = initSettingsOverlay({
   resetKind: "game",
   game: "einmaleins",
   onChange() {
-    renderLevelChip($("levelchip"));
+    renderFoxChip($("foxchip"));
     updateChip();
     if (!roundOver) renderQuestion();
   },

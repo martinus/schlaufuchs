@@ -6,6 +6,7 @@ import de from "../assets/i18n/de.js";
 import en from "../assets/i18n/en.js";
 import einmaleins from "../games/einmaleins/i18n.js";
 import { t, LANGUAGES, isLang } from "../assets/js/i18n.js";
+import { COSMETICS } from "../assets/js/rewards.js";
 
 const abs = (p) => fileURLToPath(new URL(`../${p}`, import.meta.url));
 
@@ -82,7 +83,7 @@ test("no dictionary key is dead", () => {
         for (const [, k] of src.matchAll(/\bt\(\s*["'`]([a-zA-Z0-9_]+)["'`]/g)) used.add(k);
         for (const [, k] of src.matchAll(/data-i18n(?:-label)?="([a-zA-Z0-9_]+)"/g)) used.add(k);
         // keys built at runtime, e.g. `region_${game}` or DIFF_KEYS
-        for (const [, k] of src.matchAll(/["'`](region_|game_|diff|starGoal)[a-zA-Z0-9]*["'`]/g)) used.add(k);
+        for (const [, k] of src.matchAll(/["'`](region_|game_|diff|starGoal|cos_)[a-zA-Z0-9]*["'`]/g)) used.add(k);
       }
     }
   };
@@ -95,7 +96,7 @@ test("no dictionary key is dead", () => {
   }
   used.add("region_pokalraum");
 
-  const dynamic = /^(region_|game_|diff|starGoal)/;
+  const dynamic = /^(region_|game_|diff|starGoal|cos_)/;
   const dead = Object.keys(de).filter((k) => !used.has(k) && !dynamic.test(k));
   assert.deepEqual(dead, [], `dead strings in de.js/en.js: ${dead.join(", ")}`);
 });
@@ -127,4 +128,25 @@ test("the language picker offers a way back to every language", () => {
   assert.ok(chrome.includes("LANGUAGES.map"), "the picker must be built from LANGUAGES");
   assert.ok(chrome.includes('aria-pressed'), "the active language must be marked");
   assert.ok(!/getLang\(\) === "de" \? "EN" : "DE"/.test(chrome), "the old toggle is back");
+});
+
+// `cos_*` is on the dead-key test's dynamic allowlist, which means that test can
+// no longer notice one going missing — the same hole `starGoal*` opened. Name
+// them from COSMETICS instead of copying the list, so adding a hat to the fox
+// and forgetting its translation fails here.
+test("every cosmetic the fox can wear has a name in both languages", () => {
+  assert.ok(COSMETICS.length >= 7);
+  for (const [, name] of COSMETICS) {
+    const key = `cos_${name}`;
+    assert.equal(typeof de[key], "string", `de.js is missing ${key}`);
+    assert.equal(typeof en[key], "string", `en.js is missing ${key}`);
+    assert.ok(de[key].length > 0 && en[key].length > 0, `${key} is empty`);
+  }
+  // and the chip's own two strings
+  for (const k of ["foxNext", "foxMax"]) {
+    assert.equal(typeof de[k], "string");
+    assert.equal(typeof en[k], "string");
+  }
+  assert.match(de.foxNext, /\{n\}/);
+  assert.match(de.foxNext, /\{item\}/);
 });

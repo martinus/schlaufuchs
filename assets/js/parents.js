@@ -9,7 +9,7 @@
 import { initI18n, t } from "./i18n.js";
 import { getGame, getRewards } from "./storage.js";
 import { boxesFromString } from "./adaptive.js";
-import { levelInfo, sumStars, trophyCount, GAMES } from "./rewards.js";
+import { sumStars, trophyCount, GAMES } from "./rewards.js";
 import { iconHTML, applyIcons } from "./graphics.js";
 import { heatOf, weakFacts, heatCounts, practiceSummary, minutesOf, secondsPerRound } from "./parentstats.js";
 import { POOL_COUNT, pairIndex, pairOf } from "../../games/einmaleins/logic.js";
@@ -31,7 +31,6 @@ function renderChips() {
   const streak = Array.isArray(rewards.streak) ? rewards.streak[1] : 0;
   $("p-chips").innerHTML = [
     `<span class="pchip">${iconHTML("ui-star", { size: 16 })} ${sumStars(state)}</span>`,
-    `<span class="pchip">Level ${levelInfo().level}</span>`,
     `<span class="pchip">${iconHTML("deco-trophy", { size: 16 })} ${trophies}</span>`,
     streak >= 2 ? `<span class="pchip">${iconHTML("ui-flame", { size: 16 })} ${streak}</span>` : "",
   ].join("");

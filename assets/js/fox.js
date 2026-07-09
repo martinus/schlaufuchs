@@ -1,5 +1,5 @@
 // The Schlaufuchs mascot (§15): one geometric SVG fox, poses as variations,
-// cosmetic layers unlocked by fox level (§8.4). Returned as a markup string
+// cosmetic layers unlocked by total stars (§8.4). Returned as a markup string
 // so pages can inline it anywhere (map, journey, headers, reactions).
 
 import { COSMETICS } from "./rewards.js";
@@ -40,8 +40,9 @@ function mouth(pose) {
   }
 }
 
-function cosmeticLayers(level) {
-  const on = new Set(COSMETICS.filter(([lvl]) => level >= lvl).map(([, name]) => name));
+// The outfit is earned with stars, not with a level number (§8.4).
+function cosmeticLayers(stars) {
+  const on = new Set(COSMETICS.filter(([at]) => stars >= at).map(([, name]) => name));
   let s = "";
   if (on.has("backpack"))
     s += `<rect x="16" y="60" width="8" height="22" rx="4" fill="#8d5524"/>
@@ -67,9 +68,9 @@ function cosmeticLayers(level) {
   return s;
 }
 
-// foxSVG({pose, size, level, cls}) → SVG markup string.
+// foxSVG({pose, size, stars, cls}) → SVG markup string.
 // Poses: neutral | happy | cheer | think | breath.
-export function foxSVG({ pose = "neutral", size = 64, level = 1, cls = "" } = {}) {
+export function foxSVG({ pose = "neutral", size = 64, stars = 0, cls = "" } = {}) {
   return `<svg class="fox ${cls}" viewBox="0 0 100 100" width="${size}" height="${size}"
        aria-hidden="true" focusable="false">
     <polygon points="22,42 32,8 46,34" fill="${ORANGE}"/>
@@ -82,6 +83,6 @@ export function foxSVG({ pose = "neutral", size = 64, level = 1, cls = "" } = {}
     ${eyes(pose)}
     <circle cx="50" cy="61" r="4.5" fill="${DARK}"/>
     ${mouth(pose)}
-    ${cosmeticLayers(level)}
+    ${cosmeticLayers(stars)}
   </svg>`;
 }

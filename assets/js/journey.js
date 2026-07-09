@@ -46,7 +46,9 @@ const SLOTS = 3;
 // survives a round with a different number of questions.
 const SKY = [[0.28, 52], [0.47, 32], [0.68, 48]];
 
-export function createJourney(container, { nodes, theme = "village", level = 1, stars = 0 }) {
+// `stars` is what the basket holds; `foxStars` is the fox's outfit — two
+// different counts, and conflating them would dress the fox by the tile.
+export function createJourney(container, { nodes, theme = "village", foxStars = 0, stars = 0 }) {
   const th = THEMES[theme] ?? THEMES.village;
   const xOf = (i) => PATH_X0 + i * STEP_;
   const yOf = (i) =>
@@ -115,7 +117,7 @@ export function createJourney(container, { nodes, theme = "village", level = 1, 
   }
 
   svg += `<g class="j-fox" style="transform: translate(${xOf(0) - 13}px, ${yOf(0) - 30}px)">
-      ${foxSVG({ pose: "happy", size: 26, level })}</g></svg>`;
+      ${foxSVG({ pose: "happy", size: 26, stars: foxStars })}</g></svg>`;
 
   container.innerHTML = svg;
   const el = container.querySelector("svg");
