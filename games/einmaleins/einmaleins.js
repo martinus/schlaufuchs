@@ -9,6 +9,7 @@ import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
 import { iconHTML } from "../../assets/js/graphics.js";
+import { trophyCardHTML } from "../../assets/js/trophycard.js";
 import { initTopBar } from "../../assets/js/chrome.js";
 import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
 import strings from "./i18n.js";
@@ -323,10 +324,11 @@ function endRound() {
     const won = res.newTrophies;
     st.hidden = won.length === 0;
     if (won.length > 0) {
-      // the trophy speaks for itself: the picture, then its name
+      // The very same card the album shelf shows, so the child can find it
+      // again: the cup, her emoji in it, its name.
       const size = won.length > 1 ? 34 : 44;
       st.innerHTML = won
-        .map((s) => `<span class="won"><span class="se-emoji">${iconHTML(s.icon, { size })}</span>${s[getLang()]}</span>`)
+        .map((s) => trophyCardHTML(s, { size, lang: getLang(), cls: "won" }))
         .join("");
       sfx.trophy();
     }
