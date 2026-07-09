@@ -14,7 +14,7 @@ export default {
   levelMax: "Höchstes Level erreicht!",
   streakDays: "{n} Tage in Folge",
   region_pokalraum: "Pokalraum",
-  roomIntro: "Hier steht, was du gewonnen hast. Eine fehlerfreie Runde gibt 1 Punkt auf Mittel und 2 auf Schwer. Ein Level zu meistern gibt 1 Punkt dazu.",
+  roomIntro: "Hier steht, was du gewonnen hast. Punkte gibt es für neue Sterne — je schwerer die Aufgabe, desto mehr.",
   trophyLocked: "Noch nicht freigespielt",
   trophyNextIn: "Noch {n} Punkte bis zum nächsten Pokal",
   trophyNextIn1: "Noch 1 Punkt bis zum nächsten Pokal",

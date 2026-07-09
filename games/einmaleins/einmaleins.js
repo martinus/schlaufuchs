@@ -4,7 +4,7 @@
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString } from "../../assets/js/adaptive.js";
-import { recordRound, levelInfo } from "../../assets/js/rewards.js";
+import { recordRound, levelInfo, roundPoints, tilePointsLeft } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
@@ -246,17 +246,16 @@ function endRound() {
   if (improved) starsObj[diff] = withStarDigit(starsObj[diff], table, stars);
   setGame("einmaleins", { d: diff, t: table, box: boxesToString(full, POOL_COUNT), stars: starsObj });
 
-  // mastering a table = its third star, awarded once (§8.3)
-  const res = recordRound("einmaleins", {
-    perfect: firstTryOk === total,
-    difficulty: diff,
-    masteredNew: stars === 3 && old < 3,
-  });
+  // points come from progress, never from repetition (§8.3)
+  const points = roundPoints({ oldStars: old, newStars: stars, difficulty: diff });
+  const res = recordRound("einmaleins", { points });
 
   journey.finish();
   setTimeout(() => {
     $("sum-stars").textContent = stars > 0 ? "⭐".repeat(stars) : "🦊";
-    $("sum-score").textContent = t("roundStat", { ok: firstTryOk, total, s: seconds });
+    // the points you just earned, next to the numbers that earned them
+    $("sum-score").innerHTML = t("roundStat", { ok: firstTryOk, total, s: seconds })
+      + (points > 0 ? ` <span class="gain">+${points}</span>` : "");
     $("sum-best").hidden = !improved;
     $("sum-best").textContent = t("newBest");
     const st = $("sum-trophy");
@@ -307,7 +306,14 @@ function renderPicker() {
   for (const tbl of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0]) {
     const b = document.createElement("button");
     const s = starDigit(starStr, tbl);
-    b.innerHTML = `<span>${tbl2short(tbl)}</span><span class="tstars">${s > 0 ? "⭐".repeat(s) : "·"}</span>`;
+    // Every tile states what it is still worth. A child never reads a rule —
+    // they see that an untouched Schwer tile pays 8 and a mastered one pays
+    // nothing, and they go where the points are (§10.2).
+    const left = tilePointsLeft(s, diff);
+    if (left === 0) b.classList.add("mastered");
+    b.innerHTML = `<span>${tbl2short(tbl)}</span>
+      <span class="tstars">${s > 0 ? "⭐".repeat(s) : "·"}</span>
+      <span class="tpoints">${left > 0 ? `+${left}` : "✓"}</span>`;
     b.disabled = diff === 0 && tbl !== 0 && !EASY_TABLES.includes(tbl);
     b.addEventListener("click", () => {
       table = tbl;

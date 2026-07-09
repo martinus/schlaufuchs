@@ -6,9 +6,13 @@ import { loadState, getRewards, setRewards } from "./storage.js";
 
 export const GAMES = ["einmaleins", "tippen", "rechnungen", "vokabeln", "lesen"];
 
-// Trophy s (1-indexed) is earned when the game's lifetime trophy-credit
-// counter reaches THRESHOLDS[s-1] (§8.3). Deterministic, no randomness.
-export const THRESHOLDS = [1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26, 30];
+// Trophy s (1-indexed) is earned when the game's lifetime point counter reaches
+// THRESHOLDS[s-1] (§8.3). Deterministic, no randomness.
+//
+// Balanced against einmaleins, whose 27 tiles are worth 195 points in total
+// (§8.3): the last trophy lands at ~62 % of everything there is, so finishing
+// the collection is a realistic goal rather than a grind.
+export const THRESHOLDS = [2, 5, 9, 15, 22, 30, 40, 52, 66, 82, 100, 120];
 
 // 12 fixed trophies per region (§8.3), themed. {e: emoji, de/en: name}.
 export const TROPHIES = {
@@ -88,8 +92,11 @@ export const TROPHIES = {
 // Additive only — the {e, de, en} fields are untouched.
 for (const g of GAMES) TROPHIES[g].forEach((s, i) => { s.icon = `trophy-${g}-${i + 1}`; });
 
-// Achievable stars per game, for map region states (§3.1).
-export const ACHIEVABLE = { einmaleins: 99, rechnungen: 45, tippen: 120, vokabeln: 54, lesen: 9 };
+// Achievable stars per game, for map region states (§3.1). einmaleins: 27 tiles
+// (Leicht offers only 4 tables + "Alle"; Mittel and Schwer offer all 10 + "Alle")
+// × 3 stars = 81. It was 99, which counted tiles Leicht never shows — so the
+// region could never reach "mastered" and its road could never pave itself.
+export const ACHIEVABLE = { einmaleins: 81, rechnungen: 45, tippen: 120, vokabeln: 54, lesen: 9 };
 
 // Cosmetic fox upgrades at fixed levels (§8.4).
 export const COSMETICS = [
@@ -107,21 +114,31 @@ export function trophyCount(pr) {
   return n;
 }
 
-// What a finished round is worth towards the next trophy (§8.3).
+// Points a finished round is worth (§8.3). Everything is derived from the
+// tile's best-star count before and after, so nothing extra is stored:
 //
-// Trophies must not be farmable by replaying the easiest level: a perfect
-// round on Leicht earns nothing on its own. It earns something when it also
-// *masters* the table (the third star, which needs 10/10 under a minute) —
-// so a young child who only plays Leicht still fills the Pokalraum, just by
-// getting good rather than by repeating.
+//   · each NEW star                          +1   (play what you have not solved)
+//   · your FIRST mistake-free round there    +1/+2/+3 by difficulty
+//   · mastering the tile (its third star)    +2
+//
+// A tile you have already mastered is worth nothing, so no amount of replaying
+// the easiest level fills the Pokalraum. The "first mistake-free round" needs no
+// flag of its own: two stars *mean* 10/10 on the first try (§10.3), so crossing
+// from below two stars to two or more is exactly that first perfect round.
 //
 // difficulty: 0 = Leicht, 1 = Mittel, 2 = Schwer.
-// masteredNew: this round raised the table to its third star for the first time.
-export function trophyCredit({ perfect = false, difficulty = 0, masteredNew = false } = {}) {
-  let credit = 0;
-  if (perfect && difficulty > 0) credit += difficulty; // Mittel 1, Schwer 2
-  if (masteredNew) credit += 1;
-  return credit;
+export function roundPoints({ oldStars = 0, newStars = 0, difficulty = 0 } = {}) {
+  if (!(newStars > oldStars)) return 0; // no improvement, no points
+  let points = newStars - oldStars;
+  if (oldStars < 2 && newStars >= 2) points += difficulty + 1;
+  if (oldStars < 3 && newStars === 3) points += 2;
+  return points;
+}
+
+// What is still to be gained on one tile — the number a child sees on the tile
+// in the picker, so the rules never have to be read (§10.2).
+export function tilePointsLeft(stars = 0, difficulty = 0) {
+  return roundPoints({ oldStars: stars, newStars: 3, difficulty });
 }
 
 function sumDigits(str) {
@@ -207,7 +224,7 @@ export function levelInfo() {
 
 // Called by games at the end of every round (§8). Updates fox map position,
 // streak and perfect-round counters; returns what to celebrate.
-export function recordRound(game, { perfect, difficulty = 0, masteredNew = false }) {
+export function recordRound(game, { points = 0 }) {
   const r = getRewards();
   const today = todayLocalISO();
   const prevCount = Array.isArray(r.streak) ? r.streak[1] : 0;
@@ -215,10 +232,9 @@ export function recordRound(game, { perfect, difficulty = 0, masteredNew = false
   const streak = updateStreak(r.streak, today);
   const pr = { ...(r.pr ?? {}) };
   let newTrophies = [];
-  const credit = trophyCredit({ perfect, difficulty, masteredNew });
-  if (credit > 0) {
+  if (points > 0) {
     const before = trophyCount(pr[game]);
-    pr[game] = (pr[game] ?? 0) + credit;
+    pr[game] = (pr[game] ?? 0) + points;
     newTrophies = TROPHIES[game].slice(before, trophyCount(pr[game]));
   }
   setRewards({ at: game, streak, pr });

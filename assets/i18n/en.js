@@ -14,7 +14,7 @@ export default {
   levelMax: "Top level reached!",
   streakDays: "{n} days in a row",
   region_pokalraum: "Trophy Room",
-  roomIntro: "This is what you have won. A mistake-free round is worth 1 point on Medium and 2 on Hard. Mastering a level adds 1 point.",
+  roomIntro: "This is what you have won. Points come from new stars — the harder the task, the more you get.",
   trophyLocked: "Not unlocked yet",
   trophyNextIn: "{n} more points until the next trophy",
   trophyNextIn1: "1 more point until the next trophy",

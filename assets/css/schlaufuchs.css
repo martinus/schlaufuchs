@@ -557,6 +557,21 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .tilegrid button:disabled { opacity: 0.35; cursor: default; }
 .tilegrid .tstars { font-size: 0.7rem; letter-spacing: -1px; }
 
+/* Each tile says what it is still worth, in the ownership colour. This is the
+   whole rulebook: an untouched Schwer tile shows +8, a mastered one shows ✓.
+   Nobody reads rules; everybody reads numbers (§10.2). */
+.tilegrid .tpoints {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--depth);
+}
+/* a mastered tile steps back: still playable, but visibly finished */
+.tilegrid button.mastered { opacity: 0.5; }
+.tilegrid button.mastered .tpoints { color: var(--ok); }
+
+/* the points just earned, beside the numbers that earned them */
+.summary .gain { color: var(--depth); font-weight: 800; }
+
 .setrow {
   display: flex;
   align-items: center;
