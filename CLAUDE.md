@@ -51,6 +51,11 @@ workflow runs it before publishing.
     --size 360x640 --do 'eval @play.js' --do 'until #fb-next' \
     --clip .stage --probe '#feedback' --out aid.png
   ```
+
+  `--full` captures a whole scrolling page (privacy, parents). `--reduced-motion`
+  emulates `prefers-reduced-motion: reduce` — this repo treats that setting as
+  non-negotiable, so verify it rather than assume it: an animated element that
+  never arrives is invisible in every other run.
 - **Silent no-ops are the dangerous ones.** `pave("einmaleins")` looked up an
   id that did not exist and quietly did nothing. Prefer a test that asserts the
   wiring exists over trusting that a missing element is "handled".
