@@ -85,30 +85,21 @@ export function nextStarGoal(stars) {
   return ["starGoal1", "starGoal2", "starGoal3"][stars] ?? null;
 }
 
-// How many first-try-correct answers each star costs, for a round of `total`
-// questions. Derived from the same ratios starsFor uses, so the basket and the
-// summary can never disagree.
-export const starTargets = (total) => [0.6, 0.8, 1].map((r) => Math.ceil(r * total));
+// The three stars a tile can ever hold (§10.3).
+export const STAR_SLOTS = 3;
 
-// The in-round star basket (§10.5). It *fills*; it never spills.
+// The stars you own on this tile if the round stopped right now: your best ever
+// on it, or what this round has already banked, whichever is higher (§10.5).
 //
-// `firstTrySolved` is banked and monotone, so `stars` only grows — a basket
-// driven by the still-reachable maximum would drop a star on the very first
-// mistake, and the first mistake usually arrives at question two. A child can
-// only win here anyway: `endRound` keeps the best score, never the last one.
-//
-// The goal names the cheapest star that is still *reachable*. Once three
-// misses have put two stars out of reach, promising them would be a lie, so
-// the goal falls silent rather than dangle something unreachable.
-export function basketState({ firstTrySolved = 0, firstTryOk = 0, total = 0 } = {}) {
-  if (total <= 0) return { stars: 0, needed: 0, goalStars: 0 };
-  const targets = starTargets(total);
-  const next = targets.find((k) => k > firstTrySolved && k <= firstTryOk);
-  return {
-    stars: starsFor(firstTrySolved, total),
-    needed: next ? next - firstTrySolved : 0,
-    goalStars: next ? targets.indexOf(next) + 1 : 0,
-  };
+// This is the whole scene. The sky holds `STAR_SLOTS - owned` stars still to be
+// won; the basket holds `owned`. Both terms are monotone, so a star can never
+// leave the basket, and a tile already taken to three stars starts with a full
+// basket and an empty sky — it cannot promise what `endRound()` will not pay,
+// because `improved = stars > old` uses exactly this `best`.
+export function ownedStars({ firstTrySolved = 0, total = 0 } = {}, best = 0) {
+  const held = Number.isInteger(best) && best > 0 ? Math.min(best, STAR_SLOTS) : 0;
+  const earned = total > 0 ? starsFor(firstTrySolved, total) : 0;
+  return Math.max(held, earned);
 }
 
 // Index into the 11-digit per-difficulty star string: tables 1..10 → 0..9,

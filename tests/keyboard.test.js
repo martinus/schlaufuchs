@@ -62,16 +62,15 @@ test("the feedback card is sized to fit the shortest phone", () => {
   const css = readFileSync(abs("assets/css/schlaufuchs.css"), "utf8");
   const dot = css.slice(css.indexOf(".dotgrid i {"), css.indexOf("}", css.indexOf(".dotgrid i {")));
   assert.ok(/width:\s*clamp\(/.test(dot), "the dot must scale with the viewport height");
-  // The streak line used to yield its row only while empty. It now shares that
-  // row with the star basket and is therefore almost never empty, so the whole
-  // status row hides while the aid is up.
+  // The stars, the basket and the fox are one scene now, and the whole scene
+  // yields while the aid is up — which hands the aid ~50px it never had.
   assert.ok(
-    css.includes(".stage:has(#feedback:not([hidden])) .statusrow"),
-    "the status row must not steal a row from the aid",
+    css.includes(".stage:has(#feedback:not([hidden])) .journey-wrap"),
+    "the scene must not steal room from the aid",
   );
   assert.ok(
-    !css.includes(".hotstreak:empty"),
-    "an :empty rule cannot free a row that now always has a basket in it",
+    !/\.hotstreak|\.statusrow/.test(css),
+    "the streak row is gone; a stale rule would reserve space for nothing",
   );
   assert.ok(
     einmaleins.includes("repeat(${b}, auto)"),
