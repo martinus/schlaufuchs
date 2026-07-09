@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import de from "../assets/i18n/de.js";
 import en from "../assets/i18n/en.js";
 import einmaleins from "../games/einmaleins/i18n.js";
-import { t } from "../assets/js/i18n.js";
+import { t, LANGUAGES, isLang } from "../assets/js/i18n.js";
 
 const abs = (p) => fileURLToPath(new URL(`../${p}`, import.meta.url));
 
@@ -97,4 +97,33 @@ test("no dictionary key is dead", () => {
   const dynamic = /^(region_|game_|diff)/;
   const dead = Object.keys(de).filter((k) => !used.has(k) && !dynamic.test(k));
   assert.deepEqual(dead, [], `dead strings in de.js/en.js: ${dead.join(", ")}`);
+});
+
+// Adding a language must be one declaration, not a hunt through the codebase.
+// These fail if LANGUAGES and the dictionaries drift apart.
+test("LANGUAGES lists exactly the languages that have a dictionary", () => {
+  assert.deepEqual(LANGUAGES.map((l) => l.code).sort(), ["de", "en"]);
+  for (const l of LANGUAGES) {
+    assert.ok(l.name, `${l.code}: needs a name shown in the picker`);
+    assert.ok(l.flag?.startsWith("flag-"), `${l.code}: needs a graphics-registry flag`);
+    assert.ok(isLang(l.code));
+  }
+  assert.equal(isLang("es"), false, "an unknown code must be rejected");
+  assert.equal(isLang(undefined), false);
+});
+
+test("every language flag is registered in the graphics registry", () => {
+  const src = readFileSync(abs("assets/js/graphics.js"), "utf8");
+  for (const l of LANGUAGES) {
+    assert.ok(src.includes(`"${l.flag}"`), `graphics.js is missing "${l.flag}"`);
+  }
+});
+
+test("the language picker offers a way back to every language", () => {
+  // regression: the settings row was a single button showing the OTHER
+  // language, so it never said which one you were currently reading
+  const chrome = readFileSync(abs("assets/js/chrome.js"), "utf8");
+  assert.ok(chrome.includes("LANGUAGES.map"), "the picker must be built from LANGUAGES");
+  assert.ok(chrome.includes('aria-pressed'), "the active language must be marked");
+  assert.ok(!/getLang\(\) === "de" \? "EN" : "DE"/.test(chrome), "the old toggle is back");
 });

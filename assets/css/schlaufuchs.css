@@ -596,6 +596,38 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   border-bottom: 1px solid var(--orange-soft);
 }
 
+/* Language: show them all, mark the one you are reading. A row of chips grows
+   with the list, so adding Spanish needs no layout change (§6.1). */
+.setrow-lang {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 10px 0;
+}
+
+.langpick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.langbtn {
+  flex: 1 1 auto;
+  min-height: 52px;
+  min-width: 44%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 800;
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.langbtn .flag { font-size: 20px; line-height: 1; }
+.langbtn[aria-pressed="true"] { background: var(--orange); color: #fff; }
+
 .primary {
   display: block;
   width: 100%;
