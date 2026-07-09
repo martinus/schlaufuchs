@@ -310,13 +310,63 @@ a.chip { color: var(--ink); text-decoration: none; }
   to { filter: drop-shadow(0 0 6px #f4b400); }
 }
 
+/* Each region's tap target: one bounded rect, drawn first inside its own <a>,
+   large enough for a child's finger (§3.1 wants 64px; the smallest here is
+   96×136). Mara tapped the gap between the two village houses and nothing
+   happened, because the map was hit-tested by its art alone. The fill is an
+   attribute in the markup, not a rule here — a stylesheet that fails to load
+   must not leave six black boxes on the island. */
+.worldmap .region .hit { cursor: pointer; }
+
 /* Fog over a region whose game is not built yet (§3.1). It must never take
-   the tap: the map is hit-tested by its art, and a blob over the bounding box
-   would restore the invisible hotspot this map deliberately removed. */
+   the tap: it is unbounded and spills over its neighbours, so the region's own
+   `.hit` rect answers instead. */
 .worldmap .region .fog { pointer-events: none; }
 .worldmap .region .fog ellipse { fill: #f4f7f8; }
 .worldmap .region.locked .region-label { fill: var(--ink-soft); }
 .worldmap .region.locked .region-badge { opacity: 0.55; }
+
+/* Tapping a fogged region shakes its fog instead of leaving the map. */
+.worldmap .region .fog.wiggle { animation: fog-wiggle 0.42s ease-in-out 2; }
+@keyframes fog-wiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+/* …and says so, without a sentence to read. */
+.soon-bubble { pointer-events: none; }
+.soon-bubble rect { fill: var(--orange); }
+.soon-bubble text {
+  fill: #fff;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+/* A region's name is a button, so it is drawn on a plate. Without it nothing on
+   this map looked pressable and a child tapped the fog. */
+.worldmap .label-plate {
+  fill: #fff;
+  stroke: var(--orange-soft);
+  stroke-width: 2;
+  filter: drop-shadow(0 2px 2px rgba(74, 44, 23, 0.22));
+}
+
+/* What a child may walk into breathes; what is fogged stands still. The global
+   reduced-motion switch turns this off — the plate then carries the affordance
+   on its own. Without `transform-box` an SVG group pivots on the viewport's
+   corner and the region flies off the island. */
+.worldmap .region:not(.locked) {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  animation: region-bob 3.2s ease-in-out infinite;
+}
+.worldmap .region:nth-of-type(even) { animation-delay: -1.6s; }
+@keyframes region-bob {
+  0%, 100% { transform: translateY(1.5px); }
+  50% { transform: translateY(-1.5px); }
+}
 
 .worldmap .layer-thriving, .worldmap .layer-mastered { display: none; }
 .worldmap .region.thriving .layer-thriving { display: inline; }

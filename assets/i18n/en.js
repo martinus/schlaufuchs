@@ -58,6 +58,7 @@ export default {
   diffWorth: "{d} — each star counts {n}×",
   starsTotal: "{n} stars",
   lockedHint: "Not available yet",
+  soonBubble: "Soon!",
   comingSoon: "This game isn't built yet. Number Village is ready to play.",
   region_pokalraum: "Trophy Room",
   roomIntro: "This is what you have won. Points come from new stars — the harder the task, the more you get.",
