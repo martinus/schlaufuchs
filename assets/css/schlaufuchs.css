@@ -580,8 +580,19 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 
 .summary { text-align: center; }
+
+/* the numbers are for the grown-up looking over the shoulder, not for the
+   child — quiet, one line, out of the way of the stars and the sticker */
+.summary .stat {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+}
+.summary .best { color: var(--orange); font-weight: 800; }
+
 .sum-secondary {
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   margin-top: 10px;
   margin-bottom: 0;
 }
@@ -610,7 +621,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   box-shadow: var(--shadow);
   font-weight: 800;
 }
-.summary .sticker-earn .se-emoji { font-size: 2.4rem; display: block; }
+.summary .sticker-earn .se-emoji { font-size: 2.8rem; display: block; }
 
 /* ---- album (§3.2) ---- */
 .album-how {

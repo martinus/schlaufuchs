@@ -555,9 +555,13 @@ walks the village lane; goal node: ringing the school bell.
 2. Round of 10 (per §7.3): `7 × 8 = ?`, journey strip on top (§8.2).
 3. Wrong → correct answer shown 2 s **with a dot-grid visual aid** (7 rows of
    8 dots), box drops, re-queue per §7.
-4. Summary overlay: first-try score, time, stars, sticker if earned, one
-   primary „Nochmal!" button. Table picker via the header chip: an 11-tile
-   overlay (Reihen 1–10 + „Alle gemischt") each showing its star state.
+4. Summary overlay, kept deliberately quiet: stars, one muted line of numbers
+   (`{ok}/{total} · {s} s`), the sticker if one was earned, one primary
+   „Nochmal!" button, and two secondary actions (map, table picker). A child
+   who has just won reads almost nothing — the stars say how it went and the
+   sticker is the prize, so neither gets a sentence of its own. Table picker
+   via the header chip: an 11-tile overlay (Reihen 1–10 + „Alle") each showing
+   its star state.
 
 ### 10.2 Difficulties
 
