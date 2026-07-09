@@ -82,7 +82,7 @@ test("no dictionary key is dead", () => {
         for (const [, k] of src.matchAll(/\bt\(\s*["'`]([a-zA-Z0-9_]+)["'`]/g)) used.add(k);
         for (const [, k] of src.matchAll(/data-i18n(?:-label)?="([a-zA-Z0-9_]+)"/g)) used.add(k);
         // keys built at runtime, e.g. `region_${game}` or DIFF_KEYS
-        for (const [, k] of src.matchAll(/["'`](region_|game_|diff)[a-zA-Z]*["'`]/g)) used.add(k);
+        for (const [, k] of src.matchAll(/["'`](region_|game_|diff|starGoal)[a-zA-Z0-9]*["'`]/g)) used.add(k);
       }
     }
   };
@@ -94,7 +94,7 @@ test("no dictionary key is dead", () => {
   }
   used.add("region_pokalraum");
 
-  const dynamic = /^(region_|game_|diff)/;
+  const dynamic = /^(region_|game_|diff|starGoal)/;
   const dead = Object.keys(de).filter((k) => !used.has(k) && !dynamic.test(k));
   assert.deepEqual(dead, [], `dead strings in de.js/en.js: ${dead.join(", ")}`);
 });

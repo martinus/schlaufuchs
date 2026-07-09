@@ -675,6 +675,8 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 .summary .bigstars { font-size: 2.6rem; letter-spacing: 4px; }
 .summary .sline { margin: 6px 0; font-weight: 700; }
+/* the next star's price: present, but never louder than the score */
+.summary .sline.goal { font-weight: 400; font-size: .82rem; color: var(--ink-soft); }
 .summary .trophy-earn {
   margin: 10px auto;
   padding: 10px;
