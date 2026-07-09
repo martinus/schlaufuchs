@@ -70,7 +70,7 @@ Mir gefallen die Kosmetika am Fuchs nicht, entferne alle und auch die Logik dazu
 Es ist Zeit für ein großes cleanup. Analysiere die gesamte codebasis und mach ein großes Refactoring. Ziel ist es den Code zu vereinfachen, duplizierungen zu verringern, teile wiederverwenden wo möglich: Z.b. sollen Spiele und Karte den gleichen Header verwenden, das könnte eine Codebasis sein. Schau auch dass der Code modern und testbar ist, finde Lücken und unsicherheiten und bessere nach. 
 
 -------
-Ich habe das Spiel an meiner 8 Jährigen Tochter Mara getested, das Resultat war schon ernüchternd. Es gab sehr viele Usability probleme und unklarheiten. Ich habe versucht möglichst nichts zu sagen und sie einfach spielen lassen. Hier ist das Ergebnis. Leite daraus einen neuen Plan ab und versuche sämtliche Punkte viel intuitiver zu gestalten:
+Ich habe das Spiel an meiner 8 Jährigen Tochter Mara getested, das Resultat war schon ernüchternd. Es gab sehr viele Usability probleme und unklarheiten. Ich habe versucht möglichst nichts zu sagen und sie einfach spielen lassen. Hier ist das Ergebnis. Leite daraus einen neuen Plan ab und versuche sämtliche Punkte viel intuitiver zu gestalten. Meine Ideen sind allesamt nur Ideen, wenn du bessere Ideen hast dann immer her damit! Ich bin kein Usability experte, durchdenke alles kritisch.
 
 * Mara weiß nicht worauf sie auf der Karte klicken kann. Sie hat sämtliche Nebel geklickt, aber nicht auf die Häuser in der Mitte und wusste dann nicht was sie tun soll. Sie hat praktisch nichs gelesen und einfach nur auf die Buttons gedruckt, daher hat sie auch die Hinweise bei den fehlenden Spielen nicht gelesen und wuste nicht dass sie auf die Häuser klicken kann.
 
@@ -78,13 +78,21 @@ Ich habe das Spiel an meiner 8 Jährigen Tochter Mara getested, das Resultat war
 
 * Ich habe sie darauf hingewiesen, dass sie auf die Häuser klicken muss um das Einmaleins zu spielen. Daraufhin hat sie genau zwischen die Häuser geklickt und es ist nichts passiert.
 
-* Im Spiel: weiß nicht wie man
-Weiß nicht was ein Pokal ist
-Weiß nicht wie man Spiel anderes einstellt so dass andere Reihen können
-Klickt auf Pokal aber nichts passiert
-Sieht nicht leicht Mittel schwer 
-Findet nicht pokalraum, weiß nicht dass man drauf drücken kann
-Weiß nicht wie sie ihre Pokale sehen kann
+* Im Spiel: weiß nicht wie man Level wechselt oder dass es so eine Einstellung überhaupt gibt
+
+* Nach Spielende ist sie verwundert über das Bild mit der Schulglocke (der erste Pokal), sie weiß nicht dass das ein Pokal ist den sie da gewonnen hat, und auch nicht dass der Pokal dann im Pokalraum zu finden ist oder wie sie dahin kommt.
+Meine Idee zur Verbesserung: Zeige das grafisch viel besser an. die Bilder sollen auch immer quadratisch sein und so aussehen wie im Pokalraum. Die Pokale müssen deutlich zu sehen sein. Vielleicht zeig auf jedem Bild auch einen wirklichen Pokal an? Also das Emoji vom Pokal, und darauf dann das Symbol das quasi im Pokal liegt. Das soll dann auch im Pokalraum genauso aussehen.
+
+* Mara weiß nicht wie man Spiel anderes einstellt so dass andere Reihen kommen. Sie hat versucht während der Anzeige des Endes auf den button am Spielfeld der auf dem gerade stand "Leicht * 2er" zu drücken was aber nicht geht weil sie ja in dem modalen Fenster ist. Die buttons im modalen Fenster hat sie nicht gedrückt und auch deren Text nicht gelesen.
+Meine Idee zur Verbesserung: Wenn das Spiel zu ende ist, Zeig nur einen "Ok" button, oder "Super!" oder vielleicht eine andere zufällige Gratulation. Kein Buttons.. Nach Drücken auf den Button kann eh die Level geändert werden und auf die Karte geklickt werden. Es soll genau einen Einstellbutton geben, und der soll der über dem Himmel sein. Der muss aber klarer sein dass man hier was umstellen kann.
+
+* Bei Spielende hat sie auf den gewonnen Pokal geklickt aber nichts ist passiert
+
+* Beim Umstellen des Levels war ihr nicht klar dass sie zuerst auf Leicht, Mittel, Schwer klicken sollte. Ihr war auch nicht klar dass sie da überhaupt klicken kann. Das Feld am Schluss mit "Alle" hat sie nie gesehen weil sie nicht so viel liest. Nachdem ich sie darauf hingewiesen habe war ihr auch nicht klar was das bedeutet, aber sie hat es rausgefunden.
+
+* Auf der Kartenanscht hat sie den Pokalraum dann nicht gefunden, sie hat nur ein Haus gesehen. Es ist nicht klar dass das der Pokalraum ist, und sie wusste nicht dass man drauf drücken kann.weiß nicht dass man drauf drücken kann.
+Meine Idee zur Verbesserung: bei Spielende muss klar sein dass die Pokale in den Pokalraum wandern. Zeichne z.b. eine Animation wo man sieht dass der Fuchs die Pokale mit dem Emoji in das Pokalhaus bringt. Das Pokalhaus soll auch ganz klar ein oder mehrer große Pokale zeigen, nicht den mini Pokal am Dach. 
+
 Weiß nicht was z.b. 20x im pokalraum bedeutet 
 Weiß nicht dass es bei schwer und Mittel mehr Sterne gibt
 Kennt das Division symbol nicht (, der Strich in der Mitte)
@@ -94,4 +102,6 @@ Markt nicht wenn sie einen Fehler gehabt hat, klickt einfach auf 'verstehen
 
 Fehler Ansicht sollte zeigen was sie falsch abgegeben hat und darunter die richtige Lösung sehen. Das Fenster soll wie ein Pop-up sein Hund darunter alle Knöpfe ausgrauen
 
-Wenn das Spiel zu ende ist, Zeig nur einen "Ok" button, oder "Super!" oder vielleicht eine andere zufällige Gratulation. Kein Buttons.. Nach Drücken auf den Button kann eh die Level geändert werden und auf die Karte geklickt werden.
+
+------
+TODO: Offline play through a service worker. The site is already fully static, has no network calls after load, and stores everything in one cookie — it is perhaps twenty lines from working on a train, in a waiting room, or on a school tablet with no Wi-Fi, which is exactly where a child practises times tables. It is listed in SPEC as M7 "Polish", which undersells it: for a kids' learning site, "works with no internet" is a feature parents choose on, and almost none of the commercial competitors have it because their business model needs the network.
