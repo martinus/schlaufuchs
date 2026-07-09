@@ -40,8 +40,17 @@ function render() {
         // A locked slot shows the trophy as a silhouette: you can see what is
         // missing, which is the whole reason to keep collecting. The name stays
         // hidden — the shape is the tease.
-        return `<div class="slot locked" title="${THRESHOLDS[game][i]}×" aria-label="${t("trophyLocked")}">
-          <span class="silhouette" aria-hidden="true">${iconHTML(s.icon, { size: 34 })}</span></div>`;
+        //
+        // What it costs used to hide in a `title` tooltip, which a child on a
+        // phone can never see and Mara read as "20×", i.e. twenty of something.
+        // The next slot shows how far along she is; the ones after it show the
+        // price, in the only currency this site has (§8.3).
+        const need = THRESHOLDS[game][i];
+        const foot = i === earned
+          ? `<span class="sbar"><i style="width:${Math.min(100, (100 * (pr[game] ?? 0)) / need)}%"></i></span>`
+          : `<span class="sfoot">⭐ ${need}</span>`;
+        return `<div class="slot locked" aria-label="${t("trophyLocked")} — ⭐ ${need}">
+          <span class="silhouette" aria-hidden="true">${iconHTML(s.icon, { size: 34 })}</span>${foot}</div>`;
       })
       .join("");
     section.innerHTML = `

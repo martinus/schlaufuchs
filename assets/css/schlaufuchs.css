@@ -866,6 +866,24 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
     linear-gradient(180deg, #fdf1de 0, var(--bg) 260px),
     var(--bg);
 }
+/* Mara scrolled down the shelves and could not get back out: the way to the map
+   had left the screen. The bar follows her down — it is a direct child of the
+   scrolling body, so `sticky` needs nothing else — and the room also ends with
+   a door. Opaque, in the colour the page's gradient starts with. */
+.trophyroom .topbar {
+  position: sticky;
+  top: 0;
+  background: #fdf1de;
+}
+.maplink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 560px;
+  margin: 18px auto 4px;
+  text-decoration: none;
+}
 /* The room's name and the size of the collection, on one line under the bar.
    The name was a chip in the top bar; it is a heading, and the bar has room
    for exactly three things (§3.3). */
@@ -972,6 +990,29 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .trophies .slot.locked .silhouette {
   filter: grayscale(1) contrast(0) brightness(0.72);
   opacity: 0.38;
+}
+
+/* What a locked slot costs, said out loud. It used to live in a `title`
+   tooltip, which no child on a phone will ever see. The next slot to fall shows
+   the distance instead of the price — that one is worth aiming at. */
+.trophies .slot.locked .sfoot {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.trophies .slot.locked .sbar {
+  display: block;
+  width: 62%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--orange-soft);
+  overflow: hidden;
+}
+.trophies .slot.locked .sbar i {
+  display: block;
+  height: 100%;
+  background: var(--depth);
 }
 
 /* what you own is stated in --depth, the ownership colour */
