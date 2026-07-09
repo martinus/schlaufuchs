@@ -158,6 +158,12 @@ test("the top bar and the chip stay above the round summary", () => {
   assert.ok(z("#sum-overlay") < z(".pickheading"), "the chip must stay reachable");
   assert.ok(z(".topbar") < overlay, "a real modal sheet still covers the bar");
   assert.ok(z(".pickheading") < overlay, "…and the chip");
+
+  // …and the sheet must not claim otherwise: a screen reader told that the
+  // summary is modal is told that its only exit does not exist.
+  const page = read("games/einmaleins/index.html");
+  const sheet = page.slice(page.indexOf('id="sum-overlay"'), page.indexOf("</div>\n\n  <script"));
+  assert.match(sheet, /aria-modal="false"/);
 });
 
 test("the round summary congratulates in six ways, in both languages", () => {

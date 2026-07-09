@@ -73,8 +73,12 @@
          trophy is the prize, ONE button says what happens next. Mara read the
          three buttons that used to be here as a wall and tried to press the
          chip behind the sheet; the map and the level picker live in the top bar
-         and the chip, which is where she looked for them anyway (§10.1). -->
-    <div class="sheet summary" role="dialog" aria-modal="true">
+         and the chip, which is where she looked for them anyway (§10.1).
+
+         NOT aria-modal: those two are above this sheet and stay tappable, on
+         purpose (§3.4). Claiming modality would tell a screen reader that the
+         only way out of the summary does not exist. -->
+    <div class="sheet summary" role="dialog" aria-modal="false">
       <div class="bigstars" id="sum-stars"></div>
       <p class="sline stat" id="sum-score"></p>
       <p class="sline goal" id="sum-goal" hidden></p>
