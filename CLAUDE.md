@@ -17,6 +17,7 @@ python3 -m http.server 8000   # serve locally — ALWAYS use this, never file://
 node --test                   # run unit tests (tests/*.test.js), needs Node 22+
 node --check <file.js>        # syntax-check a module
 node tools/version-assets.js N  # bump asset version — REQUIRED before deploying a change
+node tools/shoot.mjs <url> …    # drive a real Chrome: screenshot + measure (--help)
 ```
 
 There is no lint/format/build step. `node --test` is the only gate; the deploy
@@ -34,12 +35,22 @@ workflow runs it before publishing.
 - **Make it testable, then test it.** When the defect is inside DOM code, pull
   the arithmetic out as a pure function and unit-test that
   (`fittedFontSize()` in `games/einmaleins/logic.js` is the pattern).
-- **Look at the page.** Serve it, screenshot it at 390×844 and 360×640 with
-  headless Chrome, and read the image. Every visual bug this project has had —
-  a floating mountain, a clipped gear button, art standing in the sea, a
+- **Look at the page.** Serve it, then use `tools/shoot.mjs` to screenshot it at
+  390×844 and 360×640, and *read the image*. Every visual bug this project has
+  had — a floating mountain, a clipped gear button, art standing in the sea, a
   "cobbled" road that read as a river — was invisible in the diff and obvious
   in the screenshot. `node --test` passing is not evidence that the page looks
-  right.
+  right. `shoot.mjs` also measures: `--clip .stage --probe '#feedback'` reports
+  overflow past **all four** edges, because a probe that checks only the bottom
+  will call a clipped top a success. Whatever an `eval` step returns lands in
+  the report — use it to prove the run actually reached the state it claims:
+
+  ```sh
+  node tools/shoot.mjs http://localhost:8000/games/einmaleins/ \
+    --cookie "schlaufuchs=$(node -e 'process.stdout.write(encodeURIComponent(JSON.stringify({einmaleins:{d:1,t:10}})))')" \
+    --size 360x640 --do 'eval @play.js' --do 'until #fb-next' \
+    --clip .stage --probe '#feedback' --out aid.png
+  ```
 - **Silent no-ops are the dangerous ones.** `pave("einmaleins")` looked up an
   id that did not exist and quietly did nothing. Prefer a test that asserts the
   wiring exists over trusting that a missing element is "handled".
