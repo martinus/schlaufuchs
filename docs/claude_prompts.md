@@ -90,17 +90,18 @@ Meine Idee zur Verbesserung: Wenn das Spiel zu ende ist, Zeig nur einen "Ok" but
 
 * Beim Umstellen des Levels war ihr nicht klar dass sie zuerst auf Leicht, Mittel, Schwer klicken sollte. Ihr war auch nicht klar dass sie da überhaupt klicken kann. Das Feld am Schluss mit "Alle" hat sie nie gesehen weil sie nicht so viel liest. Nachdem ich sie darauf hingewiesen habe war ihr auch nicht klar was das bedeutet, aber sie hat es rausgefunden.
 
-* Auf der Kartenanscht hat sie den Pokalraum dann nicht gefunden, sie hat nur ein Haus gesehen. Es ist nicht klar dass das der Pokalraum ist, und sie wusste nicht dass man drauf drücken kann.weiß nicht dass man drauf drücken kann.
+* Auf der Kartenansicht hat sie den Pokalraum dann nicht gefunden, sie hat nur ein Haus gesehen. Es ist nicht klar dass das der Pokalraum ist, und sie wusste nicht dass man drauf drücken kann.weiß nicht dass man drauf drücken kann.
 Meine Idee zur Verbesserung: bei Spielende muss klar sein dass die Pokale in den Pokalraum wandern. Zeichne z.b. eine Animation wo man sieht dass der Fuchs die Pokale mit dem Emoji in das Pokalhaus bringt. Das Pokalhaus soll auch ganz klar ein oder mehrer große Pokale zeigen, nicht den mini Pokal am Dach. 
 
-Weiß nicht was z.b. 20x im pokalraum bedeutet 
-Weiß nicht dass es bei schwer und Mittel mehr Sterne gibt
-Kennt das Division symbol nicht (, der Strich in der Mitte)
-Hat nicht verstanden dass sie einen Fehler gemacht hat 
-Sieht nicht "Alle"
-Markt nicht wenn sie einen Fehler gehabt hat, klickt einfach auf 'verstehen
+* Im Pokalraum ist unklar was z.b. 20x oder 62x bedeutet (die Anzahl der Sterne um diesen Pokal zu bekommen)
+Meine Idee zur Verbesserung: Schreib von Anfang in jedes Feld mit Pokal wieviel Sterne dazu notwendig sind, also schreib unten z.b. ⭐ 20, ⭐ 62 (ausgegrauter Stern wenn noch nicht erreicht)
 
-Fehler Ansicht sollte zeigen was sie falsch abgegeben hat und darunter die richtige Lösung sehen. Das Fenster soll wie ein Pop-up sein Hund darunter alle Knöpfe ausgrauen
+* Im Spiel beim ändern der Schwierigkeit: Mara ist nicht klar dass es bei Mittel oder Schwer auch mehr Sterne gibt (das x2 oder x3 ist auch unklar oder wurde übersehen)
+
+* Im Spiel, bei Schwer: Mara kennt das Division symbol nicht, in der Schriftart wird zwischen Doppelpunkt ein strich gemacht, das kennt sie nicht. In der Schule ist das nur ein Doppelpunkt
+
+* Sie hat nicht verstanden dass sie einen Fehler gemacht hat, sie hat dann einfach auf "Verstanden" geklickt und wusste nicht wiesso sie das tun soll.
+Meine Idee zur Verbesserung: Es soll auch angezeigt werden was sie angegeben hat (rot hinterlegt), und darunter soll die richtige Lösung stehen. Das Fenster soll Modal sein, also es soll offensichtlich sein dass das sowas wie ein Popup ist, und das Spiel im Hintergrund nicht klickbar ist. Vielleicht sollte sie hier auch die richtige Lösung extra eintippen müssen um wieder ins Spiel kommen zu können
 
 
 ------
