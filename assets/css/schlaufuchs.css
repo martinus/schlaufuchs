@@ -623,17 +623,44 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 .summary .sticker-earn .se-emoji { font-size: 2.8rem; display: block; }
 
-/* ---- album (§3.2) ---- */
+/* ---- Pokalraum / Trophy Room (§3.2) ---- */
+/* The page is the room the map sends you to, so it should feel like one: a
+   warm wall, and one wooden shelf per game holding what you have won there. */
+.trophyroom {
+  background:
+    linear-gradient(180deg, #fdf1de 0, var(--bg) 260px),
+    var(--bg);
+}
+.roomtitle { box-shadow: none; background: none; padding-left: 4px; }
+
 .album-how {
   max-width: 560px;
   margin: 0 auto;
-  padding: 4px 14px;
+  padding: 4px 14px 10px;
   color: var(--ink-soft);
   font-weight: 600;
 }
-.album-section { padding: 6px 14px 12px; max-width: 560px; margin: 0 auto; }
-.album-section h2 { font-size: 1.05rem; margin: 10px 0 8px; }
-.album-progress { margin: 0 0 8px; font-size: 0.8rem; color: var(--ink-soft); font-weight: 700; }
+
+.album-section {
+  position: relative;
+  max-width: 560px;
+  margin: 0 auto 22px;
+  padding: 10px 14px 0;
+}
+
+/* the shelf board the stickers stand on */
+.album-section::after {
+  content: "";
+  display: block;
+  height: 9px;
+  margin: 10px 6px 0;
+  border-radius: 0 0 5px 5px;
+  background: linear-gradient(180deg, #c78a52 0, #a56538 100%);
+  box-shadow: 0 4px 7px rgba(74, 44, 23, 0.28);
+}
+
+.album-section h2 { font-size: 1.05rem; margin: 4px 0 6px; }
+.album-progress { margin: 0 0 10px; font-size: 0.8rem; color: var(--ink-soft); font-weight: 700; }
 
 .stickers {
   display: grid;

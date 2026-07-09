@@ -1,7 +1,6 @@
 // Shared UI strings, German (§6.1). Keys must match assets/i18n/en.js exactly.
 export default {
   back: "Zur Karte",
-  album: "Stickeralbum",
   settings: "Einstellungen",
   sound: "Ton",
   language: "Sprache",
@@ -15,7 +14,7 @@ export default {
   levelMax: "Höchstes Level erreicht!",
   streakDays: "{n} Tage in Folge",
   region_pokalraum: "Pokalraum",
-  albumHow: "Die Umrisse zeigen, welche Sticker noch fehlen. Spiel eine Runde ohne Fehler, und einer davon gehört dir.",
+  albumHow: "Hier steht, was du gewonnen hast. Die Umrisse zeigen, was noch fehlt — spiel eine Runde ohne Fehler, und der nächste Sticker gehört dir.",
   stickerLocked: "Noch nicht freigespielt",
   stickerNextIn: "Noch {n} perfekte Runden bis zum nächsten Sticker",
   stickerNextIn1: "Noch 1 perfekte Runde bis zum nächsten Sticker",
