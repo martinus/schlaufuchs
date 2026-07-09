@@ -111,7 +111,7 @@ in HTML/CSS/JS — never absolute paths like `/assets/...`.
 │   │   ├── audio.js          # Feedback sounds (WebAudio, no asset files)
 │   │   └── confetti.js       # Celebration effect
 │   └── img/
-│       ├── fuchs.svg         # Mascot: poses + cosmetic layers (§8.4, §15)
+│       ├── fuchs.svg         # Mascot: poses (§15)
 │       └── favicon.svg
 ├── games/
 │   ├── einmaleins/           # §10  index.html, einmaleins.js, i18n.js
@@ -159,11 +159,10 @@ Map requirements:
   per difficulty currently reachable) → *mastered* (100 %): flag on the
   summit, more animals in the forest, lanterns in the village, etc. The state
   is computed by `rewards.js` on load; layers are shown/hidden by CSS class.
-- Header strip above the map (shared with the game pages, §3.3): fox level
-  chip with total stars + progress bar + "N more stars to level N+1" (§8.4),
-  daily streak flame (§8.5), and a settings gear. Sound and language toggles
-  live inside the gear overlay; the Pokalraum is reached via its own region
-  on the map, so there is no separate header button for it.
+- Header strip above the map (shared with the game pages, §3.3): the fox chip
+  (fox, total stars, total trophies — §8.4) and a settings gear. Sound and
+  language toggles live inside the gear overlay; the Pokalraum is reached via
+  its own region on the map, so there is no separate header button for it.
 - Below the map, a `<nav>` with the game links (and the Pokalraum). It is
   **visually hidden and revealed on focus**: the map already offers every
   destination, so the list exists for keyboard and screen-reader users and
@@ -216,9 +215,9 @@ desktop instead of spanning the full viewport.
 
 - **Map button (🗺️)** → back to the map (1 tap). The map icon, not the fox
   — the fox is the player, the map is the place to go back to.
-- **Fox level chip** (shared `renderLevelChip`, `chrome.js`): fox + level +
-  total stars + progress bar. On narrow game screens the sub-line (and, below
-  430px, the bar) are hidden to save width.
+- **Fox chip** (shared `renderFoxChip`, `chrome.js`): the fox, the total star
+  count, the total trophy count. Three things, identical on the map and inside
+  a game. It is a readout, not a control: no panel, no shadow, no tap target.
 - **Level/difficulty chip** showing the current difficulty (and table/level/
   pack where applicable); tapping opens the picker **as an overlay** on the
   same page, never a separate page.
@@ -581,23 +580,23 @@ is retired; it does not appear anywhere.
 - Total: 60 trophies. The Pokalraum (§3.2) renders earned/unearned from the
   counters.
 
-### 8.4 Fuchs-Level (site-wide)
+### 8.4 Fuchs-Status (site-wide)
 
 - `totalStars` = sum of all stars across all games/difficulties.
-- **Level = min(20, 1 + floor(totalStars / 10))**, shown on the map header
-  with a progress bar to the next level.
-- Level-ups trigger confetti + a big fox celebration on the map.
-- Cosmetic fox upgrades (pure SVG layers in `fuchs.svg`, automatic, §18.3):
-  level 3 red scarf · 6 cap · 9 glasses · 12 backpack · 15 medal ·
-  18 crown · 20 golden crown. The fox wears them everywhere (map, journeys,
-  reactions).
+- `totalTrophies` = trophies earned across all games (§8.3), of 60.
+- Both are shown in the top bar beside the fox (§3.3), and nowhere else.
+- The fox itself never changes with progress. It had a level number (a second
+  name for the star count), then a progress bar toward cosmetic layers — a
+  scarf, a cap, glasses, a backpack, a medal, two crowns. The fox is who the
+  child is, not a display of what they own; the two counters say that once.
 
 ### 8.5 Tagesserie (daily streak)
 
 Playing ≥ 1 round on consecutive calendar days (local time) increments the
 streak; a missed day resets it to 1 on the next play. Stored as
-`[lastDateISO, count]` — no history log. Shown as a flame with the count on
-the map header; milestone celebrations at 3, 7, 14, 30 days.
+`[lastDateISO, count]` — no history log. Milestone celebrations at 3, 7, 14,
+30 days. The child's top bar does not show it (§3.3); the parents' view does
+(§20), because a streak is a thing a parent tracks and a child is nagged by.
 
 ---
 
@@ -973,8 +972,8 @@ language-neutral.
 ## 15. Visual Design
 
 - **Fox mascot** (`fuchs.svg`): inline SVG, poses (neutral, happy, cheering,
-  thinking, catch-breath) as swappable groups; cosmetic items (§8.4) as
-  additional layers toggled by class. One file, used everywhere.
+  thinking, catch-breath) as swappable groups. One file, used everywhere, and
+  the pose is the only thing that varies (§8.4).
 - **Map & journey art**: flat geometric SVG shapes, warm palette; emoji as
   accents where a full illustration would be costly. No raster images.
 - Palette: **colour carries meaning.** Fox-orange (`--orange`, `#e8590c`) is
@@ -1059,8 +1058,7 @@ Decisions already made — do not reopen:
    with a correct answer; nothing attacks, nothing is lost on a wrong
    answer. Rationale: the never-punish principle protects exactly the kids
    the adaptive engine targets.
-3. **Fox cosmetics are automatic** at fixed levels (§8.4) — no shop at
-   launch.
+3. **The fox does not change** with progress (§8.4) — no cosmetics, no shop.
 4. **Trophies are deterministic** (counter + thresholds), not random drops.
 5. **SpeechSynthesis is good enough for launch**; recorded audio is not a
    launch requirement.
@@ -1118,8 +1116,8 @@ speech on tap; cookie stays under budget with all packs played.
 *Accept:* every exercise fully playable without reading UI text; everything
 speakable on tap; rounds of 6; iOS speech works from tap handlers.
 
-**M7 — Polish.** Refined map/fox art, cosmetic layers,
-service worker for offline play, `prefers-reduced-motion` audit.
+**M7 — Polish.** Refined map/fox art, service worker for offline play,
+`prefers-reduced-motion` audit.
 
 **M8 — Adventure mode.** Per §18.7.
 

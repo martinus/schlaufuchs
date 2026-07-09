@@ -4,8 +4,8 @@
 // listed in AVAILABLE, that name renders as the SVG instead. No runtime
 // probing, no 404s — swapping graphics is: add files + add names to AVAILABLE.
 //
-// NOT routed through here: the fox mascot (fox.js, code-generated with level
-// cosmetics) and the hand-drawn map scenery polygons in index.html.
+// NOT routed through here: the fox mascot (fox.js, code-generated) and the
+// hand-drawn map scenery polygons in index.html.
 
 import { GAMES, TROPHIES } from "./rewards.js";
 

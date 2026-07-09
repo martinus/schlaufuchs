@@ -4,7 +4,7 @@
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString } from "../../assets/js/adaptive.js";
-import { recordRound, foxInfo, roundPoints, starValue, addPractice } from "../../assets/js/rewards.js";
+import { recordRound, roundPoints, starValue, addPractice } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
@@ -83,7 +83,6 @@ function startRound() {
   journey = createJourney($("journey"), {
     nodes: session.items().length,
     theme: "village",
-    foxStars: foxInfo().total,
     stars: best,
   });
   buffer = "";

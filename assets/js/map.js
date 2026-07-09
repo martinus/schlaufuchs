@@ -1,9 +1,9 @@
-// World map page module (§3.1): shared level chip, region star badges &
-// states, the Trophy Room badge, fox placement, settings overlay, global reset.
+// World map page module (§3.1): shared fox chip, region star badges & states,
+// the Trophy Room badge, fox placement, settings overlay, global reset.
 
 import { initI18n, t } from "./i18n.js";
 import { loadState, getRewards } from "./storage.js";
-import { gameStars, regionState, starBadgeTier, trophyCount, foxInfo, GAMES, isPlayable } from "./rewards.js";
+import { gameStars, regionState, starBadgeTier, totalTrophies, GAMES, isPlayable } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconSVG, applyIcons } from "./graphics.js";
 import { renderFoxChip, initSettingsOverlay } from "./chrome.js";
@@ -116,26 +116,25 @@ function render() {
   }
 
   // Trophy Room: total trophies collected across all games (§3.1, §8.3)
-  const pr = rewards.pr ?? {};
-  const totalTrophies = GAMES.reduce((a, g) => a + trophyCount(pr[g]), 0);
+  const trophies = totalTrophies(rewards.pr);
   const pkBadge = document.querySelector(`[data-badge="pokalraum"]`);
   if (pkBadge) {
-    const pkTier = totalTrophies >= 60 ? 3 : totalTrophies >= 20 ? 2 : totalTrophies > 0 ? 1 : 0;
-    renderBadge(pkBadge, "deco-trophy", totalTrophies, pkTier);
+    const pkTier = trophies >= 60 ? 3 : trophies >= 20 ? 2 : trophies > 0 ? 1 : 0;
+    renderBadge(pkBadge, "deco-trophy", trophies, pkTier);
     pave("pokalraum", pkTier >= 2);
   }
   const pkRegion = document.getElementById("region-pokalraum");
   if (pkRegion) {
     pkRegion.classList.remove("thriving", "mastered");
-    if (totalTrophies >= 60) pkRegion.classList.add("mastered");
-    else if (totalTrophies >= 20) pkRegion.classList.add("thriving");
+    if (trophies >= 60) pkRegion.classList.add("mastered");
+    else if (trophies >= 20) pkRegion.classList.add("thriving");
   }
 
   // the fox stands on the last-played region (§3.1)
   const at = ANCHORS[rewards.at] ? rewards.at : "einmaleins";
   const [x, y] = ANCHORS[at];
   const fox = document.getElementById("map-fox");
-  fox.innerHTML = foxSVG({ pose: "happy", size: 44, stars: foxInfo().total });
+  fox.innerHTML = foxSVG({ pose: "happy", size: 44 });
   fox.setAttribute("transform", `translate(${x - 22}, ${y - 40})`);
 }
 

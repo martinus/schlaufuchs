@@ -1,10 +1,10 @@
-// Shared page chrome (§3.3): the fox level chip and the settings overlay,
-// used identically by the map, the games and the stub pages so every screen
-// has the same top bar. Vanilla, no framework.
+// Shared page chrome (§3.3): the fox chip and the settings overlay, used
+// identically by the map, the games and the stub pages so every screen has the
+// same top bar. Vanilla, no framework.
 
 import { t, getLang, setLang, LANGUAGES } from "./i18n.js";
-import { getSettings, setSettings, resetAll, resetGame, getRewards } from "./storage.js";
-import { foxInfo } from "./rewards.js";
+import { getSettings, setSettings, resetAll, resetGame } from "./storage.js";
+import { foxInfo, TOTAL_TROPHIES } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconHTML } from "./graphics.js";
 import { sfx } from "./audio.js";
@@ -16,34 +16,23 @@ const PRIVACY_URL = new URL("../../privacy.html", import.meta.url).href;
 const PARENTS_URL = new URL("../../parents.html", import.meta.url).href;
 const ABOUT_URL = new URL("../../about.html", import.meta.url).href;
 
-// Render the fox + "level N · ⭐ total" chip with a progress bar and a
-// "N more stars to level N+1" sub-line. Call it again to refresh after a round.
-// The fox chip: the mascot, the star count, and a bar toward the next thing the
-// fox will wear. It is a status readout, not a control — it carries no panel
-// and no shadow, because a chip that looks like the buttons beside it and does
-// nothing when tapped is a small lie told on every screen.
+// The fox chip: the mascot, the star count, the trophy count. Nothing else,
+// and the same three things on the map and inside a game (§3.3). It is a status
+// readout, not a control — it carries no panel and no shadow, because a chip
+// that looks like the buttons beside it and does nothing when tapped is a small
+// lie told on every screen. Call it again to refresh after a round.
+//
+// The icons are decorative, so each counter carries the sentence a screen
+// reader should hear instead of a bare number.
 export function renderFoxChip(el) {
   if (!el) return;
-  const info = foxInfo();
-  const sub = info.next === null
-    ? t("foxMax")
-    : t("foxNext", { n: info.next.missing, item: t(`cos_${info.next.name}`) });
-  // The daily streak used to be its own chip on the map alone. It belongs to
-  // the fox, not to a page, so it rides with the star count — and the map and
-  // the games now carry exactly the same three things in the top bar (§3.3).
-  const streak = getRewards().streak;
-  const days = Array.isArray(streak) ? streak[1] : 0;
-  const flame = days >= 2
-    ? `<span class="streak" title="${t("streakDays", { n: days })}">${iconHTML("ui-flame", { size: 14 })}${days}</span>`
-    : "";
-
+  const { stars, trophies } = foxInfo();
   el.innerHTML = `
-    ${foxSVG({ pose: "neutral", size: 40, stars: info.total })}
-    <span>
-      <span class="lbl">⭐ ${info.total}${flame}</span>
-      <span class="bar"><i style="width:${Math.round(info.frac * 100)}%"></i></span>
-      <span class="sub">${sub}</span>
-    </span>`;
+    ${foxSVG({ pose: "neutral", size: 40 })}
+    <span class="lbl" role="img" aria-label="${t("starsTotal", { n: stars })}">
+      ${iconHTML("ui-star", { size: 16 })}${stars}</span>
+    <span class="lbl" role="img" aria-label="${t("trophyCount", { n: trophies, total: TOTAL_TROPHIES })}">
+      ${iconHTML("deco-trophy", { size: 16 })}${trophies}</span>`;
 }
 
 // Build the settings overlay in document.body and wire the gear button to it.
