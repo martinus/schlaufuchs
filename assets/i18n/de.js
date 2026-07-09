@@ -20,7 +20,7 @@ export default {
   trophyNextIn1: "Noch 1 Punkt bis zum nächsten Pokal",
   trophyAllDone: "Alle Pokale gesammelt!",
   again: "Nochmal",
-  roundStat: "{ok}/{total} · {s} s",
+  roundStat: "{ok}/{total}",
   gotIt: "Verstanden",
   newBest: "Neuer Rekord!",
   starGoal1: "⭐ ab 6 von 10 richtig",

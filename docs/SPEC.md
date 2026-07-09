@@ -607,7 +607,7 @@ walks the village lane; goal node: ringing the school bell.
    needs longest to read it. The card can hold ten rows of dots, so the dots
    scale with the viewport and the streak line yields its row.
 4. Summary overlay, kept deliberately quiet: stars, one muted line of numbers
-   (`{ok}/{total} · {s} s`), the price of the next star (§10.3), the trophy if
+   (`{ok}/{total}`), the price of the next star (§10.3), the trophy if
    one was earned, one primary „Nochmal" button, and two secondary actions (map, table picker). A child
    who has just won reads almost nothing — the stars say how it went and the
    trophy is the prize, so neither gets a sentence of its own. Table picker
@@ -630,8 +630,9 @@ walks the village lane; goal node: ringing the school bell.
 
 **Accuracy is the only criterion.** Speed is not: a child who reads or taps
 slowly knows the times tables just as well, and a clock is not something they
-can act on. The round's duration is still shown in the summary as a fact, never
-as a threshold.
+can act on. The round is not timed at all — a duration shown "as a fact" still
+whispers *faster is better* to the child who is slow and right, so the summary
+does not show one.
 
 A wrong answer leaves its item unsolved, so the round asks it again: a round
 ends after ten *solved* items, and only the first try counts for stars.

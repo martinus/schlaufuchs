@@ -20,7 +20,7 @@ export default {
   trophyNextIn1: "1 more point until the next trophy",
   trophyAllDone: "All trophies collected!",
   again: "Again",
-  roundStat: "{ok}/{total} · {s} s",
+  roundStat: "{ok}/{total}",
   gotIt: "Got it",
   newBest: "New best!",
   starGoal1: "⭐ for 6 out of 10 right",

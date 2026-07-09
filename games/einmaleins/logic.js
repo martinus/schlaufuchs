@@ -77,9 +77,12 @@ export function starsFor(firstTryOk, total) {
 }
 
 // The i18n key naming what the *next* star costs, so a child who scored 9/10
-// can see why they still have one star. Null once all three are earned.
+// can see why they still have one star. Null once all three are earned — and
+// null, never undefined, for anything that is not a star count: t(undefined)
+// renders an empty string, so a bad caller would print a blank row instead of
+// failing. The lookup is total; only 0, 1 and 2 name a goal.
 export function nextStarGoal(stars) {
-  return stars >= 3 ? null : ["starGoal1", "starGoal2", "starGoal3"][stars];
+  return ["starGoal1", "starGoal2", "starGoal3"][stars] ?? null;
 }
 
 // Index into the 11-digit per-difficulty star string: tables 1..10 → 0..9,

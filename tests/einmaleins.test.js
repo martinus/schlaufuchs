@@ -1,5 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import de from "../assets/i18n/de.js";
+import en from "../assets/i18n/en.js";
 import {
   POOL_COUNT, EASY_TABLES, pairIndex, pairOf, poolFor, questionFor,
   choicesFor, starsFor, nextStarGoal, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
@@ -87,6 +91,44 @@ test("the summary names the price of the next star", () => {
   assert.equal(nextStarGoal(starsFor(6, 10)), "starGoal2");
   assert.equal(nextStarGoal(starsFor(8, 10)), "starGoal3");
   assert.equal(nextStarGoal(starsFor(10, 10)), null);
+});
+
+test("nextStarGoal is total: garbage in, a hidden row out — never a blank one", () => {
+  const KEYS = ["starGoal1", "starGoal2", "starGoal3"];
+
+  // The contract the caller leans on: a real key, or null. Never undefined —
+  // t(undefined) renders "" and `hidden = goal === null` stays false, so the
+  // summary would grow a blank row instead of failing loudly.
+  for (const any of [undefined, null, -1, 0, 1, 2, 3, 4, 1.5, "2", NaN, true, {}]) {
+    const goal = nextStarGoal(any);
+    assert.ok(goal === null || KEYS.includes(goal), `nextStarGoal(${String(any)}) → ${goal}`);
+  }
+  for (const stars of [0, 1, 2]) assert.equal(nextStarGoal(stars), KEYS[stars]);
+  for (const none of [-1, 3, 4, 1.5, NaN, undefined, null]) assert.equal(nextStarGoal(none), null);
+
+  // The dead-key test waves `starGoal*` through on a regex allowlist, so it can
+  // no longer notice one going missing. Name them here instead.
+  for (const k of KEYS) {
+    assert.equal(typeof de[k], "string", `de.js is missing ${k}`);
+    assert.equal(typeof en[k], "string", `en.js is missing ${k}`);
+  }
+});
+
+// Regression: the summary showed "9/10 · 46 s". Stars stopped counting seconds,
+// but the line still whispered "faster is better" at a child who is slow and
+// right. endRound() must not measure the round at all.
+test("the round summary never times the child", () => {
+  const src = readFileSync(
+    fileURLToPath(new URL("../games/einmaleins/einmaleins.js", import.meta.url)),
+    "utf8",
+  );
+  const endRound = src.slice(src.indexOf("function endRound()"));
+  assert.ok(endRound.includes('t("roundStat"'), "the summary must still report the score");
+  assert.ok(!endRound.includes("Date.now()"), "endRound() must not read the clock");
+  assert.ok(!/\bt0\b/.test(src), "the round's start time must not be recorded at all");
+  for (const [lang, dict] of [["de", de], ["en", en]]) {
+    assert.ok(!dict.roundStat.includes("{s}"), `${lang}.roundStat still has a seconds slot`);
+  }
 });
 
 test("star digit string: 11 slots, mixed table at index 10", () => {
