@@ -63,10 +63,6 @@ export const GRAPHICS = {
   "j-butterfly": { emoji: "🦋" },
   "j-flower": { emoji: "🌼" },
   "j-bee": { emoji: "🐝" },
-  "j-goal-bell": { emoji: "🔔" },
-  "j-goal-flag": { emoji: "🚩" },
-  "j-goal-sparkle": { emoji: "✨" },
-  "j-goal-book": { emoji: "📖" },
 };
 
 // Trophy icon names are generated from the TROPHIES table (60 entries), so
