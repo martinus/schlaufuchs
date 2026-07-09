@@ -16,11 +16,36 @@ framework**. Progress is stored in a single cookie. Hosted on GitHub Pages.
 python3 -m http.server 8000   # serve locally — ALWAYS use this, never file:// (ES modules)
 node --test                   # run unit tests (tests/*.test.js), needs Node 22+
 node --check <file.js>        # syntax-check a module
-node tools/version-assets.js 7  # bump asset version — REQUIRED before deploying a change
+node tools/version-assets.js N  # bump asset version — REQUIRED before deploying a change
 ```
 
 There is no lint/format/build step. `node --test` is the only gate; the deploy
 workflow runs it before publishing.
+
+## Working rules (learned the hard way)
+
+- **A bug found is a test written.** Before or right after fixing anything,
+  add a test that fails on the old behaviour. Then re-break the code and watch
+  it go red — a test that never fails is decoration. This repo has no types
+  and no linter, so the test suite is the only thing standing between a change
+  and a child staring at a blank page. Regression tests live next to their
+  subject: `tests/map.test.js` (SVG structure), `tests/cache.test.js` (asset
+  versioning), `tests/i18n.test.js` (string liveness).
+- **Make it testable, then test it.** When the defect is inside DOM code, pull
+  the arithmetic out as a pure function and unit-test that
+  (`fittedFontSize()` in `games/einmaleins/logic.js` is the pattern).
+- **Look at the page.** Serve it, screenshot it at 390×844 and 360×640 with
+  headless Chrome, and read the image. Every visual bug this project has had —
+  a floating mountain, a clipped gear button, art standing in the sea, a
+  "cobbled" road that read as a river — was invisible in the diff and obvious
+  in the screenshot. `node --test` passing is not evidence that the page looks
+  right.
+- **Silent no-ops are the dangerous ones.** `pave("einmaleins")` looked up an
+  id that did not exist and quietly did nothing. Prefer a test that asserts the
+  wiring exists over trusting that a missing element is "handled".
+- **Dead strings and stale comments accumulate.** When you remove a feature,
+  remove its i18n keys and fix the comments that describe the old behaviour.
+  The i18n tests now fail on both a missing and an unused key.
 
 ## Conventions (do not violate)
 

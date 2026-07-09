@@ -94,7 +94,7 @@ in HTML/CSS/JS — never absolute paths like `/assets/...`.
 /
 ├── CNAME                     # schlaufuchs.ankerl.com
 ├── index.html                # World map (landing page), §3.1
-├── album.html                # Sticker album, §3.2
+├── album.html                # Pokalraum / Trophy Room, §3.2
 ├── assets/
 │   ├── css/
 │   │   └── schlaufuchs.css   # Shared design system (mobile first)
@@ -181,16 +181,21 @@ Map requirements:
   ships in M1 and is refined later; the region tap behavior and state layers
   are required from M1.
 
-### 3.2 Sticker album (`album.html`)
+### 3.2 The Pokalraum / Trophy Room (`album.html`)
+
+**The page is named after the place on the map**, not after its contents —
+one place, one name (it reuses the `region_pokalraum` string). It is styled as
+a room: a warm wall, and a wooden shelf under each game's collection.
 
 One page, five sections (one per region, translated heading). Each section
 shows **12 sticker slots** in a grid: earned stickers as large emoji with a
-name caption; unearned slots as grey outlines with „?". Earned count per
-region and total at the top. An explanation line (`albumHow`) states how
-stickers are earned, and each section shows how many perfect rounds remain
-until its next sticker. Stickers are earned via perfect rounds (§8.3). Reached
-from the map via the **Pokalraum** region (§3.1); a back-to-map button in the
-header (1 tap).
+name caption; unearned slots as **silhouettes** of the sticker you have not
+won yet — you can see what is missing, which is the whole reason to keep
+collecting. Earned count per region and total at the top. An intro line
+(`albumHow`) says what the room is and how to fill it, and each section shows
+how many perfect rounds remain until its next sticker. Stickers are earned via
+perfect rounds (§8.3). Reached from the map via the **Pokalraum** region
+(§3.1); a back-to-map button in the header (1 tap).
 
 ### 3.3 In-game chrome (every game page)
 
