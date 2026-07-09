@@ -7,16 +7,16 @@ import {
 } from "../assets/js/rewards.js";
 
 test("trophy thresholds match spec §8.3", () => {
-  assert.deepEqual(THRESHOLDS, [2, 5, 9, 15, 22, 30, 40, 52, 66, 82, 100, 120]);
+  assert.deepEqual(THRESHOLDS, [3, 9, 18, 30, 46, 64, 86, 112, 142, 172, 200, 225]);
 });
 
 test("trophyCount maps counters to earned trophies", () => {
   assert.equal(trophyCount(0), 0);
-  assert.equal(trophyCount(1), 0);
-  assert.equal(trophyCount(2), 1);
-  assert.equal(trophyCount(8), 2);
-  assert.equal(trophyCount(9), 3);
-  assert.equal(trophyCount(120), 12);
+  assert.equal(trophyCount(2), 0);
+  assert.equal(trophyCount(3), 1);
+  assert.equal(trophyCount(17), 2);
+  assert.equal(trophyCount(18), 3);
+  assert.equal(trophyCount(225), 12);
   assert.equal(trophyCount(999), 12);
   assert.equal(trophyCount(undefined), 0);
 });
@@ -70,11 +70,11 @@ test("starBadgeTier: none / some / gold / glowing (§3.1)", () => {
 });
 
 test("nextTrophyInfo: progress toward the next trophy (§8.3)", () => {
-  assert.deepEqual(nextTrophyInfo(undefined), { earned: 0, threshold: 2, remaining: 2 });
-  assert.deepEqual(nextTrophyInfo(2), { earned: 1, threshold: 5, remaining: 3 });
-  assert.deepEqual(nextTrophyInfo(8), { earned: 2, threshold: 9, remaining: 1 });
-  assert.equal(nextTrophyInfo(119).remaining, 1);
-  assert.equal(nextTrophyInfo(120), null);
+  assert.deepEqual(nextTrophyInfo(undefined), { earned: 0, threshold: 3, remaining: 3 });
+  assert.deepEqual(nextTrophyInfo(3), { earned: 1, threshold: 9, remaining: 6 });
+  assert.deepEqual(nextTrophyInfo(17), { earned: 2, threshold: 18, remaining: 1 });
+  assert.equal(nextTrophyInfo(224).remaining, 1);
+  assert.equal(nextTrophyInfo(225), null);
 });
 
 test("region states at 0 / one third / 100 % (§3.1)", () => {
@@ -109,26 +109,28 @@ test("roundPoints(): a round that improves nothing pays nothing", () => {
   }
 });
 
-test("roundPoints(): every new star is worth a point", () => {
+test("roundPoints(): every new star is worth an award, times the difficulty", () => {
   assert.equal(roundPoints({ oldStars: 0, newStars: 1, difficulty: 0 }), 1);
-  assert.equal(roundPoints({ oldStars: 1, newStars: 2, difficulty: 0 }), 1 + 1); // +first perfect
-  assert.equal(roundPoints({ oldStars: 2, newStars: 3, difficulty: 0 }), 1 + 2); // +mastery
+  assert.equal(roundPoints({ oldStars: 0, newStars: 1, difficulty: 1 }), 2);
+  assert.equal(roundPoints({ oldStars: 0, newStars: 1, difficulty: 2 }), 3);
+  assert.equal(roundPoints({ oldStars: 1, newStars: 2, difficulty: 0 }), (1 + 1) * 1);
+  assert.equal(roundPoints({ oldStars: 2, newStars: 3, difficulty: 0 }), (1 + 2) * 1);
 });
 
 test("roundPoints(): the first mistake-free round pays by difficulty", () => {
   // two stars means 10/10 on the first try (§10.3) — that IS the first
   // perfect round, so it needs no stored flag of its own
-  assert.equal(roundPoints({ oldStars: 0, newStars: 2, difficulty: 0 }), 2 + 1);
-  assert.equal(roundPoints({ oldStars: 0, newStars: 2, difficulty: 1 }), 2 + 2);
-  assert.equal(roundPoints({ oldStars: 0, newStars: 2, difficulty: 2 }), 2 + 3);
+  assert.equal(roundPoints({ oldStars: 0, newStars: 2, difficulty: 0 }), (2 + 1) * 1);
+  assert.equal(roundPoints({ oldStars: 0, newStars: 2, difficulty: 1 }), (2 + 1) * 2);
+  assert.equal(roundPoints({ oldStars: 0, newStars: 2, difficulty: 2 }), (2 + 1) * 3);
   // and only the first time: going 2 → 3 does not pay it again
-  assert.equal(roundPoints({ oldStars: 2, newStars: 3, difficulty: 2 }), 1 + 2);
+  assert.equal(roundPoints({ oldStars: 2, newStars: 3, difficulty: 2 }), (1 + 2) * 3);
 });
 
 test("roundPoints(): mastering a tile pays a bonus, once", () => {
-  assert.equal(roundPoints({ oldStars: 0, newStars: 3, difficulty: 0 }), 3 + 1 + 2); // 6
-  assert.equal(roundPoints({ oldStars: 0, newStars: 3, difficulty: 1 }), 3 + 2 + 2); // 7
-  assert.equal(roundPoints({ oldStars: 0, newStars: 3, difficulty: 2 }), 3 + 3 + 2); // 8
+  assert.equal(roundPoints({ oldStars: 0, newStars: 3, difficulty: 0 }), 6);
+  assert.equal(roundPoints({ oldStars: 0, newStars: 3, difficulty: 1 }), 12);
+  assert.equal(roundPoints({ oldStars: 0, newStars: 3, difficulty: 2 }), 18);
   assert.equal(roundPoints({ oldStars: 3, newStars: 3, difficulty: 2 }), 0);
 });
 
@@ -142,8 +144,11 @@ test("roundPoints(): harder tiles always pay more for the same progress", () => 
 });
 
 test("tilePointsLeft(): the number on the tile is what the tile still pays", () => {
-  assert.equal(tilePointsLeft(0, 2), 8, "an untouched Schwer tile");
   assert.equal(tilePointsLeft(0, 0), 6, "an untouched Leicht tile");
+  assert.equal(tilePointsLeft(0, 1), 12, "an untouched Mittel tile");
+  assert.equal(tilePointsLeft(0, 2), 18, "an untouched Schwer tile");
+  // the gap must be big enough for a child to notice and act on
+  assert.equal(tilePointsLeft(0, 2), 3 * tilePointsLeft(0, 0), "Schwer pays 3× Leicht");
   assert.equal(tilePointsLeft(3, 2), 0, "a mastered tile is worth nothing");
   // and it agrees with what you would actually be paid, in any number of steps
   for (const difficulty of [0, 1, 2]) {
@@ -167,7 +172,7 @@ test("balance: finishing einmaleins is possible, and 12 trophies come before the
   // 27 tiles: Leicht offers 4 tables + "Alle"; Mittel and Schwer all 10 + "Alle"
   const tiles = [[0, 5], [1, 11], [2, 11]];
   const total = tiles.reduce((sum, [d, n]) => sum + n * tilePointsLeft(0, d), 0);
-  assert.equal(total, 195, "the einmaleins point economy");
+  assert.equal(total, 360, "the einmaleins point economy");
 
   assert.equal(trophyCount(total), THRESHOLDS.length, "mastering everything must fill the room");
   const last = THRESHOLDS.at(-1);

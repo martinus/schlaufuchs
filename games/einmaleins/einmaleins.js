@@ -306,15 +306,27 @@ function renderPicker() {
   for (const tbl of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0]) {
     const b = document.createElement("button");
     const s = starDigit(starStr, tbl);
+    // Leicht only teaches four tables (§10.2); the rest are not offered here.
+    const locked = diff === 0 && tbl !== 0 && !EASY_TABLES.includes(tbl);
+    b.disabled = locked;
+
     // Every tile states what it is still worth. A child never reads a rule —
-    // they see that an untouched Schwer tile pays 8 and a mastered one pays
-    // nothing, and they go where the points are (§10.2).
+    // they see that an untouched Schwer tile pays 18 and a mastered one pays
+    // nothing, and they go where the points are (§10.2). Three distinct looks:
+    // locked (nothing to get, cannot play), mastered (nothing to get, may
+    // replay), open (this many points are waiting).
     const left = tilePointsLeft(s, diff);
-    if (left === 0) b.classList.add("mastered");
-    b.innerHTML = `<span>${tbl2short(tbl)}</span>
-      <span class="tstars">${s > 0 ? "⭐".repeat(s) : "·"}</span>
-      <span class="tpoints">${left > 0 ? `+${left}` : "✓"}</span>`;
-    b.disabled = diff === 0 && tbl !== 0 && !EASY_TABLES.includes(tbl);
+    if (locked) {
+      b.classList.add("locked");
+      b.innerHTML = `<span>${tbl2short(tbl)}</span>
+        <span class="tstars">${iconHTML("ui-lock", { size: 13 })}</span>
+        <span class="tpoints"></span>`;
+    } else {
+      if (left === 0) b.classList.add("mastered");
+      b.innerHTML = `<span>${tbl2short(tbl)}</span>
+        <span class="tstars">${s > 0 ? "⭐".repeat(s) : "·"}</span>
+        <span class="tpoints">${left > 0 ? `+${left}` : "✓"}</span>`;
+    }
     b.addEventListener("click", () => {
       table = tbl;
       $("pick-overlay").hidden = true;

@@ -554,19 +554,34 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   gap: 2px;
 }
 
-.tilegrid button:disabled { opacity: 0.35; cursor: default; }
+.tilegrid button:disabled { cursor: default; }
 .tilegrid .tstars { font-size: 0.7rem; letter-spacing: -1px; }
 
 /* Each tile says what it is still worth, in the ownership colour. This is the
-   whole rulebook: an untouched Schwer tile shows +8, a mastered one shows ✓.
+   whole rulebook: an untouched Schwer tile shows +18, a mastered one shows ✓.
    Nobody reads rules; everybody reads numbers (§10.2). */
 .tilegrid .tpoints {
   font-size: 0.72rem;
   font-weight: 800;
   color: var(--depth);
+  min-height: 1em;
 }
-/* a mastered tile steps back: still playable, but visibly finished */
-.tilegrid button.mastered { opacity: 0.5; }
+
+/* Three states, three looks — a locked tile must never be mistaken for a
+   finished one (§10.2):
+   locked   — not taught at this difficulty, cannot be played, promises nothing
+   mastered — finished, may be replayed, pays nothing more
+   open     — pays the number it shows */
+.tilegrid button.locked {
+  opacity: 0.4;
+  background: none;
+  box-shadow: none;
+  border: 2px dashed var(--orange-soft);
+}
+.tilegrid button.mastered {
+  background: #eff7f0;
+  box-shadow: inset 0 0 0 2px var(--ok);
+}
 .tilegrid button.mastered .tpoints { color: var(--ok); }
 
 /* the points just earned, beside the numbers that earned them */
