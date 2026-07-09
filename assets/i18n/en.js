@@ -16,7 +16,7 @@ export default {
   close: "Close",
   footerPrivacy: "Your progress is only stored on this device.",
   comingSoon: "This game isn't built yet. Number Village is ready to play.",
-  foxLevel: "Fox level {lvl}",
+  foxLevel: "Level {lvl}",
   levelNext: "{n} more stars to level {lvl}",
   levelMax: "Top level reached!",
   streakDays: "{n} days in a row",
