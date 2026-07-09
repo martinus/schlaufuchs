@@ -13,7 +13,7 @@ import { renderLevelChip, initSettingsOverlay } from "../../assets/js/chrome.js"
 import strings from "./i18n.js";
 import {
   POOL_COUNT, EASY_TABLES, poolFor, questionFor, choicesFor,
-  starsFor, nextStarGoal, starDigit, withStarDigit, fittedFontSize,
+  starsFor, nextStarGoal, basketState, starDigit, withStarDigit, fittedFontSize,
 } from "./logic.js";
 
 initI18n(strings);
@@ -83,7 +83,6 @@ function startRound() {
   hot = 0;
   buffer = "";
   roundOver = false;
-  $("hotstreak").textContent = "";
   $("sum-overlay").hidden = true;
   buildKeypad();
   askNext();
@@ -100,7 +99,29 @@ function askNext() {
   $("feedback").hidden = true;
   $("question").hidden = false;
   renderQuestion();
+  renderStatus();
   if (diff === 0) renderChoices();
+}
+
+// The basket of stars and the line beside it (§10.5). The basket shows what is
+// banked, so it only fills; the line shows the running streak if there is one,
+// and otherwise what the next reachable star costs. Never a loss, never a
+// promise that cannot be kept.
+function renderStatus() {
+  const { stars, needed, goalStars } = basketState(session.progress());
+  $("basket").innerHTML = iconHTML("ui-basket", { size: 18 })
+    + `<span class="bstars">${"⭐".repeat(stars)}</span>`;
+  $("basket").setAttribute("aria-label", t("basketHave", { n: stars }));
+
+  // The streak shrinks to a flame and a number: the goal is the thing the child
+  // asked for, and a celebratory sentence would push it off the row.
+  const streak = $("hotstreak");
+  streak.innerHTML = hot >= 3 ? `${iconHTML("ui-flame", { size: 13 })}${hot}` : "";
+  streak.setAttribute("aria-label", hot >= 3 ? t("hotStreak", { n: hot }) : "");
+
+  $("goalline").textContent = goalStars > 0
+    ? t("basketGoal", { n: needed, stars: "⭐".repeat(goalStars) })
+    : "";
 }
 
 // The question never wraps: a two-line equation reads as two thoughts. When the
@@ -212,7 +233,7 @@ function submit(value, mcButton) {
     sfx.correct();
     journey.advance();
     hot++;
-    $("hotstreak").textContent = hot >= 3 ? t("hotStreak", { n: hot }) : "";
+    renderStatus(); // the basket gains its star the moment it is banked
     if (input !== "") {
       input = String(value);
       renderQuestion();
@@ -223,8 +244,7 @@ function submit(value, mcButton) {
     sfx.wrong();
     journey.stumble();
     hot = 0;
-    // The aid already says everything, and up to ten rows of dots need the room.
-    $("hotstreak").textContent = "";
+    // The aid needs the room; the whole status row is hidden while it is up.
     showFeedback();
   }
 }

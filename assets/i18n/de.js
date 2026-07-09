@@ -20,6 +20,8 @@ export default {
   privacyDeleteBody: "Im Zahnrad-Menü kannst du deinen gesamten Fortschritt zurücksetzen. Der Cookie wird dabei gelöscht. Genauso wirkt es, wenn du die Cookies dieser Seite im Browser löschst.",
   privacyBack: "Zurück zur Karte",
   privacyLink: "Datenschutz",
+  basketGoal: "noch {n} richtig bis {stars}",
+  basketHave: "{n} Sterne im Korb",
   lockedHint: "Noch nicht verfügbar",
   comingSoon: "Dieses Spiel gibt es noch nicht. Im Zahlendorf kannst du schon üben.",
   foxLevel: "Level {lvl}",

@@ -86,7 +86,13 @@ export function createSession(pool, boxes, opts = {}) {
       }
     },
     progress() {
-      return { solved: solved.size, total: roundSize, firstTryOk: roundSize - missed.size };
+      // `firstTryOk` is the best score still *reachable*: it drops on a miss.
+      // `firstTrySolved` is what has actually been banked — it only ever grows,
+      // which is what the in-round star basket must show. A basket driven by
+      // firstTryOk would empty itself on the first mistake (§10.5).
+      let firstTrySolved = 0;
+      for (const id of solved) if (!missed.has(id)) firstTrySolved++;
+      return { solved: solved.size, total: roundSize, firstTryOk: roundSize - missed.size, firstTrySolved };
     },
     boxes() {
       return { ...box };

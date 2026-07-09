@@ -18,6 +18,7 @@ export const GRAPHICS = {
   "ui-sound-off": { emoji: "🔇" },
   "ui-flame": { emoji: "🔥" },
   "ui-star": { emoji: "⭐" },
+  "ui-basket": { emoji: "🧺" },
   "ui-trash": { emoji: "🗑️" },
   "ui-lock": { emoji: "🔒" },
 

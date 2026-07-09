@@ -85,6 +85,32 @@ export function nextStarGoal(stars) {
   return ["starGoal1", "starGoal2", "starGoal3"][stars] ?? null;
 }
 
+// How many first-try-correct answers each star costs, for a round of `total`
+// questions. Derived from the same ratios starsFor uses, so the basket and the
+// summary can never disagree.
+export const starTargets = (total) => [0.6, 0.8, 1].map((r) => Math.ceil(r * total));
+
+// The in-round star basket (§10.5). It *fills*; it never spills.
+//
+// `firstTrySolved` is banked and monotone, so `stars` only grows — a basket
+// driven by the still-reachable maximum would drop a star on the very first
+// mistake, and the first mistake usually arrives at question two. A child can
+// only win here anyway: `endRound` keeps the best score, never the last one.
+//
+// The goal names the cheapest star that is still *reachable*. Once three
+// misses have put two stars out of reach, promising them would be a lie, so
+// the goal falls silent rather than dangle something unreachable.
+export function basketState({ firstTrySolved = 0, firstTryOk = 0, total = 0 } = {}) {
+  if (total <= 0) return { stars: 0, needed: 0, goalStars: 0 };
+  const targets = starTargets(total);
+  const next = targets.find((k) => k > firstTrySolved && k <= firstTryOk);
+  return {
+    stars: starsFor(firstTrySolved, total),
+    needed: next ? next - firstTrySolved : 0,
+    goalStars: next ? targets.indexOf(next) + 1 : 0,
+  };
+}
+
 // Index into the 11-digit per-difficulty star string: tables 1..10 → 0..9,
 // "Alle gemischt" → 10.
 export const tableStarIndex = (table) => (table === 0 ? 10 : table - 1);

@@ -20,6 +20,8 @@ export default {
   privacyDeleteBody: "The gear menu resets all of your progress and deletes the cookie. Clearing this site\u2019s cookies in your browser does the same.",
   privacyBack: "Back to the map",
   privacyLink: "Privacy",
+  basketGoal: "{n} more right for {stars}",
+  basketHave: "{n} stars in the basket",
   lockedHint: "Not available yet",
   comingSoon: "This game isn't built yet. Number Village is ready to play.",
   foxLevel: "Level {lvl}",

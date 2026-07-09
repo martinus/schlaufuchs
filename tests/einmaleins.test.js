@@ -6,7 +6,7 @@ import de from "../assets/i18n/de.js";
 import en from "../assets/i18n/en.js";
 import {
   POOL_COUNT, EASY_TABLES, pairIndex, pairOf, poolFor, questionFor,
-  choicesFor, starsFor, nextStarGoal, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
+  choicesFor, starsFor, nextStarGoal, starTargets, basketState, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
 } from "../games/einmaleins/logic.js";
 
 const seeded = (seed = 1) => () => {
@@ -173,4 +173,65 @@ test("fittedFontSize(): degenerate measurements never change the size", () => {
   assert.equal(fittedFontSize(76, 0, 0), 76);
   assert.equal(fittedFontSize(76, 388, 0), 76);
   assert.equal(fittedFontSize(76, 0, 500), 76);
+});
+
+// The in-round basket (§10.5). Its whole reason to exist is that it fills and
+// never spills: a basket that drops a star on the first mistake — and the
+// first mistake usually arrives at question two — is a machine for making a
+// child quit. A bad round cannot take anything away anyway; endRound() keeps
+// the best score, never the last one.
+test("the star basket only ever fills, whatever order the mistakes arrive in", () => {
+  const TOTAL = 10;
+  assert.deepEqual(starTargets(TOTAL), [6, 8, 10]);
+
+  // Simulate a whole round: `wrongAt` marks which of the ten items get missed.
+  const play = (wrongAt) => {
+    const seen = [];
+    let missed = 0, banked = 0;
+    for (let i = 0; i < TOTAL; i++) {
+      if (wrongAt.has(i)) missed++; else banked++;
+      // firstTryOk is the best score still reachable; firstTrySolved is banked
+      seen.push(basketState({ firstTrySolved: banked, firstTryOk: TOTAL - missed, total: TOTAL }));
+    }
+    return seen;
+  };
+
+  const orders = [new Set(), new Set([0]), new Set([0, 1]), new Set([9]), new Set([0, 4, 9]),
+    new Set([0, 1, 2, 3, 4]), new Set([2, 5]), new Set([1, 3, 5, 7])];
+  for (const wrongAt of orders) {
+    const steps = play(wrongAt);
+    for (let i = 1; i < steps.length; i++) {
+      assert.ok(
+        steps[i].stars >= steps[i - 1].stars,
+        `basket lost a star with mistakes at ${[...wrongAt]}: ${steps[i - 1].stars} -> ${steps[i].stars}`,
+      );
+    }
+    // and it ends where the summary says it does
+    const final = TOTAL - wrongAt.size;
+    assert.equal(steps.at(-1).stars, starsFor(final, TOTAL), "basket and summary must agree");
+  }
+});
+
+test("the basket's goal only ever names a star that is still reachable", () => {
+  const TOTAL = 10;
+  // three misses put two and three stars out of reach: 7/10 is one star, max.
+  const afterThreeMisses = basketState({ firstTrySolved: 6, firstTryOk: 7, total: TOTAL });
+  assert.equal(afterThreeMisses.stars, 1);
+  assert.equal(afterThreeMisses.goalStars, 0, "must not dangle a star that cannot be earned");
+  assert.equal(afterThreeMisses.needed, 0);
+
+  // a clean start: the cheapest star is six right
+  assert.deepEqual(basketState({ firstTrySolved: 0, firstTryOk: 10, total: TOTAL }),
+    { stars: 0, needed: 6, goalStars: 1 });
+  // banked six, still perfect-ish: two more for the second star
+  assert.deepEqual(basketState({ firstTrySolved: 6, firstTryOk: 10, total: TOTAL }),
+    { stars: 1, needed: 2, goalStars: 2 });
+  // banked nine of ten with one miss: the third star is gone, the second is held
+  assert.deepEqual(basketState({ firstTrySolved: 9, firstTryOk: 9, total: TOTAL }),
+    { stars: 2, needed: 0, goalStars: 0 });
+
+  // degenerate rounds must not divide by zero or promise anything
+  assert.deepEqual(basketState({}), { stars: 0, needed: 0, goalStars: 0 });
+  assert.deepEqual(basketState({ firstTrySolved: 0, firstTryOk: 0, total: 0 }),
+    { stars: 0, needed: 0, goalStars: 0 });
 });

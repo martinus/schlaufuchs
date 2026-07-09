@@ -62,9 +62,16 @@ test("the feedback card is sized to fit the shortest phone", () => {
   const css = readFileSync(abs("assets/css/schlaufuchs.css"), "utf8");
   const dot = css.slice(css.indexOf(".dotgrid i {"), css.indexOf("}", css.indexOf(".dotgrid i {")));
   assert.ok(/width:\s*clamp\(/.test(dot), "the dot must scale with the viewport height");
+  // The streak line used to yield its row only while empty. It now shares that
+  // row with the star basket and is therefore almost never empty, so the whole
+  // status row hides while the aid is up.
   assert.ok(
-    css.includes(".stage:has(#feedback:not([hidden])) .hotstreak:empty"),
-    "the empty streak line must not steal a row from the aid",
+    css.includes(".stage:has(#feedback:not([hidden])) .statusrow"),
+    "the status row must not steal a row from the aid",
+  );
+  assert.ok(
+    !css.includes(".hotstreak:empty"),
+    "an :empty rule cannot free a row that now always has a basket in it",
   );
   assert.ok(
     einmaleins.includes("repeat(${b}, auto)"),
