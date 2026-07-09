@@ -16,50 +16,62 @@
 import { foxSVG } from "./fox.js";
 import { iconSVG } from "./graphics.js";
 
+// A theme is a path colour and three friendly obstacles. There is no themed
+// goal any more: the basket *is* the goal, in every theme, because the basket
+// is where the stars land and the round's point is the stars.
 export const THEMES = {
   // the village's first obstacle used to be a basket, which read as a second
-  // copy of the big one standing in the meadow
-  village: { goal: "j-goal-bell", obstacles: ["j-sunflower", "j-rooster", "j-door"], path: "#d9b48f" },
-  mountain: { goal: "j-goal-flag", obstacles: ["j-rock", "j-bridge", "j-troll"], path: "#b0a99f" },
-  forest: { goal: "j-goal-sparkle", obstacles: ["j-mushroom", "j-hedgehog", "j-door"], path: "#8fbf7f" },
-  meadow: { goal: "j-goal-book", obstacles: ["j-butterfly", "j-flower", "j-bee"], path: "#a8d08d" },
+  // copy of the big one standing at the end of the path
+  village: { obstacles: ["j-sunflower", "j-rooster", "j-door"], path: "#d9b48f" },
+  mountain: { obstacles: ["j-rock", "j-bridge", "j-troll"], path: "#b0a99f" },
+  forest: { obstacles: ["j-mushroom", "j-hedgehog", "j-door"], path: "#8fbf7f" },
+  meadow: { obstacles: ["j-butterfly", "j-flower", "j-bee"], path: "#a8d08d" },
 };
 
 const OBSTACLE_AT = [2, 5, 8]; // 0-indexed: nodes 3, 6, 9 (§8.2)
 
-// Scene geometry, in viewBox units. The scene is deliberately tall for its
-// width: a flat strip made the sky read as empty page rather than as sky.
-const H = 128;
-const HORIZON = 84;
+// Scene geometry, in viewBox units. Tall for its width: a flat strip made the
+// sky read as empty page rather than as sky.
+const H = 150;
+const HORIZON = 96;
 const STEP_ = 28;
-const PATH_X0 = 76; // the basket owns the left margin
-const PATH_Y = 102;
-const SKY_Y = 30;
-const SKY_GAP = 46;
-const STAR_SIZE = 26;
-const BASKET = { x: 40, y: 106, size: 46 };
+const PATH_X0 = 26;
+const PATH_Y = 124;
+const STAR_SIZE = 28;
+const BASKET_SIZE = 52;
 const SLOTS = 3;
 
-// Where star `i` comes to rest, nestled in the basket's mouth. These are text
-// baselines, not centres: an emoji glyph hangs above its baseline, so a naive
-// y put the stars on the basket's rim instead of inside it.
-const landing = (i) => ({ x: BASKET.x - 11 + i * 11, y: 104 });
+// The three stars hang as a small constellation, not as a row of three. Given
+// as fractions of the scene's width and absolute text baselines, so the shape
+// survives a round with a different number of questions.
+const SKY = [[0.28, 52], [0.47, 32], [0.68, 48]];
 
 export function createJourney(container, { nodes, theme = "village", level = 1, stars = 0 }) {
   const th = THEMES[theme] ?? THEMES.village;
   const xOf = (i) => PATH_X0 + i * STEP_;
-  const w = xOf(nodes - 1) + 30;
   const yOf = (i) =>
     theme === "mountain" ? PATH_Y - 4 - Math.round((i * 22) / Math.max(nodes - 1, 1)) : PATH_Y;
-  const skyX = (i) => Math.round(w / 2 + 24) + (i - 1) * SKY_GAP;
+
+  // The basket stands at the end of the path, raised clear of it so the whole
+  // basket is visible, and the fox's last step lands beside it. The reward and
+  // the finish line are the same object.
+  const endX = xOf(nodes - 1);
+  const bx = endX + 30;
+  const by = yOf(nodes - 1) - 2; // text baseline: the basket stands *on* the path
+  const w = bx + 34;
+
+  const skyX = (i) => Math.round(SKY[i][0] * w);
+  const skyY = (i) => SKY[i][1];
+  // three abreast in the basket's mouth
+  const landing = (i) => ({ x: bx - 12 + i * 12, y: by - 24 });
 
   let svg = `<svg class="journey journey-${theme}" viewBox="0 0 ${w} ${H}"
       preserveAspectRatio="xMidYMid meet" aria-hidden="true">`;
 
-  // Sky, then a meadow with a soft horizon, then the basket standing in it.
-  // The meadow is clipped to the sky's rounded corners, or it spills out of
-  // them square at the bottom. One scene per page, and `container.innerHTML`
-  // replaces it wholesale each round, so a fixed id cannot collide.
+  // Sky, then a meadow with a soft horizon. The meadow is clipped to the sky's
+  // rounded corners, or it spills out of them square at the bottom. One scene
+  // per page, and `container.innerHTML` replaces it wholesale each round, so a
+  // fixed id cannot collide.
   svg += `<defs><clipPath id="j-clip">
       <rect x="0" y="0" width="${w}" height="${H}" rx="14"/></clipPath></defs>`;
   svg += `<g clip-path="url(#j-clip)">
@@ -67,7 +79,6 @@ export function createJourney(container, { nodes, theme = "village", level = 1, 
       <path class="j-grass" d="M0 ${HORIZON}
         C ${Math.round(w * 0.28)} ${HORIZON - 12}, ${Math.round(w * 0.72)} ${HORIZON - 12}, ${w} ${HORIZON}
         L ${w} ${H} L 0 ${H} Z"/></g>`;
-  svg += iconSVG("ui-basket", { x: BASKET.x, y: BASKET.y + 16, size: BASKET.size, cls: "j-basket-big" });
 
   // the path and its nodes
   let path = `M ${xOf(0)} ${yOf(0)}`;
@@ -78,29 +89,28 @@ export function createJourney(container, { nodes, theme = "village", level = 1, 
   for (let i = 0; i < nodes; i++) {
     const x = xOf(i);
     const y = yOf(i);
-    if (i === nodes - 1) {
-      svg += iconSVG(th.goal, { x, y: y + 7, size: 22, cls: "j-goal", attrs: `data-j="${i}"` });
-    } else {
-      svg += `<circle class="j-node" data-j="${i}" cx="${x}" cy="${y}" r="5"/>`;
-      const oi = OBSTACLE_AT.indexOf(i);
-      if (oi >= 0 && i > 0) {
-        svg += iconSVG(th.obstacles[oi], { x, y: y - 12, size: 14, cls: "j-obstacle", attrs: `data-j="${i}"` });
-      }
+    svg += `<circle class="j-node" data-j="${i}" cx="${x}" cy="${y}" r="5"/>`;
+    const oi = OBSTACLE_AT.indexOf(i);
+    if (oi >= 0 && i > 0) {
+      svg += iconSVG(th.obstacles[oi], { x, y: y - 12, size: 14, cls: "j-obstacle", attrs: `data-j="${i}"` });
     }
   }
+
+  // the goal, and the place the stars fall into
+  svg += iconSVG("ui-basket", { x: bx, y: by, size: BASKET_SIZE, cls: "j-basket-big j-goal" });
 
   // The sky. A grey ghost marks every slot; the gold star on top of it is the
   // one that flies. Its trip is a CSS transform, so `prefers-reduced-motion`
   // (which kills every transition site-wide) simply places it in the basket.
   for (let i = 0; i < SLOTS; i++) {
-    svg += iconSVG("ui-star", { x: skyX(i), y: SKY_Y, size: STAR_SIZE, cls: "j-ghost" });
+    svg += iconSVG("ui-star", { x: skyX(i), y: skyY(i), size: STAR_SIZE, cls: "j-ghost" });
   }
   for (let i = 0; i < SLOTS; i++) {
     const to = landing(i);
     const dx = to.x - skyX(i);
-    const dy = to.y - SKY_Y;
+    const dy = to.y - skyY(i);
     svg += `<g class="j-star" data-s="${i}" style="--dx:${dx}px; --dy:${dy}px">`
-      + iconSVG("ui-star", { x: skyX(i), y: SKY_Y, size: STAR_SIZE })
+      + iconSVG("ui-star", { x: skyX(i), y: skyY(i), size: STAR_SIZE })
       + "</g>";
   }
 
@@ -164,6 +174,8 @@ export function createJourney(container, { nodes, theme = "village", level = 1, 
     },
     setStars,
     finish() {
+      // the last node is a node like any other now; nothing else marks it done
+      el.querySelector(`.j-node[data-j="${nodes - 1}"]`)?.classList.add("done");
       el.querySelector(".j-goal")?.classList.add("reached");
       fox.classList.add("hop");
     },

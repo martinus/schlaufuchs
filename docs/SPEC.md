@@ -716,9 +716,18 @@ still have one star.
 
 One picture, no prose. `createJourney()` in `journey.js` draws all of it:
 
-- **the sky** holds the stars still to be won on this tile;
-- **the meadow** holds a basket with the stars you already own;
+- **the sky** holds the stars still to be won on this tile, as a small
+  constellation rather than a row of three;
+- **the basket stands at the end of the path** — it is the goal *and* the place
+  the stars land, so the reward and the finish line are one object. The fox's
+  last step lands beside it. There is no themed goal icon in any theme any
+  more; `THEMES` is a path colour and three obstacles.
 - **the path** carries the fox, who advances on every correct answer.
+
+A round awards at most **three** stars in every difficulty; what scales with
+difficulty is *points* (×1 / ×2 / ×3, §8.3), not stars. The sky therefore always
+holds three slots. (Leicht offers fewer stars across the whole game — 5 tiles
+instead of 11 — but never more than three in one round.)
 
 An earned star flies from its sky slot into the basket and stays there, leaving
 a grey ghost behind. The flight is a CSS `transform` + `transition`, never a
