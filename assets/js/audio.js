@@ -51,8 +51,4 @@ export const sfx = {
     if (!enabled()) return;
     [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.14, i * 0.1));
   },
-  levelup() {
-    if (!enabled()) return;
-    [392, 523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.16, i * 0.09));
-  },
 };

@@ -3,7 +3,7 @@
 
 import { initI18n, t, getLang } from "./i18n.js";
 import { getRewards } from "./storage.js";
-import { GAMES, TROPHIES, THRESHOLDS, trophyCount, nextTrophyInfo } from "./rewards.js";
+import { GAMES, TROPHIES, THRESHOLDS, TOTAL_TROPHIES, trophyCount, nextTrophyInfo } from "./rewards.js";
 import { iconHTML, applyIcons } from "./graphics.js";
 
 initI18n();
@@ -46,4 +46,4 @@ for (const game of GAMES) {
 }
 
 const totalEl = document.getElementById("totalcount");
-if (totalEl) totalEl.textContent = t("trophyCount", { n: total, total: 60 });
+if (totalEl) totalEl.textContent = t("trophyCount", { n: total, total: TOTAL_TROPHIES });

@@ -121,17 +121,19 @@ Shared modules in `assets/js/`:
 - `storage.js` — the single cookie `schlaufuchs`. Pure encode/decode + typed
   getters/setters. **Hard 3500-byte budget** (`BUDGET`); writes over budget are
   refused. Do not add persistent state casually.
-- `rewards.js` — stars, fox level, trophies, streak, region/badge state. Pure
-  functions are exported and unit-tested. `foxLevel = min(20, 1+floor(total/10))`;
-  trophy `THRESHOLDS`; `starBadgeTier`, `nextTrophyInfo`.
+- `rewards.js` — stars, trophies, streak, region/badge state. Pure functions are
+  exported and unit-tested: trophy `THRESHOLDS`, `trophyCount`, `totalTrophies`,
+  `starBadgeTier`, `nextTrophyInfo`. `foxInfo()` reads the cookie and returns
+  the two numbers the top bar shows: `{stars, trophies}`.
 - `journey.js` — per-round path strip; fox advances on each correct answer;
   friendly obstacles at nodes 3/6/9 with bounce/wiggle/pop animations.
 - `graphics.js` — the icon registry (see below).
-- `chrome.js` — shared top-bar chrome: `renderLevelChip` + `initSettingsOverlay`
-  (sound/language/reset), used by the map, games, and stubs.
+- `chrome.js` — shared top-bar chrome: `renderFoxChip` (fox, stars, trophies —
+  nothing else, §3.3) + `initSettingsOverlay` (sound/language/reset), used by
+  the map, games, and stubs.
 - `adaptive.js` (Leitner-light practice engine), `audio.js` (synth WebAudio
-  sfx, respects mute), `fox.js` (code-generated mascot SVG with level
-  cosmetics), `confetti.js`.
+  sfx, respects mute), `fox.js` (code-generated mascot SVG; the pose is its
+  only variable), `confetti.js`.
 
 ## Key invariants & gotchas
 

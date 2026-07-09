@@ -1,6 +1,6 @@
-// Motivation system (§8): stars, deterministic trophies, daily streak,
-// site-wide fox level, map region states. Pure functions are exported for
-// tests; the record/read functions use storage.js.
+// Motivation system (§8): stars, deterministic trophies, daily streak, map
+// region states. Pure functions are exported for tests; the record/read
+// functions use storage.js.
 
 import { loadState, getRewards, setRewards } from "./storage.js";
 
@@ -139,17 +139,10 @@ export function addPractice(saved = {}, difficulty = 0, seconds = 0) {
   return { tm, rd };
 }
 
-// Cosmetic fox upgrades, keyed by total stars (§8.4).
-//
-// The scarf is gone (it needed a neck the fox does not have), and the rest move
-// up one place rather than leaving the first reward at 50 stars — a child at 29
-// stars would otherwise have watched their only clothing disappear.
-export const COSMETICS = [
-  [20, "cap"], [50, "glasses"], [80, "backpack"],
-  [110, "medal"], [140, "crown"], [170, "goldcrown"],
-];
-
 export const STREAK_MILESTONES = [3, 7, 14, 30];
+
+// Every game has 12 trophies, so this is the whole collection (§8.3).
+export const TOTAL_TROPHIES = GAMES.length * THRESHOLDS.length;
 
 // ---- pure functions -------------------------------------------------------
 
@@ -157,6 +150,11 @@ export function trophyCount(pr) {
   let n = 0;
   while (n < THRESHOLDS.length && (pr ?? 0) >= THRESHOLDS[n]) n++;
   return n;
+}
+
+// Trophies across all games, from the `pr` map of lifetime point counters.
+export function totalTrophies(pr) {
+  return GAMES.reduce((a, g) => a + trophyCount(pr?.[g]), 0);
 }
 
 // Points a finished round is worth (§8.3). Linear: every star costs the same
@@ -210,30 +208,18 @@ export function sumStars(state) {
   return GAMES.reduce((a, g) => a + gameStars(state, g), 0);
 }
 
-// What the fox is wearing, and what it earns next (§8.4).
+// Everything the top bar says about the fox (§3.3): the two counters a child
+// collects, read from the cookie.
 //
-// There used to be a "level" here, which was `1 + floor(stars / 10)` — a second
-// name for the star count, printed beside the star count. It is gone. What it
-// really gated was the fox's outfit, so the outfit now hangs directly off stars
-// at exactly the counts the old levels reached, and a child sees a scarf coming
-// instead of a number going up.
-export function foxProgress(totalStars = 0) {
-  const total = Number.isFinite(totalStars) && totalStars > 0 ? Math.floor(totalStars) : 0;
-  const worn = COSMETICS.filter(([at]) => total >= at).map(([, name]) => name);
-  const next = COSMETICS.find(([at]) => total < at) ?? null;
-  const from = worn.length > 0 ? COSMETICS[worn.length - 1][0] : 0;
-  return {
-    total,
-    worn,
-    next: next ? { at: next[0], name: next[1], missing: next[0] - total } : null,
-    frac: next ? (total - from) / (next[0] - from) : 1,
-  };
-}
-
-// The same, read from the cookie. Kept out of `foxProgress` so the arithmetic
-// stays pure and testable.
+// There used to be a "level" here (`1 + floor(stars / 10)`), then a progress
+// bar toward the fox's next piece of clothing. Both were second names for the
+// star count, printed beside the star count. What is left is what was actually
+// earned: stars, and the trophies they bought.
 export function foxInfo() {
-  return foxProgress(sumStars(loadState()));
+  return {
+    stars: sumStars(loadState()),
+    trophies: totalTrophies(getRewards().pr),
+  };
 }
 
 // Region visual state (§3.1): base → thriving (≥ 1/3) → mastered (100 %).
