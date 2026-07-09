@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   THRESHOLDS, STICKERS, GAMES, stickerCount, foxLevel, updateStreak,
-  gameStars, sumStars, regionState, ACHIEVABLE,
+  gameStars, sumStars, regionState, ACHIEVABLE, starBadgeTier, nextStickerInfo,
 } from "../assets/js/rewards.js";
 
 test("sticker thresholds match spec §8.3", () => {
@@ -54,6 +54,25 @@ test("gameStars sums digit strings and objects of digit strings", () => {
   assert.equal(gameStars(state, "tippen"), 8);
   assert.equal(gameStars(state, "lesen"), 0);
   assert.equal(sumStars(state), 16);
+});
+
+test("starBadgeTier: none / some / gold / glowing (§3.1)", () => {
+  assert.equal(starBadgeTier({}, "einmaleins"), 0);
+  assert.equal(starBadgeTier({ einmaleins: { stars: { 0: "1" } } }, "einmaleins"), 1);
+  const third = { einmaleins: { stars: { 0: "3".repeat(11) } } }; // 33 of 99
+  assert.equal(starBadgeTier(third, "einmaleins"), 2);
+  const full = {
+    einmaleins: { stars: { 0: "3".repeat(11), 1: "3".repeat(11), 2: "3".repeat(11) } },
+  };
+  assert.equal(starBadgeTier(full, "einmaleins"), 3);
+});
+
+test("nextStickerInfo: progress toward the next sticker (§8.3)", () => {
+  assert.deepEqual(nextStickerInfo(undefined), { earned: 0, threshold: 1, remaining: 1 });
+  assert.deepEqual(nextStickerInfo(1), { earned: 1, threshold: 2, remaining: 1 });
+  assert.deepEqual(nextStickerInfo(4), { earned: 3, threshold: 5, remaining: 1 });
+  assert.equal(nextStickerInfo(29).remaining, 1);
+  assert.equal(nextStickerInfo(30), null);
 });
 
 test("region states at 0 / one third / 100 % (§3.1)", () => {

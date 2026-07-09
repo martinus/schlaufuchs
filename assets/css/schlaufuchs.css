@@ -24,6 +24,10 @@
 
 [hidden] { display: none !important; }
 
+/* ---- graphics registry icons (§ graphics registry) ---- */
+.gicon { display: inline-block; vertical-align: middle; line-height: 1; }
+img.gicon { object-fit: contain; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -61,6 +65,10 @@ button, .iconbtn, .chip, a.region {
   gap: 8px;
   padding: 8px 10px;
   min-height: 56px;
+  /* match the game's 560px column so the header aligns on desktop (§3.3) */
+  max-width: 560px;
+  margin-inline: auto;
+  width: 100%;
 }
 
 .topbar .spacer { flex: 1; }
@@ -125,7 +133,14 @@ button, .iconbtn, .chip, a.region {
   border-radius: 4px;
 }
 
+.levelchip > span { display: inline-flex; flex-direction: column; gap: 1px; align-items: flex-start; }
+.levelchip .bar { display: block; }
 .levelchip .lbl { font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
+.levelchip .sub { display: block; font-size: 0.65rem; color: var(--ink-soft); white-space: nowrap; }
+
+/* game screens are narrow — drop the chip's extra lines to save width (§3.3) */
+.game .levelchip .sub { display: none; }
+@media (max-width: 430px) { .game .levelchip .bar { display: none; } }
 
 .streakchip { font-weight: 800; font-size: 1rem; }
 
@@ -168,6 +183,22 @@ button, .iconbtn, .chip, a.region {
   text-anchor: middle;
 }
 
+/* star badge tiers (§3.1): 1 = plain, 2 = gold, 3 = glowing gold */
+.worldmap .region-badge.badge-t2 .region-stars,
+.worldmap .region-badge.badge-t3 .region-stars {
+  fill: #b8860b;
+  font-weight: 800;
+  font-size: 13px;
+}
+.worldmap .region-badge.badge-t3 {
+  filter: drop-shadow(0 0 3px #f4b400);
+  animation: badge-glow 2s ease-in-out infinite alternate;
+}
+@keyframes badge-glow {
+  from { filter: drop-shadow(0 0 2px #f4b400); }
+  to { filter: drop-shadow(0 0 6px #f4b400); }
+}
+
 .worldmap .layer-thriving, .worldmap .layer-mastered { display: none; }
 .worldmap .region.thriving .layer-thriving { display: inline; }
 .worldmap .region.mastered .layer-thriving,
@@ -188,6 +219,7 @@ button, .iconbtn, .chip, a.region {
   min-height: 48px;
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 0 16px;
   border-radius: var(--radius);
   background: var(--panel);
@@ -196,6 +228,8 @@ button, .iconbtn, .chip, a.region {
   font-weight: 700;
   text-decoration: none;
 }
+
+.fallback-nav .nav-ico { font-size: 20px; }
 
 footer {
   text-align: center;
@@ -221,8 +255,32 @@ footer button { text-decoration: underline; color: var(--ink-soft); min-height: 
 .journey { width: 100%; height: auto; display: block; }
 .journey .j-node { fill: var(--orange-soft); stroke: var(--orange); stroke-width: 2; }
 .journey .j-node.done { fill: var(--ok); stroke: var(--ok); }
-.journey .j-obstacle.cleared, .journey .j-goal.reached { opacity: 1; }
-.journey .j-goal.reached { animation: goalpop 0.6s ease; }
+/* obstacle mini-celebrations when the fox passes a milestone (§8.2).
+   transform-box/origin are required so scale/rotate pivot on the glyph
+   itself, for both <text> and swapped-in <image>. */
+.journey .j-obstacle { transform-box: fill-box; transform-origin: 50% 50%; }
+.journey .j-obstacle.cleared { opacity: 0.5; }
+.journey .j-clear-0 { animation: j-bounce 0.7s ease; }
+.journey .j-clear-1 { animation: j-wiggle 0.7s ease; }
+.journey .j-clear-2 { animation: j-pop 0.7s ease; }
+.journey .j-goal.reached { opacity: 1; animation: goalpop 0.6s ease; }
+
+@keyframes j-bounce {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-8px); }
+  60% { transform: translateY(-3px); }
+}
+@keyframes j-wiggle {
+  0%, 100% { transform: rotate(0); }
+  25% { transform: rotate(-15deg); }
+  50% { transform: rotate(12deg); }
+  75% { transform: rotate(-8deg); }
+}
+@keyframes j-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
 .journey .j-fox { transition: transform 0.45s ease; }
 .journey .j-fox.hop { animation: hop 0.45s ease; }
 .journey .j-fox.stumble { animation: stumble 0.7s ease; }
@@ -451,8 +509,16 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .summary .sticker-earn .se-emoji { font-size: 2.4rem; display: block; }
 
 /* ---- album (§3.2) ---- */
+.album-how {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 4px 14px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
 .album-section { padding: 6px 14px 12px; max-width: 560px; margin: 0 auto; }
 .album-section h2 { font-size: 1.05rem; margin: 10px 0 8px; }
+.album-progress { margin: 0 0 8px; font-size: 0.8rem; color: var(--ink-soft); font-weight: 700; }
 
 .stickers {
   display: grid;

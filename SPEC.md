@@ -136,12 +136,19 @@ game** (instant resume, §3.4) — there is no walking and no intermediate page.
 | Wörterwald / Word Forest | Vokabeln | forest with animals |
 | Tippsee / Typing Lake | Tippen | lake with a boathouse |
 | Lesewiese / Reading Meadow | Lesen | meadow with a giant book-tree |
+| Pokalraum / Trophy Room | (sticker album) | trophy hall, bottom-right |
+
+The **Pokalraum** is a sixth region that links to the sticker album
+(`album.html`) instead of a game; its badge shows the total number of stickers
+collected across all games and it evolves (thriving ≥ 20, mastered = 60).
 
 Map requirements:
 
 - Each region is an SVG `<a>` group (real link, keyboard-focusable,
   `aria-label` = translated game name) with a tap target ≥ 64×64 px, a
-  translated name label, and a small badge showing that game's star count.
+  translated name label, and a small `region-badge` group showing that game's
+  star count. The badge has three tiers via CSS class: `badge-t1` (plain),
+  `badge-t2` (gold, ≥ ⅓ of achievable), `badge-t3` (glowing gold, 100 %).
 - **The fox stands on the region that was last played** (`rewards.at`,
   §9.2); first visit: at Zahlendorf. Position = fixed anchor coordinates per
   region, defined in the SVG.
@@ -150,11 +157,14 @@ Map requirements:
   per difficulty currently reachable) → *mastered* (100 %): flag on the
   summit, more animals in the forest, lanterns in the village, etc. The state
   is computed by `rewards.js` on load; layers are shown/hidden by CSS class.
-- Header strip above the map: fox level with progress bar (§8.4), daily
-  streak flame (§8.5), language toggle DE/EN, sticker-album button (1 tap to
-  `album.html`), sound toggle.
-- Below the map, a plain `<nav>` with the five game links as text buttons —
-  the accessibility/robustness fallback and the layout used if SVG fails.
+- Header strip above the map (shared with the game pages, §3.3): fox level
+  chip with total stars + progress bar + "N more stars to level N+1" (§8.4),
+  daily streak flame (§8.5), and a settings gear. Sound and language toggles
+  live inside the gear overlay; the sticker album is reached via the Pokalraum
+  region, so there is no separate album header button.
+- Below the map, a plain `<nav>` with the game links (and the album) as
+  buttons, each with its region symbol icon — the accessibility/robustness
+  fallback and the layout used if SVG fails.
 - Footer: „Deine Fortschritte werden nur auf diesem Gerät gespeichert." plus
   „Fortschritt löschen" (global reset) behind a confirmation dialog.
 - Map art style: flat, friendly, geometric SVG shapes (no raster images, no
@@ -167,20 +177,30 @@ Map requirements:
 One page, five sections (one per region, translated heading). Each section
 shows **12 sticker slots** in a grid: earned stickers as large emoji with a
 name caption; unearned slots as grey outlines with „?". Earned count per
-region and total at the top. Stickers are earned via perfect rounds (§8.3).
-A back-to-map button in the header (1 tap).
+region and total at the top. An explanation line (`albumHow`) states how
+stickers are earned, and each section shows how many perfect rounds remain
+until its next sticker. Stickers are earned via perfect rounds (§8.3). Reached
+from the map via the **Pokalraum** region (§3.1); a back-to-map button in the
+header (1 tap).
 
 ### 3.3 In-game chrome (every game page)
 
-A slim persistent mini-header:
+A slim persistent mini-header, unified with the map header (§3.1). Every page
+(map, games, stubs) uses the same top bar, and the bar is width-matched to the
+560px game column (`max-width:560px; margin-inline:auto`) so it aligns on
+desktop instead of spanning the full viewport.
 
 - **Map button (🗺️)** → back to the map (1 tap). The map icon, not the fox
   — the fox is the player, the map is the place to go back to.
+- **Fox level chip** (shared `renderLevelChip`, `chrome.js`): fox + level +
+  total stars + progress bar. On narrow game screens the sub-line (and, below
+  430px, the bar) are hidden to save width.
 - **Level/difficulty chip** showing the current difficulty (and table/level/
   pack where applicable); tapping opens the picker **as an overlay** on the
   same page, never a separate page.
-- **Settings gear** → small overlay: sound toggle, language toggle, per-game
-  reset (confirmation required).
+- **Settings gear** → shared overlay (`initSettingsOverlay`, `chrome.js`):
+  sound toggle, language toggle, and reset (global on the map, per-game inside
+  a game; two-step confirm on the destructive action).
 
 Round summaries are overlays too. The browser back button always means
 "back to the map".
@@ -221,6 +241,28 @@ Section intentionally unused to keep numbering stable across revisions.
   Speech output (Lesen, Vokabeln) via the browser **SpeechSynthesis API**
   with the voice matching the active language. iOS Safari requires a user
   gesture before speech — always trigger speech from tap handlers.
+
+### 5.1a Graphics registry (`assets/js/graphics.js`)
+
+All icon-like graphics (UI glyphs, region symbols, map decorations, journey
+obstacles/goals, stickers) go through one registry so they are swappable
+without touching the call sites.
+
+- `GRAPHICS` maps a stable name → `{ emoji }`. The emoji is always the
+  fallback. Sticker names (`sticker-<game>-<n>`, 60 total) are generated from
+  the `STICKERS` table in `rewards.js`.
+- A name renders as an SVG file (`assets/img/icons/<name>.svg`, viewBox
+  `0 0 64 64`) **only if listed in the `AVAILABLE` set** — otherwise the emoji
+  shows. No runtime probing, no 404s. Swapping in real graphics = drop the
+  files and add the names to `AVAILABLE`.
+- API: `iconHTML(name, {size})` (inline HTML), `iconSVG(name, {x,y,size,...})`
+  (markup inside an `<svg>`), `applyIcons(root)` (upgrade every `[data-icon]`
+  element to its SVG when available). Static markup keeps the emoji as the
+  `[data-icon]` element's content so pages render correctly with an empty
+  `AVAILABLE` set. URLs resolve via `import.meta.url` (subpath-safe; never
+  emit absolute `/assets/...` paths).
+- **Not** in the registry: the fox mascot (`fox.js`, code-generated) and the
+  hand-drawn map scenery polygons in `index.html`. See `GRAPHICS_BRIEF.md`.
 
 ### 5.1 Mobile first
 
@@ -375,10 +417,12 @@ unique item** in the round and the fox token on the current node.
   (§7.3), the fox always reaches the goal — the journey cannot be lost.
 - A wrong answer does **not** move the fox back; it plays the catch-breath
   animation in place.
-- Nodes 3, 6, 9 are **obstacle nodes** — purely visual flavor drawn from the
+- Nodes 3, 6, 9 are **obstacle nodes** — visual milestones drawn from the
   region theme (a friendly troll at a bridge, a locked gate, a river ferry).
-  The question at an obstacle node is a normal question; answering it plays
-  a slightly bigger "obstacle overcome" animation (troll waves, gate opens).
+  The question at an obstacle node is a normal question; passing it plays a
+  themed mini-celebration on the obstacle glyph (bounce / wiggle / pop, one
+  per obstacle index) with the normal correct-answer sound, then the glyph
+  dims to a settled "done" look.
 - The final node is the **goal**, themed per region (summit flag for
   Rechenberg, school bell for Zahlendorf, forest clearing for Wörterwald,
   story-tree for Lesewiese). Reaching it triggers the round summary.

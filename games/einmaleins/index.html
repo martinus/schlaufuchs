@@ -5,15 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Einmaleins — Schlaufuchs</title>
   <link rel="icon" href="../../assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="../../assets/css/schlaufuchs.css?v=3">
+  <link rel="stylesheet" href="../../assets/css/schlaufuchs.css?v=4">
 </head>
 <body>
   <div class="game">
     <header class="topbar">
-      <a class="iconbtn" href="../../" data-i18n-label="back">🗺️</a>
+      <a class="iconbtn" href="../../" data-i18n-label="back" data-icon="ui-map" data-icon-size="22">🗺️</a>
+      <div class="levelchip" id="levelchip"></div>
       <button class="chip" id="pickchip"></button>
       <span class="spacer"></span>
-      <button class="iconbtn" id="gearbtn" data-i18n-label="settings">⚙️</button>
+      <button class="iconbtn" id="gearbtn" data-i18n-label="settings" data-icon="ui-gear" data-icon-size="22">⚙️</button>
     </header>
 
     <div class="journey-wrap" id="journey"></div>
@@ -36,17 +37,6 @@
     </div>
   </div>
 
-  <!-- settings (§3.3) -->
-  <div class="overlay" id="set-overlay" hidden>
-    <div class="sheet" role="dialog" aria-modal="true">
-      <h2 data-i18n="settings">Einstellungen</h2>
-      <div class="setrow"><span data-i18n="sound">Ton</span><button class="iconbtn" id="set-sound">🔊</button></div>
-      <div class="setrow"><span data-i18n="language">Sprache</span><button class="iconbtn" id="set-lang">EN</button></div>
-      <div class="setrow"><span data-i18n="resetGame">Fortschritt löschen</span><button class="iconbtn" id="set-reset">🗑️</button></div>
-      <button class="primary" id="set-close" data-i18n="close">Schließen</button>
-    </div>
-  </div>
-
   <!-- round summary (§10.1) -->
   <div class="overlay" id="sum-overlay" hidden>
     <div class="sheet summary" role="dialog" aria-modal="true">
@@ -55,6 +45,7 @@
       <p class="sline" id="sum-time"></p>
       <p class="sline" id="sum-best" hidden></p>
       <div class="sticker-earn" id="sum-sticker" hidden></div>
+      <p class="sline" id="sum-nextsticker" hidden></p>
       <button class="primary" id="sum-again"></button>
       <div class="seg sum-secondary">
         <a class="sum-link" href="../../">🗺️ <span data-i18n="back">Zur Karte</span></a>

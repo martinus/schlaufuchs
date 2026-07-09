@@ -5,21 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Schlaufuchs</title>
   <link rel="icon" href="../../assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="../../assets/css/schlaufuchs.css?v=3">
+  <link rel="stylesheet" href="../../assets/css/schlaufuchs.css?v=4">
 </head>
 <body>
   <header class="topbar">
-    <a class="iconbtn" href="../../" data-i18n-label="back">🗺️</a>
+    <a class="iconbtn" href="../../" data-i18n-label="back" data-icon="ui-map" data-icon-size="22">🗺️</a>
+    <div class="levelchip" id="levelchip"></div>
+    <span class="spacer"></span>
+    <button class="iconbtn" id="gearbtn" data-i18n-label="settings" data-icon="ui-gear" data-icon-size="22">⚙️</button>
   </header>
   <main class="stub">
-    <span class="stub-emoji">🌲</span>
+    <span class="stub-emoji" data-icon="region-vokabeln" data-icon-size="64">🌲</span>
     <h1 data-i18n="game_vokabeln"></h1>
     <p data-i18n="comingSoon"></p>
     <a class="chip" href="../../" data-i18n="back"></a>
   </main>
   <script type="module">
     import { initI18n } from "../../assets/js/i18n.js";
+    import { applyIcons } from "../../assets/js/graphics.js";
+    import { renderLevelChip, initSettingsOverlay } from "../../assets/js/chrome.js";
     initI18n();
+    applyIcons(document);
+    renderLevelChip(document.getElementById("levelchip"));
+    const settings = initSettingsOverlay({ resetKind: null });
+    document.getElementById("gearbtn").addEventListener("click", settings.open);
   </script>
 </body>
 </html>

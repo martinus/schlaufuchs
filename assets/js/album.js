@@ -3,13 +3,22 @@
 
 import { initI18n, t, getLang } from "./i18n.js";
 import { getRewards } from "./storage.js";
-import { GAMES, STICKERS, THRESHOLDS, stickerCount } from "./rewards.js";
+import { GAMES, STICKERS, THRESHOLDS, stickerCount, nextStickerInfo } from "./rewards.js";
+import { iconHTML, applyIcons } from "./graphics.js";
 
 initI18n();
+applyIcons(document);
 
 const pr = getRewards().pr ?? {};
 const lang = getLang();
 let total = 0;
+
+// One progress line per game: how many perfect rounds until the next sticker.
+function progressLine(game) {
+  const info = nextStickerInfo(pr[game]);
+  if (!info) return t("stickerAllDone");
+  return info.remaining === 1 ? t("stickerNextIn1") : t("stickerNextIn", { n: info.remaining });
+}
 
 const main = document.getElementById("album");
 for (const game of GAMES) {
@@ -20,13 +29,14 @@ for (const game of GAMES) {
   const slots = STICKERS[game]
     .map((s, i) => {
       if (i < earned) {
-        return `<div class="slot"><span>${s.e}</span><span class="sname">${s[lang]}</span></div>`;
+        return `<div class="slot">${iconHTML(s.icon, { size: 34 })}<span class="sname">${s[lang]}</span></div>`;
       }
       return `<div class="slot locked" title="${THRESHOLDS[i]}×"><span>?</span></div>`;
     })
     .join("");
   section.innerHTML = `
     <h2>${t(`region_${game}`)} · ${t(`game_${game}`)} — ${earned}/12</h2>
+    <p class="album-progress">${progressLine(game)}</p>
     <div class="stickers">${slots}</div>`;
   main.appendChild(section);
 }

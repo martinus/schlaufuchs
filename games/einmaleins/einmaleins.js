@@ -1,13 +1,15 @@
 // Einmaleins page module (§10): wires the pure logic to the DOM, using the
 // shared engines (adaptive, journey, rewards, storage, i18n, audio).
 
-import { initI18n, t, getLang, setLang } from "../../assets/js/i18n.js";
-import { getGame, setGame, getSettings, setSettings, resetGame } from "../../assets/js/storage.js";
+import { initI18n, t, getLang } from "../../assets/js/i18n.js";
+import { getGame, setGame, getRewards } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString } from "../../assets/js/adaptive.js";
-import { recordRound, levelInfo } from "../../assets/js/rewards.js";
+import { recordRound, levelInfo, nextStickerInfo } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
+import { iconHTML, applyIcons } from "../../assets/js/graphics.js";
+import { renderLevelChip, initSettingsOverlay } from "../../assets/js/chrome.js";
 import strings from "./i18n.js";
 import {
   POOL_COUNT, EASY_TABLES, poolFor, questionFor, choicesFor,
@@ -15,6 +17,7 @@ import {
 } from "./logic.js";
 
 initI18n(strings);
+applyIcons(document); // upgrade back-link / gear icons if SVGs exist
 
 const $ = (id) => document.getElementById(id);
 const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
@@ -70,6 +73,7 @@ function updateChip() {
 function startRound() {
   coerceTable();
   updateChip();
+  renderLevelChip($("levelchip"));
   saved = getGame("einmaleins");
   const boxes = boxesFromString(saved.box, POOL_COUNT);
   session = createSession(poolFor(table, diff), boxes, { roundSize: 10 });
@@ -238,12 +242,23 @@ function endRound() {
     const st = $("sum-sticker");
     if (res.newStickers.length > 0) {
       const s = res.newStickers[0];
-      st.innerHTML = `<span class="se-emoji">${s.e}</span>${t("stickerNew", { name: s[getLang()] })}`;
+      st.innerHTML = `<span class="se-emoji">${iconHTML(s.icon, { size: 40 })}</span>${t("stickerNew", { name: s[getLang()] })}`;
       st.hidden = false;
       sfx.sticker();
     } else {
       st.hidden = true;
     }
+    // next-sticker progress — doubles as the in-game explanation of stickers
+    const ns = $("sum-nextsticker");
+    const info = nextStickerInfo((getRewards().pr ?? {}).einmaleins);
+    if (!info) {
+      ns.textContent = t("stickerAllDone");
+    } else {
+      ns.textContent = info.remaining === 1
+        ? t("stickerNextIn1")
+        : t("stickerNextIn", { n: info.remaining });
+    }
+    ns.hidden = false;
     $("sum-again").textContent = t("again");
     showSummary();
     if (improved || stars === 3 || res.newStickers.length > 0) confetti();
@@ -262,7 +277,7 @@ $("sum-pick").addEventListener("click", () => {
 });
 $("sum-settings").addEventListener("click", () => {
   $("sum-overlay").hidden = true;
-  openSettings();
+  settings.open();
 });
 
 // --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------
@@ -304,59 +319,26 @@ function openPicker() {
 
 $("pickchip").addEventListener("click", openPicker);
 
-// --- settings overlay --------------------------------------------------------
-function renderSettings() {
-  $("set-sound").textContent = getSettings().sound !== false ? "🔊" : "🔇";
-  $("set-lang").textContent = getLang() === "de" ? "EN" : "DE";
-}
-
-function openSettings() {
-  renderSettings();
-  $("set-overlay").hidden = false;
-}
-
-function closeSettings() {
-  $("set-overlay").hidden = true;
-  if (roundOver) showSummary();
-}
-
-$("gearbtn").addEventListener("click", openSettings);
-$("set-close").addEventListener("click", closeSettings);
-$("set-sound").addEventListener("click", () => {
-  setSettings({ sound: getSettings().sound === false });
-  sfx.click();
-  renderSettings();
+// --- settings overlay (shared chrome §3.3) ----------------------------------
+const settings = initSettingsOverlay({
+  resetKind: "game",
+  game: "einmaleins",
+  onChange() {
+    renderLevelChip($("levelchip"));
+    updateChip();
+    if (!roundOver) renderQuestion();
+  },
+  onClose() {
+    if (roundOver) showSummary();
+  },
 });
-$("set-lang").addEventListener("click", () => {
-  setLang(getLang() === "de" ? "en" : "de");
-  renderSettings();
-  updateChip();
-  if (!roundOver) renderQuestion();
-});
-// two-step confirm for the destructive per-game reset (§3.4)
-let resetArmed = false;
-$("set-reset").addEventListener("click", () => {
-  if (!resetArmed) {
-    resetArmed = true;
-    $("set-reset").textContent = "❗";
-    setTimeout(() => {
-      resetArmed = false;
-      $("set-reset").textContent = "🗑️";
-    }, 3000);
-    return;
-  }
-  resetGame("einmaleins");
-  location.reload();
-});
+$("gearbtn").addEventListener("click", settings.open);
 
-// closing an overlay after the round ended returns to the summary
+// closing the picker after the round ended returns to the summary
 $("pick-overlay").addEventListener("click", (e) => {
   if (e.target !== $("pick-overlay")) return;
   $("pick-overlay").hidden = true;
   if (roundOver) showSummary();
-});
-$("set-overlay").addEventListener("click", (e) => {
-  if (e.target === $("set-overlay")) closeSettings();
 });
 
 // Instant resume (§3.4): straight into a round, no menu.
