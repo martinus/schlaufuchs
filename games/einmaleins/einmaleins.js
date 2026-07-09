@@ -400,7 +400,10 @@ function renderPicker() {
     } else {
       if (s === 3) b.classList.add("mastered");
       const stars = [0, 1, 2].map((k) => `<i class="${k < s ? "on" : "off"}">⭐</i>`).join("");
-      b.innerHTML = `<span>${tbl2short(tbl)}</span>
+      // "Alle" is the only tile whose name is a word rather than a number, and
+      // a child who reads nothing cannot tell it from the rest. A die can.
+      const name = tbl === 0 ? `🎲 ${tbl2short(tbl)}` : tbl2short(tbl);
+      b.innerHTML = `<span>${name}</span>
         <span class="tstars">${stars}</span>`;
     }
     b.addEventListener("click", () => {

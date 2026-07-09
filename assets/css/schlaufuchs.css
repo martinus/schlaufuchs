@@ -525,17 +525,24 @@ footer p { margin: 0; }
 
 /* The round's title: same width as the scene beneath it, so the two read as
    one block rather than as a chip that wandered out of the top bar. */
+/* The round's title is also its level picker, and Mara never found it: it read
+   as a caption. It now wears a border and a caret and presses like a button.
+   The caret is a pseudo-element on purpose — `updateChip()` writes the chip's
+   textContent, which would eat a glyph kept in the i18n string. */
 .pickheading {
   display: block;
   width: 100%;
   margin: 0 auto 4px;
   padding: 6px 10px;
   min-height: 0;
+  border: 2px solid var(--orange-soft);
   /* like the top bar: the level picker stays reachable while the summary is up.
      Mara tried to press the chip *through* the summary sheet. */
   position: relative;
   z-index: 45;
 }
+.pickheading::after { content: " ▾"; color: var(--orange); }
+.pickheading:active { transform: scale(0.97); }
 
 /* ---- the round's scene: sky, meadow, basket, fox (§10.5) ---- */
 .journey .j-sky { fill: #e8f3fa; }
@@ -674,7 +681,15 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   box-shadow: var(--shadow);
 }
 
-.seg button[aria-pressed="true"] { background: var(--orange); color: #fff; }
+/* Which difficulty is chosen has to survive a glance: colour alone was too
+   quiet next to two identical neighbours, so the pressed one is also ringed
+   and a shade larger. */
+.seg button[aria-pressed="true"] {
+  background: var(--orange);
+  color: #fff;
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.55), var(--shadow);
+  transform: scale(1.04);
+}
 
 .tilegrid {
   display: grid;

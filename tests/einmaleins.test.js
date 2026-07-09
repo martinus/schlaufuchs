@@ -171,6 +171,24 @@ test("the trophy in the summary is a link to the room it belongs in", () => {
   assert.match(block.slice(0, 500), /cls: "won"/, "…and still readable by tools/play.js");
 });
 
+// Mara never found the level picker: the chip above the scene read as a
+// caption, so she never tried pressing it.
+test("the chip looks like the button it is", () => {
+  const css = read("assets/css/schlaufuchs.css");
+  const block = css.slice(css.indexOf(".pickheading {"), css.indexOf(".pickheading:active"));
+  assert.match(block, /border: 2px solid var\(--orange-soft\)/, "a chip needs an edge");
+  assert.match(css, /\.pickheading::after \{ content: " ▾"/, "…and a caret that says it opens");
+  // The caret must be a pseudo-element: updateChip() writes textContent, which
+  // would silently eat a glyph carried in the string.
+  assert.ok(!read("games/einmaleins/einmaleins.js").includes("▾"));
+  assert.match(css, /\.seg button\[aria-pressed="true"\] \{[^}]*inset 0 0 0 3px/, "the chosen level must be unmistakable");
+});
+
+test('the "Alle" tile says with a picture that it mixes the tables', () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  assert.match(src, /tbl === 0 \? `🎲 \$\{tbl2short\(tbl\)\}`/);
+});
+
 test("the summary names the price of the next star", () => {
   // A child who scores 9/10 keeps one star and is told nothing about why.
   // Every un-earned star must have a goal line; a mastered round must not.
