@@ -18,7 +18,19 @@ node --test                   # run unit tests (tests/*.test.js), needs Node 22+
 node --check <file.js>        # syntax-check a module
 node tools/version-assets.js N  # bump asset version — REQUIRED before deploying a change
 node tools/shoot.mjs <url> …    # drive a real Chrome: screenshot + measure (--help)
+sh tools/install-hooks.sh       # pre-commit/pre-push guards (run once per clone)
 ```
+
+`tools/play.js` is the round driver for einmaleins — load it into a page with
+`--do 'eval @tools/play.js'`, then `--do 'eval play({ wrongAt: 1 })'`. It
+returns a trace of every question and of the scene after each one. Its parser
+is unit-tested against every shape `questionFor()` can produce
+(`tests/play.test.js`), because a driver that answers the wrong thing proves
+nothing, quietly.
+
+The hooks refuse a commit that fails `node --test` or that deletes tests
+without saying so, and a push that would delete a file from `main`. Wave one
+through with `SKIP_TEST_GUARD=1`.
 
 There is no lint/format/build step. `node --test` is the only gate; the deploy
 workflow runs it before publishing.
