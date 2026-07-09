@@ -77,9 +77,8 @@ html, body {
 h1, h2, .question, .region-label, .foxchip .lbl, .chip,
 .mc button, .keypad button, .tilegrid button, .primary,
 .summary .sline, .feedback-aid,
-/* the summary's whole button row, not only its primary — "Nochmal" was set in
-   the display face and the two buttons beside it were not */
-.summary button, .summary .sum-link,
+/* the summary's one button */
+.summary button,
 /* a trophy's name is a name */
 .summary .trophy-earn .won,
 /* the parents' chips are chips, and its facts are the same equations the game
@@ -124,6 +123,13 @@ button, .iconbtn, .chip, a.region {
   display: flex;
   align-items: center;
   gap: 6px;
+  /* Above the round summary (z-index 40), below the sheets that really are
+     modal (z-index 50). The summary has one button and no way out written on
+     it: the way out is this bar, so the bar must stay lit and tappable while
+     the summary is up. A backdrop over it would trap a child in an endless
+     succession of rounds. */
+  position: relative;
+  z-index: 45;
   /* respect the notch/rounded corners: the gear must never be clipped */
   padding: 8px max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left));
   min-height: 56px;
@@ -525,6 +531,10 @@ footer p { margin: 0; }
   margin: 0 auto 4px;
   padding: 6px 10px;
   min-height: 0;
+  /* like the top bar: the level picker stays reachable while the summary is up.
+     Mara tried to press the chip *through* the summary sheet. */
+  position: relative;
+  z-index: 45;
 }
 
 /* ---- the round's scene: sky, meadow, basket, fox (§10.5) ---- */
@@ -780,26 +790,11 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 .summary .best { color: var(--orange); font-weight: 800; }
 
-.sum-secondary {
-  grid-template-columns: 1fr 1fr;
-  margin-top: 10px;
-  margin-bottom: 0;
-}
-.sum-secondary button, .sum-secondary .sum-link {
-  min-height: 52px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  border-radius: var(--radius);
-  background: var(--panel);
-  box-shadow: var(--shadow);
-  color: var(--ink);
-  text-decoration: none;
-  padding: 4px;
-}
+/* The summary is the one overlay a child meets without having asked for it, and
+   the only one with nothing to dismiss it. It therefore stays UNDER the top bar
+   and the chip (z-index 45), which are the ways out of it. */
+#sum-overlay { z-index: 40; }
+
 .summary .bigstars { font-size: 2.6rem; letter-spacing: 4px; }
 .summary .sline { margin: 6px 0; font-weight: 700; }
 /* the next star's price: present, but never louder than the score */
@@ -911,9 +906,11 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .tcard .t-theme {
   position: absolute;
   /* the bowl of a 🏆 glyph, not its middle */
-  top: 26%;
+  top: 28%;
   left: 50%;
   transform: translate(-50%, -50%);
+  /* a gold bell in a gold cup is one gold blob; the halo separates them */
+  filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff);
 }
 
 .tcard .sname,

@@ -35,7 +35,7 @@ test("names, numbers and headings get the display face", () => {
     ".keypad button", ".mc button", ".tilegrid button",
     ".primary",
     ".summary .sline",
-    ".summary button", ".summary .sum-link",  // the whole button row, not just "Nochmal"
+    ".summary button",                        // its one congratulation button
     ".summary .trophy-earn .won",             // a trophy's name is a name
     ".pchip", ".factlist .fact",              // the parents' chips and equations
     ".feedback-aid",
