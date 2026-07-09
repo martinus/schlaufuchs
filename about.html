@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Für Eltern — Schlaufuchs</title>
+  <title>Über mich — Schlaufuchs</title>
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/css/schlaufuchs.css?v=26">
   <!-- cache coherence: see tools/version-assets.js -->
@@ -36,39 +36,45 @@
 <body class="textpage">
   <header class="topbar">
     <a class="iconbtn" href="./" data-i18n-label="back" data-icon="ui-map" data-icon-size="22">🗺️</a>
-    <h1 class="chip roomtitle" data-i18n="parentsTitle">Für Eltern</h1>
+    <h1 class="chip roomtitle" data-i18n="aboutTitle">Über mich</h1>
     <span class="spacer"></span>
   </header>
 
   <main class="prose">
-    <p class="lede" data-i18n="parentsIntro"></p>
-    <p class="pchips" id="p-chips"></p>
+    <p class="lede" data-i18n="aboutIntro"></p>
 
-    <p class="empty" id="p-empty" data-i18n="parentsEmpty" hidden></p>
+    <h2 data-i18n="aboutWhoH"></h2>
+    <p data-i18n="aboutWhoBody"></p>
 
-    <div id="p-body" hidden>
-      <h2 data-i18n="parentsGameH"></h2>
-      <p class="muted" data-i18n="parentsOtherGames"></p>
+    <h2 data-i18n="aboutContactH"></h2>
+    <p data-i18n="aboutContactBody"></p>
+    <!-- a sibling of the translated paragraph: translateDOM overwrites
+         textContent and would eat an anchor placed inside it (§6.3) -->
+    <p><a class="mail" href="mailto:martin.ankerl@gmail.com">martin.ankerl@gmail.com</a></p>
 
-      <h2 data-i18n="parentsTimeH"></h2>
-      <div id="p-time"></div>
-      <p class="muted" id="p-pace-note"></p>
+    <h2 data-i18n="aboutProjectsH"></h2>
+    <ul class="linklist">
+      <li>
+        <a href="https://keto-calculator.ankerl.com/">keto-calculator.ankerl.com</a>
+        <span data-i18n="aboutKeto"></span>
+      </li>
+      <li>
+        <a href="https://martin.ankerl.com/">martin.ankerl.com</a>
+        <span data-i18n="aboutBlog"></span>
+      </li>
+      <li>
+        <a href="https://github.com/martinus">github.com/martinus</a>
+        <span data-i18n="aboutGithub"></span>
+      </li>
+      <li>
+        <a href="https://ankerl.com/">ankerl.com</a>
+        <span data-i18n="aboutPortal"></span>
+      </li>
+    </ul>
 
-      <h2 data-i18n="parentsHeatH"></h2>
-      <p class="muted" data-i18n="parentsHeatHint"></p>
-      <div id="p-heat"></div>
-
-      <h2 data-i18n="parentsHelpH"></h2>
-      <p id="p-help-body"></p>
-      <ul class="factlist" id="p-help-list"></ul>
-    </div>
-
-    <p class="footlinks">
-      <a class="footlink" href="privacy.html" data-i18n="privacyLink"></a>
-      <a class="footlink" href="about.html" data-i18n="aboutLink"></a>
-    </p>
+    <p><a class="footlink" href="privacy.html" data-i18n="privacyLink"></a></p>
   </main>
 
-  <script type="module" src="assets/js/parents.js?v=26"></script>
+  <script type="module" src="assets/js/about.js?v=26"></script>
 </body>
 </html>
