@@ -269,6 +269,22 @@ text that hides half its sentences is worse than one that scrolls.
   and this site's audience is 5–15. Cookieless, aggregate audience measurement
   is the only kind that fits here. If it is ever added, this page must say so.
 
+
+### 3.6 The about page (`about.html`)
+
+Who runs the site, how to reach him, and what else he built. A plain bilingual
+text page like §3.5, and reachable from everywhere by the same rule: the gear
+covers the map, the games and the stubs; the Trophy Room and the three text
+pages carry links. `tests/about.test.js` enforces that **no page is a dead end**
+— it found `parents.html` had become one.
+
+- The contact address is a real `mailto:`, published deliberately.
+- Four outbound links (keto-calculator, the blog, GitHub, the portal). They are
+  the only external URLs the site names anywhere. A test holds them to `https:`
+  and to being absolute; nothing else can check that they still resolve.
+- It reads no state. A page that says who runs the site must not need the
+  cookie to render.
+
 ---
 
 ## 4. (reserved)

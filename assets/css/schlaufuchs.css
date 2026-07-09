@@ -877,11 +877,21 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .textpage .prose p { color: var(--ink-soft); }
 .textpage .roomtitle { font-size: 1rem; }
 
-.footlink { color: var(--ink-soft); font-size: 0.8rem; text-decoration: underline; }
+/* The footer whispers. The sentence is a legal courtesy, not a message a child
+   needs; the two links are what anyone actually goes there for. */
+.footnote { font-size: 0.68rem; color: var(--ink-soft); opacity: 0.8; }
+.footlinks { display: flex; justify-content: center; gap: 16px; }
+.footlink { color: var(--ink-soft); font-size: 0.78rem; text-decoration: underline; }
 .roomfoot { text-align: center; padding: 6px 0 18px; }
 
+.textpage .linklist { list-style: none; padding: 0; }
+.textpage .linklist li { margin: 0 0 12px; }
+.textpage .linklist a { color: var(--depth); font-weight: 700; }
+.textpage .linklist span { display: block; font-size: 0.85rem; color: var(--ink-soft); }
+.textpage .mail { color: var(--depth); font-weight: 700; }
+
 /* the privacy link sits in the settings overlay, the one screen every page has */
-.cx-privacy, .cx-parents {
+.cx-privacy, .cx-parents, .cx-about {
   color: var(--depth);
   font-weight: 700;
   text-decoration: underline;
