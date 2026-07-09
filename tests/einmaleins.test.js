@@ -6,7 +6,7 @@ import de from "../assets/i18n/de.js";
 import en from "../assets/i18n/en.js";
 import {
   POOL_COUNT, EASY_TABLES, pairIndex, pairOf, poolFor, questionFor,
-  choicesFor, starsFor, nextStarGoal, starTargets, basketState, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
+  choicesFor, starsFor, nextStarGoal, ownedStars, STAR_SLOTS, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
 } from "../games/einmaleins/logic.js";
 
 const seeded = (seed = 1) => () => {
@@ -196,63 +196,63 @@ test("fittedFontSize(): degenerate measurements never change the size", () => {
   assert.equal(fittedFontSize(76, 0, 500), 76);
 });
 
-// The in-round basket (§10.5). Its whole reason to exist is that it fills and
-// never spills: a basket that drops a star on the first mistake — and the
-// first mistake usually arrives at question two — is a machine for making a
-// child quit. A bad round cannot take anything away anyway; endRound() keeps
-// the best score, never the last one.
-test("the star basket only ever fills, whatever order the mistakes arrive in", () => {
+// The scene (§10.5): the basket holds what you own, the sky what is left.
+//
+// Its whole reason to exist is that it fills and never spills. A basket that
+// drops a star on the first mistake — and the first mistake usually arrives at
+// question two — is a machine for making a child quit. Nothing is at stake
+// anyway: endRound() keeps the best score, never the last one.
+test("the basket only ever fills, whatever order the mistakes arrive in", () => {
   const TOTAL = 10;
-  assert.deepEqual(starTargets(TOTAL), [6, 8, 10]);
+  assert.equal(STAR_SLOTS, 3);
 
-  // Simulate a whole round: `wrongAt` marks which of the ten items get missed.
-  const play = (wrongAt) => {
+  const play = (wrongAt, best) => {
     const seen = [];
-    let missed = 0, banked = 0;
+    let banked = 0;
     for (let i = 0; i < TOTAL; i++) {
-      if (wrongAt.has(i)) missed++; else banked++;
-      // firstTryOk is the best score still reachable; firstTrySolved is banked
-      seen.push(basketState({ firstTrySolved: banked, firstTryOk: TOTAL - missed, total: TOTAL }));
+      if (!wrongAt.has(i)) banked++;
+      seen.push(ownedStars({ firstTrySolved: banked, total: TOTAL }, best));
     }
     return seen;
   };
 
   const orders = [new Set(), new Set([0]), new Set([0, 1]), new Set([9]), new Set([0, 4, 9]),
     new Set([0, 1, 2, 3, 4]), new Set([2, 5]), new Set([1, 3, 5, 7])];
-  for (const wrongAt of orders) {
-    const steps = play(wrongAt);
-    for (let i = 1; i < steps.length; i++) {
-      assert.ok(
-        steps[i].stars >= steps[i - 1].stars,
-        `basket lost a star with mistakes at ${[...wrongAt]}: ${steps[i - 1].stars} -> ${steps[i].stars}`,
-      );
+  for (const best of [0, 1, 2, 3]) {
+    for (const wrongAt of orders) {
+      const steps = play(wrongAt, best);
+      assert.ok(steps[0] >= best, "the basket opens with what the tile already holds");
+      for (let i = 1; i < steps.length; i++) {
+        assert.ok(steps[i] >= steps[i - 1], `basket lost a star: best=${best}, wrong at ${[...wrongAt]}`);
+      }
+      const earned = starsFor(TOTAL - wrongAt.size, TOTAL);
+      assert.equal(steps.at(-1), Math.max(best, earned), "basket and summary must agree");
     }
-    // and it ends where the summary says it does
-    const final = TOTAL - wrongAt.size;
-    assert.equal(steps.at(-1).stars, starsFor(final, TOTAL), "basket and summary must agree");
   }
 });
 
-test("the basket's goal only ever names a star that is still reachable", () => {
+// Regression: the round told a child "noch 2 richtig bis ⭐⭐⭐" on a tile they
+// had already taken to three stars — and then paid nothing, because
+// `endRound()` only pays on `stars > old`. The scene must know what is owned.
+test("a mastered tile opens with a full basket and promises nothing more", () => {
   const TOTAL = 10;
-  // three misses put two and three stars out of reach: 7/10 is one star, max.
-  const afterThreeMisses = basketState({ firstTrySolved: 6, firstTryOk: 7, total: TOTAL });
-  assert.equal(afterThreeMisses.stars, 1);
-  assert.equal(afterThreeMisses.goalStars, 0, "must not dangle a star that cannot be earned");
-  assert.equal(afterThreeMisses.needed, 0);
+  for (let solved = 0; solved <= TOTAL; solved++) {
+    assert.equal(ownedStars({ firstTrySolved: solved, total: TOTAL }, 3), 3,
+      "a three-star tile can never show fewer than three, nor more");
+  }
+  assert.equal(ownedStars({ firstTrySolved: 0, total: TOTAL }, 2), 2);
+  assert.equal(ownedStars({ firstTrySolved: 9, total: TOTAL }, 2), 2, "9/10 is still two stars");
+  assert.equal(ownedStars({ firstTrySolved: 10, total: TOTAL }, 2), 3, "10/10 wins the last one");
+  assert.equal(ownedStars({ firstTrySolved: 0, total: TOTAL }, 0), 0);
+  assert.equal(ownedStars({ firstTrySolved: 6, total: TOTAL }, 0), 1);
+});
 
-  // a clean start: the cheapest star is six right
-  assert.deepEqual(basketState({ firstTrySolved: 0, firstTryOk: 10, total: TOTAL }),
-    { stars: 0, needed: 6, goalStars: 1 });
-  // banked six, still perfect-ish: two more for the second star
-  assert.deepEqual(basketState({ firstTrySolved: 6, firstTryOk: 10, total: TOTAL }),
-    { stars: 1, needed: 2, goalStars: 2 });
-  // banked nine of ten with one miss: the third star is gone, the second is held
-  assert.deepEqual(basketState({ firstTrySolved: 9, firstTryOk: 9, total: TOTAL }),
-    { stars: 2, needed: 0, goalStars: 0 });
-
-  // degenerate rounds must not divide by zero or promise anything
-  assert.deepEqual(basketState({}), { stars: 0, needed: 0, goalStars: 0 });
-  assert.deepEqual(basketState({ firstTrySolved: 0, firstTryOk: 0, total: 0 }),
-    { stars: 0, needed: 0, goalStars: 0 });
+test("ownedStars is total: junk in, a sane basket out", () => {
+  for (const bad of [undefined, null, -1, 4, 99, 1.5, NaN, "2", {}]) {
+    const n = ownedStars({ firstTrySolved: 5, total: 10 }, bad);
+    assert.ok(Number.isInteger(n) && n >= 0 && n <= STAR_SLOTS, `best=${String(bad)} -> ${n}`);
+  }
+  assert.equal(ownedStars(), 0, "no round, no stars");
+  assert.equal(ownedStars({}, 2), 2);
+  assert.equal(ownedStars({ firstTrySolved: 0, total: 0 }, 0), 0, "never divide by an empty round");
 });

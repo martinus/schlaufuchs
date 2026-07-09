@@ -52,7 +52,7 @@ export const GRAPHICS = {
   "deco-party": { emoji: "🎉" },
 
   // Journey path (obstacles + goals)
-  "j-basket": { emoji: "🧺" },
+  "j-sunflower": { emoji: "🌻" },
   "j-rooster": { emoji: "🐓" },
   "j-door": { emoji: "🚪" },
   "j-rock": { emoji: "🪨" },

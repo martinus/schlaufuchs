@@ -13,7 +13,7 @@ import { renderLevelChip, initSettingsOverlay } from "../../assets/js/chrome.js"
 import strings from "./i18n.js";
 import {
   POOL_COUNT, EASY_TABLES, poolFor, questionFor, choicesFor,
-  starsFor, nextStarGoal, basketState, starDigit, withStarDigit, fittedFontSize,
+  starsFor, nextStarGoal, ownedStars, starDigit, withStarDigit, fittedFontSize,
 } from "./logic.js";
 
 initI18n(strings);
@@ -57,8 +57,8 @@ let currentId = null;
 let input = "";
 let buffer = ""; // digits typed during the short post-correct transition
 let phase = "answer"; // answer | correct-wait | wrong-wait
+let best = 0; // stars already won on this tile, before the round
 let roundOver = false;
-let hot = 0;
 // Only ever flows into the parents' view (§20). The child is never shown it.
 let t0 = 0;
 
@@ -77,12 +77,15 @@ function startRound() {
   saved = getGame("einmaleins");
   const boxes = boxesFromString(saved.box, POOL_COUNT);
   session = createSession(poolFor(table, diff), boxes, { roundSize: 10 });
+  // the basket opens with the stars this tile has already earned, so a mastered
+  // tile shows a full basket and a grey sky (§10.5)
+  best = starDigit((saved.stars ?? {})[diff], table);
   journey = createJourney($("journey"), {
     nodes: session.items().length,
     theme: "village",
     level: levelInfo().level,
+    stars: best,
   });
-  hot = 0;
   buffer = "";
   roundOver = false;
   t0 = Date.now();
@@ -106,25 +109,12 @@ function askNext() {
   if (diff === 0) renderChoices();
 }
 
-// The basket of stars and the line beside it (§10.5). The basket shows what is
-// banked, so it only fills; the line shows the running streak if there is one,
-// and otherwise what the next reachable star costs. Never a loss, never a
-// promise that cannot be kept.
+// The scene says it all: the basket holds what you own, the sky what is left.
+// `ownedStars` is monotone, so the basket only ever fills (§10.5).
 function renderStatus() {
-  const { stars, needed, goalStars } = basketState(session.progress());
-  $("basket").innerHTML = iconHTML("ui-basket", { size: 18 })
-    + `<span class="bstars">${"⭐".repeat(stars)}</span>`;
-  $("basket").setAttribute("aria-label", t("basketHave", { n: stars }));
-
-  // The streak shrinks to a flame and a number: the goal is the thing the child
-  // asked for, and a celebratory sentence would push it off the row.
-  const streak = $("hotstreak");
-  streak.innerHTML = hot >= 3 ? `${iconHTML("ui-flame", { size: 13 })}${hot}` : "";
-  streak.setAttribute("aria-label", hot >= 3 ? t("hotStreak", { n: hot }) : "");
-
-  $("goalline").textContent = goalStars > 0
-    ? t("basketGoal", { n: needed, stars: "⭐".repeat(goalStars) })
-    : "";
+  const owned = ownedStars(session.progress(), best);
+  journey.setStars(owned);
+  $("journey").setAttribute("aria-label", t("starsOwned", { n: owned }));
 }
 
 // The question never wraps: a two-line equation reads as two thoughts. When the
@@ -235,8 +225,7 @@ function submit(value, mcButton) {
     phase = "correct-wait";
     sfx.correct();
     journey.advance();
-    hot++;
-    renderStatus(); // the basket gains its star the moment it is banked
+    renderStatus(); // a banked star flies into the basket the moment it is won
     if (input !== "") {
       input = String(value);
       renderQuestion();
@@ -246,8 +235,7 @@ function submit(value, mcButton) {
     phase = "wrong-wait";
     sfx.wrong();
     journey.stumble();
-    hot = 0;
-    // The aid needs the room; the whole status row is hidden while it is up.
+    // The aid needs the room; the whole scene hides while it is up.
     showFeedback();
   }
 }

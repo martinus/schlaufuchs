@@ -70,7 +70,7 @@ html, body {
 /* the display face is reserved for names, numbers and headings */
 h1, h2, .question, .region-label, .levelchip .lbl, .chip,
 .mc button, .keypad button, .tilegrid button, .primary,
-.summary .sline, .feedback-aid, .hotstreak {
+.summary .sline, .feedback-aid {
   font-family: var(--font-display);
 }
 
@@ -434,30 +434,29 @@ footer p { margin: 0; }
   display: inline-block;
 }
 
-.hotstreak {
-  min-height: 1.4em;
-  font-weight: 800;
-  color: var(--orange);
-}
-
 /* Reserving its line keeps the question from jumping when a streak starts, but
    the aid needs every pixel: an empty streak line takes none. */
 /* While the aid is up it owns the stage: up to ten rows of dots plus a 48px
    button. The status row yields, whether or not it has anything to say. */
-.stage:has(#feedback:not([hidden])) .statusrow { display: none; }
+.stage:has(#feedback:not([hidden])) .journey-wrap { display: none; }
 
-/* basket + streak/goal share one row, so the stage grows by nothing (§10.5) */
-.statusrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  min-height: 22px;
+/* ---- the round's scene: sky, meadow, basket, fox (§10.5) ---- */
+.journey .j-sky { fill: #e8f3fa; }
+.journey .j-grass { fill: #bfdfa4; }
+
+/* a slot the star has left, and a slot never filled, look the same: open sky
+   above, grey ghost where a collected star used to hang */
+.journey .j-ghost { opacity: 0.22; filter: grayscale(1); }
+
+/* The flight. `prefers-reduced-motion` kills every transition site-wide, so
+   this degrades to the star simply being in the basket — never to no star. */
+.journey .j-star {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  transition: transform 0.75s cubic-bezier(0.34, 0.9, 0.4, 1);
 }
-.statusrow .basket { display: inline-flex; align-items: center; gap: 3px; }
-.statusrow .basket .bstars { letter-spacing: -2px; font-size: 13px; }
-.statusrow .hotstreak { display: inline-flex; align-items: center; gap: 2px; }
-.statusrow .goalline { color: var(--ink-soft); font-size: 0.8rem; }
+.journey .j-star.landed { transform: translate(var(--dx), var(--dy)) scale(0.52); }
+.journey .j-star.j-instant { transition: none; }
 
 .feedback-aid {
   background: var(--panel);

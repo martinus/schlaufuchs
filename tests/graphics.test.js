@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GRAPHICS, AVAILABLE, iconHTML, iconSVG } from "../assets/js/graphics.js";
+import { THEMES } from "../assets/js/journey.js";
 import { GAMES, TROPHIES } from "../assets/js/rewards.js";
 
 test("every GRAPHICS entry has an emoji fallback", () => {
@@ -29,13 +30,31 @@ test("every AVAILABLE name exists in GRAPHICS", () => {
   }
 });
 
-test("all 15 journey icon names resolve", () => {
-  const jNames = [
-    "j-basket", "j-rooster", "j-door", "j-rock", "j-bridge", "j-troll",
-    "j-mushroom", "j-hedgehog", "j-butterfly", "j-flower", "j-bee",
-    "j-goal-bell", "j-goal-flag", "j-goal-sparkle", "j-goal-book",
-  ];
-  for (const name of jNames) assert.ok(GRAPHICS[name], `missing ${name}`);
+// Derived from the themes themselves, not from a copy of them: a hard-coded
+// list only tells you that someone once typed the same names twice. This fails
+// both when a theme names an icon that does not exist, and when an icon lingers
+// in the registry that no theme uses any more.
+test("every journey icon a theme names exists, and none is orphaned", () => {
+  const named = new Set();
+  for (const th of Object.values(THEMES)) {
+    named.add(th.goal);
+    for (const o of th.obstacles) named.add(o);
+  }
+  assert.equal(named.size, 15, `themes name ${named.size} journey icons`);
+  for (const name of named) assert.ok(GRAPHICS[name], `theme names a missing icon: ${name}`);
+
+  const orphans = Object.keys(GRAPHICS).filter((k) => k.startsWith("j-") && !named.has(k));
+  assert.deepEqual(orphans, [], `journey icons no theme uses: ${orphans.join(", ")}`);
+});
+
+// The basket standing in the meadow is the scene's one basket. The village's
+// first obstacle used to be a second copy of it, twelve pixels wide, and read
+// as a duplicate rather than as scenery.
+test("the meadow's basket is not also an obstacle on the path", () => {
+  for (const th of Object.values(THEMES)) {
+    assert.ok(!th.obstacles.includes("ui-basket"), "the scene's basket is not scenery");
+    assert.ok(!th.obstacles.some((o) => /basket/.test(o)), `${th.goal}: a second basket confuses`);
+  }
 });
 
 test("iconHTML fallback contains the emoji and a font-size", () => {
