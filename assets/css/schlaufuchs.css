@@ -1,23 +1,53 @@
 /* Schlaufuchs shared design system (§15). Mobile first: baseline 360px
    portrait, wider layouts only via min-width queries (§5.1). */
 
+/* Self-hosted, no third-party request and no build step. Both faces are OFL;
+   see assets/fonts/LICENSE.md. Latin subset only — enough for de + en. */
+@font-face {
+  font-family: "Grandstander";
+  src: url("../fonts/grandstander-var-latin.woff2") format("woff2");
+  font-weight: 400 800;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("../fonts/atkinson-400-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  src: url("../fonts/atkinson-700-latin.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+
 /* The site is always light and friendly — no dark theme, regardless of the
    device setting (resolved decision, SPEC §18). color-scheme: light keeps
    the browser from darkening form controls and scrollbars. */
 :root {
   color-scheme: light;
+  /* Colour carries meaning: orange is what you DO, --depth is what you HAVE.
+     --ok / --err are momentary answer feedback and nothing else. */
   --orange: #e8590c;
   --orange-soft: #fdc79f;
+  --depth: #1f6f8b;
+  --depth-soft: #bcdfeb;
   --bg: #fdf6ec;
   --panel: #ffffff;
   --ink: #4a2c17;
   --ink-soft: #8a6a50;
   --ok: #2f9e44;
   --err: #c1121f;
-  --sky: #cfe8f7;
+  --sea: #cfe8f7;
   --grass: #b6d7a8;
   --shadow: 0 2px 8px rgba(74, 44, 23, 0.18);
   --radius: 14px;
+
+  /* Joy on top, clarity underneath: a rounded display face for numbers and
+     names, a legibility-first face for everything you read. */
+  --font-display: "Grandstander", system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -33,8 +63,25 @@ html, body {
   padding: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-body);
   -webkit-tap-highlight-color: transparent;
+}
+
+/* the display face is reserved for names, numbers and headings */
+h1, h2, .question, .region-label, .levelchip .lbl, .chip,
+.mc button, .keypad button, .tilegrid button, .primary,
+.summary .sline, .feedback-aid, .hotstreak {
+  font-family: var(--font-display);
+}
+
+/* keyboard users keep every destination; eyes get the island (§3.1) */
+.visually-hidden:not(:focus-within) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 button {
@@ -102,10 +149,15 @@ button, .iconbtn, .chip, a.region {
   align-items: center;
   gap: 6px;
   font-weight: 700;
+  white-space: nowrap;
   border-radius: 24px;
   background: var(--panel);
   box-shadow: var(--shadow);
 }
+
+a.chip { color: var(--ink); text-decoration: none; }
+
+.game .topbar .chip { padding: 0 10px; font-size: 0.9rem; }
 
 .levelchip {
   display: flex;
@@ -118,18 +170,19 @@ button, .iconbtn, .chip, a.region {
   min-height: 48px;
 }
 
+/* progress is ownership, not action — hence --depth, never orange */
 .levelchip .bar {
   width: 64px;
   height: 8px;
   border-radius: 4px;
-  background: var(--orange-soft);
+  background: var(--depth-soft);
   overflow: hidden;
 }
 
 .levelchip .bar > i {
   display: block;
   height: 100%;
-  background: var(--orange);
+  background: var(--depth);
   border-radius: 4px;
 }
 
@@ -145,24 +198,60 @@ button, .iconbtn, .chip, a.region {
 .streakchip { font-weight: 800; font-size: 1rem; }
 
 /* ---- world map (§3.1) ---- */
+/* the island claims the whole viewport below the header; nothing scrolls (§5.1) */
+.mappage { height: 100dvh; overflow: hidden; display: flex; flex-direction: column; }
+.mappage main { flex: 1; min-height: 0; display: flex; }
+
+/* the sea bleeds past the SVG's own box, so the island floats in water
+   instead of sitting in a parchment frame */
 .worldmap-wrap {
+  flex: 1;
+  min-height: 0;
   display: flex;
   justify-content: center;
-  padding: 0 6px;
+  background: var(--sea);
 }
 
 .worldmap {
   width: 100%;
-  max-width: 520px;
-  height: auto;
-  /* the whole world fits the viewport below the header — no scrolling
-     needed to see every region (§5.1) */
-  max-height: calc(100dvh - 84px);
+  height: 100%;
   display: block;
-  margin-inline: auto;
 }
 
 .worldmap a { cursor: pointer; }
+
+/* A dirt track: sand body, dashed light centre line. Drawn with two strokes
+   on one path via paint-order, so each road stays a single element. */
+.worldmap .road {
+  stroke: #e2c79a;
+  stroke-width: 8;
+}
+.worldmap .roadline {
+  stroke: var(--bg);
+  stroke-width: 2;
+  stroke-dasharray: 6 8;
+}
+
+/* Mastered: the road paves itself. Short butt-capped dashes read as separate
+   cobbles; a continuous --depth stroke would read as a river (§3.1). */
+.worldmap .road.paved {
+  stroke: var(--depth);
+  stroke-width: 9;
+  stroke-dasharray: 2.5 3.5;
+  stroke-linecap: butt;
+  opacity: 0.9;
+}
+.worldmap .roadline.paved { display: none; }
+
+/* the village square: bare earth until Zahlendorf is mastered. Pale stone with
+   dashed joints, so it reads as pavement rather than as a pond. */
+.worldmap .plaza { fill: none; stroke: none; }
+.worldmap .plaza.paved {
+  fill: var(--depth-soft);
+  stroke: var(--depth);
+  stroke-width: 3;
+  stroke-dasharray: 2.5 3.5;
+}
 
 .worldmap .region-label {
   font-family: inherit;
@@ -233,12 +322,12 @@ button, .iconbtn, .chip, a.region {
 
 footer {
   text-align: center;
-  padding: 16px 12px 28px;
+  padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
   color: var(--ink-soft);
-  font-size: 0.85rem;
+  font-size: 0.72rem;
 }
 
-footer button { text-decoration: underline; color: var(--ink-soft); min-height: 48px; }
+footer p { margin: 0; }
 
 /* ---- game layout ---- */
 /* game screens fit 100dvh without scrolling (§5.1) */
@@ -292,6 +381,8 @@ footer button { text-decoration: underline; color: var(--ink-soft); min-height: 
 }
 @keyframes goalpop { 50% { font-size: 30px; } }
 
+/* The question belongs to the answers, not to the middle of the screen: it
+   sits low in the stage so the two read as one group (§3.3). */
 .stage {
   flex: 1;
   min-height: 0;
@@ -299,16 +390,17 @@ footer button { text-decoration: underline; color: var(--ink-soft); min-height: 
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 8px;
-  padding: 4px 14px;
+  padding: 4px 14px 26px;
   text-align: center;
 }
 
 .question {
-  font-size: clamp(2rem, 9vw, 3rem);
+  font-size: clamp(2.4rem, 12vw, 3.6rem);
   font-weight: 800;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
 }
 
 .question .gap {
@@ -550,9 +642,18 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .stickers .slot.locked {
   background: transparent;
   box-shadow: none;
-  border: 2px dashed var(--orange-soft);
-  color: var(--ink-soft);
+  border: 2px dashed var(--depth-soft);
 }
+
+/* not yet yours: the shape without the colour */
+.stickers .slot.locked .silhouette {
+  filter: grayscale(1) contrast(0) brightness(0.72);
+  opacity: 0.38;
+}
+
+/* what you own is stated in --depth, the ownership colour */
+.stickers .slot:not(.locked) { outline: 2px solid var(--depth-soft); }
+.stickers .slot .sname { color: var(--depth); }
 
 @media (min-width: 600px) {
   .stickers { grid-template-columns: repeat(6, 1fr); }

@@ -31,7 +31,11 @@ for (const game of GAMES) {
       if (i < earned) {
         return `<div class="slot">${iconHTML(s.icon, { size: 34 })}<span class="sname">${s[lang]}</span></div>`;
       }
-      return `<div class="slot locked" title="${THRESHOLDS[i]}×"><span>?</span></div>`;
+      // A locked slot shows the sticker as a silhouette: you can see what is
+      // missing, which is the whole reason to keep collecting. The name stays
+      // hidden — the shape is the tease.
+      return `<div class="slot locked" title="${THRESHOLDS[i]}×" aria-label="${t("stickerLocked")}">
+        <span class="silhouette" aria-hidden="true">${iconHTML(s.icon, { size: 34 })}</span></div>`;
     })
     .join("");
   section.innerHTML = `

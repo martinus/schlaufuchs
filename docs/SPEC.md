@@ -163,11 +163,19 @@ Map requirements:
   daily streak flame (§8.5), and a settings gear. Sound and language toggles
   live inside the gear overlay; the sticker album is reached via the Pokalraum
   region, so there is no separate album header button.
-- Below the map, a plain `<nav>` with the game links (and the album) as
-  buttons, each with its region symbol icon — the accessibility/robustness
-  fallback and the layout used if SVG fails.
-- Footer: „Deine Fortschritte werden nur auf diesem Gerät gespeichert." plus
-  „Fortschritt löschen" (global reset) behind a confirmation dialog.
+- Below the map, a `<nav>` with the game links (and the album). It is
+  **visually hidden and revealed on focus**: the map already offers every
+  destination, so the list exists for keyboard and screen-reader users and
+  as the robustness fallback if SVG fails. A visible copy cost a screenful
+  and pushed the page past `100dvh`.
+- **The island remembers.** A mastered region's road from the village paves
+  itself: dirt track (sand + dashed centre line) → cobblestone in `--depth`.
+  Zahlendorf is the crossroads and has no road of its own, so mastering it
+  cobbles the village square instead. The Trophy Room road paves at 20
+  stickers. See `.road` / `.roadline` / `.plaza` and `pave()` in `map.js`.
+- Footer: „Deine Fortschritte werden nur auf diesem Gerät gespeichert."
+  The global reset lives in the settings overlay only — a second copy in the
+  footer said the same thing twice.
 - Map art style: flat, friendly, geometric SVG shapes (no raster images, no
   external assets). A simple first version (colored shapes + emoji accents)
   ships in M1 and is refined later; the region tap behavior and state layers
@@ -766,14 +774,20 @@ language-neutral.
   additional layers toggled by class. One file, used everywhere.
 - **Map & journey art**: flat geometric SVG shapes, warm palette; emoji as
   accents where a full illustration would be costly. No raster images.
-- Palette: fox-orange primary (`#e8590c` range), cream background,
-  dark-brown text; distinct success-green and error-red, all ≥ 4.5:1
-  contrast. **The site is always light and friendly — no dark theme**, even
+- Palette: **colour carries meaning.** Fox-orange (`--orange`, `#e8590c`) is
+  reserved for the fox and for actions; `--depth` (`#1f6f8b`, the island's
+  deep water) marks progress and ownership (level bar, paved roads, earned
+  stickers); success-green and error-red are momentary answer feedback and
+  nothing else. Cream background, dark-brown text, all ≥ 4.5:1 contrast. **The site is always light and friendly — no dark theme**, even
   when the device prefers dark (`color-scheme: light`); a dark UI does not
   fit the product (resolved decision, §18).
-- Typography: system font stack; very large in-game sizes (a question
-  readable from a meter away). Lesen uses a rounded font with a single-story
-  `a` to match handwriting forms.
+- Typography: **joy on top, clarity underneath.** `--font-display`
+  Grandstander (variable 400–800) carries numbers, region names and headings;
+  `--font-body` Atkinson Hyperlegible carries everything you read, and is the
+  reading game's face for the same reason it is the settings face. Both are
+  OFL and self-hosted under `assets/fonts/` (latin subset, ~77 KB) — no build
+  step, no third-party request. Very large in-game sizes (a question readable
+  from a meter away).
 - Micro-animations: flash, gentle shake, confetti, journey steps — all
   respecting `prefers-reduced-motion` (reduced: instant state changes, no
   confetti).
