@@ -9,10 +9,10 @@ export const GAMES = ["einmaleins", "tippen", "rechnungen", "vokabeln", "lesen"]
 // Trophy s (1-indexed) is earned when the game's lifetime point counter reaches
 // THRESHOLDS[s-1] (§8.3). Deterministic, no randomness.
 //
-// Balanced against einmaleins, whose 27 tiles are worth 195 points in total
+// Balanced against einmaleins, whose 27 tiles are worth 360 points in total
 // (§8.3): the last trophy lands at ~62 % of everything there is, so finishing
 // the collection is a realistic goal rather than a grind.
-export const THRESHOLDS = [2, 5, 9, 15, 22, 30, 40, 52, 66, 82, 100, 120];
+export const THRESHOLDS = [3, 9, 18, 30, 46, 64, 86, 112, 142, 172, 200, 225];
 
 // 12 fixed trophies per region (§8.3), themed. {e: emoji, de/en: name}.
 export const TROPHIES = {
@@ -117,9 +117,13 @@ export function trophyCount(pr) {
 // Points a finished round is worth (§8.3). Everything is derived from the
 // tile's best-star count before and after, so nothing extra is stored:
 //
-//   · each NEW star                          +1   (play what you have not solved)
-//   · your FIRST mistake-free round there    +1/+2/+3 by difficulty
-//   · mastering the tile (its third star)    +2
+//   · each NEW star                          1×   (play what you have not solved)
+//   · your FIRST mistake-free round there    1×
+//   · mastering the tile (its third star)    2×
+//
+// each multiplied by the difficulty: Leicht ×1, Mittel ×2, Schwer ×3. A whole
+// tile is therefore worth 6, 12 or 18 — the hard work pays three times the easy
+// work, which is a gap a child can see on the tile and act on.
 //
 // A tile you have already mastered is worth nothing, so no amount of replaying
 // the easiest level fills the Pokalraum. The "first mistake-free round" needs no
@@ -129,10 +133,11 @@ export function trophyCount(pr) {
 // difficulty: 0 = Leicht, 1 = Mittel, 2 = Schwer.
 export function roundPoints({ oldStars = 0, newStars = 0, difficulty = 0 } = {}) {
   if (!(newStars > oldStars)) return 0; // no improvement, no points
-  let points = newStars - oldStars;
-  if (oldStars < 2 && newStars >= 2) points += difficulty + 1;
-  if (oldStars < 3 && newStars === 3) points += 2;
-  return points;
+  const multiplier = difficulty + 1;
+  let awards = newStars - oldStars;
+  if (oldStars < 2 && newStars >= 2) awards += 1;
+  if (oldStars < 3 && newStars === 3) awards += 2;
+  return awards * multiplier;
 }
 
 // What is still to be gained on one tile — the number a child sees on the tile

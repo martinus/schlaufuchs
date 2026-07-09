@@ -19,6 +19,7 @@ export const GRAPHICS = {
   "ui-flame": { emoji: "🔥" },
   "ui-star": { emoji: "⭐" },
   "ui-trash": { emoji: "🗑️" },
+  "ui-lock": { emoji: "🔒" },
 
   // Regions (mini symbols under the map / on nav buttons)
   "region-einmaleins": { emoji: "🏠" },
