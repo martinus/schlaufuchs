@@ -7,7 +7,6 @@ export default {
   resetGame: "Delete this game's progress",
   resetAll: "Delete progress",
   close: "Close",
-  footerPrivacy: "Your progress is only stored on this device.",
   parentsLink: "For parents",
   parentsTitle: "For parents",
   parentsIntro: "Everything here comes from the progress stored on this device. None of it is sent anywhere, and your child does not see this page from inside the game.",
