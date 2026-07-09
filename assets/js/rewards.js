@@ -1,4 +1,4 @@
-// Motivation system (§8): stars, deterministic stickers, daily streak,
+// Motivation system (§8): stars, deterministic trophies, daily streak,
 // site-wide fox level, map region states. Pure functions are exported for
 // tests; the record/read functions use storage.js.
 
@@ -6,12 +6,12 @@ import { loadState, getRewards, setRewards } from "./storage.js";
 
 export const GAMES = ["einmaleins", "tippen", "rechnungen", "vokabeln", "lesen"];
 
-// Sticker s (1-indexed) is earned when the game's lifetime sticker-credit
+// Trophy s (1-indexed) is earned when the game's lifetime trophy-credit
 // counter reaches THRESHOLDS[s-1] (§8.3). Deterministic, no randomness.
 export const THRESHOLDS = [1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26, 30];
 
-// 12 fixed stickers per region (§8.3), themed. {e: emoji, de/en: name}.
-export const STICKERS = {
+// 12 fixed trophies per region (§8.3), themed. {e: emoji, de/en: name}.
+export const TROPHIES = {
   einmaleins: [
     { e: "🔔", de: "Schulglocke", en: "School Bell" },
     { e: "🏠", de: "Häuschen", en: "Little House" },
@@ -84,9 +84,9 @@ export const STICKERS = {
   ],
 };
 
-// Stamp a stable icon name on every sticker (used by the graphics registry).
+// Stamp a stable icon name on every trophy (used by the graphics registry).
 // Additive only — the {e, de, en} fields are untouched.
-for (const g of GAMES) STICKERS[g].forEach((s, i) => { s.icon = `sticker-${g}-${i + 1}`; });
+for (const g of GAMES) TROPHIES[g].forEach((s, i) => { s.icon = `trophy-${g}-${i + 1}`; });
 
 // Achievable stars per game, for map region states (§3.1).
 export const ACHIEVABLE = { einmaleins: 99, rechnungen: 45, tippen: 120, vokabeln: 54, lesen: 9 };
@@ -101,15 +101,15 @@ export const STREAK_MILESTONES = [3, 7, 14, 30];
 
 // ---- pure functions -------------------------------------------------------
 
-export function stickerCount(pr) {
+export function trophyCount(pr) {
   let n = 0;
   while (n < THRESHOLDS.length && (pr ?? 0) >= THRESHOLDS[n]) n++;
   return n;
 }
 
-// What a finished round is worth towards the next sticker (§8.3).
+// What a finished round is worth towards the next trophy (§8.3).
 //
-// Stickers must not be farmable by replaying the easiest level: a perfect
+// Trophies must not be farmable by replaying the easiest level: a perfect
 // round on Leicht earns nothing on its own. It earns something when it also
 // *masters* the table (the third star, which needs 10/10 under a minute) —
 // so a young child who only plays Leicht still fills the Pokalraum, just by
@@ -117,7 +117,7 @@ export function stickerCount(pr) {
 //
 // difficulty: 0 = Leicht, 1 = Mittel, 2 = Schwer.
 // masteredNew: this round raised the table to its third star for the first time.
-export function stickerCredit({ perfect = false, difficulty = 0, masteredNew = false } = {}) {
+export function trophyCredit({ perfect = false, difficulty = 0, masteredNew = false } = {}) {
   let credit = 0;
   if (perfect && difficulty > 0) credit += difficulty; // Mittel 1, Schwer 2
   if (masteredNew) credit += 1;
@@ -169,10 +169,10 @@ export function starBadgeTier(state, game) {
   return frac >= 1 ? 3 : frac >= 1 / 3 ? 2 : 1;
 }
 
-// Progress toward the next sticker of one game (pr = lifetime perfect rounds).
-// Returns null once all 12 stickers are earned.
-export function nextStickerInfo(pr) {
-  const earned = stickerCount(pr);
+// Progress toward the next trophy of one game (pr = lifetime perfect rounds).
+// Returns null once all 12 trophies are earned.
+export function nextTrophyInfo(pr) {
+  const earned = trophyCount(pr);
   if (earned >= THRESHOLDS.length) return null;
   return { earned, threshold: THRESHOLDS[earned], remaining: THRESHOLDS[earned] - (pr ?? 0) };
 }
@@ -214,17 +214,17 @@ export function recordRound(game, { perfect, difficulty = 0, masteredNew = false
   const prevDate = Array.isArray(r.streak) ? r.streak[0] : null;
   const streak = updateStreak(r.streak, today);
   const pr = { ...(r.pr ?? {}) };
-  let newStickers = [];
-  const credit = stickerCredit({ perfect, difficulty, masteredNew });
+  let newTrophies = [];
+  const credit = trophyCredit({ perfect, difficulty, masteredNew });
   if (credit > 0) {
-    const before = stickerCount(pr[game]);
+    const before = trophyCount(pr[game]);
     pr[game] = (pr[game] ?? 0) + credit;
-    newStickers = STICKERS[game].slice(before, stickerCount(pr[game]));
+    newTrophies = TROPHIES[game].slice(before, trophyCount(pr[game]));
   }
   setRewards({ at: game, streak, pr });
   const grew = streak[1] > prevCount || prevDate !== streak[0];
   return {
-    newStickers,
+    newTrophies,
     streak,
     streakMilestone: grew && STREAK_MILESTONES.includes(streak[1]),
   };

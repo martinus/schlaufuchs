@@ -6,7 +6,7 @@ Schlaufuchs is a collection of educational browser games for children, framed
 as a small illustrated world: the landing page is a **map**, each game is a
 **region** on it, and the fox mascot travels through it as the child learns.
 The site is fully static, hosted on GitHub Pages under
-**https://schlaufuchs.ankerl.com**. All state (progress, stickers, settings)
+**https://schlaufuchs.ankerl.com**. All state (progress, trophies, settings)
 is stored client-side in a cookie — no backend, no login, no data ever leaves
 the browser.
 
@@ -36,7 +36,7 @@ the browser.
 - **Really teaches something**: every game has explicit difficulty levels and
   a shared adaptive engine that detects what the child struggles with and
   practices exactly that more often (§7).
-- **Really motivates, never punishes**: journeys, stars, stickers, streaks,
+- **Really motivates, never punishes**: journeys, stars, trophies, streaks,
   a site-wide fox level (§8). A wrong answer never costs anything.
 - **Translatable**: every page ships in **German and English** from string
   dictionaries; adding a language means adding files, not HTML (§6).
@@ -105,7 +105,7 @@ in HTML/CSS/JS — never absolute paths like `/assets/...`.
 │   │   ├── storage.js        # Cookie-backed state store (§9)
 │   │   ├── i18n.js           # Translation runtime (§6)
 │   │   ├── adaptive.js       # Weakness-tracking practice engine (§7)
-│   │   ├── rewards.js        # Stars, stickers, streak, fox level (§8)
+│   │   ├── rewards.js        # Stars, trophies, streak, fox level (§8)
 │   │   ├── journey.js        # Journey path strip used inside rounds (§8.2)
 │   │   ├── audio.js          # Feedback sounds (WebAudio, no asset files)
 │   │   └── confetti.js       # Celebration effect
@@ -137,10 +137,10 @@ game** (instant resume, §3.4) — there is no walking and no intermediate page.
 | Wörterwald / Word Forest | Vokabeln | forest with animals |
 | Tippsee / Typing Lake | Tippen | lake with a boathouse |
 | Lesewiese / Reading Meadow | Lesen | meadow with a giant book-tree |
-| Pokalraum / Trophy Room | (sticker album) | trophy hall, bottom-right |
+| Pokalraum / Trophy Room | (the collection) | trophy hall, bottom-right |
 
-The **Pokalraum** is a sixth region that links to the sticker album
-(`album.html`) instead of a game; its badge shows the total number of stickers
+The **Pokalraum** is a sixth region that links to the collection
+(`album.html` — the filename is kept for URL stability) instead of a game; its badge shows the total number of trophies
 collected across all games and it evolves (thriving ≥ 20, mastered = 60).
 
 Map requirements:
@@ -161,9 +161,9 @@ Map requirements:
 - Header strip above the map (shared with the game pages, §3.3): fox level
   chip with total stars + progress bar + "N more stars to level N+1" (§8.4),
   daily streak flame (§8.5), and a settings gear. Sound and language toggles
-  live inside the gear overlay; the sticker album is reached via the Pokalraum
-  region, so there is no separate album header button.
-- Below the map, a `<nav>` with the game links (and the album). It is
+  live inside the gear overlay; the Pokalraum is reached via its own region
+  on the map, so there is no separate header button for it.
+- Below the map, a `<nav>` with the game links (and the Pokalraum). It is
   **visually hidden and revealed on focus**: the map already offers every
   destination, so the list exists for keyboard and screen-reader users and
   as the robustness fallback if SVG fails. A visible copy cost a screenful
@@ -172,7 +172,7 @@ Map requirements:
   itself: dirt track (sand + dashed centre line) → cobblestone in `--depth`.
   Zahlendorf is the crossroads and has no road of its own, so mastering it
   cobbles the village square instead. The Trophy Room road paves at 20
-  stickers. See `.road` / `.roadline` / `.plaza` and `pave()` in `map.js`.
+  trophies. See `.road` / `.roadline` / `.plaza` and `pave()` in `map.js`.
 - Footer: „Deine Fortschritte werden nur auf diesem Gerät gespeichert."
   The global reset lives in the settings overlay only — a second copy in the
   footer said the same thing twice.
@@ -188,12 +188,12 @@ one place, one name (it reuses the `region_pokalraum` string). It is styled as
 a room: a warm wall, and a wooden shelf under each game's collection.
 
 One page, five sections (one per region, translated heading). Each section
-shows **12 sticker slots** in a grid: earned stickers as large emoji with a
-name caption; unearned slots as **silhouettes** of the sticker you have not
+shows **12 trophy slots** in a grid: earned trophies as large emoji with a
+name caption; unearned slots as **silhouettes** of the trophy you have not
 won yet — you can see what is missing, which is the whole reason to keep
 collecting. Earned count per region and total at the top. An intro line
-(`albumHow`) says what the room is and how to fill it, and each section shows
-how many perfect rounds remain until its next sticker. Stickers are earned via
+(`roomIntro`) says what the room is and how to fill it, and each section shows
+how many perfect rounds remain until its next trophy. Trophies are earned via
 perfect rounds (§8.3). Reached from the map via the **Pokalraum** region
 (§3.1); a back-to-map button in the header (1 tap).
 
@@ -226,7 +226,7 @@ Round summaries are overlays too. The browser back button always means
 | Map | playing a game (resumed) | **1** |
 | Inside game A | playing game B | **2** (home → region) |
 | Inside a game | different difficulty/level | **2** (chip → pick) |
-| Map | sticker album | **1** |
+| Map | trophy album | **1** |
 
 - **Instant resume**: tapping a region drops the player directly into a
   running round at their last difficulty/level/table/pack. First visit
@@ -259,12 +259,12 @@ Section intentionally unused to keep numbering stable across revisions.
 ### 5.1a Graphics registry (`assets/js/graphics.js`)
 
 All icon-like graphics (UI glyphs, region symbols, map decorations, journey
-obstacles/goals, stickers) go through one registry so they are swappable
+obstacles/goals, trophies) go through one registry so they are swappable
 without touching the call sites.
 
 - `GRAPHICS` maps a stable name → `{ emoji }`. The emoji is always the
-  fallback. Sticker names (`sticker-<game>-<n>`, 60 total) are generated from
-  the `STICKERS` table in `rewards.js`.
+  fallback. Trophy names (`trophy-<game>-<n>`, 60 total) are generated from
+  the `TROPHIES` table in `rewards.js`.
 - A name renders as an SVG file (`assets/img/icons/<name>.svg`, viewBox
   `0 0 64 64`) **only if listed in the `AVAILABLE` set** — otherwise the emoji
   shows. No runtime probing, no 404s. Swapping in real graphics = drop the
@@ -445,25 +445,32 @@ unique item** in the round and the fox token on the current node.
   meadow`. Tippen does not use the journey (the text line itself is the
   progress display).
 
-### 8.3 Stickers (perfect rounds → collection)
+### 8.3 Trophies and points
+
+**Vocabulary (use these words everywhere, in code, UI and docs):** a **trophy**
+(DE „Pokal") is one of the 60 collectibles displayed in the Pokalraum (§3.2).
+**Points** (DE „Punkte") are the currency you spend nothing on — they accumulate
+per region and unlock the next trophy at fixed thresholds. The word *sticker*
+is retired; it does not appear anywhere.
 
 - A **perfect round** = every item in the round correct on the first try.
-- **Difficulty and mastery earn stickers; repetition does not.** A finished
-  round is worth `stickerCredit()` points: a perfect round pays its difficulty
+- **Difficulty and mastery earn trophies; repetition does not.** A finished
+  round is worth `trophyCredit()` **points**: a perfect round pays its difficulty
   (Leicht 0, Mittel 1, Schwer 2), and mastering a level — its third star, which
   needs a perfect round under a minute — pays 1 more, once. So grinding the
   easiest level forever earns nothing, while a young child who only plays
   Leicht still fills the room by getting good rather than by repeating.
-- Each region keeps a lifetime sticker-credit counter (`rewards.pr`, §9.2).
-- Each region has **12 fixed stickers** (emoji + translated name, defined in
-  a `STICKERS` table in `rewards.js`, themed per region — e.g. Wörterwald:
-  🦊 🦉 🐿️ 🦡 🍄 🌰 …). Sticker *s* (1-indexed) is earned when the counter
+- Each region keeps a lifetime **point** counter (`rewards.pr`, §9.2). The
+  field keeps its short name for the cookie budget (§9.2).
+- Each region has **12 fixed trophies** (emoji + translated name, defined in
+  a `TROPHIES` table in `rewards.js`, themed per region — e.g. Wörterwald:
+  🦊 🦉 🐿️ 🦡 🍄 🌰 …). Trophy *s* (1-indexed) is earned when the counter
   reaches `THRESHOLDS[s] = [1, 2, 3, 5, 7, 9, 12, 15, 18, 22, 26, 30]` points.
   Deterministic — no randomness, fully derivable from the counter, so only
   the counter is stored.
-- Earning a sticker shows it in the round summary: the picture and its name,
+- Earning a trophy shows it in the round summary: the picture and its name,
   no sentence (§10.1). A round can earn more than one at a time.
-- Total: 60 stickers. The album (§3.2) renders earned/unearned from the
+- Total: 60 trophies. The Pokalraum (§3.2) renders earned/unearned from the
   counters.
 
 ### 8.4 Fuchs-Level (site-wide)
@@ -519,7 +526,7 @@ URL-encoded compact JSON with a version field:
 ```
 
 - `rewards.at` = game key of the last game played (fox map position).
-- `rewards.pr` = perfect-round counters per game (stickers derive from
+- `rewards.pr` = perfect-round counters per game (trophies derive from
   these, §8.3). Fox level derives from stars stored in the game keys —
   nothing extra to store.
 
@@ -567,10 +574,10 @@ walks the village lane; goal node: ringing the school bell.
 3. Wrong → correct answer shown 2 s **with a dot-grid visual aid** (7 rows of
    8 dots), box drops, re-queue per §7.
 4. Summary overlay, kept deliberately quiet: stars, one muted line of numbers
-   (`{ok}/{total} · {s} s`), the sticker if one was earned, one primary
+   (`{ok}/{total} · {s} s`), the trophy if one was earned, one primary
    „Nochmal!" button, and two secondary actions (map, table picker). A child
    who has just won reads almost nothing — the stars say how it went and the
-   sticker is the prize, so neither gets a sentence of its own. Table picker
+   trophy is the prize, so neither gets a sentence of its own. Table picker
    via the header chip: an 11-tile overlay (Reihen 1–10 + „Alle") each showing
    its star state.
 
@@ -792,7 +799,7 @@ language-neutral.
 - Palette: **colour carries meaning.** Fox-orange (`--orange`, `#e8590c`) is
   reserved for the fox and for actions; `--depth` (`#1f6f8b`, the island's
   deep water) marks progress and ownership (level bar, paved roads, earned
-  stickers); success-green and error-red are momentary answer feedback and
+  trophies); success-green and error-red are momentary answer feedback and
   nothing else. Cream background, dark-brown text, all ≥ 4.5:1 contrast. **The site is always light and friendly — no dark theme**, even
   when the device prefers dark (`color-scheme: light`); a dark UI does not
   fit the product (resolved decision, §18).
@@ -813,7 +820,7 @@ language-neutral.
 
 - **Pure logic lives in DOM-free modules** and is unit-tested with
   `node --test` in `tests/`: adaptive engine (selection weights, re-queue
-  timing, box transitions), question generators, scoring/stars, sticker
+  timing, box transitions), question generators, scoring/stars, trophy
   thresholds, streak date logic, i18n lookup/fallback, cookie
   encode/decode/budget.
 - GitHub Actions workflow runs the tests on every push.
@@ -847,7 +854,7 @@ Rules that keep the implementation on the rails:
 7. **Cookie writes only via `storage.js`**; respect the per-game key
    ownership and the digit-string encodings exactly as specified.
 8. **Numbers in this spec are normative**: thresholds, weights, box counts,
-   sticker thresholds, star criteria, level formulas. Do not tune them.
+   trophy thresholds, star criteria, level formulas. Do not tune them.
 9. When something small is genuinely unspecified, pick the simplest option
    consistent with §1 (kid-friendly, ≤ 2 taps, mobile first, never punish)
    and note the choice in the commit message.
@@ -873,7 +880,7 @@ Decisions already made — do not reopen:
    the adaptive engine targets.
 3. **Fox cosmetics are automatic** at fixed levels (§8.4) — no shop at
    launch.
-4. **Stickers are deterministic** (counter + thresholds), not random drops.
+4. **Trophies are deterministic** (counter + thresholds), not random drops.
 5. **SpeechSynthesis is good enough for launch**; recorded audio is not a
    launch requirement.
 6. **Vokabeln launches with 6 packs**, Lesen with German content only.
@@ -910,7 +917,7 @@ reload; site works from a subpath.
 page, full Einmaleins per §10.
 *Accept:* §3.4 tap budgets hold; a wrong answer re-queues within 2–4
 questions and drops the box to 0; round always ends at the goal node;
-perfect round increments `pr` and thresholds unlock stickers exactly per
+perfect round increments `pr` and thresholds unlock trophies exactly per
 §8.3; stars appear on the map badge; fox stands on Zahlendorf after playing.
 
 **M3 — Rechnungen.** Per §12, reusing everything from M2.

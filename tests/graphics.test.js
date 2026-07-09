@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GRAPHICS, AVAILABLE, iconHTML, iconSVG } from "../assets/js/graphics.js";
-import { GAMES, STICKERS } from "../assets/js/rewards.js";
+import { GAMES, TROPHIES } from "../assets/js/rewards.js";
 
 test("every GRAPHICS entry has an emoji fallback", () => {
   for (const [name, g] of Object.entries(GRAPHICS)) {
@@ -9,14 +9,14 @@ test("every GRAPHICS entry has an emoji fallback", () => {
   }
 });
 
-test("all 60 generated sticker names exist in GRAPHICS", () => {
+test("all 60 generated trophy names exist in GRAPHICS", () => {
   let count = 0;
   for (const g of GAMES) {
-    STICKERS[g].forEach((s, i) => {
-      const name = `sticker-${g}-${i + 1}`;
+    TROPHIES[g].forEach((s, i) => {
+      const name = `trophy-${g}-${i + 1}`;
       assert.ok(GRAPHICS[name], `missing ${name}`);
       assert.equal(GRAPHICS[name].emoji, s.e, `emoji mismatch for ${name}`);
-      assert.equal(s.icon, name, `sticker.icon not stamped for ${name}`);
+      assert.equal(s.icon, name, `trophy.icon not stamped for ${name}`);
       count++;
     });
   }

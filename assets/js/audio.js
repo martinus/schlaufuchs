@@ -47,7 +47,7 @@ export const sfx = {
     // soft, neutral — not punishing (§8.1)
     if (enabled()) tone(240, 0.22, 0, "sine", 0.07);
   },
-  sticker() {
+  trophy() {
     if (!enabled()) return;
     [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.14, i * 0.1));
   },

@@ -7,7 +7,7 @@
 // NOT routed through here: the fox mascot (fox.js, code-generated with level
 // cosmetics) and the hand-drawn map scenery polygons in index.html.
 
-import { GAMES, STICKERS } from "./rewards.js";
+import { GAMES, TROPHIES } from "./rewards.js";
 
 // name -> { emoji }. The emoji is always the fallback and must always exist.
 export const GRAPHICS = {
@@ -62,11 +62,11 @@ export const GRAPHICS = {
   "j-goal-book": { emoji: "📖" },
 };
 
-// Sticker icon names are generated from the STICKERS table (60 entries), so
-// there is no duplication. rewards.js also stamps s.icon on each sticker.
+// Trophy icon names are generated from the TROPHIES table (60 entries), so
+// there is no duplication. rewards.js also stamps s.icon on each trophy.
 for (const g of GAMES) {
-  STICKERS[g].forEach((s, i) => {
-    GRAPHICS[`sticker-${g}-${i + 1}`] = { emoji: s.e };
+  TROPHIES[g].forEach((s, i) => {
+    GRAPHICS[`trophy-${g}-${i + 1}`] = { emoji: s.e };
   });
 }
 

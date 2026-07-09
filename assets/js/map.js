@@ -3,7 +3,7 @@
 
 import { initI18n, t } from "./i18n.js";
 import { loadState, getRewards } from "./storage.js";
-import { gameStars, regionState, starBadgeTier, stickerCount, levelInfo, GAMES } from "./rewards.js";
+import { gameStars, regionState, starBadgeTier, trophyCount, levelInfo, GAMES } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconHTML, iconSVG, applyIcons } from "./graphics.js";
 import { renderLevelChip, initSettingsOverlay } from "./chrome.js";
@@ -67,20 +67,20 @@ function render() {
     }
   }
 
-  // Trophy Room: total stickers collected across all games (§3.1, §8.3)
+  // Trophy Room: total trophies collected across all games (§3.1, §8.3)
   const pr = rewards.pr ?? {};
-  const totalStickers = GAMES.reduce((a, g) => a + stickerCount(pr[g]), 0);
+  const totalTrophies = GAMES.reduce((a, g) => a + trophyCount(pr[g]), 0);
   const pkBadge = document.querySelector(`[data-badge="pokalraum"]`);
   if (pkBadge) {
-    const pkTier = totalStickers >= 60 ? 3 : totalStickers >= 20 ? 2 : totalStickers > 0 ? 1 : 0;
-    renderBadge(pkBadge, "deco-trophy", totalStickers, pkTier);
+    const pkTier = totalTrophies >= 60 ? 3 : totalTrophies >= 20 ? 2 : totalTrophies > 0 ? 1 : 0;
+    renderBadge(pkBadge, "deco-trophy", totalTrophies, pkTier);
     pave("pokalraum", pkTier >= 2);
   }
   const pkRegion = document.getElementById("region-pokalraum");
   if (pkRegion) {
     pkRegion.classList.remove("thriving", "mastered");
-    if (totalStickers >= 60) pkRegion.classList.add("mastered");
-    else if (totalStickers >= 20) pkRegion.classList.add("thriving");
+    if (totalTrophies >= 60) pkRegion.classList.add("mastered");
+    else if (totalTrophies >= 20) pkRegion.classList.add("thriving");
   }
 
   // the fox stands on the last-played region (§3.1)

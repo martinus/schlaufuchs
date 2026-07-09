@@ -15,7 +15,7 @@ const html = read("index.html");
 const mapJs = read("assets/js/map.js");
 
 // Every region the map can mark as mastered — the five games plus the Trophy
-// Room, which map.js paves at 20 stickers.
+// Room, which map.js paves at 20 trophies.
 const REGIONS = [...GAMES, "pokalraum"];
 
 test("every region has something for pave() to pave", () => {

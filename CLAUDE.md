@@ -62,7 +62,7 @@ workflow runs it before publishing.
 Pages (each an entry point):
 - `index.html` — the world map (inline SVG, viewBox `0 0 360 560`), driven by
   `assets/js/map.js`. Six regions: 5 games + the Trophy Room (→ album).
-- `album.html` — sticker album, driven by `assets/js/album.js`.
+- `album.html` — trophy album, driven by `assets/js/album.js`.
 - `games/<name>/index.html` + `<name>.js` — one folder per game. Only
   `einmaleins` is fully implemented; `rechnungen`, `tippen`, `vokabeln`,
   `lesen` are stubs.
@@ -73,9 +73,9 @@ Shared modules in `assets/js/`:
 - `storage.js` — the single cookie `schlaufuchs`. Pure encode/decode + typed
   getters/setters. **Hard 3500-byte budget** (`BUDGET`); writes over budget are
   refused. Do not add persistent state casually.
-- `rewards.js` — stars, fox level, stickers, streak, region/badge state. Pure
+- `rewards.js` — stars, fox level, trophies, streak, region/badge state. Pure
   functions are exported and unit-tested. `foxLevel = min(20, 1+floor(total/10))`;
-  sticker `THRESHOLDS`; `starBadgeTier`, `nextStickerInfo`.
+  trophy `THRESHOLDS`; `starBadgeTier`, `nextTrophyInfo`.
 - `journey.js` — per-round path strip; fox advances on each correct answer;
   friendly obstacles at nodes 3/6/9 with bounce/wiggle/pop animations.
 - `graphics.js` — the icon registry (see below).
@@ -112,7 +112,7 @@ Shared modules in `assets/js/`:
 - **Icons and i18n don't mix.** `translateDOM` overwrites `textContent`, so an
   icon must never live inside a `[data-i18n]` element — use a sibling/inner
   span (see `.fallback-nav` in `index.html`).
-- **Stickers require `e`/`de`/`en`** on every entry (`tests/rewards.test.js`);
+- **Trophies require `e`/`de`/`en`** on every entry (`tests/rewards.test.js`);
   the added `icon` field is additive only.
 - **Deploy copies only** `index.html album.html CNAME assets games` (see
   `.github/workflows/deploy.yml`). Root/`docs/` markdown is NOT deployed. Any
