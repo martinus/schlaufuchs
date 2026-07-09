@@ -1,5 +1,25 @@
 # Schlaufuchs: UI Design Plan
 
+> **Archived 2026-07-09 — fully implemented.** Kept for the reasoning, not as a
+> list of work. All seven steps landed; each was checked against the running
+> page, not just the diff:
+>
+> 1. `assets/fonts/` holds Grandstander + Atkinson Hyperlegible (OFL,
+>    self-hosted); `--font-display` / `--font-body` are applied.
+> 2. `.fallback-nav` carries `.visually-hidden`; the map fills the viewport.
+> 3. `--depth` exists and owns the level bar, badges and paved roads.
+> 4. `pave()` paves a mastered region — verified live: mastering Einmaleins puts
+>    `paved` on `#plaza-einmaleins` while an untouched region's road stays dirt.
+>    Guarded by `tests/map.test.js` ("every region has something to pave").
+> 5. The question is in the display face and grouped with the answers.
+> 6. The album shows silhouettes of unearned trophies; the rule-stating empty
+>    state is gone (`roomIntro`).
+> 7. `node --test` green; every page screenshotted at 360×640 and 390×844 with
+>    `tools/shoot.mjs`, error-free; `docs/SPEC.md` updated.
+>
+> The design tokens and the *why* below remain authoritative for new UI. Where
+> this document and `docs/SPEC.md` disagree, SPEC wins.
+
 Supersedes the playtest plan (archived as `docs/PLAN_playtest_2026-07.md`,
 fully implemented). This plan covers the visual identity pass that follows the
 island map redraw.
