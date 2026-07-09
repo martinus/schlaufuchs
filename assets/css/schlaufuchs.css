@@ -778,6 +778,21 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 .roomtitle { box-shadow: none; background: none; padding-left: 4px; }
 
+/* The room's name and the size of the collection, on one line under the bar.
+   The name was a chip in the top bar; it is a heading, and the bar has room
+   for exactly three things (§3.3). */
+.roomhead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 8px 14px 0;
+}
+.roomhead h1 { margin: 0; font-size: 1.35rem; }
+.roomhead .chip { flex: 0 0 auto; font-size: 0.8rem; padding: 0 10px; min-height: 30px; }
+
 .room-intro {
   max-width: 560px;
   margin: 0 auto;

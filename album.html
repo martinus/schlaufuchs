@@ -34,16 +34,22 @@
   </script>
 </head>
 <body class="trophyroom">
+  <!-- The same three things as the map and the games: a map button, the fox's
+       status, the gear (§3.3). The room's own name moved below the bar, where
+       it can be a heading instead of a chip pretending to be one. -->
   <header class="topbar">
     <a class="iconbtn" href="./" data-i18n-label="back" data-icon="ui-map" data-icon-size="22">🗺️</a>
-    <!-- one place, one name: this page IS the Pokalraum on the map (§3.2) -->
-    <h1 class="chip roomtitle" data-i18n="region_pokalraum">Pokalraum</h1>
-    <span class="spacer"></span>
-    <span class="chip" id="totalcount"></span>
+    <div class="foxchip" id="foxchip"></div>
+    <button class="iconbtn" id="gearbtn" data-i18n-label="settings" data-icon="ui-gear" data-icon-size="22">⚙️</button>
   </header>
+  <div class="roomhead">
+    <!-- one place, one name: this page IS the Pokalraum on the map (§3.2) -->
+    <h1 data-i18n="region_pokalraum">Pokalraum</h1>
+    <!-- the top bar counts the trophies; this one names the whole collection -->
+    <span class="chip" id="totalcount"></span>
+  </div>
   <p class="room-intro" data-i18n="roomIntro"></p>
   <main id="album"></main>
-  <!-- the Trophy Room has no gear, so the privacy page hangs off its foot -->
   <footer class="roomfoot footlinks">
     <a class="footlink" href="privacy.html" data-i18n="privacyLink">Datenschutz</a>
     <a class="footlink" href="about.html" data-i18n="aboutLink">Über mich</a>

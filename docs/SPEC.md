@@ -200,16 +200,22 @@ One page, five sections (one per region, translated heading). Each section
 shows **12 trophy slots** in a grid: earned trophies as large emoji with a
 name caption; unearned slots as **silhouettes** of the trophy you have not
 won yet — you can see what is missing, which is the whole reason to keep
-collecting. Earned count per region and total at the top. An intro line
-(`roomIntro`) says what the room is and how to fill it, and each section shows
-how many perfect rounds remain until its next trophy. Trophies are earned via
-perfect rounds (§8.3). Reached from the map via the **Pokalraum** region
-(§3.1); a back-to-map button in the header (1 tap).
+collecting. Earned count per region, and the size of the whole collection
+beside the room's heading. An intro line (`roomIntro`) says what the room is
+and how to fill it, and each section shows how many perfect rounds remain until
+its next trophy. Trophies are earned via perfect rounds (§8.3). Reached from
+the map via the **Pokalraum** region (§3.1).
+
+The room carries the same top bar as every other page (§3.3), gear included —
+its settings offer no reset, because the global one belongs on the map. The
+shelves are built as markup, not as `[data-i18n]` nodes, so a language change
+rebuilds them instead of translating them in place.
 
 ### 3.3 In-game chrome (every game page)
 
 A slim persistent mini-header, unified with the map header (§3.1). Every page
-(map, games, stubs) uses the same top bar, and the bar is width-matched to the
+a child can reach (map, Pokalraum, games, stubs) uses the same top bar — three
+things, in the same order, always — and the bar is width-matched to the
 560px game column (`max-width:560px; margin-inline:auto`) so it aligns on
 desktop instead of spanning the full viewport.
 
