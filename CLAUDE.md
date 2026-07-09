@@ -145,9 +145,12 @@ Shared modules in `assets/js/`:
 ## Where things live
 
 - `docs/SPEC.md` — full product specification (authoritative).
-- `docs/PLAN.md` — the implementation plan for the playtest-feedback work.
+- `docs/PLAN_*.md` — past plans, all fully implemented and archived. Kept for
+  their reasoning (the colour/type tokens live in the UI design one); SPEC wins
+  wherever they disagree. There is no open plan.
 - `docs/GRAPHICS_BRIEF.md` — brief to hand an LLM to generate the ~102
-  replacement SVG icons. Paths in it are repo-root-relative.
+  replacement SVG icons. Paths in it are repo-root-relative. **Unexecuted:**
+  `AVAILABLE` in `graphics.js` is empty, so every icon still renders as emoji.
 - `docs/handoff/` — session handoff notes; newest describes current state.
 - `docs/claude_prompts.md` — prompt history/notes.
 
