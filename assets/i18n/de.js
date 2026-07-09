@@ -26,7 +26,7 @@ export default {
   stickerNextIn: "Noch {n} perfekte Runden bis zum nächsten Sticker",
   stickerNextIn1: "Noch 1 perfekte Runde bis zum nächsten Sticker",
   stickerAllDone: "Alle Sticker gesammelt!",
-  again: "Nochmal!",
+  again: "Nochmal",
   ok: "OK",
   roundStat: "{ok}/{total} · {s} s",
   newBest: "Neuer Rekord!",

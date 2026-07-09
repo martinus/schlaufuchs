@@ -26,7 +26,7 @@ export default {
   stickerNextIn: "{n} more perfect rounds until the next sticker",
   stickerNextIn1: "1 more perfect round until the next sticker",
   stickerAllDone: "All stickers collected!",
-  again: "Again!",
+  again: "Again",
   ok: "OK",
   roundStat: "{ok}/{total} · {s} s",
   newBest: "New best!",
