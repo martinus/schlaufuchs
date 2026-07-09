@@ -77,7 +77,6 @@ export default {
   sumOk5: "Stark!",
   sumOk6: "Du schaffst das!",
   roundStat: "{ok}/{total}",
-  gotIt: "Verstanden",
   newBest: "Neuer Rekord!",
   starGoal1: "⭐ ab 6 von 10 richtig",
   starGoal2: "⭐⭐ ab 8 von 10 richtig",

@@ -572,7 +572,38 @@ footer p { margin: 0; }
   min-width: min(240px, 78vw);
 }
 
-.feedback-aid .eq { color: var(--ok); font-size: 1.6rem; }
+.feedback-aid .eq { color: var(--ok); font-size: 1.6rem; display: block; }
+
+/* What the child wrote, retracted: red, struck through, and a size smaller than
+   the truth below it. Mara pressed "Verstanden" without noticing she had erred;
+   she never saw her own answer next to the right one. */
+.feedback-aid .eq-wrong {
+  color: var(--err);
+  font-size: 1.15rem;
+  background: #fdecee;
+  border-radius: 8px;
+  padding: 1px 8px;
+  margin-bottom: 2px;
+}
+/* the number she got wrong, made the loudest thing on the card */
+.feedback-aid .eq .ans {
+  color: var(--ok);
+  background: #e4f5e8;
+  border-radius: 6px;
+  padding: 0 5px;
+}
+
+/* the gap she fills to move on — the same gap the question wears */
+.feedback-aid .gap {
+  display: inline-block;
+  margin-top: 8px;
+  min-width: 1.6em;
+  font-size: 1.6rem;
+  color: var(--orange);
+  border-bottom: 4px solid var(--orange);
+}
+.feedback-aid .gap.stumbling,
+.mc button.stumbling { animation: stumble 0.7s ease; }
 
 /* Up to ten rows of dots have to fit above the keypad on any phone, so the dot
    scales with the viewport's height rather than sitting at a fixed 9px. */
@@ -593,12 +624,6 @@ footer p { margin: 0; }
 /* The aid waits for this button, so it has to be a comfortable target. The card
    shrinks to its dot grid, which for `7 × 1` is one dot wide — hence the
    min-width, and a button that sizes to its own text rather than to the card. */
-#fb-next {
-  display: block;
-  margin: 10px auto 0;
-  min-height: 48px;
-  padding: 0 32px;
-}
 
 /* ---- inputs: lower half, thumb reach (§5.1) ---- */
 .answers {
