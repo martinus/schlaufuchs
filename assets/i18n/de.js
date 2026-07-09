@@ -16,7 +16,7 @@ export default {
   close: "Schließen",
   footerPrivacy: "Deine Fortschritte werden nur auf diesem Gerät gespeichert.",
   comingSoon: "Dieses Spiel gibt es noch nicht. Im Zahlendorf kannst du schon üben.",
-  foxLevel: "Fuchs-Level {lvl}",
+  foxLevel: "Level {lvl}",
   levelNext: "Noch {n} Sterne bis Level {lvl}",
   levelMax: "Höchstes Level erreicht!",
   streakDays: "{n} Tage in Folge",
