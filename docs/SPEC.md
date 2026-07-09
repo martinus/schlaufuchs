@@ -173,6 +173,15 @@ Map requirements:
   Zahlendorf is the crossroads and has no road of its own, so mastering it
   cobbles the village square instead. The Trophy Room road paves at 20
   trophies. See `.road` / `.roadline` / `.plaza` and `pave()` in `map.js`.
+- **Unbuilt games sit under fog.** A region whose game is a stub is veiled by
+  code-generated mist (`fogRegion()` in `map.js`, driven by `PLAYABLE` in
+  `rewards.js`), so the island never promises what the site cannot deliver.
+  The link stays — its page says "coming soon" in words, and the region's
+  `aria-label` carries `lockedHint` for screen readers. Two invariants: the
+  fog is `pointer-events: none` (the map is hit-tested by its art, and a blob
+  over the bounding box would restore the invisible hotspot), and **playable
+  regions are painted last** in the SVG, because fog drawn later would grey
+  out the label of the one village a child can walk into.
 - Footer: „Deine Fortschritte werden nur auf diesem Gerät gespeichert."
   The global reset lives in the settings overlay only — a second copy in the
   footer said the same thing twice.

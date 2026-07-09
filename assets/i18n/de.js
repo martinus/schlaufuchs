@@ -8,6 +8,7 @@ export default {
   resetAll: "Fortschritt löschen",
   close: "Schließen",
   footerPrivacy: "Deine Fortschritte werden nur auf diesem Gerät gespeichert.",
+  lockedHint: "Noch nicht verfügbar",
   comingSoon: "Dieses Spiel gibt es noch nicht. Im Zahlendorf kannst du schon üben.",
   foxLevel: "Level {lvl}",
   levelNext: "Noch {n} Sterne bis Level {lvl}",

@@ -47,6 +47,10 @@
             C344 424 352 480 336 516 C322 546 280 552 236 548
             C180 542 120 552 76 544 C34 536 8 512 12 470
             C16 410 6 350 12 292 C18 230 6 150 14 92 C18 52 30 20 64 14 Z"/>
+          <!-- fog over the regions whose game is not built yet (map.js) -->
+          <filter id="fog-blur" x="-30%" y="-50%" width="160%" height="200%">
+            <feGaussianBlur stdDeviation="3.2"/>
+          </filter>
         </defs>
         <rect x="0" y="0" width="360" height="560" fill="var(--sea)"/>
         <!-- gentle waves in the sea -->
@@ -140,6 +144,22 @@
           <g class="region-badge" data-badge="tippen" transform="translate(282,361)"></g>
         </a>
 
+
+        <!-- Lesewiese (Lesen) bottom left -->
+        <a href="games/lesen/" class="region" id="region-lesen" data-game="lesen">
+          <ellipse cx="88" cy="472" rx="62" ry="30" fill="#a8d08d"/>
+          <rect x="78" y="442" width="12" height="30" fill="#6b4423"/>
+          <circle cx="84" cy="429" r="26" fill="#3f7d3a"/>
+          <text data-icon="deco-book" data-icon-size="16" x="84" y="437" font-size="16" text-anchor="middle">📖</text>
+          <g class="layer-thriving">
+            <text data-icon="deco-flower" data-icon-size="13" x="46" y="482" font-size="13">🌼</text>
+            <text data-icon="deco-flower" data-icon-size="13" x="120" y="486" font-size="13">🌼</text>
+          </g>
+          <g class="layer-mastered"><text data-icon="deco-rainbow" data-icon-size="15" x="116" y="446" font-size="15">🌈</text></g>
+          <text class="region-label" x="88" y="516" data-i18n="region_lesen">Lesewiese</text>
+          <g class="region-badge" data-badge="lesen" transform="translate(88,530)"></g>
+        </a>
+
         <!-- Zahlendorf (Einmaleins) center -->
         <a href="games/einmaleins/" class="region" id="region-einmaleins" data-game="einmaleins">
           <g>
@@ -164,21 +184,6 @@
           <g class="layer-mastered"><text data-icon="deco-circus" data-icon-size="15" x="172" y="360" font-size="15">🎪</text></g>
           <text class="region-label" x="180" y="448" data-i18n="region_einmaleins">Zahlendorf</text>
           <g class="region-badge" data-badge="einmaleins" transform="translate(180,463)"></g>
-        </a>
-
-        <!-- Lesewiese (Lesen) bottom left -->
-        <a href="games/lesen/" class="region" id="region-lesen" data-game="lesen">
-          <ellipse cx="88" cy="472" rx="62" ry="30" fill="#a8d08d"/>
-          <rect x="78" y="442" width="12" height="30" fill="#6b4423"/>
-          <circle cx="84" cy="429" r="26" fill="#3f7d3a"/>
-          <text data-icon="deco-book" data-icon-size="16" x="84" y="437" font-size="16" text-anchor="middle">📖</text>
-          <g class="layer-thriving">
-            <text data-icon="deco-flower" data-icon-size="13" x="46" y="482" font-size="13">🌼</text>
-            <text data-icon="deco-flower" data-icon-size="13" x="120" y="486" font-size="13">🌼</text>
-          </g>
-          <g class="layer-mastered"><text data-icon="deco-rainbow" data-icon-size="15" x="116" y="446" font-size="15">🌈</text></g>
-          <text class="region-label" x="88" y="516" data-i18n="region_lesen">Lesewiese</text>
-          <g class="region-badge" data-badge="lesen" transform="translate(88,530)"></g>
         </a>
 
         <!-- Pokalraum (Trophy Room) bottom right -> trophy album -->

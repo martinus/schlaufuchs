@@ -293,6 +293,14 @@ a.chip { color: var(--ink); text-decoration: none; }
   to { filter: drop-shadow(0 0 6px #f4b400); }
 }
 
+/* Fog over a region whose game is not built yet (§3.1). It must never take
+   the tap: the map is hit-tested by its art, and a blob over the bounding box
+   would restore the invisible hotspot this map deliberately removed. */
+.worldmap .region .fog { pointer-events: none; }
+.worldmap .region .fog ellipse { fill: #f4f7f8; }
+.worldmap .region.locked .region-label { fill: var(--ink-soft); }
+.worldmap .region.locked .region-badge { opacity: 0.55; }
+
 .worldmap .layer-thriving, .worldmap .layer-mastered { display: none; }
 .worldmap .region.thriving .layer-thriving { display: inline; }
 .worldmap .region.mastered .layer-thriving,
