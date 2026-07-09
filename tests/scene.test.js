@@ -65,3 +65,22 @@ test("the round hands the scene the tile's best stars", () => {
   assert.match(game, /ownedStars\(session\.progress\(\), best\)/, "…and keep using it as the round runs");
   assert.match(journey, /setStars\(stars, \{ animate: false \}\)/, "no flight for stars won long ago");
 });
+
+// Regression: `renderFoxChip` ran at startRound() and nowhere else, so the top
+// bar still read "⭐ 0" while three stars lit up in the summary beneath it. The
+// child only saw the real count after walking back to the map.
+test("the star chip is refreshed when the round changes the stars", () => {
+  const endRound = game.slice(game.indexOf("function endRound()"));
+  // Bound the slice to the setTimeout body. Reading to the end of the file made
+  // this test pass on the settings overlay's own renderFoxChip call, so it
+  // stayed green with the summary's call deleted — a guard that guarded nothing.
+  const open = endRound.indexOf("setTimeout(");
+  const close = endRound.indexOf("}, 700);", open);
+  assert.ok(close > open, "the summary is still painted inside a setTimeout");
+  const painted = endRound.slice(open, close);
+
+  assert.ok(
+    painted.includes('renderFoxChip($("foxchip"))'),
+    "the summary must refresh the chip it just invalidated",
+  );
+});
