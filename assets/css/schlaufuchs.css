@@ -454,6 +454,16 @@ footer p { margin: 0; }
    button. The status row yields, whether or not it has anything to say. */
 .stage:has(#feedback:not([hidden])) .journey-wrap { display: none; }
 
+/* A tile's three stars, gold for taken and grey for open — the same language
+   the sky speaks above the round (§10.5). The points a tile pays are not shown:
+   what a star is worth belongs to the difficulty, and the difficulty says so. */
+.tilegrid .tstars { display: inline-flex; gap: 1px; font-style: normal; }
+.tilegrid .tstars i { font-style: normal; font-size: 12px; line-height: 1; }
+.tilegrid .tstars i.off { filter: grayscale(1); opacity: 0.3; }
+
+/* "×2 ⭐": the stars are always three; here each one counts double */
+.seg button .dmul { display: block; font-size: 0.7rem; font-weight: 700; opacity: 0.85; }
+
 /* The round's title: same width as the scene beneath it, so the two read as
    one block rather than as a chip that wandered out of the top bar. */
 .pickheading {
@@ -629,12 +639,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 /* Each tile says what it is still worth, in the ownership colour. This is the
    whole rulebook: an untouched Schwer tile shows +18, a mastered one shows ✓.
    Nobody reads rules; everybody reads numbers (§10.2). */
-.tilegrid .tpoints {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: var(--depth);
-  min-height: 1em;
-}
+
 
 /* Three states, three looks — a locked tile must never be mistaken for a
    finished one (§10.2):
@@ -651,7 +656,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   background: #eff7f0;
   box-shadow: inset 0 0 0 2px var(--ok);
 }
-.tilegrid button.mastered .tpoints { color: var(--ok); }
+
 
 /* the points just earned, beside the numbers that earned them */
 .summary .gain { color: var(--depth); font-weight: 800; }
