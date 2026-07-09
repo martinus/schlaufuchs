@@ -584,16 +584,29 @@ is retired; it does not appear anywhere.
   field keeps its short name for the cookie budget (§9.2).
 - Each region has **12 fixed trophies** (emoji + translated name, defined in
   a `TROPHIES` table in `rewards.js`, themed per region — e.g. Wörterwald:
-  🦊 🦉 🐿️ 🦡 🍄 🌰 …). Trophy *s* (1-indexed) is earned when the counter
-  reaches `THRESHOLDS[s] = [2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112]`
-  points. **Balancing (recomputed when points went linear):** einmaleins has 27
-  tiles (Leicht offers only 4 tables + „Alle") worth **180** points in total —
-  5×3 + 11×6 + 11×9 — so the twelfth trophy lands at 62 % of everything there is.
-  Finishing the collection is a realistic goal, not a grind. The first trophy
-  arrives in the first sitting: one Leicht tile taken to two stars pays 2, which
-  is exactly the first threshold. Leicht alone caps at 15 points — three trophies
-  — and cannot fill the room. A new game must offer a comparable point economy,
-  since the thresholds are shared.
+  🦊 🦉 🐿️ 🦡 🍄 🌰 …). Trophy *s* (1-indexed) of a game is earned when **that
+  game's** counter reaches `THRESHOLDS[game][s-1]`.
+
+  **The ladder is per game, because the games are not worth the same.** It used
+  to be one shared ladder, tuned to einmaleins: `lesen` is worth 18 points in
+  total, so its trophies five through twelve stood at 29 … 112 points and could
+  never be won. Its shelf could never fill, and nothing on screen said why.
+
+  Each game declares `MAX_POINTS[game]` — what mastering every tile it offers
+  pays — and `ladderFor(max)` scales the twelve thresholds to it. The curve's
+  shape *is* the einmaleins ladder
+  (`[2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112]` over 180 points), which
+  einmaleins keeps verbatim so no child loses a trophy already won; a test
+  asserts `ladderFor(180)` reproduces it. Every ladder therefore keeps the two
+  properties that were tuned by hand: the **twelfth trophy lands at ~62 %** of
+  everything the game is worth (a realistic goal, not a grind), and the **first
+  arrives in the first sitting**. Thresholds climb strictly, so no two trophies
+  are ever bought with the same point.
+
+  `MAX_POINTS` is exact for einmaleins (27 tiles: 5×3 + 11×6 + 11×9 = 180) and
+  **provisional** for the four unbuilt games (`ACHIEVABLE × 2`). Recompute a
+  game's maximum from its real tiles when it ships.
+
   Deterministic — no randomness, fully derivable from the counter, so only
   the counter is stored.
 - Earning a trophy shows it in the round summary: the picture and its name,
