@@ -15,13 +15,15 @@ export const isPlayable = (game) => PLAYABLE.includes(game);
 // Trophy s (1-indexed) is earned when the game's lifetime point counter reaches
 // THRESHOLDS[s-1] (§8.3). Deterministic, no randomness.
 //
-// Balanced against einmaleins, whose 27 tiles are worth 360 points in total
-// (§8.3): the last trophy lands at ~62 % of everything there is, so finishing
-// the collection is a realistic goal rather than a grind.
+// Rebalanced when points went linear. einmaleins is now worth 180 points in
+// total (5 Leicht tiles × 3 + 11 Mittel × 6 + 11 Schwer × 9), where it used to
+// be 360 — the third star's ×3 mastery bonus is gone. The twelfth trophy lands
+// at 112, which is 62 % of everything there is: the same reachable fraction as
+// before, so finishing the collection stays a realistic goal.
+//
 // The first trophy must land in the first sitting. The cheapest thing a child
-// can do — one Leicht tile taken to two stars — now pays 2, not 3, because the
-// old "first mistake-free round" bonus moved onto mastery (§8.3).
-export const THRESHOLDS = [2, 9, 18, 30, 46, 64, 86, 112, 142, 172, 200, 225];
+// can do — one Leicht tile taken to two stars — pays 2.
+export const THRESHOLDS = [2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112];
 
 // 12 fixed trophies per region (§8.3), themed. {e: emoji, de/en: name}.
 export const TROPHIES = {
@@ -157,31 +159,30 @@ export function trophyCount(pr) {
   return n;
 }
 
-// Points a finished round is worth (§8.3). Everything is derived from the
-// tile's best-star count before and after, so nothing extra is stored:
+// Points a finished round is worth (§8.3). Linear: every star costs the same
+// inside a difficulty, and a star is worth `difficulty + 1` points — 1 on
+// Leicht, 2 on Mittel, 3 on Schwer. A whole tile is therefore 3, 6 or 9.
 //
-//   · each NEW star                          1×   (play what you have not solved)
-//   · mastering the tile (its third star)    3×   (a mistake-free round)
-//
-// each multiplied by the difficulty: Leicht ×1, Mittel ×2, Schwer ×3. A whole
-// tile is therefore worth 6, 12 or 18 — the hard work pays three times the easy
-// work, which is a gap a child can see on the tile and act on.
+// There used to be a `+3 × difficulty` bonus on the third star, so the first
+// two stars were worth a third of the tile and the last one two thirds. It made
+// the picker's numbers unexplainable and the star display a lie: three equal
+// stars that were not worth equal amounts.
 //
 // A tile you have already mastered is worth nothing, so no amount of replaying
-// the easiest level fills the Pokalraum. The mastery bonus needs no flag of its
-// own: three stars *mean* 10/10 on the first try (§10.3).
-//
-// difficulty: 0 = Leicht, 1 = Mittel, 2 = Schwer.
+// buys a trophy.
 export function roundPoints({ oldStars = 0, newStars = 0, difficulty = 0 } = {}) {
-  if (!(newStars > oldStars)) return 0; // no improvement, no points
-  const multiplier = difficulty + 1;
-  let awards = newStars - oldStars;
-  if (oldStars < 3 && newStars === 3) awards += 3;
-  return awards * multiplier;
+  if (!(newStars > oldStars)) return 0;
+  const perStar = ([0, 1, 2].includes(difficulty) ? difficulty : 0) + 1;
+  return (newStars - oldStars) * perStar;
 }
 
-// What is still to be gained on one tile — the number a child sees on the tile
-// in the picker, so the rules never have to be read (§10.2).
+// What a single star is worth here. The picker prints it as "×2" / "×3": the
+// stars are always three, but each one counts double or triple (§10.2).
+export const starValue = (difficulty = 0) => ([0, 1, 2].includes(difficulty) ? difficulty : 0) + 1;
+
+// What a tile can still pay. The picker no longer prints this — it shows the
+// three stars instead — but the trophy economy is balanced against it, and
+// `tests/rewards.test.js` checks the whole collection stays reachable.
 export function tilePointsLeft(stars = 0, difficulty = 0) {
   return roundPoints({ oldStars: stars, newStars: 3, difficulty });
 }

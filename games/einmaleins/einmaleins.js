@@ -4,7 +4,7 @@
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString } from "../../assets/js/adaptive.js";
-import { recordRound, foxInfo, roundPoints, tilePointsLeft, addPractice } from "../../assets/js/rewards.js";
+import { recordRound, foxInfo, roundPoints, starValue, addPractice } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
@@ -343,7 +343,11 @@ function renderPicker() {
   segEl.innerHTML = "";
   DIFF_KEYS.forEach((key, i) => {
     const b = document.createElement("button");
-    b.textContent = t(key);
+    // The stars are always three. What Mittel and Schwer buy is a star worth
+    // twice or three times as much, and that is what the label says (§10.2).
+    const v = starValue(i);
+    b.innerHTML = `${t(key)}<span class="dmul">${v > 1 ? `×${v}&nbsp;` : ""}⭐</span>`;
+    b.setAttribute("aria-label", v > 1 ? t("diffWorth", { d: t(key), n: v }) : t(key));
     b.setAttribute("aria-pressed", String(i === diff));
     b.addEventListener("click", () => {
       diff = i;
@@ -362,22 +366,19 @@ function renderPicker() {
     const locked = diff === 0 && tbl !== 0 && !EASY_TABLES.includes(tbl);
     b.disabled = locked;
 
-    // Every tile states what it is still worth. A child never reads a rule —
-    // they see that an untouched Schwer tile pays 18 and a mastered one pays
-    // nothing, and they go where the points are (§10.2). Three distinct looks:
-    // locked (nothing to get, cannot play), mastered (nothing to get, may
-    // replay), open (this many points are waiting).
-    const left = tilePointsLeft(s, diff);
+    // Every tile shows its three stars, gold for taken and grey for still to be
+    // won — the same language the sky speaks above the round (§10.5). The number
+    // of points is not on the tile: what a star is worth is a property of the
+    // difficulty, and the difficulty says so itself (§10.2).
     if (locked) {
       b.classList.add("locked");
       b.innerHTML = `<span>${tbl2short(tbl)}</span>
-        <span class="tstars">${iconHTML("ui-lock", { size: 13 })}</span>
-        <span class="tpoints"></span>`;
+        <span class="tstars">${iconHTML("ui-lock", { size: 13 })}</span>`;
     } else {
-      if (left === 0) b.classList.add("mastered");
+      if (s === 3) b.classList.add("mastered");
+      const stars = [0, 1, 2].map((k) => `<i class="${k < s ? "on" : "off"}">⭐</i>`).join("");
       b.innerHTML = `<span>${tbl2short(tbl)}</span>
-        <span class="tstars">${s > 0 ? "⭐".repeat(s) : "·"}</span>
-        <span class="tpoints">${left > 0 ? `+${left}` : "✓"}</span>`;
+        <span class="tstars">${stars}</span>`;
     }
     b.addEventListener("click", () => {
       table = tbl;

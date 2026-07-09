@@ -55,6 +55,7 @@ export default {
   aboutPortal: "An overview of all my sites",
   privacyLink: "Privacy",
   starsOwned: "{n} of 3 stars collected",
+  diffWorth: "{d} — each star counts {n}×",
   foxNext: "{n} more ⭐: {item}",
   foxMax: "All collected!",
   cos_cap: "cap",

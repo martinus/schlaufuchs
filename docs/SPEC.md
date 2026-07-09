@@ -539,38 +539,41 @@ is retired; it does not appear anywhere.
 - A **perfect round** = every item in the round correct on the first try.
 - **Points come from progress, never from repetition.** Everything is derived
   from a tile's best-star count before and after the round, so nothing extra is
-  stored (a *tile* = one table at one difficulty):
+  stored (a *tile* = one table at one difficulty).
 
-  | Award | Value |
-  |---|---|
-  | each new star | 1× |
-  | mastering the tile (its third star) | 3× |
+  **Points are linear.** One star is worth `difficulty + 1` points: **1 on
+  Leicht, 2 on Mittel, 3 on Schwer**. Every star inside a difficulty is worth
+  the same, so a whole tile is **3, 6 or 9**. Hard work pays three times what
+  easy work pays — a gap a child can see and act on. A mastered tile is worth
+  **nothing**: replaying the easiest table forever earns not one point. See
+  `roundPoints()` and `starValue()`.
 
-  …each multiplied by the difficulty: **Leicht ×1, Mittel ×2, Schwer ×3**. An
-  untouched tile is therefore worth 6, 12 or 18 — hard work pays **three times**
-  what easy work pays, a gap a child can see on the tile and act on. A mastered
-  tile is worth **nothing**: replaying the easiest table forever earns not one
-  point. The mastery bonus needs no flag of its own: three stars *mean* 10/10 on
-  the first try (§10.3). See `roundPoints()`.
-- **The rules are shown, not written.** Every tile in the picker displays what
-  it still pays (`tilePointsLeft()`). Three states, three looks, never
-  confusable: **open** shows `+18`; **mastered** is green-ringed with `✓` and
-  may be replayed for nothing; **locked** (a table Leicht does not teach) is a
-  faded dashed outline with a padlock and promises nothing. A child never reads
-  a rule; they see where the points are and go there (§10.2). The round summary
-  shows the points just earned next to the score.
+  The third star used to carry a `+3 × difficulty` mastery bonus, so three
+  equal-looking stars were worth 1, 1 and 4 on Leicht. It made the picker's
+  numbers unexplainable, and it made the star display a lie.
+- **The rules are shown, not written.** Every tile in the picker shows its
+  **three stars**, gold for taken and grey for still open — the same language
+  the sky speaks above the round (§10.5). It does not show a point total: what a
+  star is *worth* belongs to the difficulty, and the difficulty says so itself
+  („Mittel ×2 ⭐"). Three tile states, three looks: **open** (grey stars),
+  **mastered** (green-ringed, three gold stars, may be replayed for nothing),
+  **locked** (a table Leicht does not teach — faded, padlock, promises nothing).
+  The round summary shows the points just earned next to the score; that is the
+  only place a number appears.
 - Each region keeps a lifetime **point** counter (`rewards.pr`, §9.2). The
   field keeps its short name for the cookie budget (§9.2).
 - Each region has **12 fixed trophies** (emoji + translated name, defined in
   a `TROPHIES` table in `rewards.js`, themed per region — e.g. Wörterwald:
   🦊 🦉 🐿️ 🦡 🍄 🌰 …). Trophy *s* (1-indexed) is earned when the counter
-  reaches `THRESHOLDS[s] = [3, 9, 18, 30, 46, 64, 86, 112, 142, 172, 200, 225]`
-  points. **Balancing:** einmaleins has 27 tiles (Leicht offers only 4 tables +
-  „Alle") worth 360 points in total, so the twelfth trophy lands at ~63 % of
-  everything there is — finishing the collection is a realistic goal, not a
-  grind. The first trophy arrives after one good Leicht round (3 points). Leicht
-  alone caps at 30 points — four trophies — and cannot fill the room. A new game must offer a
-  comparable point economy, since the thresholds are shared.
+  reaches `THRESHOLDS[s] = [2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112]`
+  points. **Balancing (recomputed when points went linear):** einmaleins has 27
+  tiles (Leicht offers only 4 tables + „Alle") worth **180** points in total —
+  5×3 + 11×6 + 11×9 — so the twelfth trophy lands at 62 % of everything there is.
+  Finishing the collection is a realistic goal, not a grind. The first trophy
+  arrives in the first sitting: one Leicht tile taken to two stars pays 2, which
+  is exactly the first threshold. Leicht alone caps at 15 points — three trophies
+  — and cannot fill the room. A new game must offer a comparable point economy,
+  since the thresholds are shared.
   Deterministic — no randomness, fully derivable from the counter, so only
   the counter is stored.
 - Earning a trophy shows it in the round summary: the picture and its name,

@@ -55,6 +55,7 @@ export default {
   aboutPortal: "Übersicht über alle meine Seiten",
   privacyLink: "Datenschutz",
   starsOwned: "{n} von 3 Sternen gesammelt",
+  diffWorth: "{d} — jeder Stern zählt {n}×",
   foxNext: "Noch {n} ⭐: {item}",
   foxMax: "Alles gesammelt!",
   cos_cap: "Mütze",
