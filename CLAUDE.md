@@ -69,6 +69,11 @@ Shared modules in `assets/js/`:
   `AVAILABLE`. URLs resolve via `import.meta.url` — **never emit absolute
   `/assets/...` paths** (subpath deploys must work). Not in the registry: the
   fox (`fox.js`) and the hand-drawn map scenery polygons in `index.html`.
+  Icons added to `AVAILABLE` are gated by `tests/graphics-assets.test.js`
+  (validator in `tests/svg-icon-validator.js`): the file must exist and satisfy
+  the machine-checkable items of `docs/GRAPHICS_BRIEF.md` (viewBox 64,
+  transparent, no scripts/raster/external refs/fonts), and no stray files may
+  sit in `assets/img/icons/`.
 - **Icons and i18n don't mix.** `translateDOM` overwrites `textContent`, so an
   icon must never live inside a `[data-i18n]` element — use a sibling/inner
   span (see `.fallback-nav` in `index.html`).

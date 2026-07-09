@@ -222,9 +222,16 @@ fallback, so you can drop in graphics incrementally.
 
 ## Acceptance checklist (per file)
 
-- [ ] Transparent background
-- [ ] `viewBox="0 0 64 64"`
-- [ ] Standalone, valid SVG — no external refs, scripts, or raster images
-- [ ] Reads clearly at both 24px and 120px
-- [ ] Exact filename as listed
-- [ ] Style/palette consistent with the rest of the set
+The machine-checkable items are **enforced by `node --test`**
+(`tests/graphics-assets.test.js`): for every name in `AVAILABLE`, the file
+must exist and pass the validator, and no stray files may sit in
+`assets/img/icons/`. So the workflow is: drop the file in, add the name to
+`AVAILABLE`, run `node --test`, and fix whatever it reports.
+
+- [ ] Transparent background — *enforced* (no opaque full-canvas rect)
+- [ ] `viewBox="0 0 64 64"` — *enforced*
+- [ ] Standalone, valid SVG — no external refs, scripts, raster images, or
+  font/`<text>` dependencies — *enforced*
+- [ ] Exact filename as listed — *enforced* (missing/stray files fail)
+- [ ] Reads clearly at both 24px and 120px — manual (not enforceable)
+- [ ] Style/palette consistent with the rest of the set — manual
