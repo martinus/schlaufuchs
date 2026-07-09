@@ -245,6 +245,29 @@ Round summaries are overlays too. The browser back button always means
   is a single tap, plus a secondary row with map, level/table picker and
   settings buttons — the summary must never be a dead end.
 
+### 3.5 The privacy page (`privacy.html`)
+
+A plain bilingual text page, and the **only** page allowed to scroll: a legal
+text that hides half its sentences is worse than one that scrolls.
+
+- **Reachable from everywhere.** The settings overlay carries the link, which
+  covers the map, the games and the stubs. The Trophy Room has no gear, so it
+  and the map also carry a footer link. `tests/privacy.test.js` enforces that
+  every page has one of the two.
+- The URL is resolved from `chrome.js`'s own `import.meta.url`. An absolute
+  `/privacy.html` would break a subpath deploy.
+- **What it says must stay true.** Today: one cookie (`schlaufuchs`, one year,
+  progress + settings), strictly necessary for a service the child asked for —
+  which is exactly why the site shows no consent banner. No analytics, no
+  third-party requests, no external fonts. GitHub Pages serves the files and
+  therefore sees connection data (IP), which we never receive.
+- **Adding analytics changes this.** Anything that stores or reads an
+  identifier on the device needs prior opt-in consent (ePrivacy; AT §165(3)
+  TKG 2021, DE §25 TDDDG) and would put a banner in front of a five-year-old.
+  Worse, GDPR Art. 8 makes a child's own consent invalid below 16 (14 in AT),
+  and this site's audience is 5–15. Cookieless, aggregate audience measurement
+  is the only kind that fits here. If it is ever added, this page must say so.
+
 ---
 
 ## 4. (reserved)

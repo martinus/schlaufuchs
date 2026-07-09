@@ -6,25 +6,26 @@
   <title>Schlaufuchs</title>
   <meta name="description" content="Spielerisch lernen und ein Schlaufuchs werden">
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="assets/css/schlaufuchs.css?v=21">
+  <link rel="stylesheet" href="assets/css/schlaufuchs.css?v=22">
   <!-- cache coherence: see tools/version-assets.js -->
   <script type="importmap">
   {
     "imports": {
-      "./assets/js/adaptive.js": "./assets/js/adaptive.js?v=21",
-      "./assets/js/album.js": "./assets/js/album.js?v=21",
-      "./assets/js/audio.js": "./assets/js/audio.js?v=21",
-      "./assets/js/chrome.js": "./assets/js/chrome.js?v=21",
-      "./assets/js/confetti.js": "./assets/js/confetti.js?v=21",
-      "./assets/js/fox.js": "./assets/js/fox.js?v=21",
-      "./assets/js/graphics.js": "./assets/js/graphics.js?v=21",
-      "./assets/js/i18n.js": "./assets/js/i18n.js?v=21",
-      "./assets/js/journey.js": "./assets/js/journey.js?v=21",
-      "./assets/js/map.js": "./assets/js/map.js?v=21",
-      "./assets/js/rewards.js": "./assets/js/rewards.js?v=21",
-      "./assets/js/storage.js": "./assets/js/storage.js?v=21",
-      "./assets/i18n/de.js": "./assets/i18n/de.js?v=21",
-      "./assets/i18n/en.js": "./assets/i18n/en.js?v=21"
+      "./assets/js/adaptive.js": "./assets/js/adaptive.js?v=22",
+      "./assets/js/album.js": "./assets/js/album.js?v=22",
+      "./assets/js/audio.js": "./assets/js/audio.js?v=22",
+      "./assets/js/chrome.js": "./assets/js/chrome.js?v=22",
+      "./assets/js/confetti.js": "./assets/js/confetti.js?v=22",
+      "./assets/js/fox.js": "./assets/js/fox.js?v=22",
+      "./assets/js/graphics.js": "./assets/js/graphics.js?v=22",
+      "./assets/js/i18n.js": "./assets/js/i18n.js?v=22",
+      "./assets/js/journey.js": "./assets/js/journey.js?v=22",
+      "./assets/js/map.js": "./assets/js/map.js?v=22",
+      "./assets/js/privacy.js": "./assets/js/privacy.js?v=22",
+      "./assets/js/rewards.js": "./assets/js/rewards.js?v=22",
+      "./assets/js/storage.js": "./assets/js/storage.js?v=22",
+      "./assets/i18n/de.js": "./assets/i18n/de.js?v=22",
+      "./assets/i18n/en.js": "./assets/i18n/en.js?v=22"
     }
   }
   </script>
@@ -223,9 +224,11 @@
   <!-- "delete all progress" lives in the settings overlay only; a second
        copy in the footer cost a screenful and said the same thing. -->
   <footer>
+    <!-- a sibling, never a child: translateDOM overwrites textContent (§6.3) -->
     <p data-i18n="footerPrivacy">Deine Fortschritte werden nur auf diesem Gerät gespeichert.</p>
+    <a class="footlink" href="privacy.html" data-i18n="privacyLink">Datenschutz</a>
   </footer>
 
-  <script type="module" src="assets/js/map.js?v=21"></script>
+  <script type="module" src="assets/js/map.js?v=22"></script>
 </body>
 </html>

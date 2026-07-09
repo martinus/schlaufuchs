@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pokalraum — Schlaufuchs</title>
+  <title>Datenschutz — Schlaufuchs</title>
   <link rel="icon" href="assets/img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="assets/css/schlaufuchs.css?v=22">
   <!-- cache coherence: see tools/version-assets.js -->
@@ -29,20 +29,31 @@
   }
   </script>
 </head>
-<body class="trophyroom">
+<body class="textpage">
   <header class="topbar">
     <a class="iconbtn" href="./" data-i18n-label="back" data-icon="ui-map" data-icon-size="22">🗺️</a>
-    <!-- one place, one name: this page IS the Pokalraum on the map (§3.2) -->
-    <h1 class="chip roomtitle" data-i18n="region_pokalraum">Pokalraum</h1>
+    <h1 class="chip roomtitle" data-i18n="privacyTitle">Datenschutz &amp; Cookies</h1>
     <span class="spacer"></span>
-    <span class="chip" id="totalcount"></span>
   </header>
-  <p class="room-intro" data-i18n="roomIntro"></p>
-  <main id="album"></main>
-  <!-- the Trophy Room has no gear, so the privacy page hangs off its foot -->
-  <footer class="roomfoot">
-    <a class="footlink" href="privacy.html" data-i18n="privacyLink">Datenschutz</a>
-  </footer>
-  <script type="module" src="assets/js/album.js?v=22"></script>
+
+  <main class="prose">
+    <p class="lede" data-i18n="privacyIntro"></p>
+
+    <h2 data-i18n="privacyCookieH"></h2>
+    <p data-i18n="privacyCookieBody"></p>
+
+    <h2 data-i18n="privacyNoTrackH"></h2>
+    <p data-i18n="privacyNoTrackBody"></p>
+
+    <h2 data-i18n="privacyHostingH"></h2>
+    <p data-i18n="privacyHostingBody"></p>
+
+    <h2 data-i18n="privacyDeleteH"></h2>
+    <p data-i18n="privacyDeleteBody"></p>
+
+    <p><a class="chip" href="./" data-i18n="privacyBack"></a></p>
+  </main>
+
+  <script type="module" src="assets/js/privacy.js?v=22"></script>
 </body>
 </html>

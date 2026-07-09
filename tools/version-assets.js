@@ -39,9 +39,10 @@ const shared = [
   ...readdirSync(join(ROOT, "assets/i18n")).map((f) => `assets/i18n/${f}`),
 ].filter((p) => p.endsWith(".js"));
 
+// Every root-level page, discovered — a page added to a hard-coded list only
+// when someone remembers is a page that ships unversioned.
 const pages = [
-  "index.html",
-  "album.html",
+  ...readdirSync(ROOT).filter((f) => f.endsWith(".html")).sort(),
   ...readdirSync(join(ROOT, "games")).map((g) => `games/${g}/index.html`),
 ];
 

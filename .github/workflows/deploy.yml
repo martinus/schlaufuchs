@@ -34,7 +34,8 @@ jobs:
       - name: Assemble site (site files only, no dev files)
         run: |
           mkdir -p _site
-          cp -r index.html album.html CNAME assets games _site/
+          # every root page, so a new one cannot be perfect locally and 404 live
+          cp -r ./*.html CNAME assets games _site/
       - uses: actions/configure-pages@v5
         with:
           # create/enable the Pages site (build_type: workflow) if it

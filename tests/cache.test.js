@@ -19,9 +19,11 @@ const root = new URL("../", import.meta.url);
 const abs = (p) => fileURLToPath(new URL(p, root));
 const read = (p) => readFileSync(abs(p), "utf8");
 
+// Discovered, not listed: a new root page must be covered by these tests the
+// moment it exists, not when someone remembers to add it here.
+const ROOT_PAGES = readdirSync(abs(".")).filter((f) => f.endsWith(".html")).sort();
 const PAGES = [
-  "index.html",
-  "album.html",
+  ...ROOT_PAGES,
   ...readdirSync(abs("games")).map((g) => `games/${g}/index.html`),
 ];
 
@@ -127,4 +129,19 @@ test("no page-scripted element lookup can throw on a stale page", () => {
       assert.fail(`${file}: getElementById(${m[1]}). must use ?. — a stale page has no such element`);
     }
   }
+});
+
+// Regression risk: the deploy step used to copy a hard-coded list of pages, so
+// a new root page was perfect on localhost and a 404 in production. Nothing in
+// the test suite could see it — deploy.yml is not JavaScript.
+test("the deploy workflow ships every page this repo builds", () => {
+  const yml = read(".github/workflows/deploy.yml");
+  const cp = yml.split("\n").find((l) => l.trim().startsWith("cp -r"));
+  assert.ok(cp, "deploy.yml must still assemble _site with cp -r");
+  assert.ok(
+    /(\.\/)?\*\.html/.test(cp),
+    `deploy copies a fixed list of pages, so a new one would 404: ${cp.trim()}`,
+  );
+  for (const dir of ["assets", "games"]) assert.ok(cp.includes(dir), `deploy must ship ${dir}/`);
+  assert.ok(ROOT_PAGES.includes("index.html"), "sanity: pages are discovered");
 });
