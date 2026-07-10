@@ -592,10 +592,18 @@ the child never sees the mechanism.
 
 ### 7.3 Round composition
 
-A round draws **10 unique items** (6 for Lesen). Re-queued repeats extend the
-round; **the round only ends when every item has been answered correctly**,
-so every round ends in success (see journey framing, §8.2). "First-try
-correct" is tracked per item for scoring.
+A round draws **10 unique items** (6 for Lesen; einmaleins Schwer draws 12,
+§10.2). Re-queued repeats extend the round; **the round only ends when every
+item has been answered correctly**, so every round ends in success (see
+journey framing, §8.2). "First-try correct" is tracked per item for scoring.
+
+The draw multiplies an optional per-item **boost** into the box weight
+(`opts.boost`, default 1): a game can say "this item is intrinsically hard,
+show it more often" without touching the box mechanics (einmaleins uses it for
+its hardness weighting, §10.2). The boost never affects re-queueing or box
+movement. For the weighting to have anything to choose from, **the pool should
+be larger than the round** — a pool the size of the round is asked in full,
+mastered or not.
 
 ### 7.4 Difficulty levels
 
@@ -606,7 +614,7 @@ input mode (defined per game), never the adaptive mechanics.
 ### 7.5 API
 
 ```js
-createSession(pool, boxes, {roundSize, requeueMin: 2, requeueMax: 4})
+createSession(pool, boxes, {roundSize, requeueMin: 2, requeueMax: 4, boost})
   .next(): item | null        // null when round complete
   .answer(item, correct)
   .progress(): {solved, total, firstTryOk}
@@ -727,20 +735,23 @@ and an 8-year-old understood neither.
   Each game declares `MAX_POINTS[game]` — what mastering every tile it offers
   pays — and `ladderFor(max)` scales the twelve thresholds to it. The curve's
   shape *is* the einmaleins ladder
-  (`[2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112]` over 180 points), which
-  einmaleins keeps verbatim so no child loses a trophy already won; a test
-  asserts `ladderFor(180)` reproduces it. Every ladder therefore keeps the two
-  properties that were tuned by hand: the **twelfth trophy lands at ~62 %** of
-  everything the game is worth (a realistic goal, not a grind), and the **first
-  arrives in the first sitting**. Thresholds climb strictly, so no two trophies
-  are ever bought with the same point.
+  (`[2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112]` over the 180 points the
+  game was worth when the ladder was tuned), which einmaleins keeps verbatim so
+  no child loses a trophy already won; a test asserts `ladderFor(180)`
+  reproduces it. Every ladder therefore keeps the two properties that were
+  tuned by hand: the **twelfth trophy lands at ~62 %** of everything the game
+  is worth (a realistic goal, not a grind), and the **first arrives in the
+  first sitting**. Thresholds climb strictly, so no two trophies are ever
+  bought with the same point.
 
-  `MAX_POINTS` is exact for einmaleins (27 tiles: 5×3 + 11×6 + 11×9 = 180) and
+  `MAX_POINTS` is exact for einmaleins (25 tiles: 5×3 + 11×6 + 9×9 = 162 —
+  Schwer lost its 1er and 10er tiles, §10.2, and the hand-tuned ladder tops out
+  at 112, still comfortably below) and
   **a guess** for the four unbuilt games — it was once "achievable stars × 2",
   from a raw star count that no longer exists. It is now the sole denominator of
   a region's badge tier and its thriving/mastered state (§3.1), so **recompute a
   game's maximum from its real tiles the day it ships**, exactly as einmaleins'
-  180 was computed. Until then those four regions are scaled against a number
+  162 was computed. Until then those four regions are scaled against a number
   nobody has checked.
 
   Deterministic — no randomness, fully derivable from the counter, so only
@@ -852,7 +863,8 @@ walks the village lane; goal node: ringing the school bell.
 
 1. Region tap → instantly into a round at the last difficulty & table
    (first visit: Leicht, 2er-Reihe).
-2. Round of 10 (per §7.3): `7 × 8 = ?`, journey strip on top (§8.2).
+2. Round of 10 — 12 on Schwer (§7.3, `ROUND_SIZE`): `7 × 8 = ?`, journey
+   strip on top (§8.2).
    German divides with a **colon**, and a colon sits on the baseline: between
    two 40px numerals `12 : 3` reads as a label and its value. It is wrapped
    (`eqHTML()`) and lifted to the optical middle, in the question and in the
@@ -902,31 +914,61 @@ walks the village lane; goal node: ringing the school bell.
    what separates them is an edge, not more colour. The stars a tile still has
    to give are the whole promise of the tile.
    Difficulty is not a control: choosing a tile chooses both. Leicht shows its
-   five tiles (Reihen 1, 2, 5, 10 + „🎲 Alle"), the others eleven; **no tile is
-   ever disabled**, where six padlocked ones used to sit in the Leicht grid. The
-   list opens focused on the tile being played (`aria-current`), which scrolls
-   it into view.
+   five tiles (Reihen 1, 2, 5, 10 + „🎲 Alle"), Mittel eleven, Schwer nine
+   (Reihen 2–9 + „🎲 Alle" — nothing about ×1 or ×10 is hard, §10.2); **no
+   tile is ever disabled**, where six padlocked ones used to sit in the Leicht
+   grid. A saved tile the current difficulty does not offer falls back to the
+   2er-Reihe (`coerceTable`). The list opens focused on the tile being played
+   (`aria-current`), which scrolls it into view.
 
 ### 10.2 Difficulties
 
-| | Content | Input |
-|---|---|---|
-| Leicht | Reihen 1, 2, 5, 10; dot-grid hint always visible | multiple choice (4 buttons) |
-| Mittel | all Reihen 1–10 | on-screen keypad |
-| Schwer | mixed, gap questions (`_ × 7 = 42`), division sprinkled in | keypad |
+| | Content | Round | Input |
+|---|---|---|---|
+| Leicht | Reihen 1, 2, 5, 10; dot-grid hint always visible | 10 | multiple choice (4 buttons) |
+| Mittel | all Reihen 1–10 | 10 | on-screen keypad |
+| Schwer | Reihen 2–9, factors 2–9 only; gap questions (`_ × 7 = 42`) and division mixed in | 12 | keypad |
 
 „Alle gemischt" draws across tables weighted by the adaptive boxes.
+
+**Schwer must be hard** (`HARD_TABLES`). No question on Schwer ever contains a
+factor of 1 or 10 — 1×1 or 8×10 inside a round sold as "Schwer" tells the
+child the label lies — and the 1er and 10er tiles do not exist on Schwer at
+all. Its mixed pool is the 8×8 hard core (factors 2–9).
+
+**A fixed Reihe on Mittel/Schwer holds both orientations** (the 4er-Reihe asks
+4×7 *and* 7×4, separate Leitner items). With ten facts and ten questions the
+old pool asked every fact every round, mastered or not; a pool larger than the
+round (19 items on Mittel, 15 on Schwer) is what lets the box weights of §7.2
+actually choose — known facts rest, weak ones return, like a vocabulary
+trainer. Leicht keeps the plain ten-fact row: a beginner is meant to meet her
+whole Reihe.
+
+**Intrinsic hardness weights the draw** on Mittel and Schwer:
+`pairHardness(t, f)` scores a fact 0–6 from its factors (1/10 free, 2/5 easy,
+3/4/9 medium, 6/7/8 hard, squares one step easier than their neighbours), and
+the session is created with `boost = 1 + hardness` (§7.3). 7×8 comes up about
+seven times as often as 2×2 in the same box; the Leitner weight still
+dominates, so a *struggling* easy fact outranks a mastered hard one.
+
+**On a fixed Reihe the unknown is never the Reihe itself.** `12 : 3 = ?`
+inside the 4er-Reihe answers itself — every answer in that round is a partner
+of 4. Gap and division questions solve for the *other* factor (`28 : 4 = ?`,
+`4 × _ = 28`); only „Alle gemischt" may ask in both directions. `questionFor`
+takes the round's table for this (0 = mixed).
 
 **The division sign follows the language**: `":"` in German, because that is
 what German schools write and a child who has only ever seen `:` reads `÷` as a
 decoration; `"÷"` in English. It is the `divSign` key, injected into the pure
-`questionFor(id, difficulty, rng, divSign)` — `logic.js` stays free of i18n.
-Anything that reprints the equation (the aid card) must build it from
+`questionFor(id, difficulty, rng, divSign, table)` — `logic.js` stays free of
+i18n. Anything that reprints the equation (the aid card) must build it from
 `question.text`, never from `t` and `f`.
 
 ### 10.3 Stars (per table & difficulty)
 
-6/10 → ⭐ · 8/10 → ⭐⭐ · 10/10 → ⭐⭐⭐, counting first tries only.
+≥ 60 % → ⭐ · ≥ 80 % → ⭐⭐ · 100 % → ⭐⭐⭐ of the round first-try correct
+(`starsFor` is a ratio, so a 12-question Schwer round needs 8 / 10 / 12 where
+a 10-question round needs 6 / 8 / 10).
 
 **Accuracy is the only criterion.** Speed is not: a child who reads or taps
 slowly knows the times tables just as well, and a clock is not something they
@@ -935,7 +977,8 @@ whispers *faster is better* to the child who is slow and right, so the summary
 does not show one.
 
 A wrong answer leaves its item unsolved, so the round asks it again: a round
-ends after ten *solved* items, and only the first try counts for stars.
+ends only when every drawn item is *solved*, and only the first try counts for
+stars.
 
 The summary names the price of the next star (`nextStarGoal`), quietly, under
 the score — otherwise a child who scores 9/10 has no way to learn why they
@@ -968,7 +1011,8 @@ One picture, no prose. `createJourney()` in `journey.js` draws all of it:
 A round awards at most **three** stars in every difficulty; what scales with
 difficulty is what each star *counts* (×1 / ×2 / ×3, §8.3). The sky therefore
 always holds three slots. (Leicht offers fewer stars across the whole game —
-5 tiles instead of 11 — but never more than three in one round.)
+5 tiles to Mittel's 11 and Schwer's 9 — but never more than three in one
+round.)
 
 **On Mittel and Schwer a sky slot holds the stars it pays** — two of them, or
 three, drawn smaller so the group takes about the room one big star took

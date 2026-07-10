@@ -34,8 +34,10 @@ const EINMALEINS_LADDER = [2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112];
 // It is the denominator of everything the map says about a region, so it must
 // be right.
 //
-// einmaleins is exact: 5 Leicht tiles × 3 + 11 Mittel × 6 + 11 Schwer × 9 — a
-// star is worth 1, 2 or 3 depending on the difficulty that won it.
+// einmaleins is exact: 5 Leicht tiles × 3 + 11 Mittel × 6 + 9 Schwer × 9 — a
+// star is worth 1, 2 or 3 depending on the difficulty that won it. (Schwer
+// lost its 1er and 10er tiles: nothing in them is hard, §10.2. Stars already
+// won there stay banked in `pr`; only the ceiling moved.)
 //
 // **The other four are guesses.** Those games do not exist, and neither does
 // their tile structure; these numbers were once "achievable stars × 2", from a
@@ -43,7 +45,7 @@ const EINMALEINS_LADDER = [2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112];
 // tiles the day it ships, exactly as einmaleins' 180 was computed — until then
 // its badge tiers and region states are scaled against a number nobody checked.
 export const MAX_POINTS = {
-  einmaleins: 180,
+  einmaleins: 162,
   rechnungen: 90,
   tippen: 240,
   vokabeln: 108,

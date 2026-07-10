@@ -52,8 +52,12 @@ test("every game's twelfth trophy is reachable by mastering that game", () => {
 // keeps the four generated ladders honest: they are the same curve, not a
 // second opinion about what a trophy should cost.
 test("ladderFor reproduces the hand-tuned einmaleins ladder", () => {
-  assert.deepEqual(ladderFor(MAX_POINTS.einmaleins), EM);
-  assert.equal(MAX_POINTS.einmaleins, 180);
+  // 180 is the economy the ladder was tuned in (11 Schwer tiles, before the
+  // 1er and 10er left, §10.2). The ladder itself is grandfathered — no child
+  // may lose a trophy — so the generator's shape is still read off 180, not
+  // off today's MAX_POINTS.
+  assert.deepEqual(ladderFor(180), EM);
+  assert.equal(MAX_POINTS.einmaleins, 162);
 
   // a game too small to hold twelve climbing thresholds must say so, loudly,
   // rather than hand out two trophies for the same point
@@ -143,9 +147,9 @@ test("the fox chip counts stars, not a second currency", () => {
 test("starBadgeTier: none / some / gold / glowing (§3.1)", () => {
   assert.equal(starBadgeTier({}, "einmaleins"), 0);
   assert.equal(starBadgeTier({ einmaleins: 1 }, "einmaleins"), 1);
-  assert.equal(starBadgeTier({ einmaleins: 59 }, "einmaleins"), 1, "just under a third");
-  assert.equal(starBadgeTier({ einmaleins: 60 }, "einmaleins"), 2, "a third of 180");
-  assert.equal(starBadgeTier({ einmaleins: 179 }, "einmaleins"), 2);
+  assert.equal(starBadgeTier({ einmaleins: 53 }, "einmaleins"), 1, "just under a third");
+  assert.equal(starBadgeTier({ einmaleins: 54 }, "einmaleins"), 2, "a third of 162");
+  assert.equal(starBadgeTier({ einmaleins: 161 }, "einmaleins"), 2);
   assert.equal(starBadgeTier({ einmaleins: MAX_POINTS.einmaleins }, "einmaleins"), 3);
   assert.equal(starBadgeTier({ einmaleins: 1000 }, "einmaleins"), 3, "and it cannot go higher");
 });
@@ -166,15 +170,16 @@ test("nextTrophyInfo: progress toward the next trophy (§8.3)", () => {
 
 test("region states at 0 / one third / 100 % (§3.1)", () => {
   assert.equal(regionState({}, "einmaleins"), "base");
-  assert.equal(regionState({ einmaleins: 59 }, "einmaleins"), "base");
-  assert.equal(regionState({ einmaleins: 60 }, "einmaleins"), "thriving", "a third of 180");
-  assert.equal(regionState({ einmaleins: 179 }, "einmaleins"), "thriving");
-  assert.equal(regionState({ einmaleins: 180 }, "einmaleins"), "mastered");
+  assert.equal(regionState({ einmaleins: 53 }, "einmaleins"), "base");
+  assert.equal(regionState({ einmaleins: 54 }, "einmaleins"), "thriving", "a third of 162");
+  assert.equal(regionState({ einmaleins: 161 }, "einmaleins"), "thriving");
+  assert.equal(regionState({ einmaleins: 162 }, "einmaleins"), "mastered");
 
   // Mastering einmaleins is exactly what MAX_POINTS says it is: 5 Leicht tiles
-  // at 3 points + 11 Mittel at 6 + 11 Schwer at 9. If this drifts, a child can
-  // never pave the village square, or paves it before she is done.
-  assert.equal(5 * 3 + 11 * 6 + 11 * 9, MAX_POINTS.einmaleins);
+  // at 3 points + 11 Mittel at 6 + 9 Schwer at 9 (no 1er/10er on Schwer,
+  // §10.2). If this drifts, a child can never pave the village square, or
+  // paves it before she is done.
+  assert.equal(5 * 3 + 11 * 6 + 9 * 9, MAX_POINTS.einmaleins);
   for (const game of GAMES) {
     assert.ok(MAX_POINTS[game] > 0, `${game}: a zero maximum divides by zero`);
     assert.equal(regionState({ [game]: MAX_POINTS[game] }, game), "mastered");
@@ -255,10 +260,11 @@ test("grinding a mastered tile can never fill the Pokalraum", () => {
 });
 
 test("balance: finishing einmaleins is possible, and 12 trophies come before the end", () => {
-  // 27 tiles: Leicht offers 4 tables + "Alle"; Mittel and Schwer all 10 + "Alle"
-  const tiles = [[0, 5], [1, 11], [2, 11]];
+  // 25 tiles: Leicht offers 4 tables + "Alle"; Mittel all 10 + "Alle"; Schwer
+  // its 8 hard tables + "Alle" (§10.2)
+  const tiles = [[0, 5], [1, 11], [2, 9]];
   const total = tiles.reduce((sum, [d, n]) => sum + n * tilePointsLeft(0, d), 0);
-  assert.equal(total, 180, "the einmaleins point economy, after points went linear");
+  assert.equal(total, 162, "the einmaleins point economy, after Schwer lost its 1er and 10er");
   assert.equal(total, MAX_POINTS.einmaleins, "…and MAX_POINTS must agree with the tiles");
 
   assert.equal(trophyCount("einmaleins", total), TROPHIES_PER_GAME, "mastering everything must fill the room");

@@ -16,8 +16,9 @@ import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
 import { createLevelFox } from "../../assets/js/levelfox.js";
 import strings from "./i18n.js";
 import {
-  POOL_COUNT, EASY_TABLES, ALL_TABLES, poolFor, questionFor, choicesFor,
-  starsFor, nextStarGoal, ownedStars, starDigit, withStarDigit, fittedFontSize, retryStep,
+  POOL_COUNT, EASY_TABLES, ALL_TABLES, HARD_TABLES, ROUND_SIZE, poolFor,
+  questionFor, choicesFor, hardnessBoost,
+  starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit, fittedFontSize, retryStep,
 } from "./logic.js";
 
 initI18n(strings);
@@ -75,8 +76,10 @@ let saved = getGame("einmaleins");
 let diff = [0, 1, 2].includes(saved.d) ? saved.d : 0;
 let table = Number.isInteger(saved.t) && saved.t >= 0 && saved.t <= 10 ? saved.t : 2;
 
+// Each difficulty offers its own tiles (§10.2); a saved table the current
+// difficulty does not offer (Schwer lost its 1er and 10er) falls back to 2.
 function coerceTable() {
-  if (diff === 0 && table !== 0 && !EASY_TABLES.includes(table)) table = 2;
+  if (!tablesFor(diff).includes(table)) table = 2;
 }
 
 // --- round state -----------------------------------------------------------
@@ -117,7 +120,12 @@ function startRound() {
   bar.refresh();
   saved = getGame("einmaleins");
   const boxes = boxesFromString(saved.box, POOL_COUNT);
-  session = createSession(poolFor(table, diff), boxes, { roundSize: 10 });
+  session = createSession(poolFor(table, diff), boxes, {
+    roundSize: ROUND_SIZE[diff],
+    // hard facts (7×8) come up more often than trivial ones (2×2), on top of
+    // what the Leitner boxes already say (§10.2)
+    boost: (id) => hardnessBoost(id, diff),
+  });
   // the basket opens with the stars this tile has already earned, so a mastered
   // tile shows a full basket and a grey sky (§10.5)
   best = starDigit((saved.stars ?? {})[diff], table);
@@ -139,7 +147,7 @@ function askNext() {
   const id = session.next();
   if (id === null) return endRound();
   currentId = id;
-  question = questionFor(id, diff, Math.random, t("divSign"));
+  question = questionFor(id, diff, Math.random, t("divSign"), table);
   input = buffer.slice(0, 3);
   buffer = "";
   retry = "";
@@ -388,10 +396,12 @@ function endRound() {
     // the stars you just earned, next to the numbers that earned them
     $("sum-score").innerHTML = t("roundStat", { ok: firstTryOk, total })
       + (points > 0 ? ` <span class="gain">+${points} ⭐</span>` : "");
-    // what the next star costs — the rule is invisible otherwise (§10.3)
+    // what the next star costs — the rule is invisible otherwise (§10.3), and
+    // the count is computed from THIS round's length: "8 von 10" on a Schwer
+    // round of 12 would name a goal the round does not have
     const goal = nextStarGoal(stars);
     $("sum-goal").hidden = goal === null;
-    if (goal) $("sum-goal").textContent = t(goal);
+    if (goal) $("sum-goal").textContent = t(goal, { n: starGoalNeed(stars, total), total });
     $("sum-best").hidden = !improved;
     $("sum-best").textContent = t("newBest");
     // One round can cross several thresholds at once — a first Schwer round to
@@ -449,9 +459,10 @@ $("sum-trophy").addEventListener("click", (e) => {
 
 // --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------
 
-// Leicht teaches four tables (§10.2); the others teach all ten. Both end with
-// "Alle gemischt".
-const tablesFor = (d) => (d === 0 ? [...EASY_TABLES, 0] : [...ALL_TABLES, 0]);
+// Leicht teaches four tables, Mittel all ten, Schwer the eight with something
+// hard in them (§10.2). Each ends with "Alle gemischt".
+const tablesFor = (d) =>
+  (d === 0 ? [...EASY_TABLES, 0] : d === 2 ? [...HARD_TABLES, 0] : [...ALL_TABLES, 0]);
 
 // The picker used to be two controls: three difficulty buttons on top, and one
 // grid of tables that changed underneath them. A child had to understand that

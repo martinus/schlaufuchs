@@ -6,16 +6,58 @@
 export const POOL_COUNT = 100;
 export const EASY_TABLES = [1, 2, 5, 10]; // Leicht (§10.2)
 export const ALL_TABLES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+// Schwer never touches a factor of 1 or 10: nothing about ×1 or ×10 is hard,
+// and 1×1 inside a round sold as "Schwer" tells the child the label lies.
+export const HARD_TABLES = [2, 3, 4, 5, 6, 7, 8, 9];
+
+// Questions per round, by difficulty (§7.3): Schwer rounds run longer.
+export const ROUND_SIZE = [10, 10, 12];
 
 export const pairIndex = (t, f) => (t - 1) * 10 + (f - 1);
 export const pairOf = (id) => [Math.floor(id / 10) + 1, (id % 10) + 1];
 
 // table 0 = "Alle gemischt". On Leicht, mixed draws only from the easy tables.
+//
+// A fixed table on Mittel/Schwer holds BOTH orientations — the 4er-Reihe asks
+// 4×7 and 7×4, which are separate Leitner items. That is the point: with ten
+// facts and ten questions the old pool asked every fact every round, mastered
+// or not, and the box weights had nothing to choose from. A pool larger than
+// the round is what lets known facts rest and weak ones return (§7.2).
 export function poolFor(table, difficulty) {
-  const tables = table === 0 ? (difficulty === 0 ? EASY_TABLES : ALL_TABLES) : [table];
+  const factors = difficulty === 2 ? HARD_TABLES : ALL_TABLES;
+  if (table === 0) {
+    const tables = difficulty === 0 ? EASY_TABLES : factors;
+    const pool = [];
+    for (const t of tables) for (const f of factors) pool.push(pairIndex(t, f));
+    return pool;
+  }
   const pool = [];
-  for (const t of tables) for (let f = 1; f <= 10; f++) pool.push(pairIndex(t, f));
+  for (const f of factors) pool.push(pairIndex(table, f));
+  if (difficulty >= 1) {
+    for (const f of factors) if (f !== table) pool.push(pairIndex(f, table));
+  }
   return pool;
+}
+
+// How hard a fact is, before any child has touched it. Facts with a 1 or 10
+// are free, 2s and 5s have a song, big odd-ish factors (6, 7, 8) are the ones
+// every classroom drills longest; 9 has its finger trick, squares are chanted
+// and stick better than their neighbours (7×8 is harder than 8×8).
+const FACTOR_HARDNESS = { 1: 0, 2: 1, 3: 2, 4: 2, 5: 1, 6: 3, 7: 3, 8: 3, 9: 2, 10: 0 };
+
+export function pairHardness(t, f) {
+  const h = FACTOR_HARDNESS[t] + FACTOR_HARDNESS[f];
+  return t === f ? Math.max(h - 1, 0) : h; // 0..6
+}
+
+// The per-item boost the session multiplies into the Leitner weights (§7.2):
+// on Mittel and Schwer a hard fact is drawn up to 7× as often as a trivial
+// one of the same box. Leicht keeps uniform coverage — a beginner is meant to
+// meet her whole row, easy corners included.
+export function hardnessBoost(id, difficulty) {
+  if (difficulty === 0) return 1;
+  const [t, f] = pairOf(id);
+  return 1 + pairHardness(t, f);
 }
 
 // Question formats (§10.2): Leicht/Mittel plain multiplication; Schwer mixes
@@ -24,21 +66,32 @@ export function poolFor(table, difficulty) {
 // The division sign is injected, not chosen here: German schools write ":" and
 // a child who has never seen "÷" reads it as a decoration. This module stays
 // pure and i18n-free, so the caller passes `t("divSign")`.
-export function questionFor(id, difficulty, rng = Math.random, divSign = "÷") {
+//
+// `table` is the round's chosen row (0 = mixed). With the 4er-Reihe picked,
+// "12 : 3 = ?" answers itself — every answer in this round is a multiple's
+// partner of 4, so the gap and the division must always solve for the OTHER
+// factor, never for the table the child is standing on.
+export function questionFor(id, difficulty, rng = Math.random, divSign = "÷", table = 0) {
   const [t, f] = pairOf(id);
   if (difficulty < 2) {
     return { kind: "mul", t, f, text: `${t} × ${f} = ?`, answer: t * f };
   }
+  // Which factor may be the unknown? On a fixed table, only the other one.
+  const askT = table === 0 || f === table;
+  const askF = table === 0 || t === table;
   const r = rng();
   if (r < 0.5) {
     return { kind: "mul", t, f, text: `${t} × ${f} = ?`, answer: t * f };
   }
+  const forT = askT && (!askF || rng() < 0.5);
   if (r < 0.75) {
-    return rng() < 0.5
+    return forT
       ? { kind: "gap", t, f, text: `? × ${f} = ${t * f}`, answer: t }
       : { kind: "gap", t, f, text: `${t} × ? = ${t * f}`, answer: f };
   }
-  return { kind: "div", t, f, text: `${t * f} ${divSign} ${f} = ?`, answer: t };
+  return forT
+    ? { kind: "div", t, f, text: `${t * f} ${divSign} ${f} = ?`, answer: t }
+    : { kind: "div", t, f, text: `${t * f} ${divSign} ${t} = ?`, answer: f };
 }
 
 // Four multiple-choice options for Leicht: the answer plus 3 plausible,
@@ -87,6 +140,15 @@ export function starsFor(firstTryOk, total) {
 // failing. The lookup is total; only 0, 1 and 2 name a goal.
 export function nextStarGoal(stars) {
   return ["starGoal1", "starGoal2", "starGoal3"][stars] ?? null;
+}
+
+// What the next star costs in first-try answers, for a round of `total`
+// questions: the smallest count whose ratio clears the next threshold. The
+// goal strings used to hardcode "6 von 10", which became a lie the moment a
+// Schwer round grew to 12 questions.
+export function starGoalNeed(stars, total) {
+  const ratio = [0.6, 0.8, 1][stars];
+  return ratio === undefined || !(total > 0) ? null : Math.ceil(ratio * total);
 }
 
 // The three stars a tile can ever hold (§10.3).
