@@ -201,6 +201,29 @@ test("the fog is built from the art, never from the hit rect", () => {
   assert.match(fn, /classList\.contains\("hit"\)/, "fogRegion must skip the .hit rect");
 });
 
+// Regression: the cover used to be four gaussian-blurred ellipses. Blur has no
+// edge, so the mountain under it read as washed-out art — a rendering mistake —
+// not as weather that will lift. The clouds are drawn shapes now; only the veil
+// beneath them may blur, because its one job is to have no edge.
+test("the clouds have an edge; only the veil is blurred", () => {
+  const cloud = mapJs.slice(mapJs.indexOf("function cloudAt"), mapJs.indexOf("function fogRegion"));
+  assert.ok(!cloud.includes("fog-blur"), "a blurred cloud is the old fog again");
+  // the rim pass is drawn before the puff pass, so the edge is a single outer
+  // line — a stroke on each opaque puff would draw its seams inside the cloud
+  assert.match(cloud, /\["cloud-rim", "cloud-puff"\]/);
+  const fog = mapJs.slice(mapJs.indexOf("function fogRegion"), mapJs.indexOf("function ensurePlate"));
+  assert.match(fog, /veil\.setAttribute\("filter", "url\(#fog-blur\)"\)/);
+});
+
+// A locked region's game cannot pay a star, so "⭐ 0" under its name is a
+// promise the clouds just took back. The badge group stays in the markup for
+// the day the game ships.
+test("a fogged region carries no star badge", () => {
+  const render = mapJs.slice(mapJs.indexOf("function render"));
+  assert.match(render, /if \(locked\) badge\.replaceChildren\(\);/);
+  assert.match(render, /else renderBadge\(/, "…and a playable region keeps its badge");
+});
+
 // Regression: tapping a fogged region navigated to a stub page whose single
 // sentence explained that the game does not exist. Mara reads almost nothing;
 // she was simply gone from the map, with no way back she recognised.

@@ -30,11 +30,44 @@ function pave(game, on) {
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-// Four of the five games are stubs. Their regions are drawn under fog so the
-// island never promises what the site cannot deliver (§3.1). The fog is built
+// Four of the five games are stubs. Their regions are drawn under clouds so the
+// island never promises what the site cannot deliver (§3.1). The cover is built
 // from the region's own art, so it fits a mountain as well as a lake, and it
 // is `pointer-events: none` — the tap belongs to the region's own `.hit` rect,
-// which is bounded; a fog blob is not, and it would grey out its neighbours.
+// which is bounded; a cloud bank is not, and it would grey out its neighbours.
+//
+// The cover used to be four gaussian-blurred ellipses. Blur has no edge, and a
+// shape with no edge does not read as a *thing*: the mountain under it looked
+// like washed-out art, a rendering mistake, not like weather that will lift.
+// These are drawn cumulus clouds — a body and three bumps each — and only the
+// veil underneath keeps the old blur, because its one job is to have no edge.
+// One cloud: a body and three bumps, drawn twice. The rim pass sits under the
+// puff pass, a little larger, so the cloud has a single outer edge — a stroke
+// on each opaque puff would draw its seams *inside* the cloud instead.
+function cloudAt(g, x, y, s) {
+  const puffs = [
+    [0, 0.12, 1.0, 0.45],       // the body
+    [-0.62, -0.1, 0.42, 0.42],  // west bump
+    [-0.05, -0.32, 0.55, 0.55], // the crown
+    [0.58, -0.06, 0.38, 0.38],  // east bump
+  ];
+  const cloud = document.createElementNS(SVG_NS, "g");
+  cloud.setAttribute("class", "cloud");
+  for (const cls of ["cloud-rim", "cloud-puff"]) {
+    const grow = cls === "cloud-rim" ? 1.5 : 0;
+    for (const [dx, dy, rx, ry] of puffs) {
+      const e = document.createElementNS(SVG_NS, "ellipse");
+      e.setAttribute("class", cls);
+      e.setAttribute("cx", (x + dx * s).toFixed(1));
+      e.setAttribute("cy", (y + dy * s).toFixed(1));
+      e.setAttribute("rx", (rx * s + grow).toFixed(1));
+      e.setAttribute("ry", (ry * s + grow).toFixed(1));
+      cloud.appendChild(e);
+    }
+  }
+  g.appendChild(cloud);
+}
+
 function fogRegion(region) {
   if (region.querySelector(".fog")) return; // render() runs again after a reset
   const label = region.querySelector(".region-label");
@@ -53,28 +86,31 @@ function fogRegion(region) {
 
   const g = document.createElementNS(SVG_NS, "g");
   g.setAttribute("class", "fog");
-  g.setAttribute("filter", "url(#fog-blur)");
 
-  // A veil over the whole art, then three banks for texture. The veil is what
-  // makes the region read as *closed*: with banks alone the treetops and the
-  // book poked through and Lesewiese looked open for business. Fog spilling
-  // onto a neighbour is harmless — playable regions are painted last (§3.1),
-  // so nothing can grey out the one village a child can walk into.
+  // A veil over the whole art, then three clouds. The veil is what makes the
+  // region read as *closed*: with clouds alone the treetops and the book poked
+  // through and Lesewiese looked open for business. Cover spilling onto a
+  // neighbour is harmless — playable regions are painted last (§3.1), so
+  // nothing can grey out the one village a child can walk into.
   const w = x1 - x0, h = y1 - y0, cx = x0 + w / 2, cy = y0 + h / 2;
-  const banks = [
-    [0.00, 0.00, 0.52, 0.52, 0.55], // the veil
-    [-0.15, 0.02, 0.32, 0.24, 0.72],
-    [0.16, -0.05, 0.30, 0.22, 0.70],
-    [0.00, 0.14, 0.38, 0.20, 0.76],
+  const veil = document.createElementNS(SVG_NS, "ellipse");
+  veil.setAttribute("class", "fog-veil");
+  veil.setAttribute("filter", "url(#fog-blur)");
+  veil.setAttribute("cx", cx.toFixed(1));
+  veil.setAttribute("cy", cy.toFixed(1));
+  veil.setAttribute("rx", (0.48 * w).toFixed(1));
+  veil.setAttribute("ry", (0.48 * h).toFixed(1));
+  g.appendChild(veil);
+
+  // Staggered like the old banks: high-left, high-right, low-centre. Sized by
+  // the art's width alone so a tall region gets round clouds, not stretched ones.
+  const clouds = [
+    [-0.17, -0.16, 0.26],
+    [0.20, -0.02, 0.22],
+    [-0.02, 0.22, 0.25],
   ];
-  for (const [dx, dy, rx, ry, o] of banks) {
-    const e = document.createElementNS(SVG_NS, "ellipse");
-    e.setAttribute("cx", (cx + dx * w).toFixed(1));
-    e.setAttribute("cy", (cy + dy * h).toFixed(1));
-    e.setAttribute("rx", (rx * w).toFixed(1));
-    e.setAttribute("ry", (ry * h).toFixed(1));
-    e.setAttribute("opacity", o);
-    g.appendChild(e);
+  for (const [dx, dy, s] of clouds) {
+    cloudAt(g, cx + dx * w, cy + dy * h, Math.max(16, s * w));
   }
   region.insertBefore(g, label); // over the art, under the label and badge
 }
@@ -213,8 +249,14 @@ function render() {
 
   // region star badges and visual states
   for (const game of GAMES) {
+    const locked = !isPlayable(game);
     const badge = document.querySelector(`[data-badge="${game}"]`);
-    if (badge) renderBadge(badge, "ui-star", gameStarsOf(rewards.pr, game), starBadgeTier(rewards.pr, game));
+    // A locked region's game cannot pay a star, so "⭐ 0" under its name is a
+    // promise the clouds just took back. The group stays for the day it ships.
+    if (badge) {
+      if (locked) badge.replaceChildren();
+      else renderBadge(badge, "ui-star", gameStarsOf(rewards.pr, game), starBadgeTier(rewards.pr, game));
+    }
     const region = document.getElementById(`region-${game}`);
     if (region) {
       region.classList.remove("thriving", "mastered");
@@ -223,9 +265,8 @@ function render() {
       // the island remembers: a mastered region's road turns to cobblestone
       pave(game, rs === "mastered");
 
-      // A region whose game does not exist yet sits under fog and does not open:
-      // the href stays for the deep link, the click is cancelled (see above).
-      const locked = !isPlayable(game);
+      // A region whose game does not exist yet sits under clouds and does not
+      // open: the href stays for the deep link, the click is cancelled (above).
       region.classList.toggle("locked", locked);
       if (locked) {
         fogRegion(region);
