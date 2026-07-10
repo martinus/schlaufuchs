@@ -141,22 +141,46 @@ workflow runs it before publishing.
 - **Dead strings and stale comments accumulate.** When you remove a feature,
   remove its i18n keys and fix the comments that describe the old behaviour.
   The i18n tests now fail on both a missing and an unused key.
-- **A merged PR ends its branch.** PRs here are **not squashed** — the branch's
-  own commits land on `main` as they were, so write them as if they will be
-  read there, because they will be. Keep committing on a merged branch anyway
-  and the next PR silently reverts whatever landed on `main` in the meantime —
-  this nearly deleted `tests/svg-icon-validator.js` and
-  `tests/graphics-assets.test.js` from a neighbouring PR. So, before the first
-  change after a merge:
+- **A merged PR ends its branch — and you will not be told when it happens.**
+  Martin merges out of band, between your turns, often right after you open the
+  PR. So the branch you are standing on may already be dead, and a merged branch
+  is a dead end: pushing more commits to it does **nothing** to `main`, and
+  `gh pr edit` on a merged PR edits a closed page nobody reads. Both were done
+  this session — a whole feature was committed onto `round-guard` *after* it
+  merged, and had to be cherry-picked out onto a fresh branch to reach `main`.
+
+  Therefore, **the check below is the first thing you do before ANY new unit of
+  work, not only when you happen to know a merge occurred.** Do not trust your
+  memory of the branch's state from an earlier turn:
 
   ```sh
-  gh pr list --state merged --limit 3   # did my branch's PR land?
-  git fetch origin && git checkout -b <new-branch> origin/main
+  gh pr list --state merged --limit 5      # is the branch I'm on already merged?
+  git branch --show-current                # ...this one
   ```
 
-  Already committed onto the stale branch? `git rebase origin/main`. Either
-  way, **before opening the PR**, read what it deletes — an unexpected name
-  here means you are undoing someone's merge:
+  If it merged (or you are on `main`), start clean and move only the commits
+  that are genuinely new:
+
+  ```sh
+  git fetch origin && git checkout -b <new-branch> origin/main
+  git cherry-pick <sha-of-each-new-commit>   # NOT the ones already on main
+  ```
+
+  **Do not reach for `git rebase origin/main` to "catch up" a merged branch.**
+  Merges here rewrite history: a rebase- or squash-merge lands your commits on
+  `main` with **new SHAs**, so your local branch's originals look like fresh,
+  unmerged work. Rebasing (or opening a PR from that branch) then replays them
+  as duplicates on top of what already merged — and drags along anything that
+  landed on `main` in between, reverting it. That is how a neighbouring PR
+  nearly lost `tests/svg-icon-validator.js` and `tests/graphics-assets.test.js`.
+  Cherry-picking only the new commit sidesteps all of it.
+
+  A corollary of the SHA rewrite: **"is my work on `main`?" cannot be answered
+  by SHA.** `git branch -r --contains <sha>` will say no even when the content
+  is there. Ask `gh pr view <n> --json state,mergedAt` and compare the *diff*.
+
+  Either way, **before opening the PR**, read what it deletes — an unexpected
+  name here means you are undoing someone's merge:
 
   ```sh
   git diff --diff-filter=D --name-only origin/main..HEAD
