@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Germany, in the site's own red and gold -->
+  <defs><clipPath id="r"><rect x="6" y="15" width="52" height="34" rx="6"/></clipPath></defs>
+  <g clip-path="url(#r)">
+    <rect x="6" y="15" width="52" height="12" fill="#2b2420"/>
+    <rect x="6" y="26" width="52" height="12" fill="#c1121f"/>
+    <rect x="6" y="37" width="52" height="12" fill="#f4b400"/>
+  </g>
+  <rect x="6" y="15" width="52" height="34" rx="6" fill="none" stroke="#4a2c17" stroke-width="3"/>
+</svg>

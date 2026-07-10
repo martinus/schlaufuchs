@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- the same speaker, told to hush -->
+  <path d="M7 24 h10 l13 -11 v38 l-13 -11 H7 Z" fill="#4a2c17" stroke="#4a2c17" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M39 25 l14 14 M53 25 l-14 14" fill="none" stroke="#c1121f" stroke-width="5" stroke-linecap="round"/>
+</svg>

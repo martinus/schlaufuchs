@@ -72,10 +72,21 @@ for (const g of GAMES) {
   });
 }
 
-// Names that have a real SVG file in assets/img/icons/<name>.svg. Empty until
-// graphics are delivered; add names here (and drop the files) to switch a name
-// from emoji to SVG. Nothing else in the code changes.
-export const AVAILABLE = new Set([]);
+// Names that have a real SVG file in assets/img/icons/<name>.svg. Add names
+// here (and drop the files) to switch a name from emoji to SVG. Nothing else
+// in the code changes. The UI set is delivered; the rest of the brief
+// (docs/GRAPHICS_BRIEF.md) still renders as emoji. ui-star stays an emoji on
+// purpose: ⭐ also appears inside i18n strings and tile markup, and a drawn
+// star beside an emoji star would be two different currencies.
+export const AVAILABLE = new Set([
+  "flag-de",
+  "flag-en",
+  "ui-gear",
+  "ui-map",
+  "ui-sound-off",
+  "ui-sound-on",
+  "ui-trash",
+]);
 
 // Resolve an icon file URL relative to THIS module, so it works from any page
 // depth and under subpath deploys (never emit an absolute /assets/... path).

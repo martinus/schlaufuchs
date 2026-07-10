@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- a simplified Union Jack; the navy leans on the site's depth blue -->
+  <defs><clipPath id="r"><rect x="6" y="15" width="52" height="34" rx="6"/></clipPath></defs>
+  <g clip-path="url(#r)">
+    <rect x="6" y="15" width="52" height="34" fill="#1f6f8b"/>
+    <path d="M6 15 L58 49 M58 15 L6 49" stroke="#fdf6ec" stroke-width="9"/>
+    <path d="M6 15 L58 49 M58 15 L6 49" stroke="#c1121f" stroke-width="3.5"/>
+    <path d="M32 15 V49 M6 32 H58" stroke="#fdf6ec" stroke-width="13"/>
+    <path d="M32 15 V49 M6 32 H58" stroke="#c1121f" stroke-width="7"/>
+  </g>
+  <rect x="6" y="15" width="52" height="34" rx="6" fill="none" stroke="#4a2c17" stroke-width="3"/>
+</svg>
