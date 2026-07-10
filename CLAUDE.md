@@ -38,9 +38,27 @@ shared machine it also kills someone else's server. Both forms were tried here;
 both misfired. Use `kill-serve.sh`.
 
 `tools/play.js` is the round driver for einmaleins — load it into a page with
-`--do 'eval @tools/play.js'`, then `--do 'eval play({ wrongAt: 1 })'`. It
-returns a trace of every question and of the scene after each one. Its parser
-is unit-tested against every shape `questionFor()` can produce
+`--do 'eval @tools/play.js'`, then `--do 'eval play({...})'`. It escapes the
+level picker the game opens on (Escape starts the round on the fox's tile) and
+plays until the summary is up. Options:
+
+- `wrongAt: 3` or `[1,2,3]` — answer these questions wrongly first (drives the
+  aid card, star loss, the ⭐⭐ tempo gate);
+- `delayMs: 5000` — "think" that long before every answer, inside the game's
+  tempo clock. This is how the slow tempo tiers (🐇/🚗, §10.6) are reached in a
+  driven round and the knob for calibrating `TEMPO_TIERS`; the driver's
+  deadline scales with it;
+- `stopAt: 5` / `questions: n` — stop early, e.g. to screenshot mid-round.
+
+It returns a trace of every question and of the scene after each one;
+`readScene()` and `readSummary()` are also available as separate `eval` steps.
+Seed state through the cookie (difficulty `d`, table `t`, `stars`, `tempo` —
+see the recipe below), and read results back out of `document.cookie`. Two
+traps: every post-answer wait must outlive the game's 250ms correct-wait
+transition (`SETTLE = 350` in play.js — on Leicht a shorter wait re-reads the
+same question and silently swallows `wrongAt`), and the trailing duplicate
+reads of the final question in a trace are harmless phantoms. The parser is
+unit-tested against every shape `questionFor()` can produce
 (`tests/play.test.js`), because a driver that answers the wrong thing proves
 nothing, quietly.
 

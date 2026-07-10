@@ -7,6 +7,13 @@
 //     --do 'eval play({ wrongAt: 1 })' \
 //     --do 'until #sum-overlay'
 //
+// play() escapes the level picker the game opens on and runs until the round's
+// summary is up. Options: `wrongAt` (question number or list — answered
+// wrongly first), `delayMs` (think that long before every answer, inside the
+// game's tempo clock — the knob for reaching the slow tempo tiers, §10.6),
+// `stopAt` / `questions` (stop early, e.g. for a mid-round screenshot).
+// `readScene()` and `readSummary()` are separate globals for `eval` steps.
+//
 // It exists because this round has now been driven from scratch in four
 // separate sessions, each time thrown away with the scratchpad. Every
 // verification of the scene, the basket, the aid card and the summary starts
