@@ -50,6 +50,12 @@ export const GRAPHICS = {
   "deco-trophy": { emoji: "🏆" },
   "deco-party": { emoji: "🎉" },
 
+  // The tempo ladder (§10.6): hare → race car → rocket. There is no snail —
+  // the lowest state is no symbol at all.
+  "tempo-hare": { emoji: "🐇" },
+  "tempo-car": { emoji: "🚗" },
+  "tempo-rocket": { emoji: "🚀" },
+
   // Journey path (obstacles + goals)
   "j-sunflower": { emoji: "🌻" },
   "j-rooster": { emoji: "🐓" },

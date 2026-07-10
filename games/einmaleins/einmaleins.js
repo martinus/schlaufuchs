@@ -19,6 +19,7 @@ import {
   POOL_COUNT, EASY_TABLES, ALL_TABLES, HARD_TABLES, ROUND_SIZE, poolFor,
   questionFor, choicesFor, hardnessBoost,
   starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit, fittedFontSize, retryStep,
+  median, tempoTier, awardTempo,
 } from "./logic.js";
 
 initI18n(strings);
@@ -51,6 +52,10 @@ const summary = overlayFrom(document.getElementById("sum-overlay"), {
 });
 const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
 const DIFF_SLUGS = ["easy", "medium", "hard"];
+// The tempo ladder's three faces (§10.6), indexed by tier. Index 0 is the
+// point: below the hare there is nothing to draw, never a snail.
+const TEMPO_ICONS = [null, "tempo-hare", "tempo-car", "tempo-rocket"];
+const TEMPO_KEYS = [null, "tempo1", "tempo2", "tempo3"];
 const SUM_OK_KEYS = ["sumOk1", "sumOk2", "sumOk3", "sumOk4", "sumOk5", "sumOk6"];
 const NEXT_MS = 250;
 
@@ -100,6 +105,12 @@ let roundOver = false;
 let wonTrophies = []; // what this round just handed over, for the showcase
 // Only ever flows into the parents' view (§20). The child is never shown it.
 let t0 = 0;
+// The tempo ladder's raw material (§10.6): when the current question appeared,
+// and how long each first-try-correct answer took. The child only ever meets
+// these as a symbol — never as a number of time.
+let qShownAt = 0;
+let answerTimes = [];
+let missedIds = new Set();
 
 function tbl2short(tbl) {
   return tbl === 0 ? t("emMixed") : t("emTableShort", { t: tbl });
@@ -138,6 +149,8 @@ function startRound() {
   buffer = "";
   roundOver = false;
   t0 = Date.now();
+  answerTimes = [];
+  missedIds = new Set();
   summary.close();
   buildKeypad();
   askNext();
@@ -156,6 +169,7 @@ function askNext() {
   $("question").hidden = false;
   renderQuestion();
   renderStatus();
+  qShownAt = Date.now(); // the tempo clock starts when the question is up (§10.6)
   if (diff === 0) {
     // drawn once per question: the aid re-renders the SAME four options, and a
     // reshuffle between the answer and the retry would move them under the
@@ -296,11 +310,35 @@ document.addEventListener("keydown", (e) => {
   e.preventDefault();
 });
 
+// The ⚡ moment (§10.6): one answer at rocket speed, marked the instant it
+// lands. Appended to the stage, not the question — renderQuestion rewrites the
+// question's innerHTML in this same tick and would eat it. Decorative only; a
+// slow answer sees nothing, because there is no negative moment. The flight is
+// a transition, so reduced motion degrades to "briefly there", never a
+// keyframe hanging mid-air (§10.5).
+function blitzFlash() {
+  const b = document.createElement("span");
+  b.className = "blitz";
+  b.setAttribute("aria-hidden", "true");
+  b.textContent = "⚡";
+  $("question").parentElement.appendChild(b);
+  requestAnimationFrame(() => b.classList.add("gone"));
+  setTimeout(() => b.remove(), 800);
+}
+
 function submit(value, mcButton) {
   const correct = value === question.answer;
   if (mcButton) mcButton.classList.add(correct ? "flash-ok" : "flash-err");
   session.answer(currentId, correct);
   if (correct) {
+    // Only a first try feeds the tempo ladder (§10.6): an item that was ever
+    // missed this round contributes nothing, so speed can never buy back what
+    // a wrong answer cost. One answer at rocket speed earns its ⚡ right now.
+    if (!missedIds.has(currentId)) {
+      const took = Date.now() - qShownAt;
+      answerTimes.push(took);
+      if (tempoTier(took, diff) === 3) blitzFlash();
+    }
     phase = "correct-wait";
     sfx.correct();
     journey.advance();
@@ -311,6 +349,7 @@ function submit(value, mcButton) {
     }
     setTimeout(askNext, NEXT_MS);
   } else {
+    missedIds.add(currentId);
     phase = "wrong-wait";
     retry = "";
     sfx.wrong();
@@ -381,9 +420,21 @@ function endRound() {
   const old = starDigit(starsObj[diff], table);
   const improved = stars > old;
   if (improved) starsObj[diff] = withStarDigit(starsObj[diff], table, stars);
+
+  // The tempo ladder (§10.6): the round's median answer time as a tier, gated
+  // by two stars and stored only upward — the same digit strings the stars
+  // use, one per difficulty. Computed here, painted below only as a symbol.
+  const tier = tempoTier(median(answerTimes), diff);
+  const tempoObj = { ...(saved.tempo ?? {}) };
+  const oldTempo = starDigit(tempoObj[diff], table);
+  const newTempo = awardTempo({ stars, tier, best: oldTempo });
+  const tempoImproved = newTempo > oldTempo;
+  if (tempoImproved) tempoObj[diff] = withStarDigit(tempoObj[diff], table, newTempo);
+
   const practice = addPractice(saved, diff, (Date.now() - t0) / 1000);
   setGame("einmaleins", {
-    d: diff, t: table, box: boxesToString(full, POOL_COUNT), stars: starsObj, ...practice,
+    d: diff, t: table, box: boxesToString(full, POOL_COUNT), stars: starsObj,
+    tempo: tempoObj, ...practice,
   });
 
   // points come from progress, never from repetition (§8.3)
@@ -404,6 +455,16 @@ function endRound() {
     if (goal) $("sum-goal").textContent = t(goal, { n: starGoalNeed(stars, total), total });
     $("sum-best").hidden = !improved;
     $("sum-best").textContent = t("newBest");
+    // The finish line's verdict, as a symbol and its name — never a number of
+    // time (§10.6). A round that awarded no tier shows nothing: below the
+    // hare there is no snail, only an empty line that never appears.
+    const paid = stars >= 2 && tier > 0;
+    $("sum-tempo").hidden = !paid;
+    if (paid) {
+      $("sum-tempo").innerHTML =
+        `${iconHTML(TEMPO_ICONS[tier], { size: 22 })} ${t(TEMPO_KEYS[tier])}`
+        + (tempoImproved ? ` · <b>${t("tempoBest")}</b>` : "");
+    }
     // One round can cross several thresholds at once — a first Schwer round to
     // three stars is worth 18 points and passes 2, 9 and 18. Showing only the
     // first would quietly swallow two prizes (§8.3).
@@ -439,7 +500,7 @@ function endRound() {
     // beneath it — until they walked back to the map.
     bar.refresh();
     summary.open();
-    if (improved || stars === 3 || res.newTrophies.length > 0) confetti();
+    if (improved || stars === 3 || res.newTrophies.length > 0 || tempoImproved) confetti();
   }, 700);
 }
 
@@ -503,7 +564,9 @@ function renderPicker() {
   const box = $("pick-levels");
   box.innerHTML = "";
   // not the module's `saved`: the picker must read the cookie as it is now
-  const starsByDiff = getGame("einmaleins").stars ?? {};
+  const savedNow = getGame("einmaleins");
+  const starsByDiff = savedNow.stars ?? {};
+  const tempoByDiff = savedNow.tempo ?? {};
   let currentTile = null;
 
   DIFF_KEYS.forEach((key, d) => {
@@ -528,14 +591,21 @@ function renderPicker() {
       // a child who reads nothing cannot tell it from the rest. A die can.
       const name = tbl === 0 ? `🎲 ${tbl2short(tbl)}` : tbl2short(tbl);
       const art = left > 0 ? "<i>⭐</i>".repeat(left) : '<b class="tdone">✓</b>';
+      // The tempo symbol the tile has earned (§10.6), a badge in the corner.
+      // Tier 0 draws nothing at all — an empty corner, never a snail.
+      const tempo = starDigit(tempoByDiff[d], tbl);
+      const badge = tempo > 0
+        ? `<span class="ttempo" aria-hidden="true">${iconHTML(TEMPO_ICONS[tempo], { size: 16 })}</span>`
+        : "";
       b.innerHTML = `<span class="tstars" aria-hidden="true">${art}</span>`
-        + `<span class="tname">${name}</span>`;
+        + badge + `<span class="tname">${name}</span>`;
       // The fox on the current tile is decorative markup; a screen reader is
       // told where it stands in words.
       const here = b === currentTile ? ` · ${t("tileHere")}` : "";
+      const pace = tempo > 0 ? ` · ${t("tileTempo", { name: t(TEMPO_KEYS[tempo]) })}` : "";
       b.setAttribute(
         "aria-label",
-        `${t(key)} · ${tbl2short(tbl)}${here} — ${left > 0 ? t("tileStarsLeft", { n: left }) : t("tileMastered")}`,
+        `${t(key)} · ${tbl2short(tbl)}${here} — ${left > 0 ? t("tileStarsLeft", { n: left }) : t("tileMastered")}${pace}`,
       );
       b.addEventListener("click", () => chooseLevel(d, tbl, b));
       grid.appendChild(b);
