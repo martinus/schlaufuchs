@@ -99,6 +99,22 @@
     const deadline = Date.now() + 60000;
     let n = 0;
 
+    // The game opens on the level picker (§10.1), and no question exists while
+    // it is up. Dismissing it starts a round on the tile the fox stands on —
+    // the cookie's own level — so leave it the way a child in a hurry does.
+    if (!$("pick-overlay").hidden) {
+      document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      await sleep(160);
+    }
+
+    // Every wait after an answer must outlive the game's post-correct
+    // transition (NEXT_MS = 250ms). On Leicht the gap keeps showing "?" while
+    // that transition runs, so a shorter sleep re-read the SAME question,
+    // "answered" it into the correct-wait phase — where clicks are swallowed —
+    // and logged every question twice. A wrongAt landing on such a phantom
+    // read was swallowed with it, and the round it meant to disturb ran clean.
+    const SETTLE = 350;
+
     while (!summaryUp() && n < questions && Date.now() < deadline) {
       const text = await nextQuestion();
       if (text === null) break;
@@ -108,7 +124,7 @@
       n += 1;
       const wrongNow = wrong.has(n);
       await answer(wrongNow ? want + 1 : want);
-      await sleep(160);
+      await sleep(SETTLE);
 
       if (aidUp()) {
         trace.push({ q: n, text, gave: want + 1, aid: true, ...readScene() });
@@ -117,7 +133,7 @@
         // the answer completes itself at the last digit, and `answer()`'s
         // trailing OK click lands in `correct-wait`, where OK does nothing.
         await answer(want);
-        await sleep(160);
+        await sleep(SETTLE);
       } else {
         trace.push({ q: n, text, gave: want, ...readScene() });
       }
