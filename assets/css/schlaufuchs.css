@@ -878,7 +878,18 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 /* Two states, two looks: mastered pays nothing more, and the level she is
    playing right now is where the list opens. */
 .tilegrid button.mastered { box-shadow: inset 0 0 0 2px var(--ok), var(--shadow); }
-.tilegrid button.current { box-shadow: inset 0 0 0 3px var(--orange), var(--shadow); }
+/* One orange ring, not two. The current tile is also the one the picker focuses
+   on open, so an inset orange box-shadow sat *inside* the orange `:focus-visible`
+   outline — two concentric red rings on the one tile a child looks at first. An
+   outline instead of a box-shadow collapses them: `.tilegrid button.current`
+   outranks `:focus-visible`, so its ring wins and the focus ring never doubles
+   it. `box-shadow: var(--shadow)` also overrides `.mastered`'s green inset ring,
+   so a mastered *and* current tile shows the orange one alone, as it did before. */
+.tilegrid button.current {
+  outline: 3px solid var(--orange);
+  outline-offset: -3px;
+  box-shadow: var(--shadow);
+}
 
 /* The fox stands on the level she is playing (`levelfox.js`). It is positioned
    in the level list's own coordinates, so it scrolls with the tiles rather than
@@ -1081,8 +1092,8 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    opened 46px off to one side. The name breaks instead. */
 .trophies {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
 /* One trophy card, used on the album shelf and in the round summary. A child
@@ -1118,7 +1129,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   line-height: 1;
 }
 
-/* The overlap is `em` of the symbol's own size, so it holds at 34px on the
+/* The overlap is `em` of the symbol's own size, so it holds at 46px on the
    shelf and at 170px in the showcase without a second number to keep in step. */
 .tcard .t-theme {
   position: relative;
@@ -1135,9 +1146,9 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   color: var(--ink-soft);
   text-align: center;
   padding: 0 3px;
-  /* German compounds do not fit a 77px slot in one piece (see .trophies), and a
-     centred flex item is shrink-to-fit: without `stretch` the name's own box is
-     as wide as the word, so it never wraps — it just hangs over both edges. */
+  /* German compounds do not fit a ~105px slot in one piece (see .trophies), and
+     a centred flex item is shrink-to-fit: without `stretch` the name's own box
+     is as wide as the word, so it never wraps — it just hangs over both edges. */
   align-self: stretch;
   overflow-wrap: break-word;
   hyphens: auto;
@@ -1194,13 +1205,14 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .tcard .sname,
 .trophies .slot .sname { color: var(--depth); }
 
-@media (min-width: 600px) {
-  .trophies { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-}
+/* Three to a row at every width, like the level picker (§3.2). The shelf used
+   to widen to six on a desktop, back when the phone showed four; three cups a
+   row is now the one rhythm the child-facing grids keep, and the 560px column
+   the section is capped at holds them big without a second breakpoint. */
 
 /* ---- the showcase: one trophy, held up (§3.2) ---- */
 /* Mara won her first trophy, found it on the shelf, tapped it — and it was a
-   77px square that did nothing. A trophy is for showing to somebody. Tapping it
+   small square that did nothing. A trophy is for showing to somebody. Tapping it
    fills the screen with it: confetti, a fox jumping beside it, stars blinking
    around it. `prefers-reduced-motion` stops all three (the rule at the foot of
    this file), and what is left is still the trophy, still full size. */
