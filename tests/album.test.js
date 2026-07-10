@@ -134,9 +134,13 @@ test("the shelf and the round summary hold a trophy up the same way", () => {
 // showcase overlay inherited the 406px viewport and opened 46px off to one side.
 test("a long German trophy name cannot widen the shelf", () => {
   const grid = css.slice(css.indexOf(".trophies {"), css.indexOf("}", css.indexOf(".trophies {")));
-  assert.match(grid, /repeat\(4, minmax\(0, 1fr\)\)/, "a bare 1fr floors the track at min-content");
-  assert.ok(!/\.trophies \{[^}]*repeat\(4, 1fr\)/.test(css));
-  assert.match(css, /repeat\(6, minmax\(0, 1fr\)\)/, "…and the wide layout too");
+  // Three to a row now (§3.2), like the picker — but the guard is `minmax(0, …)`,
+  // not the column count: a bare `1fr` floors the track at min-content, which for
+  // a <button> is its longest unbreakable word ("Rechenschieber" → 406px inside a
+  // 360px phone, and the fixed showcase inherited the sideways scroll).
+  assert.match(grid, /repeat\(3, minmax\(0, 1fr\)\)/, "a bare 1fr floors the track at min-content");
+  // no `.trophies` track may be a bare fraction, at any width
+  assert.ok(!/\.trophies[^{]*\{[^}]*repeat\(\d+, 1fr\)/.test(css), "a bare 1fr would still overflow");
 
   const name = css.slice(css.indexOf(".tcard .sname,"), css.indexOf("}", css.indexOf(".tcard .sname,")));
   assert.match(name, /overflow-wrap: break-word/, "the name must be allowed to break");

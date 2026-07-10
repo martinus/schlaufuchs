@@ -22,6 +22,12 @@ function sectionTitle(game) {
   return place === game_ ? place : `${place} · ${game_}`;
 }
 
+// The cup size on the shelf. Three slots to a row (not four) leaves each slot
+// ~105px on a phone, and a 34px cup there was the picker's small-symbol problem
+// again: a speck in a wide card. `.trophies` and the summary size the same card
+// (`trophycard.js`), so this is the shelf's number, passed at the call site.
+const SHELF_CUP = 46;
+
 // The shelves are built with innerHTML, not with [data-i18n], so nothing in
 // them is re-translated by setLang(). They are rebuilt instead — which is why
 // this is a function and not the body of the module (§3.4).
@@ -45,7 +51,7 @@ function render() {
         // child wants to make about it.
         if (i < earned) {
           return trophyCardHTML(s, {
-            size: 34, lang, cls: "slot earned", button: true,
+            size: SHELF_CUP, lang, cls: "slot earned", button: true,
             attrs: `data-trophy="${game}:${i}"`,
           });
         }
@@ -68,7 +74,7 @@ function render() {
           label = `${t("trophyLocked")} — ${owed === 1 ? t("trophyNextIn1") : t("trophyNextIn", { n: owed })}`;
         }
         return `<div class="slot locked" aria-label="${label}">
-          <span class="silhouette" aria-hidden="true">${iconHTML(s.icon, { size: 34 })}</span>${foot}</div>`;
+          <span class="silhouette" aria-hidden="true">${iconHTML(s.icon, { size: SHELF_CUP })}</span>${foot}</div>`;
       })
       .join("");
     section.innerHTML = `

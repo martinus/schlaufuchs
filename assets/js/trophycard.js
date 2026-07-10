@@ -14,9 +14,10 @@
 import { iconHTML } from "./graphics.js";
 
 // The theme emoji rides in the cup's bowl, so it is drawn smaller than the cup
-// that carries it — but not by much. At half the cup a 🔔 in a 34px card was a
+// that carries it — but not by much. At half the cup a 🔔 in a small card was a
 // speck, and the twelve trophies on a shelf were twelve identical cups. Ratio,
-// not pixels: the card is used at 34px on the shelf and at 44px in the summary.
+// not pixels, so it holds at every size the card is used: 46px on the shelf
+// (`SHELF_CUP` in album.js), 44px in the summary, 170px in the showcase.
 const THEME_RATIO = 0.66;
 
 export function trophyCardHTML(trophy, { size = 34, lang = "de", href, button = false, cls = "", label, attrs: extra = "" } = {}) {

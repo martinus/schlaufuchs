@@ -248,8 +248,15 @@ one place, one name (it reuses the `region_pokalraum` string). It is styled as
 a room: a warm wall, and a wooden shelf under each game's collection.
 
 One page, five sections (one per region, translated heading). Each section
-shows **12 trophy slots** in a grid: earned trophies as the shared **trophy
-card** (`trophycard.js` — the trophy's own emoji **standing on** the cup, two
+shows **12 trophy slots**, **three to a row** at every width — the same rhythm
+the level picker keeps (§10.2), and enough room for a cup that reads as a cup
+(the shelf used to be four across on a phone and six on a desktop, where the
+trophies shrank to specks). The grid tracks are `minmax(0, 1fr)`, never a bare
+`1fr`: a bare fraction floors each track at the item's longest unbreakable word,
+and „Rechenschieber" once pushed the row past a 360px phone and dragged the
+fixed showcase overlay off-centre with it. Earned trophies show as the shared
+**trophy card** (`trophycard.js` — the trophy's own emoji **standing on** the
+cup, two
 thirds of its size (`THEME_RATIO`) and dipping into the bowl by about a quarter
 of its own height. `.t-art` is a column, symbol above cup, so the pair is taller than
 the cup alone: you see what you won before you see what it came in. Buried
@@ -286,7 +293,7 @@ over (§10.1). That card used to be a *link to this room*, which celebrated by
 taking the child out of the round she had just finished and dropping her among
 empty slots. The showcase's overlay sits above the summary's (z-index 50 vs 40),
 so the round is still there behind it, and the focus goes back to the trophy she
-pressed. One celebration, one module, two callers. A trophy is for showing to somebody, and a 77px shelf slot that does
+pressed. One celebration, one module, two callers. A trophy is for showing to somebody, and a shelf slot that does
 nothing when pressed is a receipt. An earned slot is therefore a `<button>`
 (`trophyCardHTML({ button: true })`) carrying `data-trophy="<game>:<index>"`,
 and one delegated listener on `#album` opens the showcase. A locked slot is not
