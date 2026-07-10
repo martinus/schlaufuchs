@@ -19,9 +19,13 @@ initTopBar({ back: "../../" });
 
 const main = document.getElementById("stub");
 if (main) {
+  // The sentence above already points at the one game that exists; the first
+  // chip is that sentence made pressable. Without it the page named a game
+  // ready to play and then offered only the way back.
   main.innerHTML = `
     <span class="stub-emoji">${iconHTML(`region-${game}`, { size: 64 })}</span>
     <h1 data-i18n="game_${game}">${t(`game_${game}`)}</h1>
     <p data-i18n="comingSoon">${t("comingSoon")}</p>
+    <a class="chip" href="../einmaleins/" data-i18n="stubPlay">${t("stubPlay")}</a>
     <a class="chip" href="../../" data-i18n="back">${t("back")}</a>`;
 }

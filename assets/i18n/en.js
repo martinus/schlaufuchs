@@ -58,6 +58,7 @@ export default {
   lockedHint: "Not available yet",
   soonBubble: "Soon!",
   comingSoon: "This game isn't built yet. Times tables is ready to play.",
+  stubPlay: "Practise times tables",
   region_pokalraum: "Trophy Room",
   trophyLocked: "Not unlocked yet",
   trophyNextIn: "{n} more ⭐ until the next trophy",
