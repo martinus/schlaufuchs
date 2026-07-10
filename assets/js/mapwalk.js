@@ -13,7 +13,7 @@
 // The Trophy Room's is beside its house, not on it: the fox is drawn after every
 // region, so an anchor on the shelf would paint the fox over the trophies.
 export const ANCHORS = {
-  einmaleins: [180, 372],
+  einmaleins: [170, 372],
   rechnungen: [282, 196],
   tippen: [300, 266],
   vokabeln: [88, 198],
