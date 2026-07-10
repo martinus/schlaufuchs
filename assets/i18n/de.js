@@ -3,6 +3,7 @@ export default {
   back: "Zur Karte",
   settings: "Einstellungen",
   sound: "Ton",
+  fullscreen: "Vollbild",
   language: "Sprache",
   resetAll: "Fortschritt löschen",
   close: "Schließen",

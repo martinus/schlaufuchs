@@ -3,6 +3,7 @@ export default {
   back: "To the map",
   settings: "Settings",
   sound: "Sound",
+  fullscreen: "Fullscreen",
   language: "Language",
   resetAll: "Delete progress",
   close: "Close",
