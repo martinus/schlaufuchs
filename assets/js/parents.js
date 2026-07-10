@@ -12,7 +12,7 @@ import { boxesFromString } from "./adaptive.js";
 import { totalPoints, totalTrophies } from "./rewards.js";
 import { iconHTML } from "./graphics.js";
 import { initTopBar } from "./chrome.js";
-import { heatOf, weakFacts, heatCounts, practiceSummary, minutesOf, secondsPerRound } from "./parentstats.js";
+import { cellState, cellCounts, recallDigit, weakFacts, heatCounts, practiceSummary, minutesOf, secondsPerRound } from "./parentstats.js";
 import { POOL_COUNT, pairIndex, pairOf } from "../../games/einmaleins/logic.js";
 
 initI18n();
@@ -62,25 +62,32 @@ function renderTime() {
 }
 
 // 10×10, rows are tables and columns are factors, so the grid reads exactly
-// like the times table a parent learned at school.
+// like the times table a parent learned at school. The box paints accuracy;
+// the recall tracker (§20, written by the game per first-try answer) darkens
+// a solid cell to "auswendig" when the answers have repeatedly come at rocket
+// speed — the split between knowing a fact and computing it, which no box
+// digit can see.
 function renderHeat() {
+  const rc = saved.rc;
   let html = '<div class="heat" role="img" aria-label="' + t("parentsHeatH") + '">';
   html += '<span class="hh"></span>';
   for (let f = 1; f <= 10; f++) html += `<span class="hh">${f}</span>`;
   for (let tbl = 1; tbl <= 10; tbl++) {
     html += `<span class="hh">${tbl}</span>`;
     for (let f = 1; f <= 10; f++) {
-      const box = boxes[pairIndex(tbl, f)];
-      html += `<span class="hc h-${heatOf(box)}" title="${tbl} × ${f} = ${tbl * f}"></span>`;
+      const id = pairIndex(tbl, f);
+      const state = cellState(boxes[id], recallDigit(rc, id));
+      html += `<span class="hc h-${state}" title="${tbl} × ${f} = ${tbl * f}"></span>`;
     }
   }
   html += "</div>";
 
-  const tally = heatCounts(boxes, POOL_COUNT);
+  const tally = cellCounts(boxes, rc, POOL_COUNT);
   html += `<p class="legend">
     <span><i class="h-weak"></i> ${t("parentsLegendWeak")} (${tally.weak})</span>
     <span><i class="h-open"></i> ${t("parentsLegendOpen")} (${tally.open})</span>
     <span><i class="h-solid"></i> ${t("parentsLegendSolid")} (${tally.solid})</span>
+    <span><i class="h-fast"></i> ${t("parentsLegendFast")} (${tally.fast})</span>
   </p>`;
   $("p-heat").innerHTML = html;
 }

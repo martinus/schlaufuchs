@@ -203,6 +203,41 @@ export function awardTempo({ stars = 0, tier = 0, best = 0 } = {}) {
   return stars >= 2 ? Math.max(held, won) : held;
 }
 
+// --- per-fact recall telemetry (§20) ------------------------------------------
+// One digit per pair in a 100-char string beside `box`: 0 = never timed,
+// 1..4 = tempoTier + 1 of what the tracker has settled on. Written by the
+// game, read only by the parents' view — the child never meets it, and it is
+// the answer to the one question the Leitner box cannot answer: does she KNOW
+// 7×8, or does she compute it every time?
+//
+// The digit drifts ONE step per observation toward what was just seen, so a
+// single lucky tap or a single distracted answer cannot repaint a cell.
+// "Auswendig" (digit 4) therefore means "the recent answers came repeatedly at
+// rocket speed" — a claim a parent can act on. It also self-corrects: recall
+// that fades drifts back down, unlike the child's own tile badge (§10.6),
+// which is a reward and only ever climbs.
+export function recallStep(digit, tier) {
+  const d = Number.isInteger(digit) && digit >= 0 && digit <= 4 ? digit : 0;
+  if (!Number.isInteger(tier) || tier < 0 || tier > 3) return d;
+  const seen = tier + 1;
+  return d === 0 ? seen : d + Math.sign(seen - d);
+}
+
+// Fold one round's observations ({id: tier}, first-try-correct answers only)
+// into the recall string. Total, and sanitizing: whatever comes in, what goes
+// back to the cookie is always `count` digits of 0–4 — a corrupt slot reads
+// (and is rewritten) as "never timed", never carried along.
+export function foldRecall(str, obs, count = POOL_COUNT) {
+  const s = String(str ?? "").padEnd(count, "0").split("").slice(0, count)
+    .map((c) => ("01234".includes(c) ? c : "0"));
+  for (const [id, tier] of Object.entries(obs ?? {})) {
+    const i = Number(id);
+    if (!Number.isInteger(i) || i < 0 || i >= count) continue;
+    s[i] = String(recallStep(Number.parseInt(s[i], 10), tier));
+  }
+  return s.join("");
+}
+
 // The stars you own on this tile if the round stopped right now: your best ever
 // on it, or what this round has already banked, whichever is higher (§10.5).
 //

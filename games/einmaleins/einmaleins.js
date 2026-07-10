@@ -19,7 +19,7 @@ import {
   POOL_COUNT, EASY_TABLES, ALL_TABLES, HARD_TABLES, ROUND_SIZE, poolFor,
   questionFor, choicesFor, hardnessBoost,
   starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit, fittedFontSize, retryStep,
-  median, tempoTier, awardTempo,
+  median, tempoTier, awardTempo, foldRecall,
 } from "./logic.js";
 
 initI18n(strings);
@@ -111,6 +111,7 @@ let t0 = 0;
 let qShownAt = 0;
 let answerTimes = [];
 let missedIds = new Set();
+let recallObs = {}; // {id: tier} per first-try answer, for the parents' grid (§20)
 
 function tbl2short(tbl) {
   return tbl === 0 ? t("emMixed") : t("emTableShort", { t: tbl });
@@ -151,6 +152,7 @@ function startRound() {
   t0 = Date.now();
   answerTimes = [];
   missedIds = new Set();
+  recallObs = {};
   summary.close();
   buildKeypad();
   askNext();
@@ -337,6 +339,9 @@ function submit(value, mcButton) {
     if (!missedIds.has(currentId)) {
       const took = Date.now() - qShownAt;
       answerTimes.push(took);
+      // a slow first try is an observation too: the parents' recall tracker
+      // must see counting, not just recall (§20)
+      recallObs[currentId] = tempoTier(took, diff);
       if (tempoTier(took, diff) === 3) blitzFlash();
     }
     phase = "correct-wait";
@@ -434,7 +439,7 @@ function endRound() {
   const practice = addPractice(saved, diff, (Date.now() - t0) / 1000);
   setGame("einmaleins", {
     d: diff, t: table, box: boxesToString(full, POOL_COUNT), stars: starsObj,
-    tempo: tempoObj, ...practice,
+    tempo: tempoObj, rc: foldRecall(saved.rc, recallObs), ...practice,
   });
 
   // points come from progress, never from repetition (§8.3)

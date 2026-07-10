@@ -1335,6 +1335,9 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .h-weak { background: #e8853c; }
 .h-open { background: #e6ded2; }
 .h-solid { background: var(--depth); }
+/* solid AND repeatedly rocket-fast: known by heart, not computed (§20). The
+   step darker than --depth; ΔE 20.8 to its neighbour under every CVD type. */
+.h-fast { background: #0d3d4f; }
 
 .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.78rem; color: var(--ink-soft); }
 .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; vertical-align: -1px; margin-right: 4px; }
