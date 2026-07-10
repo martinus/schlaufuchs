@@ -59,6 +59,7 @@ export default {
   // shown in a bubble when a child taps a fogged region — she stays on the map
   soonBubble: "Bald!",
   comingSoon: "Dieses Spiel gibt es noch nicht. Beim Einmaleins kannst du schon üben.",
+  stubPlay: "Einmaleins üben",
   region_pokalraum: "Pokalraum",
   trophyLocked: "Noch nicht freigespielt",
   trophyNextIn: "Noch {n} ⭐ bis zum nächsten Pokal",

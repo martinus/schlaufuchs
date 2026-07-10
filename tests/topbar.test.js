@@ -89,6 +89,17 @@ test("the stub pages carry no script of their own", () => {
   }
 });
 
+// The stub's sentence points at the one game that exists; the chip is that
+// sentence made pressable. Without it the page named a game ready to play and
+// then offered only the way back.
+test("a stub offers the game that exists, not only the way back", () => {
+  const js = read("assets/js/stub.js");
+  assert.match(js, /href="\.\.\/einmaleins\/"/, "the chip must lead to the playable game");
+  assert.match(js, /t\("stubPlay"\)/, "…and say so in both languages");
+  assert.ok(js.indexOf("stubPlay") < js.indexOf('data-i18n="back"'),
+    "the game she can play comes before the way back");
+});
+
 // One gear, one sheet. It used to take a `resetKind`: "all" on the map, "game"
 // inside a game, and *nothing at all* in the Pokalraum — so the same button
 // opened three different screens, and in the room a parent looking for the reset
