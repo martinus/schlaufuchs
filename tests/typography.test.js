@@ -39,9 +39,22 @@ test("names, numbers and headings get the display face", () => {
     ".summary .trophy-earn .won",             // a trophy's name is a name
     ".pchip", ".factlist .fact",              // the parents' chips and equations
     ".feedback-aid",
+    ".region-stars",                          // the star count under a place name
+    ".trophies .sfoot",                       // a locked trophy's price
+    ".summary .stat",                         // the round's tally
   ]) {
     assert.ok(assigns(sel), `${sel} should be set in the display face`);
   }
+});
+
+// Regression: the display list named `.region-label`, and `.worldmap
+// .region-label` said `font-family: inherit` — a heavier selector, so the map's
+// place names silently fell back to the body face. The list cannot see the
+// cascade; this pins the one override that already slipped through it.
+test("no heavier selector takes the region label out of the display face", () => {
+  const rule = css.slice(css.indexOf(".worldmap .region-label {"));
+  assert.ok(!rule.slice(0, rule.indexOf("}")).includes("font-family"),
+    ".worldmap .region-label must not override the display-face list");
 });
 
 // Deliberate, not forgotten. Atkinson Hyperlegible exists to make `1 l I` and

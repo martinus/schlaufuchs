@@ -81,6 +81,11 @@ h1, h2, .question, .region-label, .foxchip .lbl, .chip,
 .summary button,
 /* a trophy's name is a name */
 .summary .trophy-earn .won,
+/* Scores a child reads are numbers, not data: the star counts on the map, a
+   locked trophy's price, the round's tally. In the body face their zeros wear
+   Atkinson's hyperlegibility slash, which next to a star reads as "none,
+   forbidden" — the right glyph for a URL and the wrong one for a score. */
+.region-stars, .trophies .sfoot, .summary .stat,
 /* the parents' chips are chips, and its facts are the same equations the game
    sets in the display face */
 .pchip, .factlist .fact {
@@ -282,7 +287,10 @@ a.chip { color: var(--ink); text-decoration: none; }
 }
 
 .worldmap .region-label {
-  font-family: inherit;
+  /* No face is set here: the display list at the top of this file already
+     names `.region-label`, and an `inherit` in this heavier selector silently
+     won the cascade and put the place names back into the body face — with
+     Atkinson's slashed zero in every star count beneath them. */
   font-size: 15px;
   font-weight: 800;
   fill: var(--ink);
