@@ -21,6 +21,7 @@
       "./assets/js/i18n.js": "./assets/js/i18n.js?v=33",
       "./assets/js/journey.js": "./assets/js/journey.js?v=33",
       "./assets/js/map.js": "./assets/js/map.js?v=33",
+      "./assets/js/mapwalk.js": "./assets/js/mapwalk.js?v=33",
       "./assets/js/overlay.js": "./assets/js/overlay.js?v=33",
       "./assets/js/parents.js": "./assets/js/parents.js?v=33",
       "./assets/js/parentstats.js": "./assets/js/parentstats.js?v=33",
@@ -37,15 +38,18 @@
   </script>
 </head>
 <body class="trophyroom">
-  <!-- the shared bar (§3.3); the room's own name is a heading below it -->
+  <!-- the shared bar (§3.3); the room's own symbol is the heading below it -->
   <header class="topbar" id="topbar"></header>
+  <!-- The room says its own name in the one language a five-year-old reads: its
+       symbol, the same one that marks it on the map (§3.2). The heading it used
+       to be, and the paragraph explaining where trophies come from, were text
+       under a bar that already counts the trophies — nobody read either. The
+       name survives for screen readers, on the heading itself. -->
   <div class="roomhead">
-    <!-- one place, one name: this page IS the Pokalraum on the map (§3.2) -->
-    <h1 data-i18n="region_pokalraum">Pokalraum</h1>
-    <!-- the top bar counts the trophies; this one names the whole collection -->
-    <span class="chip" id="totalcount"></span>
+    <h1 class="roomsymbol" aria-label="Pokalraum" data-i18n-label="region_pokalraum">
+      <span data-icon="region-pokalraum" data-icon-size="56" aria-hidden="true">🏆</span>
+    </h1>
   </div>
-  <p class="room-intro" data-i18n="roomIntro"></p>
   <main id="album"></main>
   <!-- Mara could not get out of this room: the way back was a small button at
        the very top, and she had scrolled past it. The icon lives in its own

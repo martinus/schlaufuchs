@@ -128,21 +128,29 @@ The landing page is a single **inline SVG map** in portrait orientation
 (viewBox `0 0 360 560`, scaling to the viewport width). The world is drawn
 as an **island**: sea, a sandy coastline, land, a compass rose, and dashed
 roads linking the regions from the village crossroads. It shows five themed
-regions; **each region is one big tap target that immediately launches its
-game** (instant resume, §3.4) — there is no walking and no intermediate page.
+regions; **each region is one big tap target.** Tapping it walks the fox there
+and opens the game the moment the fox arrives (§3.1, "the fox walks") — there
+is no intermediate page.
 
 | Region (DE / EN) | Game | Visual anchor |
 |---|---|---|
-| Zahlendorf / Number Village | Einmaleins | village with a school bell |
+| Einmaleins / Times tables | Einmaleins | village with a school bell |
 | Rechenberg / Math Mountain | Rechnungen | mountain with a summit |
 | Wörterwald / Word Forest | Vokabeln | forest with animals |
 | Tippsee / Typing Lake | Tippen | lake with a boathouse |
 | Lesewiese / Reading Meadow | Lesen | meadow with a giant book-tree |
 | Pokalraum / Trophy Room | (the collection) | trophy hall, bottom-right |
 
+The village **is called after its game**: a child who plays "Einmaleins" should
+not have to learn that it happens in a place called something else. The other
+four regions keep a place name, because their game's name is a verb.
+
 The **Pokalraum** is a sixth region that links to the collection
-(`album.html` — the filename is kept for URL stability) instead of a game; its badge shows the total number of trophies
-collected across all games and it evolves (thriving ≥ 20, mastered = 60).
+(`album.html` — the filename is kept for URL stability) instead of a game. It
+evolves like the others (thriving ≥ 20 trophies, mastered = 60). It carries **no
+star badge**: the number of trophies in it is written on its own facade, above
+the trophy painted there (`#pokal-count`), where the number can only mean the
+cup it sits on. Under the house it was one more caption on a map of captions.
 
 Map requirements:
 
@@ -165,9 +173,21 @@ Map requirements:
   language change resizes it), and the whole region bobs ±1.5 px on an idle
   loop. Fogged regions get neither. Under `prefers-reduced-motion` the global
   kill switch stops the bob and the plate carries the affordance alone.
-- **The fox stands on the region that was last played** (`rewards.at`,
-  §9.2); first visit: at Zahlendorf. Position = fixed anchor coordinates per
-  region, defined in the SVG.
+- **The fox stands where the child last went** (`rewards.at`, §9.2); first
+  visit: at the village. Position = one fixed anchor per region, in
+  `mapwalk.js` — the Trophy Room has one too, because it is a destination even
+  though it is not a game.
+- **The fox walks.** Tapping a region cancels the navigation, writes `at`, and
+  animates the fox from its anchor to the tapped region's; only when it arrives
+  does the page open (`travelTo()` in `map.js`). So the child sees herself
+  cross the island, and finds the fox standing in front of the place she was in
+  when she comes back. The walk is three damped hops over an eased line
+  (`walkPoint`), 420–1100 ms by distance (`walkMs`), both pure and tested.
+  Under `prefers-reduced-motion` there is no walk: `at` is written and the page
+  opens at once, so the fox is still there on the way back (§15). A fogged
+  region is not walked to — it wiggles (below). These are SVG anchors, so the
+  href comes from `getAttribute("href")`: `region.href` is an
+  `SVGAnimatedString`, and assigning it navigates to a 404.
 - **Regions visibly evolve with mastery.** Each region has 3 visual states as
   toggled SVG layers: *base* → *thriving* (≥ ⅓ of `MAX_POINTS[game]`, the stars
   that game can pay) → *mastered* (100 %): flag on the
@@ -184,7 +204,7 @@ Map requirements:
   and pushed the page past `100dvh`.
 - **The island remembers.** A mastered region's road from the village paves
   itself: dirt track (sand + dashed centre line) → cobblestone in `--depth`.
-  Zahlendorf is the crossroads and has no road of its own, so mastering it
+  The village is the crossroads and has no road of its own, so mastering it
   cobbles the village square instead. The Trophy Room road paves at 20
   trophies. See `.road` / `.roadline` / `.plaza` and `pave()` in `map.js`.
 - **Unbuilt games sit under fog, and do not open.** A region whose game is a
@@ -220,8 +240,11 @@ a room: a warm wall, and a wooden shelf under each game's collection.
 
 One page, five sections (one per region, translated heading). Each section
 shows **12 trophy slots** in a grid: earned trophies as the shared **trophy
-card** (`trophycard.js` — the cup with the trophy's own emoji riding in its
-bowl, name underneath); unearned slots as **silhouettes** of the trophy you
+card** (`trophycard.js` — the cup with the trophy's own emoji sitting in its
+bowl and rising out of it: two thirds of the cup's size (`THEME_RATIO`), high
+enough to read at 34px. At half the size and buried in the bowl, twelve
+trophies on one shelf were twelve identical cups); unearned slots as
+**silhouettes** of the trophy you
 have not won yet — you can see what is missing, which is the whole reason to
 keep collecting. The round summary draws the same card (§3.4), so a child
 recognises the trophy she just won when she meets it on the shelf.
@@ -230,11 +253,23 @@ recognises the trophy she just won when she meets it on the shelf.
 silhouette, and for the next slot to fall, a small progress bar instead. It
 used to live in a `title` tooltip, which no child on a phone will ever see.
 
-Earned count per region, and the size of the whole collection beside the room's
-heading. An intro line (`roomIntro`) says what the room is and how to fill it,
-and each section shows how many stars remain until its next trophy. Trophies
-are earned via stars (§8.3). Reached from the map via the **Pokalraum** region
-(§3.1).
+**The room says what it is with its symbol**, not with a sentence: the heading
+is the same trophy that marks the room on the map, and it carries the room's
+name as an `aria-label` for the people who listen to the page. The written
+heading, and a paragraph explaining where trophies come from, are gone — the
+child this room is for reads neither, and the top bar already counts the
+trophies. Each section still shows its earned count and how many stars remain
+until its next trophy. Trophies are earned via stars (§8.3). Reached from the
+map via the **Pokalraum** region (§3.1).
+
+**Tapping a trophy she owns holds it up** (`openShowcase()` in `album.js`): the
+cup fills the screen, confetti falls, the fox jumps beside it and stars blink
+around it. A trophy is for showing to somebody, and a 77px shelf slot that does
+nothing when pressed is a receipt. An earned slot is therefore a `<button>`
+(`trophyCardHTML({ button: true })`) carrying `data-trophy="<game>:<index>"`,
+and one delegated listener on `#album` opens the showcase. A locked slot is not
+a door. The blink and the hop are CSS animations, so `prefers-reduced-motion`
+silences both and leaves the trophy, full size (§15).
 
 The room carries the same top bar as every other page (§3.3), gear included —
 its settings offer no reset, because the global one belongs on the map. The bar
@@ -593,7 +628,7 @@ unique item** in the round and the fox token on the current node.
   per obstacle index) with the normal correct-answer sound, then the glyph
   dims to a settled "done" look.
 - The final node is the **goal**, themed per region (summit flag for
-  Rechenberg, school bell for Zahlendorf, forest clearing for Wörterwald,
+  Rechenberg, school bell for the village, forest clearing for Wörterwald,
   story-tree for Lesewiese). Reaching it triggers the round summary.
 - `journey.js` API: `createJourney(container, {nodes, theme})` →
   `{advance(), stumble(), finish()}`. Themes: `village | mountain | forest |
@@ -771,7 +806,7 @@ resetAll()                     // delete cookie (map footer)
 
 ---
 
-## 10. Game 1: Einmaleins — region **Zahlendorf**
+## 10. Game 1: Einmaleins — region **Einmaleins**
 
 Master the multiplication tables 1–10. Journey theme: `village` — the fox
 walks the village lane; goal node: ringing the school bell.
@@ -796,9 +831,15 @@ walks the village lane; goal node: ringing the school bell.
    gets a sentence of its own. The map and the level picker stay reachable
    above the sheet, in the bar and on the chip.
 5. **The level picker** opens from that chip (which wears a border and a caret,
-   because it read as a caption and was never pressed). It is **one scrollable
+   because it read as a caption and was never pressed). The chip also carries
+   the **village's own symbol** (`region-einmaleins`, the houses), so the game
+   says which place on the map it is without naming it — the same job the
+   trophy does for the Pokalraum (§3.2). It is **one scrollable
    list of every level the game has**, in three colour-coded bands — Leicht
    green, Mittel amber, Schwer red — each under a plain, unclickable heading.
+   The bands are **saturated enough to carry a gold star**: as three pale
+   washes, the stars a tile still had to give were invisible on amber, which is
+   the whole promise of the tile.
    Difficulty is not a control: choosing a tile chooses both. Leicht shows its
    five tiles (Reihen 1, 2, 5, 10 + „🎲 Alle"), the others eleven; **no tile is
    ever disabled**, where six padlocked ones used to sit in the Leicht grid. The
@@ -1225,7 +1266,7 @@ page, full Einmaleins per §10.
 *Accept:* §3.4 tap budgets hold; a wrong answer re-queues within 2–4
 questions and drops the box to 0; round always ends at the goal node;
 perfect round increments `pr` and thresholds unlock trophies exactly per
-§8.3; stars appear on the map badge; fox stands on Zahlendorf after playing.
+§8.3; stars appear on the map badge; fox stands on the village after playing.
 
 **M3 — Rechnungen.** Per §12, reusing everything from M2.
 *Accept:* all four modes + Mix generate valid questions per difficulty

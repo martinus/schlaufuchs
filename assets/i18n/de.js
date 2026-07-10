@@ -11,7 +11,7 @@ export default {
   parentsTitle: "Für Eltern",
   parentsIntro: "Alles hier stammt aus dem Fortschritt auf diesem Gerät. Nichts davon wird irgendwohin gesendet, und dein Kind sieht diese Seite im Spiel nicht.",
   parentsEmpty: "Hier steht noch nichts — sobald dein Kind eine Runde gespielt hat, siehst du, was sitzt und wo es hakt.",
-  parentsGameH: "Zahlendorf · Einmaleins",
+  parentsGameH: "Einmaleins",
   parentsOtherGames: "Die anderen vier Spiele gibt es noch nicht, deshalb steht hier nur das Einmaleins.",
   parentsTimeH: "Geübte Zeit",
   parentsColRounds: "Runden",
@@ -59,9 +59,8 @@ export default {
   lockedHint: "Noch nicht verfügbar",
   // shown in a bubble when a child taps a fogged region — she stays on the map
   soonBubble: "Bald!",
-  comingSoon: "Dieses Spiel gibt es noch nicht. Im Zahlendorf kannst du schon üben.",
+  comingSoon: "Dieses Spiel gibt es noch nicht. Beim Einmaleins kannst du schon üben.",
   region_pokalraum: "Pokalraum",
-  roomIntro: "Hier steht, was du gewonnen hast. Pokale bekommst du für Sterne — und je schwerer die Aufgabe, desto mehr zählt jeder Stern.",
   trophyLocked: "Noch nicht freigespielt",
   trophyNextIn: "Noch {n} ⭐ bis zum nächsten Pokal",
   trophyNextIn1: "Noch 1 ⭐ bis zum nächsten Pokal",
@@ -89,7 +88,9 @@ export default {
   game_rechnungen: "Rechnungen",
   game_vokabeln: "Vokabeln",
   game_lesen: "Lesen",
-  region_einmaleins: "Zahlendorf",
+  // The village is called after the game it holds: one name, in the top bar, on
+  // the map and on the album's shelf. "Zahlendorf" was a sixth name to learn.
+  region_einmaleins: "Einmaleins",
   region_tippen: "Tippsee",
   region_rechnungen: "Rechenberg",
   region_vokabeln: "Wörterwald",

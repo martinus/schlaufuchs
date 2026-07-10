@@ -271,7 +271,7 @@ a.chip { color: var(--ink); text-decoration: none; }
 }
 .worldmap .roadline.paved { display: none; }
 
-/* the village square: bare earth until Zahlendorf is mastered. Pale stone with
+/* the village square: bare earth until the village is mastered. Pale stone with
    dashed joints, so it reads as pavement rather than as a pond. */
 .worldmap .plaza { fill: none; stroke: none; }
 .worldmap .plaza.paved {
@@ -297,6 +297,17 @@ a.chip { color: var(--ink); text-decoration: none; }
   font-size: 11px;
   font-weight: 700;
   fill: var(--ink);
+  text-anchor: middle;
+}
+
+/* How many trophies are in the room, written on the room's own wall, above the
+   cup it counts (map.js). It used to be a badge under the house, where it read
+   as a caption on a map full of captions. */
+.worldmap .pokal-count {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  fill: var(--depth);
   text-anchor: middle;
 }
 
@@ -533,6 +544,8 @@ footer p { margin: 0; }
 }
 .pickheading::after { content: " ▾"; color: var(--orange); }
 .pickheading:active { transform: scale(0.97); }
+/* the village's own symbol, so the game says which place on the map it is */
+.pickheading .ph-sym { margin-right: 6px; }
 
 /* ---- the round's scene: sky, meadow, basket, fox (§10.5) ---- */
 .journey .j-sky { fill: #e8f3fa; }
@@ -728,10 +741,12 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 
 /* Easy is green, hard is red, and the middle is between them. The colour says
-   which band a tile belongs to without its heading having to be on screen. */
-.tilegrid.lvl-easy button { background: #e8f5e2; }
-.tilegrid.lvl-medium button { background: #fdf1d9; }
-.tilegrid.lvl-hard button { background: #fbe4e3; }
+   which band a tile belongs to without its heading having to be on screen.
+   These were three pale washes, and a gold star on pale yellow is not a star —
+   the whole promise of the tile was invisible on the band that matters most. */
+.tilegrid.lvl-easy button { background: #c3e0b6; }
+.tilegrid.lvl-medium button { background: #f4dba4; }
+.tilegrid.lvl-hard button { background: #f0c2bf; }
 
 /* **The stars a tile still has to give**, behind its name: three on a fresh
    Leicht tile, six on Mittel, nine on Schwer (`tilePointsLeft`). That a harder
@@ -749,16 +764,17 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   pointer-events: none;
   line-height: 1;
 }
-/* pale: they are what the tile promises, not what it shouts */
+/* Quiet, not invisible: they are what the tile promises, not what it shouts.
+   At 0.42 they dissolved into the band behind them. */
 .tilegrid .tstars i {
   font-style: normal;
   font-size: 14px;
   width: 33.333%;
   text-align: center;
-  opacity: 0.42;
+  opacity: 0.85;
 }
 /* nothing left to give */
-.tilegrid .tstars .tdone { font-size: 34px; color: var(--ok); opacity: 0.75; }
+.tilegrid .tstars .tdone { font-size: 34px; color: #1e6b2c; opacity: 0.9; }
 
 .tilegrid .tname { position: relative; color: var(--ink); }
 
@@ -891,27 +907,22 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   margin: 18px auto 4px;
   text-decoration: none;
 }
-/* The room's name and the size of the collection, on one line under the bar.
-   The name was a chip in the top bar; it is a heading, and the bar has room
-   for exactly three things (§3.3). */
+/* The room announces itself with its symbol, not with its name: the same trophy
+   that marks it on the map. A written heading and a paragraph about where
+   trophies come from used to live here, and the child this room is for reads
+   neither. The name is still on the heading, for the people who listen. */
 .roomhead {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
+  justify-content: center;
   max-width: 560px;
   margin: 0 auto;
-  padding: 8px 14px 0;
+  padding: 6px 14px 2px;
 }
-.roomhead h1 { margin: 0; font-size: 1.35rem; }
-.roomhead .chip { flex: 0 0 auto; font-size: 0.8rem; padding: 0 10px; min-height: 30px; }
-
-.room-intro {
-  max-width: 560px;
-  margin: 0 auto;
-  padding: 4px 14px 10px;
-  color: var(--ink-soft);
-  font-weight: 600;
+.roomhead .roomsymbol {
+  margin: 0;
+  line-height: 1;
+  font-size: 56px;
+  filter: drop-shadow(0 3px 5px rgba(74, 44, 23, 0.28));
 }
 
 .album-section {
@@ -968,14 +979,17 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   line-height: 1;
 }
 
+/* The theme emoji sits in the cup's bowl and rises out of it, the way a prize
+   sticks out of the thing it was handed over in. Buried at the glyph's 28% it
+   was a small dark mark inside a gold cup; twelve of those on one shelf are
+   twelve identical cups. It is bigger now (THEME_RATIO) and higher. */
 .tcard .t-theme {
   position: absolute;
-  /* the bowl of a 🏆 glyph, not its middle */
-  top: 28%;
+  top: 12%;
   left: 50%;
   transform: translate(-50%, -50%);
   /* a gold bell in a gold cup is one gold blob; the halo separates them */
-  filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1.5px #fff);
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 1px 1px rgba(74, 44, 23, 0.35));
 }
 
 .tcard .sname,
@@ -1030,6 +1044,78 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 
 @media (min-width: 600px) {
   .trophies { grid-template-columns: repeat(6, 1fr); }
+}
+
+/* ---- the showcase: one trophy, held up (§3.2) ---- */
+/* Mara won her first trophy, found it on the shelf, tapped it — and it was a
+   77px square that did nothing. A trophy is for showing to somebody. Tapping it
+   fills the screen with it: confetti, a fox jumping beside it, stars blinking
+   around it. `prefers-reduced-motion` stops all three (the rule at the foot of
+   this file), and what is left is still the trophy, still full size. */
+/* The one overlay that is not a form: it is centred, not a sheet slid up from
+   the bottom edge, because the trophy is the thing — not a list of settings
+   under the thumb. */
+.showcase { align-items: center; }
+.showcase .sheet {
+  text-align: center;
+  width: calc(100% - 24px);
+  border-radius: 22px;
+  padding-bottom: 18px;
+  background: radial-gradient(120% 90% at 50% 34%, #fffaf0 0%, var(--bg) 72%);
+}
+
+.sc-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 18px 0 6px;
+  margin-bottom: 10px;
+}
+
+.sc-card .tcard {
+  width: min(58vw, 210px);
+  gap: 6px;
+  box-shadow: 0 10px 26px rgba(74, 44, 23, 0.3);
+}
+.sc-card .tcard .sname { font-size: 1.05rem; padding: 0 8px; }
+
+.sc-sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.sc-sparks i {
+  position: absolute;
+  font-style: normal;
+  font-size: 22px;
+  opacity: 0;
+  animation: sc-twinkle 1.5s ease-in-out infinite;
+}
+.sc-sparks i:nth-child(1) { top: 2%; left: 12%; animation-delay: 0s; }
+.sc-sparks i:nth-child(2) { top: 12%; right: 10%; animation-delay: 0.2s; }
+.sc-sparks i:nth-child(3) { top: 42%; left: 3%; animation-delay: 0.45s; }
+.sc-sparks i:nth-child(4) { top: 36%; right: 2%; animation-delay: 0.65s; }
+.sc-sparks i:nth-child(5) { bottom: 6%; left: 16%; animation-delay: 0.85s; }
+.sc-sparks i:nth-child(6) { top: 0; left: 47%; animation-delay: 1.05s; }
+.sc-sparks i:nth-child(7) { bottom: 14%; right: 18%; animation-delay: 1.25s; }
+
+@keyframes sc-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.5) rotate(-12deg); }
+  50% { opacity: 1; transform: scale(1.15) rotate(12deg); }
+}
+
+/* beside the cup, not on it: the fox is the one cheering, not the prize */
+.sc-fox {
+  position: absolute;
+  right: 0;
+  bottom: -2px;
+  line-height: 0;
+  animation: sc-hop 0.72s ease-in-out infinite;
+}
+
+@keyframes sc-hop {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(-18px); }
 }
 
 /* ---- confetti ---- */

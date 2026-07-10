@@ -24,8 +24,8 @@ test("the name follows the language", () => {
   assert.ok(!trophyCardHTML(bell, { lang: "en" }).includes("Schulglocke"));
 });
 
-// The summary's trophy leads to the album; the album's leads nowhere. A <div>
-// with a click handler is not a link, and a child taps what looks tappable.
+// The summary's trophy leads to the album; the album's opens it full size; a
+// card that does neither must not look tappable, because a child taps what does.
 test("href makes it a link, and nothing else does", () => {
   const plain = trophyCardHTML(bell, {});
   assert.match(plain, /^<div class="tcard"/);
@@ -34,6 +34,25 @@ test("href makes it a link, and nothing else does", () => {
   const linked = trophyCardHTML(bell, { href: "../../album.html", label: "Schulglocke — Pokalraum" });
   assert.match(linked, /^<a class="tcard" href="\.\.\/\.\.\/album\.html" aria-label="Schulglocke — Pokalraum">/);
   assert.match(linked, /<\/a>$/);
+});
+
+test("button makes it a button, and it carries the album's own data", () => {
+  const btn = trophyCardHTML(bell, { button: true, attrs: 'data-trophy="einmaleins:0"' });
+  assert.match(btn, /^<button class="tcard" type="button" data-trophy="einmaleins:0">/);
+  assert.match(btn, /<\/button>$/);
+  // a form on any page it lands on must not be submitted by a trophy
+  assert.ok(btn.includes('type="button"'));
+  // href wins: the summary's card is a link even if someone passes both
+  assert.match(trophyCardHTML(bell, { button: true, href: "x" }), /^<a /);
+});
+
+// Regression: at half the cup's size the theme emoji was a speck buried in a
+// gold bowl, and twelve trophies on one shelf were twelve identical cups.
+test("the theme emoji is big enough to tell one trophy from another", () => {
+  const html = trophyCardHTML(bell, { size: 100 });
+  const theme = html.match(/class="gicon t-theme" style="font-size:(\d+)px"/);
+  assert.ok(theme, "the theme icon must be sized relative to the cup");
+  assert.ok(Number(theme[1]) >= 60, `the emoji is ${theme[1]}px in a 100px cup`);
 });
 
 test("extra classes ride along, so the summary can mark it as just won", () => {

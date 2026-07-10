@@ -1,21 +1,13 @@
 // World map page module (§3.1): shared fox chip, region star badges & states,
-// the Trophy Room badge, fox placement, settings overlay, global reset.
+// the Trophy Room's trophy count, the fox and its walk, settings, global reset.
 
 import { initI18n, t } from "./i18n.js";
-import { loadState, getRewards } from "./storage.js";
-import { gameStarsOf, regionState, starBadgeTier, totalTrophies, GAMES, isPlayable } from "./rewards.js";
+import { loadState, getRewards, setRewards } from "./storage.js";
+import { gameStarsOf, regionState, starBadgeTier, totalTrophies, TOTAL_TROPHIES, GAMES, isPlayable } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconSVG, applyIcons } from "./graphics.js";
 import { initTopBar } from "./chrome.js";
-
-// Fox anchor per region (map coordinates, §3.1).
-const ANCHORS = {
-  einmaleins: [180, 372],
-  rechnungen: [282, 196],
-  tippen: [300, 266],
-  vokabeln: [88, 198],
-  lesen: [88, 480],
-};
+import { ANCHORS, walkPoint, walkMs } from "./mapwalk.js";
 
 initI18n();
 applyIcons(document); // upgrade static [data-icon] decorations if SVGs exist
@@ -146,13 +138,72 @@ function soonBubble(region) {
   }, BUBBLE_MS);
 }
 
+// --- the fox and its walk (§3.1) --------------------------------------------
+
+// Which anchor the fox is standing on right now. `render()` seeds it from the
+// cookie; the walk moves it. Kept here rather than re-read from storage, because
+// a walk that starts from anywhere but the fox's actual feet is a teleport.
+let foxAt = "einmaleins";
+let walking = false;
+
+function placeFox([x, y]) {
+  document.getElementById("map-fox")
+    ?.setAttribute("transform", `translate(${(x - 22).toFixed(1)}, ${(y - 40).toFixed(1)})`);
+}
+
+// Walk the fox to `to`, then call `done`. Nothing else may start a walk while
+// one is running: two rAF loops would fight over the same transform, and the
+// second `location.href` would cancel the first navigation half-done.
+function walkFox(from, to, done) {
+  walking = true;
+  const ms = walkMs(from, to);
+  const t0 = performance.now();
+  const step = (now) => {
+    const p = Math.min(1, (now - t0) / ms);
+    placeFox(walkPoint(from, to, p));
+    if (p < 1) requestAnimationFrame(step);
+    else done();
+  };
+  requestAnimationFrame(step);
+}
+
+// A region opens only once the fox is standing in front of it. The map remembers
+// where she went, so the fox is there again when she comes back (§3.1).
+//
+// `prefers-reduced-motion` skips the walk and opens at once — the fox still ends
+// up at the new region, because `at` is written either way (§15).
+function travelTo(region) {
+  if (walking) return;
+  const game = region.dataset.game;
+  const to = ANCHORS[game];
+  // These are SVG anchors, and `region.href` on one is an SVGAnimatedString —
+  // assigning it to location.href navigated to "/[object%20SVGAnimatedString]".
+  // The attribute is relative to this document, which is also what a subpath
+  // deploy needs (§ never emit an absolute /assets path).
+  const href = region.getAttribute("href");
+  setRewards({ at: game });
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!to || reduced || game === foxAt) {
+    location.href = href;
+    return;
+  }
+  walkFox(ANCHORS[foxAt] ?? ANCHORS.einmaleins, to, () => {
+    foxAt = game;
+    location.href = href;
+  });
+}
+
 // Registered once, on the map itself: `render()` runs again on every settings
 // change, and a listener added there would fire twice, then three times.
 document.querySelector(".worldmap")?.addEventListener("click", (e) => {
-  const region = e.target.closest?.("a.region.locked");
+  const region = e.target.closest?.("a.region");
   if (!region) return;
+  // "open in a new tab" is still the browser's to answer, and there is no fox
+  // to walk in the tab it opens.
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
   e.preventDefault();
-  soonBubble(region);
+  if (region.classList.contains("locked")) soonBubble(region);
+  else travelTo(region);
 });
 
 function render() {
@@ -186,28 +237,31 @@ function render() {
     }
   }
 
-  // Trophy Room: total trophies collected across all games (§3.1, §8.3)
+  // Trophy Room: total trophies collected across all games (§3.1, §8.3).
+  // The count used to hang under the house on a badge of its own, where it read
+  // as one more label. It is now written above the trophy on the facade — the
+  // number belongs to the cup it counts.
   const trophies = totalTrophies(rewards.pr);
-  const pkBadge = document.querySelector(`[data-badge="pokalraum"]`);
-  if (pkBadge) {
-    const pkTier = trophies >= 60 ? 3 : trophies >= 20 ? 2 : trophies > 0 ? 1 : 0;
-    renderBadge(pkBadge, "deco-trophy", trophies, pkTier);
-    pave("pokalraum", pkTier >= 2);
-  }
+  const pkCount = document.getElementById("pokal-count");
+  if (pkCount) pkCount.textContent = trophies;
+  pave("pokalraum", trophies >= 20);
+
   const pkRegion = document.getElementById("region-pokalraum");
   if (pkRegion) {
     pkRegion.classList.remove("thriving", "mastered");
     if (trophies >= 60) pkRegion.classList.add("mastered");
     else if (trophies >= 20) pkRegion.classList.add("thriving");
+    // the number on the wall is decorative; the link says what it means
+    pkRegion.setAttribute("aria-label",
+      `${t("region_pokalraum")} — ${t("trophyCount", { n: trophies, total: TOTAL_TROPHIES })}`);
     ensurePlate(pkRegion);
   }
 
-  // the fox stands on the last-played region (§3.1)
-  const at = ANCHORS[rewards.at] ? rewards.at : "einmaleins";
-  const [x, y] = ANCHORS[at];
+  // the fox stands where the child last went (§3.1)
+  foxAt = ANCHORS[rewards.at] ? rewards.at : "einmaleins";
   const fox = document.getElementById("map-fox");
-  fox.innerHTML = foxSVG({ pose: "happy", size: 44 });
-  fox.setAttribute("transform", `translate(${x - 22}, ${y - 40})`);
+  if (fox) fox.innerHTML = foxSVG({ pose: "happy", size: 44 });
+  placeFox(ANCHORS[foxAt]);
 }
 
 // The map wears the shared bar with a flat map button — you are already here —

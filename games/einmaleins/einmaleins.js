@@ -10,6 +10,7 @@ import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
 import { trophyCardHTML } from "../../assets/js/trophycard.js";
 import { initTopBar } from "../../assets/js/chrome.js";
+import { iconHTML } from "../../assets/js/graphics.js";
 import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
 import strings from "./i18n.js";
 import {
@@ -89,8 +90,13 @@ function tbl2short(tbl) {
   return tbl === 0 ? t("emMixed") : t("emTableShort", { t: tbl });
 }
 
+// The round's title carries the village's own symbol, so the child can see
+// which place on the map she is standing in without reading its name (§3.1).
+// The symbol is decorative; `.ph-txt` is the button's accessible name.
 function updateChip() {
-  $("pickchip").textContent = `${t(DIFF_KEYS[diff])} · ${tbl2short(table)}`;
+  $("pickchip").innerHTML =
+    `<span class="ph-sym" aria-hidden="true">${iconHTML("region-einmaleins", { size: 20 })}</span>`
+    + `<span class="ph-txt">${t(DIFF_KEYS[diff])} · ${tbl2short(table)}</span>`;
 }
 
 function startRound() {
