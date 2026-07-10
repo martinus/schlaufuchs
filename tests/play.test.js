@@ -65,6 +65,16 @@ test("the driver leaves the aid by answering, not by pressing a button", () => {
   assert.match(aid.slice(0, 700), /await answer\(want\)/, "it must enter the right answer");
 });
 
+// `delayMs` is what makes the tempo ladder's slow tiers (§10.6) reachable in a
+// driven round: the driver "thinks" before answering, inside the game's tempo
+// clock — and the deadline grows with it, or a slow round would look hung.
+test("the driver can play slowly on purpose, without timing itself out", () => {
+  assert.match(src, /delayMs = 0/);
+  assert.match(src, /if \(pause\) await sleep\(pause\);\s*\/\/.*\n\s*await answer\(/,
+    "the pause must sit between reading the question and answering it");
+  assert.match(src, /60000 \+ pause \* \d+/, "the deadline must scale with the pause");
+});
+
 test("the driver refuses what it cannot read, instead of guessing", () => {
   assert.throws(() => solveQuestion("7 x 8 = ?"), /unknown operator/);
   assert.throws(() => solveQuestion("nonsense"), /not an equation/);

@@ -93,10 +93,16 @@
   //
   // Returns a trace, and throws rather than returning a half-played round:
   // a driver that quietly stopped early must not look like one that finished.
-  globalThis.play = async ({ questions = Infinity, wrongAt = [], stopAt = null } = {}) => {
+  // `delayMs` paces the driver: it thinks that long over every question before
+  // answering, which lands in the game's measured answer time — the knob that
+  // makes the tempo ladder's slow tiers (§10.6) reachable in a driven round.
+  // The deadline grows with it, or a deliberately slow round would look hung.
+  globalThis.play = async ({ questions = Infinity, wrongAt = [], stopAt = null, delayMs = 0 } = {}) => {
     const wrong = new Set(Array.isArray(wrongAt) ? wrongAt : [wrongAt]);
+    const pause = Number.isFinite(delayMs) && delayMs > 0 ? Math.round(delayMs) : 0;
     const trace = [];
-    const deadline = Date.now() + 60000;
+    // a round is at most ~25 answers (12 drawn + requeues + phantom margin)
+    const deadline = Date.now() + 60000 + pause * 25;
     let n = 0;
 
     // The game opens on the level picker (§10.1), and no question exists while
@@ -123,6 +129,7 @@
 
       n += 1;
       const wrongNow = wrong.has(n);
+      if (pause) await sleep(pause); // "think" — counted by the tempo clock
       await answer(wrongNow ? want + 1 : want);
       await sleep(SETTLE);
 
