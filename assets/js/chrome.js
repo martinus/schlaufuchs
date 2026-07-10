@@ -13,7 +13,7 @@
 // carries its `data-i18n` attribute, so `setLang()` reaches the parts that stay.
 
 import { t, getLang, setLang, LANGUAGES } from "./i18n.js";
-import { getSettings, setSettings, resetAll, resetGame } from "./storage.js";
+import { getSettings, setSettings, resetAll } from "./storage.js";
 import { foxInfo, TOTAL_TROPHIES } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconHTML } from "./graphics.js";
@@ -68,7 +68,7 @@ export function topBarHTML({ back = "./", title = null } = {}) {
 //
 // A language or sound change always repaints the chip before the page's own
 // onChange runs — three pages used to remember that, and one of them forgot.
-export function initTopBar({ back = "./", title = null, resetKind = null, game, onChange, onClose } = {}) {
+export function initTopBar({ back = "./", title = null, onChange, onClose } = {}) {
   const bar = document.getElementById("topbar");
   if (!bar) return { refresh() {}, settings: null };
   bar.innerHTML = topBarHTML({ back, title });
@@ -80,8 +80,6 @@ export function initTopBar({ back = "./", title = null, resetKind = null, game, 
   refresh();
 
   const settings = initSettingsOverlay({
-    resetKind,
-    game,
     onChange() {
       refresh();
       onChange?.();
@@ -93,8 +91,14 @@ export function initTopBar({ back = "./", title = null, resetKind = null, game, 
 }
 
 // Build the settings overlay and return its handle (§3.4).
-// resetKind: "all" (whole site), "game" (one game), or null (no reset row).
-export function initSettingsOverlay({ resetKind = null, game, onChange, onClose } = {}) {
+//
+// **The same six rows on every page that has a gear.** The overlay used to take
+// a `resetKind`: "all" on the map, "game" on a game page, and nothing at all in
+// the Pokalraum — so the gear opened three different sheets, and in the room a
+// parent looked for the reset and there was none. One sheet, one reset, and the
+// reset is the whole site's, because that is the only one a child's screen can
+// honestly offer: she is never told which game she is "in".
+export function initSettingsOverlay({ onChange, onClose } = {}) {
   const overlay = createOverlay({
     onClose,
     sheet: `<h2 class="cx-title"></h2>
@@ -103,7 +107,7 @@ export function initSettingsOverlay({ resetKind = null, game, onChange, onClose 
         <span class="cx-l-lang"></span>
         <div class="langpick" id="cx-lang" role="group"></div>
       </div>
-      ${resetKind ? `<div class="setrow"><span class="cx-l-reset"></span><button class="iconbtn" id="cx-reset"></button></div>` : ""}
+      <div class="setrow"><span class="cx-l-reset"></span><button class="iconbtn" id="cx-reset"></button></div>
       <div class="setrow"><a class="cx-parents" href="${PARENTS_URL}"></a></div>
       <div class="setrow"><a class="cx-privacy" href="${PRIVACY_URL}"></a></div>
       <div class="setrow"><a class="cx-about" href="${ABOUT_URL}"></a></div>
@@ -124,10 +128,8 @@ export function initSettingsOverlay({ resetKind = null, game, onChange, onClose 
     el.querySelector(".cx-l-lang").textContent = t("language");
     soundBtn.innerHTML = iconHTML(getSettings().sound !== false ? "ui-sound-on" : "ui-sound-off", { size: 22 });
     renderLangPick();
-    if (resetBtn) {
-      el.querySelector(".cx-l-reset").textContent = resetKind === "all" ? t("resetAll") : t("resetGame");
-      if (!resetArmed) resetBtn.innerHTML = iconHTML("ui-trash", { size: 22 });
-    }
+    el.querySelector(".cx-l-reset").textContent = t("resetAll");
+    if (!resetArmed) resetBtn.innerHTML = iconHTML("ui-trash", { size: 22 });
     el.querySelector(".cx-parents").textContent = t("parentsLink");
     el.querySelector(".cx-privacy").textContent = t("privacyLink");
     el.querySelector(".cx-about").textContent = t("aboutLink");
@@ -163,22 +165,19 @@ export function initSettingsOverlay({ resetKind = null, game, onChange, onClose 
   });
 
   // two-step confirm for the destructive reset (§3.4)
-  if (resetBtn) {
-    resetBtn.addEventListener("click", () => {
-      if (!resetArmed) {
-        resetArmed = true;
-        resetBtn.textContent = "❗";
-        setTimeout(() => {
-          resetArmed = false;
-          resetBtn.innerHTML = iconHTML("ui-trash", { size: 22 });
-        }, 3000);
-        return;
-      }
-      if (resetKind === "all") resetAll();
-      else resetGame(game);
-      location.reload();
-    });
-  }
+  resetBtn.addEventListener("click", () => {
+    if (!resetArmed) {
+      resetArmed = true;
+      resetBtn.textContent = "❗";
+      setTimeout(() => {
+        resetArmed = false;
+        resetBtn.innerHTML = iconHTML("ui-trash", { size: 22 });
+      }, 3000);
+      return;
+    }
+    resetAll();
+    location.reload();
+  });
   closeBtn.addEventListener("click", overlay.close);
 
   return overlay;

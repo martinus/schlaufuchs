@@ -48,7 +48,6 @@ exactly (they are the registry keys). Target directory: `assets/img/icons/`.
 | ui-gear.svg | ⚙️ | settings cog |
 | ui-sound-on.svg | 🔊 | speaker with sound waves |
 | ui-sound-off.svg | 🔇 | muted speaker |
-| ui-flame.svg | 🔥 | small friendly flame (daily streak) |
 | ui-star.svg | ⭐ | single gold star (score unit) |
 | ui-trash.svg | 🗑️ | trash can (delete progress) |
 

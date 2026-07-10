@@ -26,13 +26,14 @@ const boxes = boxesFromString(saved.box, POOL_COUNT);
 const practice = practiceSummary(saved);
 const rewards = getRewards();
 
+// The two numbers the child's own top bar shows, and nothing else. A third chip
+// used to count the daily streak behind a 🔥 — the flame is gone from the site
+// (there is no streak counter anywhere a child can see it, §10.5), and a symbol
+// that exists on one page only is a symbol nobody learns.
 function renderChips() {
-  const trophies = totalTrophies(rewards.pr);
-  const streak = Array.isArray(rewards.streak) ? rewards.streak[1] : 0;
   $("p-chips").innerHTML = [
     `<span class="pchip">${iconHTML("ui-star", { size: 16 })} ${totalPoints(rewards.pr)}</span>`,
-    `<span class="pchip">${iconHTML("deco-trophy", { size: 16 })} ${trophies}</span>`,
-    streak >= 2 ? `<span class="pchip">${iconHTML("ui-flame", { size: 16 })} ${streak}</span>` : "",
+    `<span class="pchip">${iconHTML("deco-trophy", { size: 16 })} ${totalTrophies(rewards.pr)}</span>`,
   ].join("");
 }
 

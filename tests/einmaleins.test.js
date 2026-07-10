@@ -155,8 +155,9 @@ test("the round summary has one button and nothing else to press", () => {
   for (const gone of ["sum-again", "sum-pick", "sum-secondary", "sum-link"]) {
     assert.ok(!sheet.includes(gone), `${gone} is still in the summary`);
   }
-  // …and that one button must be the one the focus lands on: the trophy above
-  // it is a link to the album, so Enter would otherwise leave the game.
+  // …and that one button must be the one the focus lands on. The trophy row is
+  // injected above it and its cards are buttons too, so Enter would otherwise
+  // hold a trophy up instead of starting the next round.
   assert.match(read("games/einmaleins/einmaleins.js"), /initialFocus: "#sum-ok"/);
 });
 
@@ -196,11 +197,26 @@ test("the round summary congratulates in six ways, in both languages", () => {
   assert.ok(!("again" in de) && !("again" in en), '"Nochmal" retired with the button');
 });
 
-test("the trophy in the summary is a link to the room it belongs in", () => {
+// Mara tapped the trophy she had won and nothing happened. It was then a link to
+// the Pokalraum — which celebrated by taking her out of the round she had just
+// finished and dropping her in a room full of empty slots. It holds the trophy
+// up where she is standing.
+test("tapping a trophy she just won holds it up, without leaving the round", () => {
   const src = read("games/einmaleins/einmaleins.js");
-  const block = src.slice(src.indexOf("if (won.length > 0)"));
-  assert.match(block.slice(0, 500), /href: "\.\.\/\.\.\/album\.html"/, "the trophy must be tappable");
-  assert.match(block.slice(0, 500), /cls: "won"/, "…and still readable by tools/play.js");
+  const block = src.slice(src.indexOf("if (won.length > 0)"), src.indexOf("sfx.trophy()"));
+  assert.match(block, /button: true/, "the trophy must be tappable");
+  assert.match(block, /attrs: `data-won="\$\{i\}"`/, "…and say which of them it is");
+  assert.match(block, /cls: "won"/, "…and still readable by tools/play.js");
+  assert.ok(!block.includes("href"), "a won trophy must not navigate anywhere");
+  // one delegated listener: endRound rewrites the row on every round that pays
+  assert.match(src, /\$\("sum-trophy"\)\.addEventListener\("click"/);
+  assert.match(src, /openShowcase\(wonTrophies\[Number\(card\.dataset\.won\)\]\)/);
+  // Regression: `.won { width: 5.5em }` with `.tcard { font-size: 1.9rem }` made
+  // a 167px card, and the cup inside it stayed 44px — a token adrift in a square.
+  const css = read("assets/css/schlaufuchs.css");
+  assert.match(css, /\.summary \.trophy-earn \.won \{ width: \d+(\.\d+)?rem; \}/, "em here is 1.9rem");
+  assert.ok(!/\.trophy-earn[^{]*\{ width: [\d.]+em/.test(css));
+  assert.match(block, /\[82, 68, 48\]\[won\.length - 1\]/, "the cup must fill the card it is given");
 });
 
 // Mara never found the level picker: the chip above the scene read as a

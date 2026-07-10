@@ -264,10 +264,10 @@ function render() {
   placeFox(ANCHORS[foxAt]);
 }
 
-// The map wears the shared bar with a flat map button — you are already here —
-// and its gear is the only place the global reset lives (§3.4). initTopBar
+// The map wears the shared bar with a flat map button — you are already here.
+// Its gear opens the one settings sheet every page shares (§3.4). initTopBar
 // repaints the fox chip itself on every settings change; `render` only has to
 // redraw the island.
-initTopBar({ back: null, resetKind: "all", onChange: render });
+initTopBar({ back: null, onChange: render });
 
 render();

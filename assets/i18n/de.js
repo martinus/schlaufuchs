@@ -4,7 +4,6 @@ export default {
   settings: "Einstellungen",
   sound: "Ton",
   language: "Sprache",
-  resetGame: "Fortschritt dieses Spiels löschen",
   resetAll: "Fortschritt löschen",
   close: "Schließen",
   parentsLink: "Für Eltern",
@@ -64,7 +63,6 @@ export default {
   trophyLocked: "Noch nicht freigespielt",
   trophyNextIn: "Noch {n} ⭐ bis zum nächsten Pokal",
   trophyNextIn1: "Noch 1 ⭐ bis zum nächsten Pokal",
-  trophyAllDone: "Alle Pokale gesammelt!",
   // The round summary's one button. Picked at random so the round that follows
   // feels like an answer and not a menu item; a child who reads nothing still
   // sees a friendly word and one place to press.
