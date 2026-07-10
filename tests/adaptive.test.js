@@ -99,6 +99,27 @@ test("weighted selection prefers weak items (§7.2)", () => {
   assert.equal(WEIGHTS[0] / WEIGHTS[4], 16);
 });
 
+// The boost multiplies into the Leitner weight at draw time (§7.2): a game can
+// say "this item is intrinsically hard, show it more" without touching the box
+// mechanics. Zero weight is the strongest statement, and while any positive
+// weight remains, a zero-weight item must never be drawn.
+test("boost multiplies into the draw, and a zero boost excludes an item", () => {
+  const pool = Array.from({ length: 20 }, (_, i) => i);
+  const rng = seeded(13);
+  for (let r = 0; r < 100; r++) {
+    const s = createSession(pool, {}, { roundSize: 10, rng, boost: (id) => (id < 10 ? 1 : 0) });
+    assert.ok(s.items().every((id) => id < 10), `drew a zero-weight item: ${s.items()}`);
+  }
+  // …and a large boost dominates equal boxes: item 0 boosted 50× is all but
+  // certain to be in a half-pool draw
+  let included = 0;
+  for (let r = 0; r < 100; r++) {
+    const s = createSession(pool, {}, { roundSize: 10, rng, boost: (id) => (id === 0 ? 50 : 1) });
+    if (s.items().includes(0)) included++;
+  }
+  assert.ok(included > 90, `boosted item drawn in ${included}/100 rounds`);
+});
+
 test("roundSize larger than pool shrinks to pool size", () => {
   const s = createSession([1, 2, 3], {}, { roundSize: 10, rng: seeded() });
   assert.equal(s.items().length, 3);

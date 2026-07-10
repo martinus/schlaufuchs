@@ -48,7 +48,11 @@ function weightedSample(pool, weightOf, k, rng) {
 // createSession(pool, boxes, opts) per §7.5.
 //  - pool: array of item ids
 //  - boxes: {id: 0..4}
-//  - opts: {roundSize=10, requeueMin=2, requeueMax=4, rng=Math.random}
+//  - opts: {roundSize=10, requeueMin=2, requeueMax=4, rng=Math.random,
+//           boost: (id) => 1}
+// `boost` multiplies into the Leitner weight when the round is drawn (§7.2):
+// a game can make intrinsically hard items come up more often without touching
+// the box mechanics. It never affects re-queueing or box movement.
 // The round ends only when every drawn item has been answered correctly
 // (§7.3), so next() returns null only after full success.
 export function createSession(pool, boxes, opts = {}) {
@@ -56,11 +60,12 @@ export function createSession(pool, boxes, opts = {}) {
   const roundSize = Math.min(opts.roundSize ?? 10, pool.length);
   const reqMin = opts.requeueMin ?? 2;
   const reqMax = opts.requeueMax ?? 4;
+  const boost = opts.boost ?? (() => 1);
 
   const box = {};
   for (const id of pool) box[id] = clampBox(boxes[id]);
 
-  const pending = weightedSample(pool, (id) => WEIGHTS[box[id]], roundSize, rng);
+  const pending = weightedSample(pool, (id) => WEIGHTS[box[id]] * boost(id), roundSize, rng);
   const roundItems = [...pending];
   let cursor = 0;
   const solved = new Set();

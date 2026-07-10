@@ -7,8 +7,8 @@ import en from "../assets/i18n/en.js";
 import { read } from "./pages.js";
 import {
   POOL_COUNT, EASY_TABLES, pairIndex, pairOf, poolFor, questionFor,
-  choicesFor, starsFor, nextStarGoal, ownedStars, STAR_SLOTS, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
-  retryStep, ALL_TABLES,
+  choicesFor, starsFor, nextStarGoal, starGoalNeed, ownedStars, STAR_SLOTS, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
+  retryStep, ALL_TABLES, HARD_TABLES, ROUND_SIZE, pairHardness, hardnessBoost,
 } from "../games/einmaleins/logic.js";
 import { tilePointsLeft } from "../assets/js/rewards.js";
 
@@ -36,12 +36,82 @@ test("canonical pair index roundtrips over the full 100-item pool (§10.4)", () 
 });
 
 test("poolFor: single table, mixed, and easy-mixed (§10.2)", () => {
-  assert.equal(poolFor(7, 1).length, 10);
-  assert.ok(poolFor(7, 1).every((id) => pairOf(id)[0] === 7));
-  assert.equal(poolFor(0, 1).length, 100);
+  // Leicht: a row is its ten facts, one orientation, factors 1..10.
+  assert.equal(poolFor(7, 0).length, 10);
+  assert.ok(poolFor(7, 0).every((id) => pairOf(id)[0] === 7));
   const easyMixed = poolFor(0, 0);
   assert.equal(easyMixed.length, 40);
   assert.ok(easyMixed.every((id) => EASY_TABLES.includes(pairOf(id)[0])));
+  assert.equal(poolFor(0, 1).length, 100);
+});
+
+// With ten facts and ten questions the old fixed-table pool asked every fact
+// every round, known or not — the Leitner weights had nothing to choose from.
+// A row on Mittel/Schwer now holds both orientations, so the pool is larger
+// than the round and mastered facts can finally rest (§7.2).
+test("a fixed table on Mittel/Schwer holds both orientations", () => {
+  const mittel = poolFor(4, 1);
+  assert.equal(mittel.length, 19, "10 facts + 9 commuted, the square only once");
+  assert.equal(new Set(mittel).size, 19);
+  assert.ok(mittel.every((id) => pairOf(id).includes(4)));
+  assert.ok(mittel.includes(pairIndex(4, 7)) && mittel.includes(pairIndex(7, 4)));
+
+  const schwer = poolFor(4, 2);
+  assert.equal(schwer.length, 15, "8 hard factors + 7 commuted");
+  assert.ok(schwer.every((id) => pairOf(id).includes(4)));
+});
+
+// "Schwer" with 1×1 and 8×10 in it tells the child the label lies: nothing
+// with a factor of 1 or 10 is hard, so Schwer never draws one (§10.2).
+test("Schwer pools never contain a factor of 1 or 10", () => {
+  for (const table of [0, ...HARD_TABLES]) {
+    for (const id of poolFor(table, 2)) {
+      const [t, f] = pairOf(id);
+      assert.ok(HARD_TABLES.includes(t) && HARD_TABLES.includes(f),
+        `${t}×${f} has no place on Schwer (table ${table})`);
+    }
+  }
+  assert.equal(poolFor(0, 2).length, 64, "mixed Schwer is the 8×8 hard core");
+});
+
+test("Schwer rounds run longer (§7.3)", () => {
+  assert.deepEqual(ROUND_SIZE, [10, 10, 12]);
+});
+
+// The two knobs above only exist if the page actually turns them: the session
+// must be created with the difficulty's round size and the hardness boost.
+test("the round is drawn with the difficulty's size and the hardness boost", () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  assert.match(src, /roundSize: ROUND_SIZE\[diff\]/);
+  assert.match(src, /boost: \(id\) => hardnessBoost\(id, diff\)/);
+});
+
+test("pairHardness: trivial facts score 0, the drilled ones score highest", () => {
+  assert.equal(pairHardness(1, 1), 0);
+  assert.equal(pairHardness(8, 10), 3, "×10 contributes nothing");
+  assert.equal(pairHardness(7, 8), 6, "the classroom's hardest");
+  assert.ok(pairHardness(2, 2) < pairHardness(6, 7));
+  // squares are chanted and stick better than their neighbours
+  assert.ok(pairHardness(8, 8) < pairHardness(7, 8));
+  // symmetric: 4×7 is the same fact as 7×4
+  for (let t = 1; t <= 10; t++) {
+    for (let f = 1; f <= 10; f++) {
+      assert.equal(pairHardness(t, f), pairHardness(f, t));
+      assert.ok(pairHardness(t, f) >= 0 && pairHardness(t, f) <= 6);
+    }
+  }
+});
+
+test("hardnessBoost: neutral on Leicht, up to 7× on Mittel/Schwer", () => {
+  for (let id = 0; id < 100; id++) assert.equal(hardnessBoost(id, 0), 1);
+  assert.equal(hardnessBoost(pairIndex(1, 1), 2), 1);
+  assert.equal(hardnessBoost(pairIndex(7, 8), 2), 7);
+  for (const d of [1, 2]) {
+    for (let id = 0; id < 100; id++) {
+      const [t, f] = pairOf(id);
+      assert.equal(hardnessBoost(id, d), 1 + pairHardness(t, f));
+    }
+  }
 });
 
 test("questions always have the correct answer for every kind", () => {
@@ -51,10 +121,43 @@ test("questions always have the correct answer for every kind", () => {
     const q = questionFor(id, 2, rng);
     const [t, f] = pairOf(id);
     if (q.kind === "mul") assert.equal(q.answer, t * f);
-    if (q.kind === "div") assert.equal(q.answer, t);
+    if (q.kind === "div") assert.ok(q.answer === t || q.answer === f);
     if (q.kind === "gap") assert.ok(q.answer === t || q.answer === f);
     assert.ok(q.text.includes("?"));
+    // whatever the kind, the printed equation must hold with the answer in it
+    const [lhs, rhs] = q.text.replace("?", q.answer).split(" = ").map((s) => s.trim());
+    const [a, op, b] = lhs.split(" ");
+    assert.equal(op === "×" ? Number(a) * Number(b) : Number(a) / Number(b), Number(rhs), q.text);
   }
+});
+
+// "12 : 3 = ?" in the 4er-Reihe answers itself: every answer in that round is
+// a partner of 4. On a fixed table the gap and the division solve for the
+// OTHER factor — the table the child picked is never the thing she is asked
+// to produce (§10.2). Mixed rounds may ask in both directions.
+test("on a fixed table, the unknown is never the table itself", () => {
+  const rng = seeded(11);
+  for (const table of [2, 4, 7, 9]) {
+    for (const id of poolFor(table, 2)) {
+      const [t, f] = pairOf(id);
+      for (let i = 0; i < 30; i++) {
+        const q = questionFor(id, 2, rng, ":", table);
+        if (q.kind === "mul") continue;
+        if (t === f) continue; // the square: both factors are the table
+        assert.notEqual(q.answer, table, `"${q.text}" asks for the ${table}er row itself`);
+        if (q.kind === "div") {
+          assert.ok(q.text.includes(` : ${table} =`), `"${q.text}" must divide by the table`);
+        }
+      }
+    }
+  }
+  // mixed rounds keep both directions
+  const kinds = new Set();
+  for (let i = 0; i < 300; i++) {
+    const q = questionFor(pairIndex(3, 4), 2, rng, ":", 0);
+    if (q.kind !== "mul") kinds.add(q.answer);
+  }
+  assert.deepEqual([...kinds].sort(), [3, 4], "mixed may solve for either factor");
 });
 
 // Mara has never seen "÷": her school writes division as ":". The sign is the
@@ -87,7 +190,7 @@ test("the aid reprints the question that was asked, not a new one", () => {
   const fn = src.slice(src.indexOf("function showFeedback"));
   assert.ok(!fn.slice(0, 600).includes("÷"), "showFeedback must not hardcode a division sign");
   assert.match(fn.slice(0, 600), /eqHTML\(question\.text\)\.replace/, "it builds from question.text");
-  assert.match(src, /questionFor\(id, diff, Math\.random, t\("divSign"\)\)/);
+  assert.match(src, /questionFor\(id, diff, Math\.random, t\("divSign"\), table\)/);
 });
 
 // German divides with a colon, which sits on the baseline: between two 40px
@@ -300,15 +403,23 @@ test("a tile shows the stars it still has to give", () => {
   }
 });
 
-// Leicht teaches four tables; the others teach ten. The old picker showed the
-// six it does not teach as padlocked tiles in the Leicht grid — six dead
-// buttons a child could tap and be refused by.
-test("Leicht offers its five tiles, and nothing is disabled anywhere", () => {
+// Leicht teaches four tables, Mittel all ten, Schwer the eight with something
+// hard in them. The old picker showed tables a difficulty does not teach as
+// padlocked tiles — dead buttons a child could tap and be refused by.
+test("each difficulty offers its own tiles, and nothing is disabled anywhere", () => {
   const src = read("games/einmaleins/einmaleins.js");
-  assert.match(src, /const tablesFor = \(d\) => \(d === 0 \? \[\.\.\.EASY_TABLES, 0\] : \[\.\.\.ALL_TABLES, 0\]\)/);
+  assert.match(
+    src,
+    /const tablesFor = \(d\) =>\s*\(d === 0 \? \[\.\.\.EASY_TABLES, 0\] : d === 2 \? \[\.\.\.HARD_TABLES, 0\] : \[\.\.\.ALL_TABLES, 0\]\)/,
+  );
   assert.equal(EASY_TABLES.length + 1, 5, "four easy tables plus 'Alle'");
   assert.equal(ALL_TABLES.length + 1, 11);
+  assert.equal(HARD_TABLES.length + 1, 9, "no 1er or 10er on Schwer");
   assert.ok(!/b\.disabled|classList\.add\("locked"\)|ui-lock/.test(src), "no padlocked tiles");
+
+  // a saved tile the current difficulty does not offer must fall back, not
+  // leave the fox standing on a level that no longer exists
+  assert.match(src, /if \(!tablesFor\(diff\)\.includes\(table\)\) table = 2;/);
 });
 
 // The list is long enough to scroll. It must open on the level she is playing.
@@ -402,6 +513,29 @@ test("the summary names the price of the next star", () => {
   assert.equal(nextStarGoal(starsFor(6, 10)), "starGoal2");
   assert.equal(nextStarGoal(starsFor(8, 10)), "starGoal3");
   assert.equal(nextStarGoal(starsFor(10, 10)), null);
+});
+
+// The goal strings used to hardcode "6 von 10", which became a lie the moment
+// a Schwer round grew to 12 questions. The count is computed from the round.
+test("starGoalNeed names the cheapest score that pays the next star", () => {
+  for (const total of [8, 10, 12]) {
+    for (const stars of [0, 1, 2]) {
+      const need = starGoalNeed(stars, total);
+      assert.equal(starsFor(need, total), stars + 1, `${need}/${total} must pay star ${stars + 1}`);
+      assert.ok(starsFor(need - 1, total) <= stars, `${need - 1}/${total} must not`);
+    }
+  }
+  assert.equal(starGoalNeed(0, 10), 6);
+  assert.equal(starGoalNeed(1, 10), 8);
+  assert.equal(starGoalNeed(2, 12), 12);
+  assert.equal(starGoalNeed(0, 12), 8);
+  // total like nextStarGoal: junk answers null, never NaN into a string
+  for (const bad of [[3, 10], [-1, 10], [0, 0], [0, -5], [undefined, 10]]) {
+    assert.equal(starGoalNeed(...bad), null, `starGoalNeed(${bad})`);
+  }
+  // …and the summary must pass the round's own length
+  assert.match(read("games/einmaleins/einmaleins.js"),
+    /t\(goal, \{ n: starGoalNeed\(stars, total\), total \}\)/);
 });
 
 test("nextStarGoal is total: garbage in, a hidden row out — never a blank one", () => {
