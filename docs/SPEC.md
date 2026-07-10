@@ -112,7 +112,6 @@ in HTML/CSS/JS — never absolute paths like `/assets/...`.
 │   │   ├── mapwalk.js        # Fox anchors + walk arithmetic, pure (§3.1)
 │   │   ├── showcase.js       # One trophy, held up — shelf & summary (§3.2)
 │   │   ├── audio.js          # Feedback sounds (WebAudio, no asset files)
-│   │   ├── fullscreen.js     # Remembered fullscreen toggle (§3.4)
 │   │   └── confetti.js       # Celebration effect
 │   └── img/
 │       ├── fuchs.svg         # Mascot: poses (§15)
@@ -330,9 +329,9 @@ The bar has exactly two shapes:
   difficulty and table; tapping opens the picker **as an overlay** on the same
   page, never a separate page.
 - **Settings gear** → shared overlay (`initSettingsOverlay`, `chrome.js`):
-  the **same rows on every page that has a gear** — sound, fullscreen (where the
-  browser has it, §3.4), language, reset, and the three links out. The reset is
-  always the whole site's, with a two-step confirm. It used to take a
+  the **same six rows on every page that has a gear** — sound, language, reset,
+  and the three links out. The reset is always the whole site's, with a two-step
+  confirm. It used to take a
   `resetKind`: "all" on the map, "game" inside a game, and *nothing at all* in
   the Pokalraum — so one gear opened three sheets, and in the room a parent
   looking for the reset found a row that was missing. There is no per-game
@@ -366,24 +365,14 @@ open, it owns the keyboard: the game behind it must not receive a keystroke.
   — the same rule the map keeps for its regions (§3.1). A tap during the walk
   is ignored; `prefers-reduced-motion` skips it and opens at once (§15).
 - No confirmation dialogs on the happy path (only destructive resets).
-- **Fullscreen** (`fullscreen.js`) is a toggle in the settings sheet, and it is
-  remembered (`settings.fullscreen`). It pairs with the round guard (§10.7):
-  fullscreen hides the Android navigation bar, so the edge swipe that ends a
-  round is harder to reach by accident. Two browser facts shape it, and both are
-  load-bearing:
-  - **The API does not exist on iPhone Safari** (only iPad, Android, desktop).
-    The toggle therefore *removes its own row* where `fsSupported()` is false —
-    a control that toggles nothing is the one broken thing on a child's screen.
-    The iPhone's only route to a chromeless view is "Add to Home Screen", a
-    different mechanism this site does not yet claim.
-  - **`requestFullscreen()` is granted only from a user gesture**, so a
-    remembered "on" cannot re-apply itself on load. It re-enters on the **first
-    tap or key** after each navigation instead — which on a game page is the
-    child's first move. Leaving fullscreen deliberately (Escape, a system
-    gesture) clears the preference, so the re-entry never fights her. The button
-    follows the real `fullscreenchange`, so the sheet never lies about the
-    state, and it shows ON as an orange fill, not a second icon (Unicode has no
-    clean "shrink" glyph to answer the four-corners "expand").
+- **No fullscreen toggle.** A remembered fullscreen mode was built and then
+  removed: on the very common phones with a centred punch-hole camera, hiding
+  the browser chrome let the top bar — the fox chip, the star count — slide up
+  under the camera cutout. Respecting `env(safe-area-inset-top)` might have
+  dropped the bar back below it, but that inset is unreliable in web fullscreen
+  across Android devices and could not be verified on the real hardware, and the
+  one benefit fullscreen offered — a harder-to-reach edge swipe — the round
+  guard (§10.7) already delivers. So the round is protected without it.
 - **The round summary has exactly ONE button**, carrying a randomly chosen
   congratulation („Super!", "Well done!", …); pressing it opens the level
   picker on the level just played, where one more tap plays it again. A wall of

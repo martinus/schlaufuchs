@@ -199,13 +199,6 @@ button, .iconbtn, .chip, a.region {
 
 .iconbtn:active { transform: scale(0.95); }
 
-/* A settings icon button that is a switch (fullscreen, §3.4) wears its ON state
-   the way the language pick does: orange fill, not a second icon. The emoji
-   fallback is dark ink, so it must flip to white to stay legible on orange —
-   a real SVG icon inherits nothing and is unaffected. */
-.iconbtn[aria-pressed="true"] { background: var(--orange); color: #fff; }
-.iconbtn[aria-pressed="true"] .gicon { color: #fff; }
-
 .chip {
   min-height: 48px;
   padding: 0 14px;
