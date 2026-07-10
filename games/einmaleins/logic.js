@@ -123,9 +123,11 @@ export function choicesFor(q, rng = Math.random) {
   return opts;
 }
 
-// Stars per round (§10.3): 6/10 → ⭐, 8/10 → ⭐⭐, 10/10 → ⭐⭐⭐, first try each.
-// Speed is deliberately not a criterion: a child who reads or taps slowly knows
-// the times tables just as well, and a clock is not something they can act on.
+// Stars per round (§10.3): ≥60 % → ⭐, ≥80 % → ⭐⭐, 100 % → ⭐⭐⭐ of the round
+// first-try correct — a ratio, so a 12-question Schwer round scales with it.
+// Speed is deliberately not a criterion for stars: a child who reads or taps
+// slowly knows the times tables just as well. Speed has its own additive
+// ladder (§10.6, below), which can only ever add.
 export function starsFor(firstTryOk, total) {
   const ratio = total > 0 ? firstTryOk / total : 0;
   if (ratio >= 1) return 3;
