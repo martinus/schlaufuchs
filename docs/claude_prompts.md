@@ -79,7 +79,7 @@ Ich habe das Spiel an meiner 8 Jährigen Tochter Mara getested, das Resultat war
 * Ich habe sie darauf hingewiesen, dass sie auf die Häuser klicken muss um das Einmaleins zu spielen. Daraufhin hat sie genau zwischen die Häuser geklickt und es ist nichts passiert.
 
 * Im Spiel: weiß nicht wie man Level wechselt oder dass es so eine Einstellung überhaupt gibt
-
+ 
 * Nach Spielende ist sie verwundert über das Bild mit der Schulglocke (der erste Pokal), sie weiß nicht dass das ein Pokal ist den sie da gewonnen hat, und auch nicht dass der Pokal dann im Pokalraum zu finden ist oder wie sie dahin kommt.
 Meine Idee zur Verbesserung: Zeige das grafisch viel besser an. die Bilder sollen auch immer quadratisch sein und so aussehen wie im Pokalraum. Die Pokale müssen deutlich zu sehen sein. Vielleicht zeig auf jedem Bild auch einen wirklichen Pokal an? Also das Emoji vom Pokal, und darauf dann das Symbol das quasi im Pokal liegt. Das soll dann auch im Pokalraum genauso aussehen.
 
@@ -103,6 +103,22 @@ Meine Idee zur Verbesserung: Schreib von Anfang in jedes Feld mit Pokal wieviel 
 * Sie hat nicht verstanden dass sie einen Fehler gemacht hat, sie hat dann einfach auf "Verstanden" geklickt und wusste nicht wiesso sie das tun soll.
 Meine Idee zur Verbesserung: Es soll auch angezeigt werden was sie angegeben hat (rot hinterlegt), und darunter soll die richtige Lösung stehen. Das Fenster soll Modal sein, also es soll offensichtlich sein dass das sowas wie ein Popup ist, und das Spiel im Hintergrund nicht klickbar ist. Vielleicht sollte sie hier auch die richtige Lösung extra eintippen müssen um wieder ins Spiel kommen zu können
 
+------
+Die Änderungen sind super, hier noch ein paar Wünsche:
+
+* Man sieht die Sterne schlecht bei der Level Auswahl, vielleicht die Farben grün, gelb, rot dunkler machen?
+* Die Symbole sollten oberhalb des Pokals sein, wie wenn sie darin liegen würden; und größer so dass man sie auch gut erkennen kann
+* Im Pokalraum entferne die Anzeige "X von 60 Pokalen"
+* Auf der Karte entferne die Anzeige von der Anzahl der Pokale unter dem Pokalraum, stattdessen zeig die Anzahl über dem großen Pokal an der am Haus dargestellt ist
+* Wenn ich in der Karte auf z.b. den Pokalraum klicke oder auf das Zahlendorf, dann soll der fuchs auch wirklich dorthin wandern, in einer kleinen Animation. Erst wenn der Fuchs dort ist soll es sich öffnen. Wenn man dann wieder auf die Karte geht, soll der Fuchs auch vor dem Bereich stehen in dem man gerade war, und wenn man woanders klickt dorthin wandern.
+* Benenne das Zahlendorf um in Einmaleins, wie das Spiel. Ich möchte dass das einheitlich ist. Im Einmaleins zeig auch das jeweilige Symbol an, also die Häuser oder im Pokalraum das Symbol vom Pokalraum. Entferne den Text vom Pokalraum, liest eh keiner; es soll intuitiv erkennbar sein was das ist.
+* Im Pokalraum: Bei klick auf einenm Pokal zeig diesen ganz groß, und lass Konfetti regnen, es soll beeindruckend sein, der Fuchs soll auch daneben huepfen, Sterne sollen blinken, so dass das Kind das stolz herzeigen moechte
+
+----
+* Positioniere den Doppelpunkt (was ja als Divisionssymbol verwendet wird) etwas hoeher damit er nicht wie ein Doppelpunkt wirkt
+* In der Levelauswahl: mach einen weissen Rand um die Sterne, man sieht sie trotzdem sonst sehr schlecht
+* Statt in der Himmelansicht bei den Sternen ein x2 oder x3 anzuzeigen, zeichne einfach kleine Gruppen mit 2 oder 3 Sterne (halt etwas kleiner), die dann alle in den Korb fliegen
+* Im Fehlerfall soll die Eingabe genauso wie im Spiel funktionieren, also z.b. bei Schwer oder Mittel Zahl eingeben und auch wirklich auf OK drucken muessen
 
 ------
 TODO: Offline play through a service worker. The site is already fully static, has no network calls after load, and stores everything in one cookie — it is perhaps twenty lines from working on a train, in a waiting room, or on a school tablet with no Wi-Fi, which is exactly where a child practises times tables. It is listed in SPEC as M7 "Polish", which undersells it: for a kids' learning site, "works with no internet" is a feature parents choose on, and almost none of the commercial competitors have it because their business model needs the network.

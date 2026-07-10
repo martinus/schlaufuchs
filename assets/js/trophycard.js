@@ -7,22 +7,26 @@
 // The album and the summary both call this, and a child can follow the picture
 // from the round that earned it to the shelf it lives on.
 //
-// It renders an <a> when `href` is given and a <div> otherwise, because the
-// summary's trophy leads to the album and the album's does not lead anywhere.
+// It renders an <a> when `href` is given, a <button> when `button` is set, and
+// a <div> otherwise: the summary's trophy leads to the album, the album's opens
+// the trophy full size, and a card that does neither must not look tappable.
 
 import { iconHTML } from "./graphics.js";
 
-// The theme emoji rides in the cup's bowl, so it is drawn distinctly smaller
-// than the cup that carries it. Ratio, not pixels: the card is used at 34px on
-// the shelf and at 44px in the summary.
-const THEME_RATIO = 0.5;
+// The theme emoji rides in the cup's bowl, so it is drawn smaller than the cup
+// that carries it — but not by much. At half the cup a 🔔 in a 34px card was a
+// speck, and the twelve trophies on a shelf were twelve identical cups. Ratio,
+// not pixels: the card is used at 34px on the shelf and at 44px in the summary.
+const THEME_RATIO = 0.66;
 
-export function trophyCardHTML(trophy, { size = 34, lang = "de", href, cls = "", label } = {}) {
-  const tag = href ? "a" : "div";
+export function trophyCardHTML(trophy, { size = 34, lang = "de", href, button = false, cls = "", label, attrs: extra = "" } = {}) {
+  const tag = href ? "a" : button ? "button" : "div";
   const attrs = [
     `class="tcard${cls ? ` ${cls}` : ""}"`,
     href ? `href="${href}"` : "",
+    button ? `type="button"` : "",
     label ? `aria-label="${label}"` : "",
+    extra,
   ].filter(Boolean).join(" ");
 
   const cup = iconHTML("deco-trophy", { size, cls: "t-cup" });

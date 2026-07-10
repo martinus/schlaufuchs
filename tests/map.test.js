@@ -32,6 +32,24 @@ test("every region has something for pave() to pave", () => {
   }
 });
 
+// The room's collection used to hang beneath its house on a badge, in a column
+// of region labels and star badges, where a number means nothing in particular.
+// It is now written on the wall, above the cup it counts.
+test("the Trophy Room counts its trophies on the cup, not under the house", () => {
+  const room = html.slice(html.indexOf('id="region-pokalraum"'), html.indexOf("</a>", html.indexOf('id="region-pokalraum"')));
+  assert.ok(!room.includes('data-badge="pokalraum"'), "the badge under the house is gone");
+  assert.match(room, /id="pokal-count"/, "…and the count is on the facade");
+  assert.match(mapJs, /getElementById\("pokal-count"\)/, "…and map.js still fills it");
+
+  const count = Number(room.match(/id="pokal-count"[^>]*y="([\d.]+)"/)[1]);
+  const cup = Number(room.match(/data-icon="deco-trophy"[^>]*y="([\d.]+)"/)[1]);
+  assert.ok(count < cup, "the number must sit above the trophy, not on top of it");
+
+  // The number is decorative markup; the link has to say what it means.
+  assert.match(room, /id="pokal-count"[^>]*aria-hidden="true"/);
+  assert.match(mapJs, /pkRegion\.setAttribute\("aria-label"/);
+});
+
 test("every road has the dashed centre line that pave() hides", () => {
   const roads = [...html.matchAll(/id="road-([a-z]+)"/g)].map((m) => m[1]);
   assert.ok(roads.length >= 5, "expected the roads to still be there");
@@ -51,11 +69,49 @@ test("pave() targets exactly the ids the SVG offers", () => {
 });
 
 test("every region the fox can stand on has an anchor", () => {
-  const anchors = mapJs.slice(mapJs.indexOf("const ANCHORS"), mapJs.indexOf("};"));
+  // the anchors themselves are checked in mapwalk.test.js; here: the map has a
+  // group for each one, and map.js reads them from the one module that owns them
   for (const game of GAMES) {
-    assert.ok(anchors.includes(`${game}:`), `no fox anchor for "${game}"`);
     assert.ok(html.includes(`id="region-${game}"`), `no region group for "${game}"`);
   }
+  assert.match(mapJs, /from "\.\/mapwalk\.js"/, "map.js must not keep a second copy of the anchors");
+  assert.ok(!mapJs.includes("const ANCHORS ="), "the anchors live in mapwalk.js");
+});
+
+// Mara tapped the Trophy Room and the page swapped under her. The fox stayed on
+// the island, so nothing tied the map she left to the room she arrived in.
+test("a tap sends the fox there first, and the region opens when it arrives", () => {
+  const travel = mapJs.slice(mapJs.indexOf("function travelTo"));
+  assert.match(travel.slice(0, 700), /setRewards\(\{ at: game \}\)/,
+    "the map must remember where she went, or the fox is not there when she returns");
+  // the navigation is the walk's callback, never a statement beside it
+  assert.match(mapJs, /walkFox\([\s\S]{0,120}location\.href = href;/,
+    "the region must open only once the fox has arrived");
+  // Regression risk: two rAF loops fighting over one transform, and two
+  // navigations racing each other.
+  assert.match(travel.slice(0, 200), /if \(walking\) return;/);
+});
+
+// Regression: these are SVG anchors. `region.href` is an SVGAnimatedString, not
+// a string, so `location.href = region.href` sent the child to the 404 page
+// "/[object%20SVGAnimatedString]". Every region on the map was a dead end, and
+// node --test saw nothing wrong.
+test("the map navigates by the href attribute, not by an SVG anchor's href", () => {
+  assert.ok(!/location\.href = region\.href/.test(mapJs), "SVGAnimatedString is not a URL");
+  assert.match(mapJs, /region\.getAttribute\("href"\)/);
+});
+
+test("a fox that cannot be watched walking still ends up at the new region", () => {
+  // `prefers-reduced-motion` is not negotiable (§15): no walk, and `at` is
+  // written before the branch, so the fox stands there on the way back.
+  const travel = mapJs.slice(mapJs.indexOf("function travelTo"));
+  const head = travel.slice(0, travel.indexOf("walkFox("));
+  assert.match(head, /prefers-reduced-motion/);
+  assert.ok(
+    head.indexOf("setRewards") < head.indexOf("prefers-reduced-motion"),
+    "`at` must be written before the reduced-motion shortcut takes the navigation",
+  );
+  assert.match(head, /location\.href = href;/, "…and it must still open");
 });
 
 test("Tippsee: the lake is painted after the hut, so the shore is in front", () => {
@@ -150,8 +206,10 @@ test("the fog is built from the art, never from the hit rect", () => {
 // she was simply gone from the map, with no way back she recognised.
 test("a fogged region does not open — it wiggles and says Bald", () => {
   const handler = mapJs.slice(mapJs.indexOf('addEventListener("click"'));
-  assert.match(handler.slice(0, 300), /a\.region\.locked/, "only fogged regions are caught");
-  assert.match(handler.slice(0, 300), /preventDefault/, "the navigation must be cancelled");
+  assert.match(handler.slice(0, 600), /preventDefault/, "the navigation must be cancelled");
+  // one handler, two answers: the fog wiggles, everything else is walked to
+  assert.match(handler.slice(0, 600), /classList\.contains\("locked"\)\) soonBubble\(region\);/);
+  assert.match(handler.slice(0, 600), /else travelTo\(region\);/);
   assert.match(mapJs, /t\("soonBubble"\)/, "and the child must be told, without a sentence");
   assert.ok(
     mapJs.indexOf('addEventListener("click"') < mapJs.indexOf("function render()"),

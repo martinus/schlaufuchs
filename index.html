@@ -22,6 +22,7 @@
       "./assets/js/i18n.js": "./assets/js/i18n.js?v=33",
       "./assets/js/journey.js": "./assets/js/journey.js?v=33",
       "./assets/js/map.js": "./assets/js/map.js?v=33",
+      "./assets/js/mapwalk.js": "./assets/js/mapwalk.js?v=33",
       "./assets/js/overlay.js": "./assets/js/overlay.js?v=33",
       "./assets/js/parents.js": "./assets/js/parents.js?v=33",
       "./assets/js/parentstats.js": "./assets/js/parentstats.js?v=33",
@@ -170,7 +171,8 @@
           <g class="region-badge" data-badge="lesen" transform="translate(88,530)"></g>
         </a>
 
-        <!-- Zahlendorf (Einmaleins) center -->
+        <!-- Einmaleins, the village at the crossroads. The place is named after
+             its game: one name to learn, not two (§3.1). -->
         <a href="games/einmaleins/" class="region" id="region-einmaleins" data-game="einmaleins">
           <!-- Mara tapped the gap between the two houses and nothing happened. -->
           <rect class="hit" fill="transparent" x="122" y="350" width="110" height="120"/>
@@ -186,7 +188,7 @@
             <rect x="210" y="400" width="10" height="10" fill="#5aa7d6"/>
             <rect x="197" y="410" width="14" height="17" fill="#6b4423"/>
             <!-- the village is the crossroads, so it has no road of its own:
-                 mastering Zahlendorf cobbles its square instead (§3.1) -->
+                 mastering it cobbles its square instead (§3.1) -->
             <ellipse class="plaza" id="plaza-einmaleins" cx="180" cy="433" rx="46" ry="8"/>
           </g>
           <g class="layer-thriving">
@@ -194,7 +196,7 @@
             <text data-icon="deco-sparkle" data-icon-size="13" x="228" y="368" font-size="13">✨</text>
           </g>
           <g class="layer-mastered"><text data-icon="deco-circus" data-icon-size="15" x="172" y="360" font-size="15">🎪</text></g>
-          <text class="region-label" x="180" y="448" data-i18n="region_einmaleins">Zahlendorf</text>
+          <text class="region-label" x="180" y="448" data-i18n="region_einmaleins">Einmaleins</text>
           <g class="region-badge" data-badge="einmaleins" transform="translate(180,463)"></g>
         </a>
 
@@ -209,12 +211,15 @@
           <rect x="247" y="444" width="7" height="46" fill="#d9cbb8"/>
           <rect x="301" y="444" width="7" height="46" fill="#d9cbb8"/>
           <polygon points="234,442 278,412 322,442" fill="#b06f3c"/>
-          <!-- the room says what it holds: a trophy on its own facade -->
-          <text data-icon="deco-trophy" data-icon-size="24" x="278" y="484" font-size="24" text-anchor="middle">🏆</text>
+          <!-- The room says what it holds: a trophy on its own facade, with the
+               size of the collection written above it. That number used to be a
+               badge under the house, one more label among the region labels —
+               here it can only mean the cup it sits on (map.js fills it). -->
+          <text class="pokal-count" id="pokal-count" x="278" y="460" aria-hidden="true">0</text>
+          <text data-icon="deco-trophy" data-icon-size="26" x="278" y="488" font-size="26" text-anchor="middle">🏆</text>
           <g class="layer-thriving"><text data-icon="deco-sparkle" data-icon-size="13" x="246" y="432" font-size="13">✨</text></g>
           <g class="layer-mastered"><text data-icon="deco-party" data-icon-size="15" x="311" y="432" font-size="15">🎉</text></g>
           <text class="region-label" x="278" y="518" data-i18n="region_pokalraum">Pokalraum</text>
-          <g class="region-badge" data-badge="pokalraum" transform="translate(278,532)"></g>
         </a>
 
         <!-- the fox, placed by map.js at the last-played region -->
