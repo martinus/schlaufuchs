@@ -177,6 +177,9 @@ Shared modules in `assets/js/`:
   the four unbuilt games — recompute when one ships.
 - `journey.js` — the round's scene; `sceneGeometry(nodes, theme)` is the pure
   arithmetic (tested), `createJourney` is the DOM around it.
+- `mapwalk.js` / `levelfox.js` — the fox's walk, on the island and in the level
+  picker. Both open a place only once the fox has arrived on it; the second
+  borrows the first's `walkPoint`/`walkMs`, so there is one gait.
 - `graphics.js` — the icon registry (see below). `applyIcons` only matters where
   a page has static `[data-icon]` markup, which today is `index.html` alone.
 - `trophycard.js` — `trophyCardHTML(trophy, {size, lang, href, cls, label})`,
