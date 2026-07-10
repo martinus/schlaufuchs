@@ -20,11 +20,6 @@ export const GRAPHICS = {
   "ui-basket": { emoji: "🧺" },
   "ui-trash": { emoji: "🗑️" },
   "ui-lock": { emoji: "🔒" },
-  // Fullscreen toggle (§3.4). One icon for both states — Unicode has no clean
-  // "shrink" counterpart to the four-corners "expand", so the ON state is shown
-  // by the button's active colour (like the language pick), not a second glyph.
-  // Emoji placeholder like the rest of the set until the brief's SVG is drawn.
-  "ui-fullscreen": { emoji: "⛶" },
 
   // Language flags — one per entry in LANGUAGES (i18n.js). Windows renders no
   // flag emoji, so these are the first candidates for real SVGs.
