@@ -4,17 +4,16 @@
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString } from "../../assets/js/adaptive.js";
-import { recordRound, roundPoints, starValue, addPractice } from "../../assets/js/rewards.js";
+import { recordRound, roundPoints, starValue, tilePointsLeft, addPractice } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
-import { iconHTML } from "../../assets/js/graphics.js";
 import { trophyCardHTML } from "../../assets/js/trophycard.js";
 import { initTopBar } from "../../assets/js/chrome.js";
 import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
 import strings from "./i18n.js";
 import {
-  POOL_COUNT, EASY_TABLES, poolFor, questionFor, choicesFor,
+  POOL_COUNT, EASY_TABLES, ALL_TABLES, poolFor, questionFor, choicesFor,
   starsFor, nextStarGoal, ownedStars, starDigit, withStarDigit, fittedFontSize, retryStep,
 } from "./logic.js";
 
@@ -26,6 +25,10 @@ const $ = (id) => document.getElementById(id);
 // cannot: closing it would leave a finished round with nothing to press (§3.3).
 const picker = overlayFrom(document.getElementById("pick-overlay"), {
   onOpen: renderPicker,
+  // The list is long enough to scroll. Open it on the level she is playing,
+  // not on the first tile of the first difficulty — focusing it scrolls it
+  // into view, so she sees where she is before she chooses where to go.
+  initialFocus: "[aria-current='true']",
   onClose() {
     if (roundOver) summary.open();
   },
@@ -37,6 +40,7 @@ const summary = overlayFrom(document.getElementById("sum-overlay"), {
   initialFocus: "#sum-ok",
 });
 const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
+const DIFF_SLUGS = ["easy", "medium", "hard"];
 const SUM_OK_KEYS = ["sumOk1", "sumOk2", "sumOk3", "sumOk4", "sumOk5", "sumOk6"];
 const NEXT_MS = 250;
 
@@ -402,61 +406,67 @@ function endRound() {
 $("sum-ok").addEventListener("click", startRound);
 
 // --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------
+
+// Leicht teaches four tables (§10.2); the others teach all ten. Both end with
+// "Alle gemischt".
+const tablesFor = (d) => (d === 0 ? [...EASY_TABLES, 0] : [...ALL_TABLES, 0]);
+
+// The picker used to be two controls: three difficulty buttons on top, and one
+// grid of tables that changed underneath them. A child had to understand that
+// the first row rewrote the second, and that "×2 ⭐" on a button she had not
+// pressed was a promise about stars she could not see.
+//
+// It is now one scrollable list of every level the game has. The difficulty is
+// where a tile sits, what colour it has, and — the whole point — **how many
+// stars it still has to give**: three on a fresh Leicht tile, six on Mittel,
+// nine on Schwer. Nobody has to be told that hard work pays more; the tile is
+// three times as full. A tile with nothing left to give shows a tick.
 function renderPicker() {
-  const segEl = $("pick-diff");
-  segEl.innerHTML = "";
-  DIFF_KEYS.forEach((key, i) => {
-    const b = document.createElement("button");
-    // The stars are always three. What Mittel and Schwer buy is a star worth
-    // twice or three times as much, and that is what the label says (§10.2).
-    const v = starValue(i);
-    b.innerHTML = `${t(key)}<span class="dmul">${v > 1 ? `×${v}&nbsp;` : ""}⭐</span>`;
-    b.setAttribute("aria-label", v > 1 ? t("diffWorth", { d: t(key), n: v }) : t(key));
-    b.setAttribute("aria-pressed", String(i === diff));
-    b.addEventListener("click", () => {
-      diff = i;
-      renderPicker();
-    });
-    segEl.appendChild(b);
-  });
+  const box = $("pick-levels");
+  box.innerHTML = "";
+  // not the module's `saved`: the picker must read the cookie as it is now
+  const starsByDiff = getGame("einmaleins").stars ?? {};
 
-  const grid = $("pick-tables");
-  grid.innerHTML = "";
-  const starStr = (getGame("einmaleins").stars ?? {})[diff];
-  for (const tbl of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0]) {
-    const b = document.createElement("button");
-    const s = starDigit(starStr, tbl);
-    // Leicht only teaches four tables (§10.2); the rest are not offered here.
-    const locked = diff === 0 && tbl !== 0 && !EASY_TABLES.includes(tbl);
-    b.disabled = locked;
+  DIFF_KEYS.forEach((key, d) => {
+    // A heading, not a control: pressing a difficulty is choosing a tile in it.
+    const head = document.createElement("h3");
+    head.className = `lvl-head lvl-${DIFF_SLUGS[d]}`;
+    head.textContent = t(key);
+    box.appendChild(head);
 
-    // Every tile shows its three stars, gold for taken and grey for still to be
-    // won — the same language the sky speaks above the round (§10.5). The number
-    // of points is not on the tile: what a star is worth is a property of the
-    // difficulty, and the difficulty says so itself (§10.2).
-    if (locked) {
-      b.classList.add("locked");
-      b.innerHTML = `<span>${tbl2short(tbl)}</span>
-        <span class="tstars">${iconHTML("ui-lock", { size: 13 })}</span>`;
-    } else {
-      if (s === 3) b.classList.add("mastered");
-      const stars = [0, 1, 2].map((k) => `<i class="${k < s ? "on" : "off"}">⭐</i>`).join("");
+    const grid = document.createElement("div");
+    grid.className = `tilegrid lvl-${DIFF_SLUGS[d]}`;
+    for (const tbl of tablesFor(d)) {
+      const left = tilePointsLeft(starDigit(starsByDiff[d], tbl), d);
+      const b = document.createElement("button");
+      if (left === 0) b.classList.add("mastered");
+      if (d === diff && tbl === table) {
+        b.classList.add("current");
+        b.setAttribute("aria-current", "true");
+      }
       // "Alle" is the only tile whose name is a word rather than a number, and
       // a child who reads nothing cannot tell it from the rest. A die can.
       const name = tbl === 0 ? `🎲 ${tbl2short(tbl)}` : tbl2short(tbl);
-      b.innerHTML = `<span>${name}</span>
-        <span class="tstars">${stars}</span>`;
+      const art = left > 0 ? "<i>⭐</i>".repeat(left) : '<b class="tdone">✓</b>';
+      b.innerHTML = `<span class="tstars" aria-hidden="true">${art}</span>`
+        + `<span class="tname">${name}</span>`;
+      b.setAttribute(
+        "aria-label",
+        `${t(key)} · ${tbl2short(tbl)} — ${left > 0 ? t("tileStarsLeft", { n: left }) : t("tileMastered")}`,
+      );
+      b.addEventListener("click", () => {
+        diff = d;
+        table = tbl;
+        // the new round is the answer to the picker; it must not reopen the
+        // summary of the old one behind it
+        roundOver = false;
+        picker.close();
+        startRound();
+      });
+      grid.appendChild(b);
     }
-    b.addEventListener("click", () => {
-      table = tbl;
-      // the new round is the answer to the picker; it must not reopen the
-      // summary of the old one behind it
-      roundOver = false;
-      picker.close();
-      startRound();
-    });
-    grid.appendChild(b);
-  }
+    box.appendChild(grid);
+  });
 }
 
 $("pickchip").addEventListener("click", picker.open);

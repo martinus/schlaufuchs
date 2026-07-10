@@ -8,8 +8,9 @@ import { read } from "./pages.js";
 import {
   POOL_COUNT, EASY_TABLES, pairIndex, pairOf, poolFor, questionFor,
   choicesFor, starsFor, nextStarGoal, ownedStars, STAR_SLOTS, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
-  retryStep,
+  retryStep, ALL_TABLES,
 } from "../games/einmaleins/logic.js";
+import { tilePointsLeft } from "../assets/js/rewards.js";
 
 // Type a whole string through retryStep, returning the final step.
 function typeAll(keys, answer, start = "") {
@@ -195,12 +196,72 @@ test("the chip looks like the button it is", () => {
   // The caret must be a pseudo-element: updateChip() writes textContent, which
   // would silently eat a glyph carried in the string.
   assert.ok(!read("games/einmaleins/einmaleins.js").includes("▾"));
-  assert.match(css, /\.seg button\[aria-pressed="true"\] \{[^}]*inset 0 0 0 3px/, "the chosen level must be unmistakable");
 });
 
 test('the "Alle" tile says with a picture that it mixes the tables', () => {
   const src = read("games/einmaleins/einmaleins.js");
   assert.match(src, /tbl === 0 \? `🎲 \$\{tbl2short\(tbl\)\}`/);
+});
+
+// The picker was two controls: three difficulty buttons that silently rewrote
+// the grid of tables under them, and a "×2 ⭐" promise on a button nobody had
+// pressed. It is now one scrollable list of every level the game has.
+test("the picker is one list of levels, not a switch above a grid", () => {
+  const page = read("games/einmaleins/index.html");
+  const src = read("games/einmaleins/einmaleins.js");
+  const css = read("assets/css/schlaufuchs.css");
+
+  assert.match(page, /id="pick-levels"/);
+  for (const gone of ["pick-diff", "pick-tables", 'class="seg"']) {
+    assert.ok(!page.includes(gone), `${gone} survived in the picker markup`);
+  }
+  assert.ok(!/aria-pressed/.test(src), "nothing in the picker is a toggle any more");
+  assert.ok(!/dmul|×\$\{v\}|diffWorth/.test(src), "the ×2 / ×3 promise is gone from the picker");
+  assert.ok(!/\.seg\b|\.dmul\b/.test(css), "dead rules for a control that no longer exists");
+
+  // A difficulty is a heading, not a control: choosing one IS choosing a tile.
+  assert.match(src, /const head = document\.createElement\("h3"\)/);
+  assert.ok(!/head\.addEventListener/.test(src), "a heading must not be clickable");
+  for (const slug of ["easy", "medium", "hard"]) {
+    assert.ok(css.includes(`.lvl-head.lvl-${slug}`), `no colour for the ${slug} heading`);
+    assert.ok(css.includes(`.tilegrid.lvl-${slug} button`), `no colour for the ${slug} tiles`);
+  }
+});
+
+// The whole rulebook, as a picture: a fresh Leicht tile holds 3 stars, Mittel 6,
+// Schwer 9 — so "harder pays three times as much" needs no words. As she wins
+// them the tile empties, and an empty one shows a tick.
+test("a tile shows the stars it still has to give", () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  assert.match(src, /tilePointsLeft\(starDigit\(starsByDiff\[d\], tbl\), d\)/);
+  assert.match(src, /left > 0 \? "<i>⭐<\/i>"\.repeat\(left\) : '<b class="tdone">✓<\/b>'/);
+  assert.match(src, /if \(left === 0\) b\.classList\.add\("mastered"\)/);
+
+  // 3 / 6 / 9 on an untouched tile, nothing on a finished one — the numbers the
+  // colour bands promise. tilePointsLeft is unit-tested in rewards.test.js.
+  for (const [d, fresh] of [[0, 3], [1, 6], [2, 9]]) {
+    assert.equal(tilePointsLeft(0, d), fresh, `a fresh tile of difficulty ${d}`);
+    assert.equal(tilePointsLeft(3, d), 0, `a mastered tile of difficulty ${d}`);
+  }
+});
+
+// Leicht teaches four tables; the others teach ten. The old picker showed the
+// six it does not teach as padlocked tiles in the Leicht grid — six dead
+// buttons a child could tap and be refused by.
+test("Leicht offers its five tiles, and nothing is disabled anywhere", () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  assert.match(src, /const tablesFor = \(d\) => \(d === 0 \? \[\.\.\.EASY_TABLES, 0\] : \[\.\.\.ALL_TABLES, 0\]\)/);
+  assert.equal(EASY_TABLES.length + 1, 5, "four easy tables plus 'Alle'");
+  assert.equal(ALL_TABLES.length + 1, 11);
+  assert.ok(!/b\.disabled|classList\.add\("locked"\)|ui-lock/.test(src), "no padlocked tiles");
+});
+
+// The list is long enough to scroll. It must open on the level she is playing.
+test("the picker opens on the tile she is on", () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  assert.match(src, /initialFocus: "\[aria-current='true'\]"/);
+  assert.match(src, /b\.setAttribute\("aria-current", "true"\)/);
+  assert.match(read("assets/css/schlaufuchs.css"), /\.tilegrid button\.current \{/);
 });
 
 // Mara clicked "Verstanden" after a wrong answer without ever registering that

@@ -5,35 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Einmaleins — Schlaufuchs</title>
   <link rel="icon" href="../../assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="../../assets/css/schlaufuchs.css?v=32">
+  <link rel="stylesheet" href="../../assets/css/schlaufuchs.css?v=33">
   <!-- cache coherence: see tools/version-assets.js -->
   <script type="importmap">
   {
     "imports": {
-      "../../assets/js/about.js": "../../assets/js/about.js?v=32",
-      "../../assets/js/adaptive.js": "../../assets/js/adaptive.js?v=32",
-      "../../assets/js/album.js": "../../assets/js/album.js?v=32",
-      "../../assets/js/audio.js": "../../assets/js/audio.js?v=32",
-      "../../assets/js/chrome.js": "../../assets/js/chrome.js?v=32",
-      "../../assets/js/confetti.js": "../../assets/js/confetti.js?v=32",
-      "../../assets/js/fox.js": "../../assets/js/fox.js?v=32",
-      "../../assets/js/graphics.js": "../../assets/js/graphics.js?v=32",
-      "../../assets/js/i18n.js": "../../assets/js/i18n.js?v=32",
-      "../../assets/js/journey.js": "../../assets/js/journey.js?v=32",
-      "../../assets/js/map.js": "../../assets/js/map.js?v=32",
-      "../../assets/js/overlay.js": "../../assets/js/overlay.js?v=32",
-      "../../assets/js/parents.js": "../../assets/js/parents.js?v=32",
-      "../../assets/js/parentstats.js": "../../assets/js/parentstats.js?v=32",
-      "../../assets/js/privacy.js": "../../assets/js/privacy.js?v=32",
-      "../../assets/js/rewards.js": "../../assets/js/rewards.js?v=32",
-      "../../assets/js/storage.js": "../../assets/js/storage.js?v=32",
-      "../../assets/js/stub.js": "../../assets/js/stub.js?v=32",
-      "../../assets/js/trophycard.js": "../../assets/js/trophycard.js?v=32",
-      "../../assets/i18n/de.js": "../../assets/i18n/de.js?v=32",
-      "../../assets/i18n/en.js": "../../assets/i18n/en.js?v=32",
-      "./logic.js": "./logic.js?v=32",
-      "./einmaleins.js": "./einmaleins.js?v=32",
-      "./i18n.js": "./i18n.js?v=32"
+      "../../assets/js/about.js": "../../assets/js/about.js?v=33",
+      "../../assets/js/adaptive.js": "../../assets/js/adaptive.js?v=33",
+      "../../assets/js/album.js": "../../assets/js/album.js?v=33",
+      "../../assets/js/audio.js": "../../assets/js/audio.js?v=33",
+      "../../assets/js/chrome.js": "../../assets/js/chrome.js?v=33",
+      "../../assets/js/confetti.js": "../../assets/js/confetti.js?v=33",
+      "../../assets/js/fox.js": "../../assets/js/fox.js?v=33",
+      "../../assets/js/graphics.js": "../../assets/js/graphics.js?v=33",
+      "../../assets/js/i18n.js": "../../assets/js/i18n.js?v=33",
+      "../../assets/js/journey.js": "../../assets/js/journey.js?v=33",
+      "../../assets/js/map.js": "../../assets/js/map.js?v=33",
+      "../../assets/js/overlay.js": "../../assets/js/overlay.js?v=33",
+      "../../assets/js/parents.js": "../../assets/js/parents.js?v=33",
+      "../../assets/js/parentstats.js": "../../assets/js/parentstats.js?v=33",
+      "../../assets/js/privacy.js": "../../assets/js/privacy.js?v=33",
+      "../../assets/js/rewards.js": "../../assets/js/rewards.js?v=33",
+      "../../assets/js/storage.js": "../../assets/js/storage.js?v=33",
+      "../../assets/js/stub.js": "../../assets/js/stub.js?v=33",
+      "../../assets/js/trophycard.js": "../../assets/js/trophycard.js?v=33",
+      "../../assets/i18n/de.js": "../../assets/i18n/de.js?v=33",
+      "../../assets/i18n/en.js": "../../assets/i18n/en.js?v=33",
+      "./logic.js": "./logic.js?v=33",
+      "./einmaleins.js": "./einmaleins.js?v=33",
+      "./i18n.js": "./i18n.js?v=33"
     }
   }
   </script>
@@ -58,12 +58,13 @@
     <div class="answers" id="answers"></div>
   </div>
 
-  <!-- table & difficulty picker (§3.3: overlay, never a separate page) -->
+  <!-- Level picker (§3.3: overlay, never a separate page). One scrollable list
+       of every level there is. Difficulty is not a switch: it is where a tile
+       sits, what colour it has, and how many stars it still has to give. -->
   <div class="overlay" id="pick-overlay" hidden>
     <div class="sheet" role="dialog" aria-modal="true">
       <h2 data-i18n="emPickTitle">Reihe &amp; Schwierigkeit</h2>
-      <div class="seg" id="pick-diff"></div>
-      <div class="tilegrid" id="pick-tables"></div>
+      <div class="levels" id="pick-levels"></div>
     </div>
   </div>
 
@@ -88,6 +89,6 @@
     </div>
   </div>
 
-  <script type="module" src="einmaleins.js?v=32"></script>
+  <script type="module" src="einmaleins.js?v=33"></script>
 </body>
 </html>
