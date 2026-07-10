@@ -11,6 +11,7 @@ import { confetti } from "../../assets/js/confetti.js";
 import { trophyCardHTML } from "../../assets/js/trophycard.js";
 import { openShowcase } from "../../assets/js/showcase.js";
 import { initTopBar } from "../../assets/js/chrome.js";
+import { createLeaveGuard } from "../../assets/js/leaveguard.js";
 import { iconHTML } from "../../assets/js/graphics.js";
 import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
 import { createLevelFox } from "../../assets/js/levelfox.js";
@@ -627,11 +628,22 @@ function renderPicker() {
 
 $("pickchip").addEventListener("click", picker.open);
 
+// --- leaving a round that is not saved yet (§10.7) ---------------------------
+// A round lives in memory until `endRound()` writes it. `session && !roundOver`
+// is exactly that window: the picker (no session) and the summary (round over,
+// cookie written) have nothing to lose, and are left without a question.
+const guard = createLeaveGuard({
+  mapUrl: new URL("../../", import.meta.url).href,
+  inRound: () => session !== null && !roundOver,
+});
+
 // --- the shared top bar (§3.3) ----------------------------------------------
 // Its gear opens the one settings sheet, the same one the map and the Pokalraum
 // open (§3.4).
 const bar = initTopBar({
   back: "../../",
+  // The map button is one tap from the keypad, and Mara found it mid-round.
+  onLeave: guard.guardLink,
   onChange() {
     updateChip();
     if (!roundOver) renderQuestion();

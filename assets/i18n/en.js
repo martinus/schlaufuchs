@@ -6,6 +6,12 @@ export default {
   language: "Language",
   resetAll: "Delete progress",
   close: "Close",
+  // The question a swipe or a stray tap on the map button asks mid-round
+  // (§10.7). It never says "progress" — a child counts stars.
+  leaveTitle: "Leave the round?",
+  leaveBody: "The stars from this round will be gone.",
+  leaveStay: "Keep playing",
+  leaveGo: "To the map",
   parentsLink: "For parents",
   parentsTitle: "For parents",
   parentsIntro: "Everything here comes from the progress stored on this device. None of it is sent anywhere, and your child does not see this page from inside the game.",
