@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- a speaker, singing in orange -->
+  <path d="M7 24 h10 l13 -11 v38 l-13 -11 H7 Z" fill="#4a2c17" stroke="#4a2c17" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M39 25 a9 9 0 0 1 0 14" fill="none" stroke="#e8590c" stroke-width="4" stroke-linecap="round"/>
+  <path d="M46 18 a17 17 0 0 1 0 28" fill="none" stroke="#e8590c" stroke-width="4" stroke-linecap="round"/>
+</svg>

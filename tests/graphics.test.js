@@ -58,9 +58,15 @@ test("the meadow's basket is not also an obstacle on the path", () => {
   }
 });
 
-test("iconHTML fallback contains the emoji and a font-size", () => {
-  const html = iconHTML("ui-gear");
-  assert.match(html, /⚙️/);
+test("iconHTML: an AVAILABLE name is an <img>, the rest fall back to emoji", () => {
+  assert.ok(AVAILABLE.has("ui-gear"), "ui-gear should be a delivered SVG now");
+  const img = iconHTML("ui-gear");
+  assert.match(img, /<img class="gicon"/);
+  assert.match(img, /ui-gear\.svg/);
+
+  assert.ok(!AVAILABLE.has("deco-trophy"), "deco-trophy is still emoji-only");
+  const html = iconHTML("deco-trophy");
+  assert.match(html, /🏆/);
   assert.match(html, /font-size:24px/);
   assert.match(html, /class="gicon"/);
 });
