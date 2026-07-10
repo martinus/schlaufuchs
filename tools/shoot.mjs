@@ -29,6 +29,9 @@
 //                        type TEXT     one key per character
 //                        until SEL     wait until SEL exists and is visible
 //                        wait MS       sleep
+//                        back          the browser's own back, the way the
+//                                      hardware button and the Android edge
+//                                      swipe send it — not `eval history.back()`
 //                        eval JS       run in the page, await a promise.
 //                                      'eval @file.js' reads it from a file,
 //                                      which keeps the shell out of your JS.
@@ -136,13 +139,16 @@ export const parseCookie = (s) => {
   return { name: s.slice(0, i), value: s.slice(i + 1) };
 };
 
-export const VERBS = ["click", "key", "type", "until", "wait", "eval"];
+export const VERBS = ["click", "key", "type", "until", "wait", "eval", "back"];
+// `back` names a whole gesture, so it takes nothing. Every other verb without
+// its argument is a typo, and a silent no-op would be the worst kind.
+export const NO_ARG = new Set(["back"]);
 export function parseAction(s) {
   const i = s.indexOf(" ");
   const verb = i < 0 ? s : s.slice(0, i);
   if (!VERBS.includes(verb)) die(`--do: unknown verb '${verb}', want ${VERBS.join("|")}`);
   const arg = i < 0 ? "" : s.slice(i + 1).trim();
-  if (!arg) die(`--do '${verb}' needs an argument`);
+  if (!arg && !NO_ARG.has(verb)) die(`--do '${verb}' needs an argument`);
   return { verb, arg };
 }
 
@@ -330,12 +336,23 @@ async function waitUntil(cdp, sid, sel, timeoutMs = 10000) {
   throw new Error(`until: '${sel}' never became visible`);
 }
 
+// The browser's own back, not the page's. `eval history.back()` tests what the
+// page thinks a back is; this walks Chrome's navigation history the way the
+// hardware button and the Android edge swipe do, which is the only way to see
+// whether a history sentinel (`leaveguard.js`, §10.7) really catches them.
+async function goBack(cdp, sid) {
+  const { currentIndex, entries } = await cdp.send("Page.getNavigationHistory", {}, sid);
+  if (currentIndex <= 0) throw new Error("back: this page has nothing behind it");
+  await cdp.send("Page.navigateToHistoryEntry", { entryId: entries[currentIndex - 1].id }, sid);
+}
+
 async function runAction(cdp, sid, { verb, arg }) {
   if (verb === "click") return clickSelector(cdp, sid, arg);
   if (verb === "key") return pressKey(cdp, sid, arg);
   if (verb === "type") { for (const ch of arg) await pressKey(cdp, sid, ch); return; }
   if (verb === "until") return waitUntil(cdp, sid, arg);
   if (verb === "wait") return sleep(Number(arg));
+  if (verb === "back") return goBack(cdp, sid);
   if (verb === "eval") return evaluate(cdp, sid, arg.startsWith("@") ? readFileSync(arg.slice(1), "utf8") : arg);
 }
 

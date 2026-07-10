@@ -21,6 +21,7 @@ node tools/version-assets.js N  # bump asset version — REQUIRED before deployi
 node tools/shoot.mjs <url> …    # drive a real Chrome: screenshot + measure (--help)
 sh tools/firefox-shot.sh <url> out.png [WxH]   # the same page in Gecko
 sh tools/baseline.sh <ref> <path> [shoot opts] # the same page at another commit
+sh tools/mutate.sh <file> <perl-expr> [tests]  # prove a test can fail
 sh tools/install-hooks.sh       # pre-commit/pre-push guards (run once per clone)
 ```
 
@@ -73,7 +74,14 @@ workflow runs it before publishing.
 
 - **A bug found is a test written.** Before or right after fixing anything,
   add a test that fails on the old behaviour. Then re-break the code and watch
-  it go red — a test that never fails is decoration. This repo has no types
+  it go red — a test that never fails is decoration. Use `sh tools/mutate.sh
+  <file> <perl-expr> [test files]`: it copies the file, mutates it, runs
+  `node --test`, and restores it from the copy on every exit path. **Never undo
+  a mutation with `git checkout -- <file>`** — it reverts to HEAD, so it eats
+  whatever you had not committed, and it *fails* on an untracked file and leaves
+  the mutation sitting there. Both happened here, in one command. `mutate.sh`
+  also exits 2 when the pattern matched nothing, which is the other silent way
+  a mutation test lies to you. This repo has no types
   and no linter, so the test suite is the only thing standing between a change
   and a child staring at a blank page. Regression tests live next to their
   subject: `tests/map.test.js` (SVG structure), `tests/cache.test.js` (asset
@@ -122,6 +130,11 @@ workflow runs it before publishing.
   emulates `prefers-reduced-motion: reduce` — this repo treats that setting as
   non-negotiable, so verify it rather than assume it: an animated element that
   never arrives is invisible in every other run.
+
+  `--do back` walks Chrome's own navigation history, the way the hardware button
+  and the Android edge swipe do. `--do 'eval history.back()'` only tests what the
+  page thinks a back is, which is the one thing the round guard (§10.7) must not
+  be trusted about.
 - **Silent no-ops are the dangerous ones.** `pave("einmaleins")` looked up an
   id that did not exist and quietly did nothing. Prefer a test that asserts the
   wiring exists over trusting that a missing element is "handled".

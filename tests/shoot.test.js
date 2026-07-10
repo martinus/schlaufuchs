@@ -6,7 +6,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { parseArgs, parseSize, parseCookie, parseAction, keySpec, outName, hscrollMessage, overflowScript, VERBS } from "../tools/shoot.mjs";
+import { parseArgs, parseSize, parseCookie, parseAction, keySpec, outName, hscrollMessage, overflowScript, VERBS, NO_ARG } from "../tools/shoot.mjs";
 
 // Regression, learned the hard way in a previous session: a CDP keyDown without
 // `text` never performs the key's default action, so a scripted Enter silently
@@ -39,6 +39,13 @@ test("parseSize / parseCookie / parseAction reject what they cannot mean", () =>
   assert.throws(() => parseAction("clcik #ok"), /unknown verb/);
   assert.throws(() => parseAction("click"), /needs an argument/);
   for (const v of VERBS) assert.equal(parseAction(`${v} x`).verb, v);
+
+  // `back` names a whole gesture and takes nothing. Every other bare verb is a
+  // typo, and a typo that silently becomes a no-op is the worst kind of pass.
+  assert.deepEqual(parseAction("back"), { verb: "back", arg: "" });
+  for (const v of VERBS.filter((v) => !NO_ARG.has(v))) {
+    assert.throws(() => parseAction(v), /needs an argument/, `${v} must want an argument`);
+  }
 });
 
 test("parseArgs: a default viewport, repeatable flags, and a url it insists on", () => {
