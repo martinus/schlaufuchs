@@ -139,7 +139,9 @@ export function createJourney(container, { nodes, theme = "village", stars = 0, 
     svg += `<circle class="j-node" data-j="${i}" cx="${x}" cy="${y}" r="5"/>`;
     const oi = OBSTACLE_AT.indexOf(i);
     if (oi >= 0 && i > 0) {
-      svg += iconSVG(th.obstacles[oi], { x, y: y - 12, size: 14, cls: "j-obstacle", attrs: `data-j="${i}"` });
+      // 18, not 14: at 14 the milestones vanished beside a 26-unit fox and a
+      // 52-unit basket, and the mini-celebration animated a speck
+      svg += iconSVG(th.obstacles[oi], { x, y: y - 13, size: 18, cls: "j-obstacle", attrs: `data-j="${i}"` });
     }
   }
 
