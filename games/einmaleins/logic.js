@@ -125,31 +125,29 @@ export function withStarDigit(starString, table, value) {
 // right answer (§8.1). Mara clicked "Verstanden" without ever noticing she had
 // erred; typing the answer herself is the smallest act that proves she read it.
 //
+// **The aid is answered the way the question was.** Digits go in, OK submits.
+// It used to be cleverer than the game around it: it matched on every keypress,
+// so the answer completed itself without an OK and a digit that could no longer
+// be right was refused before it was finished. That is a second set of rules on
+// the same keypad — the child has just been told she was wrong, and the buttons
+// under her thumb behave differently than they did one question ago.
+//
 // One keypress in, the next input and what the caller must do:
 //   "typing" — keep going
-//   "done"   — the answer is entered; leave the aid
-//   "reject" — that cannot become the answer; shake, and clear the input
-//
-// The match is checked on every keypress, so `3` for 30 does not wait for an
-// OK, and `4` for 30 is refused the moment it can no longer be right. Both
-// matter: a child who has to hunt for OK loses the thread, and a child who
-// types four wrong digits does not know which one was wrong.
+//   "done"   — OK was pressed on the right answer; leave the aid
+//   "reject" — OK was pressed on the wrong one; shake, and clear the input
 export function retryStep(input, key, answer) {
   const want = String(answer);
   const cur = String(input ?? "");
 
   if (key === "⌫") return { input: cur.slice(0, -1), state: "typing" };
   if (key === "OK") {
-    if (cur === want) return { input: cur, state: "done" };
-    return cur === "" ? { input: cur, state: "typing" } : { input: "", state: "reject" };
+    if (cur === "") return { input: cur, state: "typing" }; // OK on an empty gap
+    return cur === want ? { input: cur, state: "done" } : { input: "", state: "reject" };
   }
   if (!/^[0-9]$/.test(key)) return { input: cur, state: "typing" };
 
-  const next = cur.length < 3 ? cur + key : cur;
-  if (next === want) return { input: next, state: "done" };
-  // As long as it is still a prefix of the answer it may yet become it.
-  if (want.startsWith(next)) return { input: next, state: "typing" };
-  return { input: "", state: "reject" };
+  return { input: cur.length < 3 ? cur + key : cur, state: "typing" };
 }
 
 // The question must always stay on one line (§10.1). Given the size the CSS

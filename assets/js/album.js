@@ -55,8 +55,31 @@ const scCard = showcase.el.querySelector("#sc-card");
 const scClose = showcase.el.querySelector("#sc-close");
 scClose.addEventListener("click", showcase.close);
 
+// The card is square and fills what the screen has left over once the sheet's
+// own box and the Close button are paid for. Measured here, not in CSS: the cup
+// is an emoji, so its size is a font-size in px, and no CSS length can be
+// derived from the width of the box it has to fit into.
+//
+// The width budget is the overlay's 12px margins plus the sheet's 16px padding,
+// on both sides — a card sized to the viewport alone hung out over the sheet.
+const SHEET_X = 2 * (12 + 16);
+const SHEET_Y = 250; // top bar of the sheet, the Close button, the paddings
+
+function showcaseSizes() {
+  const card = Math.max(160, Math.min(
+    window.innerWidth - SHEET_X - 8,
+    window.innerHeight - SHEET_Y,
+    340,
+  ));
+  // the art is the symbol (0.66 cups, overlapping the rim by a third) standing
+  // on the cup — about 1.45 cups tall — and the name lives under it
+  return { card, cup: Math.round(card * 0.52) };
+}
+
 function openShowcase(trophy) {
-  scCard.innerHTML = trophyCardHTML(trophy, { size: 108, lang: getLang() });
+  const { card, cup } = showcaseSizes();
+  scCard.style.setProperty("--sc-card", `${card}px`);
+  scCard.innerHTML = trophyCardHTML(trophy, { size: cup, lang: getLang() });
   scClose.textContent = t("close");
   showcase.open();
   sfx.trophy();

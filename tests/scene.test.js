@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import de from "../assets/i18n/de.js";
 import en from "../assets/i18n/en.js";
+import { starCluster } from "../assets/js/journey.js";
 
 const root = new URL("../", import.meta.url);
 const read = (p) => readFileSync(fileURLToPath(new URL(p, root)), "utf8");
@@ -34,20 +35,41 @@ test("a star reaches the basket even with prefers-reduced-motion", () => {
 });
 
 // Mara could not tell that Mittel and Schwer pay more: the claim only ever
-// appeared inside a picker she never opened. Now each sky star carries what it
-// counts, and carries it into the basket.
-test("a star that counts double says so, and says it all the way down", () => {
-  const loop = journey.slice(journey.indexOf("const tag = worth > 1"), journey.indexOf('+ "</g>"'));
-  assert.match(loop, /j-worth/, "the tag must exist");
-  assert.match(loop, /×\$\{worth\}/);
-  // INSIDE the group: the group is what moves, so the tag rides the transition.
-  // Given its own keyframe it would never move under prefers-reduced-motion.
-  assert.ok(loop.indexOf("j-star") < loop.indexOf("+ tag"), "the tag is a child of the flying star");
-  assert.ok(!/animation/.test(css.slice(css.indexOf(".journey .j-worth {"), css.indexOf("}", css.indexOf(".journey .j-worth {")))));
+// appeared inside a picker she never opened. It was then written on each star
+// as "×2" — a sentence, aimed at a child who cannot read one. A slot now simply
+// holds the stars it pays.
+test("a slot holds as many stars as it pays", () => {
+  for (const [worth, n] of [[1, 1], [2, 2], [3, 3]]) {
+    assert.equal(starCluster(worth).length, n, `worth ${worth} must draw ${n} stars`);
+  }
+  // a one-star slot keeps the big single star the scene was built around
+  assert.deepEqual(starCluster(1), [{ dx: 0, dy: 0, size: 28 }]);
 
-  // worth 1 is the default and prints nothing: "×1" is noise on every Leicht round
-  assert.match(journey, /worth = 1/, "the default must be silent");
-  assert.match(journey, /worth > 1\s*\n?\s*\?/, "…and only >1 draws a tag");
+  // two or three stars must share roughly the room one big star took, or the
+  // three slots in the sky start colliding with one another
+  for (const worth of [2, 3]) {
+    for (const { dx, dy, size } of starCluster(worth)) {
+      assert.ok(Math.abs(dx) <= 14 && Math.abs(dy) <= 14, `worth ${worth}: (${dx},${dy}) strays`);
+      assert.ok(size < 28, `worth ${worth}: a grouped star must be smaller than a lone one`);
+    }
+  }
+  // nothing outside 1..3 can ask for an empty sky or a swarm
+  assert.equal(starCluster(0).length, 1);
+  assert.equal(starCluster(9).length, 3);
+  assert.equal(starCluster(undefined).length, 1);
+});
+
+test("every star in a slot flies into the basket, and none is left in the sky", () => {
+  // ONE group per slot, and the whole cluster inside it: the group is what
+  // moves. Given a keyframe each, none of them would move under reduced motion.
+  const loop = journey.slice(journey.indexOf("for (let i = 0; i < SLOTS; i++) {"), journey.indexOf(".j-fox"));
+  assert.match(loop, /<g class="j-star"[\s\S]*?clusterAt\(skyX\(i\), skyY\(i\), ""\)/,
+    "the cluster must be a child of the flying group");
+  assert.ok(!/j-worth/.test(journey) && !/j-worth/.test(css), "the ×N tag is retired, everywhere");
+
+  // the ghost slot is the same shape, or a collected slot would not match the
+  // hole it left behind
+  assert.match(journey, /clusterAt\(skyX\(i\), skyY\(i\), "j-ghost"\)/);
   assert.match(game, /worth: starValue\(diff\)/, "the round tells the scene what its stars are worth");
 });
 

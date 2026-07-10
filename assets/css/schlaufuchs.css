@@ -518,6 +518,12 @@ footer p { margin: 0; }
   display: inline-block;
 }
 
+/* German divides with a colon, and a colon sits on the baseline. Between two
+   40px numerals it reads as "12: three", a label and its value. Lifted to the
+   optical middle it reads as an operator (einmaleins.js: `eqHTML`). */
+.question .divsign,
+.feedback-aid .divsign { vertical-align: 0.18em; }
+
 /* Reserving its line keeps the question from jumping when a streak starts, but
    the aid needs every pixel: an empty streak line takes none. */
 /* While the aid is up it owns the stage: up to ten rows of dots plus a 48px
@@ -565,15 +571,10 @@ footer p { margin: 0; }
 .journey .j-star.landed { transform: translate(var(--dx), var(--dy)) scale(0.52); }
 .journey .j-star.j-instant { transition: none; }
 
-/* What this star counts (§10.2). Mittel and Schwer pay double and triple, and
-   the only place that ever said so was inside a picker Mara never opened. It is
-   inside the star's own group, so it flies into the basket with it. */
-.journey .j-worth {
-  fill: var(--depth);
-  font-family: var(--font-display);
-  font-size: 12px;
-  font-weight: 800;
-}
+/* What a slot counts (§10.2) is no longer written on it. Mittel and Schwer pay
+   double and triple, so a slot simply holds two stars, or three, and they fly
+   into the basket together (`starCluster` in journey.js). A "×3" tag was a
+   sentence, and it was aimed at a child who cannot read one. */
 
 .feedback-aid {
   background: var(--panel);
@@ -764,14 +765,18 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   pointer-events: none;
   line-height: 1;
 }
-/* Quiet, not invisible: they are what the tile promises, not what it shouts.
-   At 0.42 they dissolved into the band behind them. */
+/* A gold star on a warm band is gold on gold, at any opacity. What separates it
+   is not more colour but an edge: a white outline, drawn as four hard
+   drop-shadows because `-webkit-text-stroke` does not touch a colour emoji. */
 .tilegrid .tstars i {
   font-style: normal;
   font-size: 14px;
   width: 33.333%;
   text-align: center;
-  opacity: 0.85;
+  opacity: 0.95;
+  filter:
+    drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff)
+    drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);
 }
 /* nothing left to give */
 .tilegrid .tstars .tdone { font-size: 34px; color: #1e6b2c; opacity: 0.9; }
@@ -946,9 +951,15 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .album-section h2 { font-size: 1.05rem; margin: 4px 0 6px; }
 .album-progress { margin: 0 0 10px; font-size: 0.8rem; color: var(--ink-soft); font-weight: 700; }
 
+/* `minmax(0, …)`, not a bare `1fr`: a bare fraction floors the track at the
+   item's min-content, and the item is a <button> whose min-content is its
+   longest unbreakable word. "Rechenschieber" pushed the four columns to 406px
+   inside a 360px phone, and the Pokalraum scrolled sideways — which nothing
+   else on this site does, and which a fixed overlay inherits: the showcase
+   opened 46px off to one side. The name breaks instead. */
 .trophies {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
 
@@ -958,6 +969,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .tcard,
 .trophies .slot {
   aspect-ratio: 1;
+  min-width: 0; /* a grid item floors at min-content otherwise: see .trophies */
   border-radius: var(--radius);
   background: var(--panel);
   box-shadow: var(--shadow);
@@ -971,25 +983,27 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 
 .tcard { text-decoration: none; }
 
-/* the emoji rides in the cup, so the cup needs to be the frame it sits in */
+/* The prize stands on the cup, not inside it: a column, symbol above cup, with
+   the symbol dipping into the bowl just enough to be *in* it. The pair is
+   therefore taller than the cup alone — which is the point. You see what you
+   won before you see what it came in. Buried at the glyph's 28 % it was a small
+   dark mark in a gold cup, and twelve of those on a shelf are twelve cups. */
 .tcard .t-art {
   position: relative;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   line-height: 1;
 }
 
-/* The theme emoji sits in the cup's bowl and rises out of it, the way a prize
-   sticks out of the thing it was handed over in. Buried at the glyph's 28% it
-   was a small dark mark inside a gold cup; twelve of those on one shelf are
-   twelve identical cups. It is bigger now (THEME_RATIO) and higher. */
+/* The overlap is `em` of the symbol's own size, so it holds at 34px on the
+   shelf and at 170px in the showcase without a second number to keep in step. */
 .tcard .t-theme {
-  position: absolute;
-  top: 12%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  /* a gold bell in a gold cup is one gold blob; the halo separates them */
-  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 1px 1px rgba(74, 44, 23, 0.35));
+  position: relative;
+  z-index: 1;
+  margin-bottom: -0.34em;
+  /* a gold bell on a gold cup is one gold blob; the halo separates them */
+  filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 2px 2px rgba(74, 44, 23, 0.3));
 }
 
 .tcard .sname,
@@ -999,6 +1013,12 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   color: var(--ink-soft);
   text-align: center;
   padding: 0 3px;
+  /* German compounds do not fit a 77px slot in one piece (see .trophies), and a
+     centred flex item is shrink-to-fit: without `stretch` the name's own box is
+     as wide as the word, so it never wraps — it just hangs over both edges. */
+  align-self: stretch;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .trophies .slot.locked {
@@ -1043,7 +1063,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .trophies .slot .sname { color: var(--depth); }
 
 @media (min-width: 600px) {
-  .trophies { grid-template-columns: repeat(6, 1fr); }
+  .trophies { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
 
 /* ---- the showcase: one trophy, held up (§3.2) ---- */
@@ -1072,12 +1092,15 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   margin-bottom: 10px;
 }
 
+/* As big as the screen allows: `--sc-card` is measured in album.js against the
+   viewport, because the cup is an emoji sized in px and CSS cannot pick a font
+   size from the width of the box it has to fit into. */
 .sc-card .tcard {
-  width: min(58vw, 210px);
-  gap: 6px;
+  width: var(--sc-card, 210px);
+  gap: 8px;
   box-shadow: 0 10px 26px rgba(74, 44, 23, 0.3);
 }
-.sc-card .tcard .sname { font-size: 1.05rem; padding: 0 8px; }
+.sc-card .tcard .sname { font-size: 1.2rem; padding: 0 10px; }
 
 .sc-sparks {
   position: absolute;
@@ -1104,11 +1127,12 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   50% { opacity: 1; transform: scale(1.15) rotate(12deg); }
 }
 
-/* beside the cup, not on it: the fox is the one cheering, not the prize */
+/* The cup takes the whole sheet, so the fox stands at its corner and hangs off
+   it — beside the prize, never over the name. */
 .sc-fox {
   position: absolute;
-  right: 0;
-  bottom: -2px;
+  right: -8px;
+  bottom: -10px;
   line-height: 0;
   animation: sc-hop 0.72s ease-in-out infinite;
 }

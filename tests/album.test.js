@@ -92,6 +92,24 @@ test("tapping a trophy she owns holds it up, loudly", () => {
   assert.ok(!/class="slot locked"[^>]*data-trophy/.test(js));
 });
 
+// Regression: the earned slot became a <button>, and a grid item's `1fr` track
+// is floored at its min-content — which for a button is its longest unbreakable
+// word. "Rechenschieber" pushed the four columns to 406px inside a 360px phone,
+// the room scrolled sideways (nothing else on this site does), and the fixed
+// showcase overlay inherited the 406px viewport and opened 46px off to one side.
+test("a long German trophy name cannot widen the shelf", () => {
+  const grid = css.slice(css.indexOf(".trophies {"), css.indexOf("}", css.indexOf(".trophies {")));
+  assert.match(grid, /repeat\(4, minmax\(0, 1fr\)\)/, "a bare 1fr floors the track at min-content");
+  assert.ok(!/\.trophies \{[^}]*repeat\(4, 1fr\)/.test(css));
+  assert.match(css, /repeat\(6, minmax\(0, 1fr\)\)/, "…and the wide layout too");
+
+  const name = css.slice(css.indexOf(".tcard .sname,"), css.indexOf("}", css.indexOf(".tcard .sname,")));
+  assert.match(name, /overflow-wrap: break-word/, "the name must be allowed to break");
+  // A centred flex item is shrink-to-fit: without `stretch` its own box is as
+  // wide as the word, so it never wraps — it hangs over both edges of the card.
+  assert.match(name, /align-self: stretch/);
+});
+
 test("the showcase's noise stops for a child who asked it to", () => {
   // §15: the blink and the hop are CSS animations, so the site-wide
   // prefers-reduced-motion rule silences both. Confetti no-ops on its own.

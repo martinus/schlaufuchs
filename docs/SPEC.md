@@ -240,11 +240,12 @@ a room: a warm wall, and a wooden shelf under each game's collection.
 
 One page, five sections (one per region, translated heading). Each section
 shows **12 trophy slots** in a grid: earned trophies as the shared **trophy
-card** (`trophycard.js` — the cup with the trophy's own emoji sitting in its
-bowl and rising out of it: two thirds of the cup's size (`THEME_RATIO`), high
-enough to read at 34px. At half the size and buried in the bowl, twelve
-trophies on one shelf were twelve identical cups); unearned slots as
-**silhouettes** of the trophy you
+card** (`trophycard.js` — the trophy's own emoji **standing on** the cup, two
+thirds of its size (`THEME_RATIO`) and dipping into the bowl by a third of its
+own height. `.t-art` is a column, symbol above cup, so the pair is taller than
+the cup alone: you see what you won before you see what it came in. Buried
+inside the bowl at half the size, twelve trophies on a shelf were twelve
+identical cups); unearned slots as **silhouettes** of the trophy you
 have not won yet — you can see what is missing, which is the whole reason to
 keep collecting. The round summary draws the same card (§3.4), so a child
 recognises the trophy she just won when she meets it on the shelf.
@@ -263,8 +264,9 @@ until its next trophy. Trophies are earned via stars (§8.3). Reached from the
 map via the **Pokalraum** region (§3.1).
 
 **Tapping a trophy she owns holds it up** (`openShowcase()` in `album.js`): the
-cup fills the screen, confetti falls, the fox jumps beside it and stars blink
-around it. A trophy is for showing to somebody, and a 77px shelf slot that does
+cup fills the screen — the card is sized against the viewport in JS, because the
+cup is an emoji and no CSS length can be derived from the box it has to fit into
+— confetti falls, the fox jumps at its corner and stars blink around it. A trophy is for showing to somebody, and a 77px shelf slot that does
 nothing when pressed is a receipt. An earned slot is therefore a `<button>`
 (`trophyCardHTML({ button: true })`) carrying `data-trophy="<game>:<index>"`,
 and one delegated listener on `#album` opens the showcase. A locked slot is not
@@ -601,10 +603,13 @@ anything, no lives, no damage, no losing.
   one (§10.1's dot grid).
 - **The child leaves the aid by entering the correct answer**, not by
   dismissing it. On multiple choice the same four options return and a wrong
-  tap shakes; on a keypad she types, and the answer completes itself the
-  instant it matches — no OK to hunt for — while a digit that can no longer
-  become the answer is refused at once and the gap clears. A soft chime and the
-  round goes on.
+  tap shakes.
+  **On a keypad the aid is answered exactly the way the question was**: digits
+  go in, backspace repairs, and **OK submits**. A wrong OK shakes and clears the
+  gap. The aid used to be cleverer than the game around it — the answer
+  completed itself at the last digit, and a digit that could no longer be right
+  was refused before it was finished — which is a second set of rules on the
+  same keypad, told apart only by whether the child had just been wrong.
   There is no timer (it took the answer away from exactly the child who reads
   slowest) and no "Verstanden" button (an 8-year-old pressed it every time
   without ever registering that she had erred). The arithmetic is `retryStep()`
@@ -816,6 +821,11 @@ walks the village lane; goal node: ringing the school bell.
 1. Region tap → instantly into a round at the last difficulty & table
    (first visit: Leicht, 2er-Reihe).
 2. Round of 10 (per §7.3): `7 × 8 = ?`, journey strip on top (§8.2).
+   German divides with a **colon**, and a colon sits on the baseline: between
+   two 40px numerals `12 : 3` reads as a label and its value. It is wrapped
+   (`eqHTML()`) and lifted to the optical middle, in the question and in the
+   aid, which prints the same equation twice. `÷` is already centred and is
+   never touched.
 3. Wrong → her own answer struck through in red, the correct equation in green
    under it, **a dot-grid visual aid** (7 rows of 8 dots), box drops, re-queue
    per §7. It stays until **she enters the correct answer herself** (§8.1) —
@@ -837,9 +847,11 @@ walks the village lane; goal node: ringing the school bell.
    trophy does for the Pokalraum (§3.2). It is **one scrollable
    list of every level the game has**, in three colour-coded bands — Leicht
    green, Mittel amber, Schwer red — each under a plain, unclickable heading.
-   The bands are **saturated enough to carry a gold star**: as three pale
-   washes, the stars a tile still had to give were invisible on amber, which is
-   the whole promise of the tile.
+   The bands are **saturated enough to carry a gold star**, and each star wears
+   a **white outline** (four hard drop-shadows — `-webkit-text-stroke` does not
+   touch a colour emoji). Gold on a warm band is gold on gold at any opacity;
+   what separates them is an edge, not more colour. The stars a tile still has
+   to give are the whole promise of the tile.
    Difficulty is not a control: choosing a tile chooses both. Leicht shows its
    five tiles (Reihen 1, 2, 5, 10 + „🎲 Alle"), the others eleven; **no tile is
    ever disabled**, where six padlocked ones used to sit in the Leicht grid. The
@@ -909,15 +921,19 @@ difficulty is what each star *counts* (×1 / ×2 / ×3, §8.3). The sky therefor
 always holds three slots. (Leicht offers fewer stars across the whole game —
 5 tiles instead of 11 — but never more than three in one round.)
 
-**On Mittel and Schwer each sky star carries its worth** as a small `×2` / `×3`
-tag (`createJourney(…, { worth })`). It is drawn *inside* the star's own group,
-so the group's transform carries it into the basket; given a keyframe of its
-own it would never move under reduced motion. On Leicht the tag is omitted —
-"×1" is noise on every round. Until this existed, the claim that harder work
-pays more appeared only inside a picker a child never opened.
+**On Mittel and Schwer a sky slot holds the stars it pays** — two of them, or
+three, drawn smaller so the group takes about the room one big star took
+(`starCluster(worth)`, `createJourney(…, { worth })`). It used to be one star
+with a `×2` tag written under it, and a tag is a sentence: a child who cannot
+read one still had to be told. Now a Schwer sky simply holds nine stars and a
+Leicht sky three. Until any of this existed, the claim that harder work pays
+more appeared only inside a picker a child never opened.
 
-An earned star flies from its sky slot into the basket and stays there, leaving
-a grey ghost behind. The flight is a CSS `transform` + `transition`, never a
+The whole cluster is one `<g>`, so one transform carries every star in it into
+the basket; given a keyframe each, none of them would move under reduced motion.
+
+An earned slot flies into the basket and stays there, leaving a grey ghost of
+the same shape behind. The flight is a CSS `transform` + `transition`, never a
 keyframe animation: the site-wide `prefers-reduced-motion` rule kills both
 `animation` and `transition`, so a transition degrades to *the star is already
 in the basket*, whereas an animation would leave it hanging in the sky for

@@ -41,6 +41,25 @@ const STAR_SIZE = 28;
 const BASKET_SIZE = 52;
 const SLOTS = 3;
 
+// What a slot in the sky looks like when its star counts double or triple
+// (§10.2). It used to be one star with "×2" written under it, and a tag is a
+// sentence: a child who cannot read still has to be told. A slot now simply
+// *holds two stars*, or three — smaller, so the group takes about the room one
+// big star took — and the whole group flies into the basket together.
+//
+// Offsets are relative to the slot's anchor (x, and y as a text baseline);
+// sizes are viewBox units.
+const CLUSTERS = {
+  1: [[0, 0, STAR_SIZE]],
+  2: [[-8, -3, 20], [8, 5, 20]],
+  3: [[0, -8, 17], [-9, 6, 17], [9, 6, 17]],
+};
+
+export function starCluster(worth) {
+  const w = Math.min(3, Math.max(1, Math.round(worth) || 1));
+  return CLUSTERS[w].map(([dx, dy, size]) => ({ dx, dy, size }));
+}
+
 // The three stars hang as a small constellation, not as a row of three. Given
 // as fractions of the scene's width and absolute text baselines, so the shape
 // survives a round with a different number of questions.
@@ -77,10 +96,10 @@ export function sceneGeometry(nodes, theme = "village") {
 }
 
 // `stars` is what the basket holds: the stars this tile has already earned.
-// `worth` is what each of them counts (§10.2): 1 on Leicht, 2 on Mittel, 3 on
+// `worth` is what each slot counts (§10.2): 1 on Leicht, 2 on Mittel, 3 on
 // Schwer. Mara could not see that the harder levels paid more, because the
-// claim only ever appeared inside the picker she never opened. Now the tag
-// rides on the star itself, and into the basket with it.
+// claim only ever appeared inside the picker she never opened. Now a slot is
+// drawn as the stars it pays, and they all fly into the basket together.
 export function createJourney(container, { nodes, theme = "village", stars = 0, worth = 1 }) {
   const th = THEMES[theme] ?? THEMES.village;
   const g = sceneGeometry(nodes, theme);
@@ -127,24 +146,28 @@ export function createJourney(container, { nodes, theme = "village", stars = 0, 
   // the goal, and the place the stars fall into
   svg += iconSVG("ui-basket", { x: bx, y: by, size: BASKET_SIZE, cls: "j-basket-big j-goal" });
 
-  // The sky. A grey ghost marks every slot; the gold star on top of it is the
-  // one that flies. Its trip is a CSS transform, so `prefers-reduced-motion`
-  // (which kills every transition site-wide) simply places it in the basket.
-  for (let i = 0; i < SLOTS; i++) {
-    svg += iconSVG("ui-star", { x: skyX(i), y: skyY(i), size: STAR_SIZE, cls: "j-ghost" });
-  }
+  // The sky. A grey ghost marks every slot; the gold stars on top of it are the
+  // ones that fly. Their trip is a CSS transform, so `prefers-reduced-motion`
+  // (which kills every transition site-wide) simply places them in the basket.
+  //
+  // A slot holds `worth` stars, so a Schwer round has nine stars in its sky and
+  // a Leicht round three. Nobody is told that hard work pays triple; the sky is
+  // three times as full.
+  const cluster = starCluster(worth);
+  const clusterAt = (x, y, cls) => cluster
+    .map(({ dx, dy, size }) => iconSVG("ui-star", { x: x + dx, y: y + dy, size, cls }))
+    .join("");
+
+  for (let i = 0; i < SLOTS; i++) svg += clusterAt(skyX(i), skyY(i), "j-ghost");
   for (let i = 0; i < SLOTS; i++) {
     const to = landing(i);
     const dx = to.x - skyX(i);
     const dy = to.y - skyY(i);
-    // The tag lives INSIDE the group, so the group's transform carries it to
-    // the basket. A keyframe of its own would never run under reduced motion.
-    const tag = worth > 1
-      ? `<text class="j-worth" x="${skyX(i)}" y="${skyY(i) + STAR_SIZE / 2 + 7}" text-anchor="middle">×${worth}</text>`
-      : "";
+    // The whole cluster is one group, so one transform carries every star in it
+    // to the basket. Given a keyframe each, none of them would move under
+    // prefers-reduced-motion.
     svg += `<g class="j-star" data-s="${i}" style="--dx:${dx}px; --dy:${dy}px">`
-      + iconSVG("ui-star", { x: skyX(i), y: skyY(i), size: STAR_SIZE })
-      + tag
+      + clusterAt(skyX(i), skyY(i), "")
       + "</g>";
   }
 
