@@ -19,6 +19,7 @@ import { foxSVG } from "./fox.js";
 import { iconHTML } from "./graphics.js";
 import { createOverlay } from "./overlay.js";
 import { sfx } from "./audio.js";
+import { initFullscreen, fsSupported, isFullscreen } from "./fullscreen.js";
 
 // The settings overlay is the one screen every page has, so the privacy page
 // hangs off it. Resolved from this module's own URL — an absolute "/privacy"
@@ -97,17 +98,28 @@ export function initTopBar({ back = "./", title = null, onChange, onClose, onLea
 
 // Build the settings overlay and return its handle (§3.4).
 //
-// **The same six rows on every page that has a gear.** The overlay used to take
+// **The same rows on every page that has a gear.** The overlay used to take
 // a `resetKind`: "all" on the map, "game" on a game page, and nothing at all in
 // the Pokalraum — so the gear opened three different sheets, and in the room a
 // parent looked for the reset and there was none. One sheet, one reset, and the
 // reset is the whole site's, because that is the only one a child's screen can
 // honestly offer: she is never told which game she is "in".
+//
+// The one row that is not everywhere is fullscreen: it appears only where the
+// browser has the API (never iPhone), because a control that toggles nothing is
+// a lie told on every screen that shows it (§3.4).
 export function initSettingsOverlay({ onChange, onClose } = {}) {
+  // The fullscreen row is present only where the API is — never on iPhone,
+  // where it does not exist (§3.4). A row that toggled nothing would be the
+  // one broken control on a child's screen, so it is left out entirely.
+  const fsRow = fsSupported()
+    ? `<div class="setrow"><span class="cx-l-fullscreen"></span><button class="iconbtn" id="cx-fullscreen"></button></div>`
+    : "";
   const overlay = createOverlay({
     onClose,
     sheet: `<h2 class="cx-title"></h2>
       <div class="setrow"><span class="cx-l-sound"></span><button class="iconbtn" id="cx-sound"></button></div>
+      ${fsRow}
       <div class="setrow setrow-lang">
         <span class="cx-l-lang"></span>
         <div class="langpick" id="cx-lang" role="group"></div>
@@ -122,16 +134,39 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
   const el = overlay.el;
 
   const soundBtn = el.querySelector("#cx-sound");
+  const fsBtn = el.querySelector("#cx-fullscreen");
   const langPick = el.querySelector("#cx-lang");
   const resetBtn = el.querySelector("#cx-reset");
   const closeBtn = el.querySelector("#cx-close");
   let resetArmed = false;
+
+  // Built once, on every child page — so a remembered fullscreen re-enters on
+  // the first tap after a navigation, whether or not the sheet is ever opened.
+  // The change handler repaints the icon when a child leaves fullscreen with
+  // Escape or a system gesture, so the sheet never lies about the state.
+  const fullscreen = initFullscreen({
+    getPref: () => getSettings().fullscreen === true,
+    setPref: (on) => setSettings({ fullscreen: on }),
+    onChange: () => { if (fsBtn) paintFsBtn(); },
+  });
+
+  function paintFsBtn() {
+    // One icon, two states: the ON state is the button's active colour and
+    // aria-pressed, not a second glyph (there is no clean "shrink" emoji).
+    fsBtn.innerHTML = iconHTML("ui-fullscreen", { size: 22 });
+    fsBtn.setAttribute("aria-pressed", String(isFullscreen()));
+    fsBtn.setAttribute("aria-label", t("fullscreen"));
+  }
 
   function renderRows() {
     el.querySelector(".cx-title").textContent = t("settings");
     el.querySelector(".cx-l-sound").textContent = t("sound");
     el.querySelector(".cx-l-lang").textContent = t("language");
     soundBtn.innerHTML = iconHTML(getSettings().sound !== false ? "ui-sound-on" : "ui-sound-off", { size: 22 });
+    if (fsBtn) {
+      el.querySelector(".cx-l-fullscreen").textContent = t("fullscreen");
+      paintFsBtn();
+    }
     renderLangPick();
     el.querySelector(".cx-l-reset").textContent = t("resetAll");
     if (!resetArmed) resetBtn.innerHTML = iconHTML("ui-trash", { size: 22 });
@@ -140,6 +175,15 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
     el.querySelector(".cx-about").textContent = t("aboutLink");
     closeBtn.textContent = t("close");
   }
+
+  // The tap on this button is itself the user gesture the API demands.
+  fsBtn?.addEventListener("click", () => {
+    fullscreen.toggle();
+    sfx.click();
+    // The icon follows the real fullscreenchange, but paint now too: on a
+    // refused request the change never comes, and the button must not stick.
+    paintFsBtn();
+  });
 
   soundBtn.addEventListener("click", () => {
     setSettings({ sound: getSettings().sound === false });

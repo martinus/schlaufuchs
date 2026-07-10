@@ -226,6 +226,14 @@ Shared modules in `assets/js/`:
 - `adaptive.js` (Leitner-light practice engine), `audio.js` (synth WebAudio
   sfx, respects mute), `fox.js` (code-generated mascot SVG; the pose is its
   only variable), `confetti.js`.
+- `fullscreen.js` — the settings-sheet fullscreen toggle (§3.4), remembered in
+  `settings.fullscreen`. The cross-browser method resolution (`fsMethods`,
+  webkit-prefixed on Safari/iPad, **null on iPhone** — that is why the row hides
+  itself) and the first-gesture re-entry decision (`reentryNeeded`) are pure and
+  unit-tested; the DOM controller (`initFullscreen`) is verified with
+  `shoot.mjs` because `requestFullscreen` needs a *trusted* gesture — a
+  JS-dispatched `PointerEvent` is ignored, only `--do click` (real CDP input)
+  enters fullscreen.
 
 ## Key invariants & gotchas
 
