@@ -13,6 +13,7 @@ import { openShowcase } from "../../assets/js/showcase.js";
 import { initTopBar } from "../../assets/js/chrome.js";
 import { iconHTML } from "../../assets/js/graphics.js";
 import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
+import { createLevelFox } from "../../assets/js/levelfox.js";
 import strings from "./i18n.js";
 import {
   POOL_COUNT, EASY_TABLES, ALL_TABLES, poolFor, questionFor, choicesFor,
@@ -25,6 +26,10 @@ const $ = (id) => document.getElementById(id);
 
 // The two overlays this page owns. The picker can be waved away — the summary
 // cannot: closing it would leave a finished round with nothing to press (§3.3).
+//
+// The picker is also where the game begins and where every round ends, so
+// waving it away must never leave the child looking at an empty stage: with no
+// round behind it, dismissing it starts the level the fox is standing on.
 const picker = overlayFrom(document.getElementById("pick-overlay"), {
   onOpen: renderPicker,
   // The list is long enough to scroll. Open it on the level she is playing,
@@ -32,7 +37,9 @@ const picker = overlayFrom(document.getElementById("pick-overlay"), {
   // into view, so she sees where she is before she chooses where to go.
   initialFocus: "[aria-current='true']",
   onClose() {
+    if (levelFox?.walking) return; // the walk opens the level it is walking to
     if (roundOver) summary.open();
+    else if (!session) startRound();
   },
 });
 // The summary leads with the trophy it just handed out, and that trophy is a
@@ -73,7 +80,10 @@ function coerceTable() {
 }
 
 // --- round state -----------------------------------------------------------
+// `session` is also the answer to "is there a round on the stage?" — the picker
+// asks it when it is dismissed rather than chosen from.
 let session = null;
+let levelFox = null; // rebuilt with the tiles on every open of the picker
 let journey = null;
 let question = null;
 let currentId = null;
@@ -423,10 +433,11 @@ function endRound() {
   }, 700);
 }
 
-// The one button in the summary. The map lives in the top bar and the level
-// picker on the chip — both reachable while the summary is up, which is where
-// Mara reached for them.
-$("sum-ok").addEventListener("click", startRound);
+// The one button in the summary opens the level picker, with the fox still
+// standing on the level she just played: pressing that tile plays it again, and
+// every other level is one tap away instead of two. The map lives in the top
+// bar, reachable while the summary is up, which is where Mara reached for it.
+$("sum-ok").addEventListener("click", picker.open);
 
 // A trophy she just won, held up the way the Pokalraum holds it up — without
 // sending her to the Pokalraum. Delegated once: `endRound` rewrites this row's
@@ -452,11 +463,37 @@ const tablesFor = (d) => (d === 0 ? [...EASY_TABLES, 0] : [...ALL_TABLES, 0]);
 // stars it still has to give**: three on a fresh Leicht tile, six on Mittel,
 // nine on Schwer. Nobody has to be told that hard work pays more; the tile is
 // three times as full. A tile with nothing left to give shows a tick.
+// Open the level `tile` stands for. Called when the fox has arrived on it, so a
+// round never starts under a fox that is still in the air.
+function openLevel(d, tbl) {
+  diff = d;
+  table = tbl;
+  // Started BEFORE the picker closes, and the order is the whole contract: the
+  // round clears `roundOver` and fills `session`, which is exactly what onClose
+  // reads. Close first and it would reopen the summary of the round she just
+  // walked away from, or start a second round on top of this one.
+  startRound();
+  picker.close();
+}
+
+// A tile she tapped. The fox walks there first — that walk is the answer to the
+// tap, and the level it opens is where the fox came to rest.
+function chooseLevel(d, tbl, tile) {
+  if (levelFox?.walking) return;
+  if (d === diff && tbl === table) return openLevel(d, tbl); // already standing there
+  // The list scrolls, and a fox walking to a tile below the fold walks off the
+  // screen. Bring the destination into view; the fox's coordinates are the
+  // list's own, so the scroll moves it with the tiles.
+  tile.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  levelFox.walkTo(tile, () => openLevel(d, tbl));
+}
+
 function renderPicker() {
   const box = $("pick-levels");
   box.innerHTML = "";
   // not the module's `saved`: the picker must read the cookie as it is now
   const starsByDiff = getGame("einmaleins").stars ?? {};
+  let currentTile = null;
 
   DIFF_KEYS.forEach((key, d) => {
     // A heading, not a control: pressing a difficulty is choosing a tile in it.
@@ -474,6 +511,7 @@ function renderPicker() {
       if (d === diff && tbl === table) {
         b.classList.add("current");
         b.setAttribute("aria-current", "true");
+        currentTile = b;
       }
       // "Alle" is the only tile whose name is a word rather than a number, and
       // a child who reads nothing cannot tell it from the rest. A die can.
@@ -481,23 +519,24 @@ function renderPicker() {
       const art = left > 0 ? "<i>⭐</i>".repeat(left) : '<b class="tdone">✓</b>';
       b.innerHTML = `<span class="tstars" aria-hidden="true">${art}</span>`
         + `<span class="tname">${name}</span>`;
+      // The fox on the current tile is decorative markup; a screen reader is
+      // told where it stands in words.
+      const here = b === currentTile ? ` · ${t("tileHere")}` : "";
       b.setAttribute(
         "aria-label",
-        `${t(key)} · ${tbl2short(tbl)} — ${left > 0 ? t("tileStarsLeft", { n: left }) : t("tileMastered")}`,
+        `${t(key)} · ${tbl2short(tbl)}${here} — ${left > 0 ? t("tileStarsLeft", { n: left }) : t("tileMastered")}`,
       );
-      b.addEventListener("click", () => {
-        diff = d;
-        table = tbl;
-        // the new round is the answer to the picker; it must not reopen the
-        // summary of the old one behind it
-        roundOver = false;
-        picker.close();
-        startRound();
-      });
+      b.addEventListener("click", () => chooseLevel(d, tbl, b));
       grid.appendChild(b);
     }
     box.appendChild(grid);
   });
+
+  // The fox is drawn last, over the tiles, and is placed after they are laid
+  // out — `tileAnchor` reads offsets, and the overlay is already shown by the
+  // time onOpen runs, so the numbers are real.
+  levelFox = createLevelFox(box);
+  if (currentTile) levelFox.jumpTo(currentTile);
 }
 
 $("pickchip").addEventListener("click", picker.open);
@@ -516,5 +555,11 @@ const bar = initTopBar({
   },
 });
 
-// Instant resume (§3.4): straight into a round, no menu.
-startRound();
+// The game opens on its map of levels, with the fox standing on the one she
+// left (§3.4). It is one tap from a round — the tile the fox is on — and the
+// same tap from any other level, which is what the two taps used to buy. A
+// child who came here to play the ×7 row can see that she is about to play the
+// ×7 row before she is in it.
+coerceTable(); // an invalid saved tile has no `.current`, and the fox no ground
+updateChip();
+picker.open();

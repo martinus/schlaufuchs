@@ -29,8 +29,9 @@ the browser.
   in-game progress is a journey (fox walks a path, climbs a mountain) rather
   than an abstract progress bar (§8.2).
 - **Radically simple navigation**: starting or switching a game takes at most
-  **two taps from anywhere** (§3.4). The map never slows this down: regions
-  are tapped, never walked to.
+  **two taps from anywhere** (§3.4). A tap is never spent on a menu — the one
+  thing a child chooses between two rounds is *which level*, and that choice is
+  a picture of where she stands, not a list of settings.
 - **Mobile first**: designed for a phone in portrait, scaled up to tablet and
   desktop (§5.1).
 - **Really teaches something**: every game has explicit difficulty levels and
@@ -346,19 +347,25 @@ open, it owns the keyboard: the game behind it must not receive a keystroke.
 
 | From | To | Taps |
 |---|---|---|
-| Map | playing a game (resumed) | **1** |
+| Map | playing a game (resumed) | **2** (region → the tile the fox is on) |
 | Inside game A | playing game B | **2** (home → region) |
 | Inside a game | different difficulty/level | **2** (chip → pick) |
+| After a round | the same level again | **1** (the tile the fox is on) |
 | Map | trophy album | **1** |
 
-- **Instant resume**: tapping a region drops the player directly into a
-  running round at their last difficulty/level/table/pack. First visit
-  starts the easiest difficulty immediately.
+- **A game opens on its levels, with the fox standing on the last one played.**
+  Every round ends back there, so the level she is about to play is a thing she
+  saw, not a thing she has to remember. Pressing the tile under the fox is one
+  tap and plays it again; any other tile is the same one tap. First visit stands
+  the fox on the easiest level.
+- **The fox walks to the level she taps, and the level opens when it arrives**
+  — the same rule the map keeps for its regions (§3.1). A tap during the walk
+  is ignored; `prefers-reduced-motion` skips it and opens at once (§15).
 - No confirmation dialogs on the happy path (only destructive resets).
 - **The round summary has exactly ONE button**, carrying a randomly chosen
-  congratulation („Super!", "Well done!", …); pressing it starts the next
-  round. A wall of three buttons made an 8-year-old reach past the sheet for
-  the chip behind it. Any trophy it hands out is the shared trophy card
+  congratulation („Super!", "Well done!", …); pressing it opens the level
+  picker on the level just played, where one more tap plays it again. A wall of
+  three buttons made an 8-year-old reach past the sheet for the chip behind it. Any trophy it hands out is the shared trophy card
   (§3.2), and it links to the album — a trophy that does nothing when tapped
   is a picture, not a prize.
 - The summary must never be a dead end, and its one button is not the way out:
@@ -861,15 +868,23 @@ walks the village lane; goal node: ringing the school bell.
 4. Summary overlay, kept deliberately quiet: stars, one muted line of numbers
    (`{ok}/{total}` and `+6 ⭐`), the price of the next star (§10.3), the trophy
    if one was earned, and **one** button carrying a random congratulation,
-   which starts the next round (§3.4). A child who has just won reads almost
+   which opens the level picker (§3.4). A child who has just won reads almost
    nothing — the stars say how it went and the trophy is the prize, so neither
    gets a sentence of its own. The map and the level picker stay reachable
    above the sheet, in the bar and on the chip.
-5. **The level picker** opens from that chip (which wears a border and a caret,
-   because it read as a caption and was never pressed). The chip also carries
-   the **village's own symbol** (`region-einmaleins`, the houses), so the game
-   says which place on the map it is without naming it — the same job the
-   trophy does for the Pokalraum (§3.2).
+5. **The level picker** is where the game starts and where every round ends. It
+   also opens from the chip (which wears a border and a caret, because it read
+   as a caption and was never pressed). The chip carries the **village's own
+   symbol** (`region-einmaleins`, the houses), so the game says which place on
+   the map it is without naming it — the same job the trophy does for the
+   Pokalraum (§3.2).
+
+   **The fox stands on the level she is playing** (`levelfox.js`). A coloured
+   border was the only thing saying "you are here", and a border is not a
+   place. Tapping another tile sends the fox hopping across the list — the
+   island's own gait (`mapwalk.js`) — and the level opens when it lands. Since
+   the picker is dismissible, closing it with no round behind it starts the
+   level the fox is standing on, rather than leaving an empty stage.
 
    The chip is `flex: 0 0 auto` inside `.stage`'s flex column and keeps a 44px
    `min-height`. With `min-height: 0` it was a shrinkable flex item: on Schwer,

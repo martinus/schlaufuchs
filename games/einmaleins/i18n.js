@@ -7,9 +7,11 @@ export default {
     emTableShort: "{t}er",
     emMixed: "Alle",
     emPickTitle: "Reihe & Schwierigkeit",
-    // The picker's tiles are pictures; these two are what a screen reader hears.
+    // The picker's tiles are pictures; these three are what a screen reader
+    // hears — including the fox, which is drawn but never announced.
     tileStarsLeft: "noch {n} Sterne zu holen",
     tileMastered: "geschafft",
+    tileHere: "hier stehst du",
     // German schools write division as ":" — Mara did not recognise "÷".
     divSign: ":",
   },
@@ -21,6 +23,7 @@ export default {
     emPickTitle: "Table & difficulty",
     tileStarsLeft: "{n} stars still to win",
     tileMastered: "mastered",
+    tileHere: "you are here",
     divSign: "÷",
   },
 };

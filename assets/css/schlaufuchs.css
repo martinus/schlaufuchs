@@ -823,6 +823,22 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .tilegrid button.mastered { box-shadow: inset 0 0 0 2px var(--ok), var(--shadow); }
 .tilegrid button.current { box-shadow: inset 0 0 0 3px var(--orange), var(--shadow); }
 
+/* The fox stands on the level she is playing (`levelfox.js`). It is positioned
+   in the level list's own coordinates, so it scrolls with the tiles rather than
+   sailing across them, and the tiles are its offsetParent. */
+.levels { position: relative; }
+
+.lvl-fox {
+  position: absolute;
+  left: 0;
+  top: 0;
+  /* the fox is inline SVG: a line box would push it down by its own leading,
+     and `foxOrigin` has already said where its feet belong */
+  line-height: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+}
+
 
 /* the points just earned, beside the numbers that earned them */
 .summary .gain { color: var(--depth); font-weight: 800; }
