@@ -39,7 +39,7 @@ export default {
   privacyTitle: "Datenschutz & Cookies",
   privacyIntro: "Schlaufuchs ist eine reine Lernseite für Kinder. Es gibt keine Anmeldung, kein Benutzerkonto und keinen Server, der etwas über dich speichert.",
   privacyCookieH: "Der eine Cookie",
-  privacyCookieBody: "Diese Seite speichert einen einzigen Cookie namens „schlaufuchs“ auf deinem Gerät. Darin stehen deine Sterne, Pokale, die Tagesserie und deine Einstellungen (Sprache, Ton). Er ist ein Jahr gültig und verlässt dein Gerät nie. Ohne ihn wäre dein Fortschritt nach jedem Schließen weg — er ist für die Funktion der Seite erforderlich, deshalb fragt sie nicht um Erlaubnis.",
+  privacyCookieBody: "Diese Seite speichert einen einzigen Cookie namens „schlaufuchs“ auf deinem Gerät. Darin stehen deine Sterne, Pokale und deine Einstellungen (Sprache, Ton). Er ist ein Jahr gültig und verlässt dein Gerät nie. Ohne ihn wäre dein Fortschritt nach jedem Schließen weg — er ist für die Funktion der Seite erforderlich, deshalb fragt sie nicht um Erlaubnis.",
   privacyNoTrackH: "Kein Tracking",
   privacyNoTrackBody: "Es gibt keine Statistik, keine Werbung und keine Cookies von Dritten. Die Seite lädt nichts von fremden Servern nach: Schriften, Bilder und Code liegen alle hier. Niemand erfährt, welche Aufgaben du rechnest.",
   privacyHostingH: "Wo die Seite liegt",

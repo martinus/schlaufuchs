@@ -7,10 +7,21 @@ test("state roundtrips through the cookie encoding (§9.2)", () => {
   const state = {
     v: 1,
     settings: { sound: true, lang: "de" },
-    rewards: { streak: ["2026-07-08", 4], at: "einmaleins", pr: { einmaleins: 3 } },
+    rewards: { at: "einmaleins", pr: { einmaleins: 3 } },
     einmaleins: { d: 1, t: 7, box: "3421".padEnd(100, "2"), stars: { 1: "30200000000" } },
   };
   assert.deepEqual(decodeState(encodeState(state)), state);
+});
+
+// How a field is *removed* from the cookie: patch it with undefined, and
+// JSON.stringify drops it. recordRound retires the dead streak field this way
+// (§8.5) — without this, patchSection's merge would carry a removed field
+// along until the reset button.
+test("patching a section with undefined deletes the key from the cookie", () => {
+  const state = { v: 1, rewards: { streak: ["2026-07-08", 4], at: "einmaleins", pr: { einmaleins: 3 } } };
+  const scrubbed = decodeState(encodeState(patchSection(state, "rewards", { at: "tippen", streak: undefined })));
+  assert.deepEqual(scrubbed.rewards, { at: "tippen", pr: { einmaleins: 3 } }, "the dead field is gone, the live ones stay");
+  assert.ok(!encodeState(patchSection(state, "rewards", { streak: undefined })).includes("streak"));
 });
 
 test("corrupt cookie decodes to empty state, never throws (§9.2)", () => {
@@ -26,7 +37,6 @@ test("budget check: realistic full state fits, oversized state is refused", () =
     v: 1,
     settings: { sound: true, lang: "de" },
     rewards: {
-      streak: ["2026-07-08", 30],
       at: "vokabeln",
       pr: { einmaleins: 30, tippen: 30, rechnungen: 30, vokabeln: 30, lesen: 30 },
     },

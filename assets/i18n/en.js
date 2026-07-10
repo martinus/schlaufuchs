@@ -39,7 +39,7 @@ export default {
   privacyTitle: "Privacy & Cookies",
   privacyIntro: "Schlaufuchs is a learning site for children. There is no sign-up, no account, and no server that stores anything about you.",
   privacyCookieH: "The one cookie",
-  privacyCookieBody: "This site stores a single cookie named \u201cschlaufuchs\u201d on your device. It holds your stars, trophies, daily streak and settings (language, sound). It lasts a year and never leaves your device. Without it your progress would vanish every time you close the page \u2014 it is required for the site to work, which is why the site does not ask for permission.",
+  privacyCookieBody: "This site stores a single cookie named \u201cschlaufuchs\u201d on your device. It holds your stars, trophies and settings (language, sound). It lasts a year and never leaves your device. Without it your progress would vanish every time you close the page \u2014 it is required for the site to work, which is why the site does not ask for permission.",
   privacyNoTrackH: "No tracking",
   privacyNoTrackBody: "There is no analytics, no advertising and no third-party cookie. The site loads nothing from foreign servers: fonts, images and code all live here. Nobody learns which sums you practise.",
   privacyHostingH: "Where the site lives",

@@ -223,7 +223,7 @@ Shared modules in `assets/js/`:
   optional already-loaded state, so a page parses the cookie once). **Hard
   3500-byte budget** (`BUDGET`); writes over budget are refused. Do not add
   persistent state casually.
-- `rewards.js` — stars, trophies, streak, region/badge state. Pure functions are
+- `rewards.js` — stars, trophies, region/badge state. Pure functions are
   exported and unit-tested: `trophyCount(game, pr)`, `totalTrophies`,
   `totalPoints(pr)`, `starBadgeTier(pr, game)`, `nextTrophyInfo(game, pr)`.
   **The trophy ladder is per game**: `THRESHOLDS[game]`, scaled by
