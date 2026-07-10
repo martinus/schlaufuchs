@@ -863,7 +863,16 @@ walks the village lane; goal node: ringing the school bell.
    because it read as a caption and was never pressed). The chip also carries
    the **village's own symbol** (`region-einmaleins`, the houses), so the game
    says which place on the map it is without naming it — the same job the
-   trophy does for the Pokalraum (§3.2). It is **one scrollable
+   trophy does for the Pokalraum (§3.2).
+
+   The chip is `flex: 0 0 auto` inside `.stage`'s flex column and keeps a 44px
+   `min-height`. With `min-height: 0` it was a shrinkable flex item: on Schwer,
+   whose keypad is a row taller than Leicht's four choice buttons, the stage
+   crushed it to 16px around 27px of content and its bottom border ran through
+   the label. Its caret is drawn from two borders, not typed as `▾` (U+25BE) —
+   a glyph is whatever font the phone falls back to.
+
+   It is **one scrollable
    list of every level the game has**, in three colour-coded bands — Leicht
    green, Mittel amber, Schwer red — each under a plain, unclickable heading.
    The bands are **saturated enough to carry a gold star**, and each star wears

@@ -19,6 +19,8 @@ node --test                     # run unit tests (tests/*.test.js), needs Node 2
 node --check <file.js>          # syntax-check a module
 node tools/version-assets.js N  # bump asset version — REQUIRED before deploying a change
 node tools/shoot.mjs <url> …    # drive a real Chrome: screenshot + measure (--help)
+sh tools/firefox-shot.sh <url> out.png [WxH]   # the same page in Gecko
+sh tools/baseline.sh <ref> <path> [shoot opts] # the same page at another commit
 sh tools/install-hooks.sh       # pre-commit/pre-push guards (run once per clone)
 ```
 
@@ -79,6 +81,24 @@ workflow runs it before publishing.
     --size 360x640 --do 'eval @play.js' --do 'eval play({ wrongAt: 1, stopAt: 1 })' \
     --clip .stage --probe '#feedback' --out aid.png
   ```
+
+  **A shot fails when the page is wider than the viewport it was asked for.**
+  This site never scrolls sideways, and when it did the symptom appeared
+  somewhere else entirely — a `position: fixed` overlay opened 46px off-centre
+  because a grid track two DOM levels away had widened the layout viewport. The
+  report names the outermost element whose own parent still fits. `--allow-hscroll`
+  waves it through. Note the trap it exists for: under mobile emulation Chrome
+  grows `innerWidth` to fit the overflow, so `scrollWidth > innerWidth` is *false*
+  in exactly the broken case; the check is against `--size`.
+
+  **Two more tools, for the two questions a Chrome screenshot cannot answer.**
+  `sh tools/baseline.sh <ref> <path> [shoot opts]` renders the same page from
+  another commit (worktree + its own server, both torn down on exit) and answers
+  "did I break this, or was it always so?". `sh tools/firefox-shot.sh <url>
+  out.png [WxH]` answers "does it look like this in the other engine?" — Gecko
+  squeezed a flex-item button to 16px where Blink gave it 37, and the level
+  picker shipped with its bottom border cutting through its own label. It only
+  looks: no cookies, no script, no probes.
 
   `--full` captures a whole scrolling page (privacy, parents). `--reduced-motion`
   emulates `prefers-reduced-motion: reduce` — this repo treats that setting as

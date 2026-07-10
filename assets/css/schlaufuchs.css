@@ -540,21 +540,42 @@ footer p { margin: 0; }
    The caret is a pseudo-element on purpose — `updateChip()` writes the chip's
    textContent, which would eat a glyph kept in the i18n string. */
 .pickheading {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   margin: 0 auto 4px;
-  padding: 6px 10px;
-  min-height: 0;
-  border: 2px solid var(--orange-soft);
+  padding: 4px 14px;
+  min-height: 44px;
+  /* `.stage` is a flex column, so this button is a flex item, and a flex item
+     shrinks. It carried `min-height: 0`, and on Schwer — whose keypad is a row
+     taller than Leicht's four choice buttons — the stage squeezed it to 16px
+     while its content needed 27px: the bottom border cut straight through the
+     text. Reported from a phone, invisible on Leicht, invisible in every probe
+     that only measured the label. A control does not give up its size. */
+  flex: 0 0 auto;
+  border: 2px solid var(--orange);
   /* like the top bar: the level picker stays reachable while the summary is up.
      Mara tried to press the chip *through* the summary sheet. */
   position: relative;
   z-index: 45;
 }
-.pickheading::after { content: " ▾"; color: var(--orange); }
+
+/* The caret is drawn, not typed. `content: "▾"` is U+25BE, and on a phone that
+   is whatever font the device happens to fall back to — on Android Firefox it
+   came out small and sitting on the baseline. Two borders are geometry, and
+   geometry renders the same in every engine. */
+.pickheading::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--orange);
+}
+
 .pickheading:active { transform: scale(0.97); }
-/* the village's own symbol, so the game says which place on the map it is */
-.pickheading .ph-sym { margin-right: 6px; }
 
 /* ---- the round's scene: sky, meadow, basket, fox (§10.5) ---- */
 .journey .j-sky { fill: #e8f3fa; }

@@ -6,7 +6,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { parseArgs, parseSize, parseCookie, parseAction, keySpec, outName, VERBS } from "../tools/shoot.mjs";
+import { parseArgs, parseSize, parseCookie, parseAction, keySpec, outName, hscrollMessage, overflowScript, VERBS } from "../tools/shoot.mjs";
 
 // Regression, learned the hard way in a previous session: a CDP keyDown without
 // `text` never performs the key's default action, so a scripted Enter silently
@@ -48,7 +48,7 @@ test("parseArgs: a default viewport, repeatable flags, and a url it insists on",
 
   const o = parseArgs(["http://x/", "--size", "360x640", "--size", "390x844",
     "--probe", "#a", "--probe", "#b", "--clip", ".stage", "--keep", "--allow-errors",
-    "--full", "--reduced-motion"]);
+    "--full", "--reduced-motion", "--allow-hscroll"]);
   assert.equal(o.sizes.length, 2);
   assert.deepEqual(o.probes, ["#a", "#b"]);
   assert.equal(o.clip, ".stage");
@@ -56,6 +56,7 @@ test("parseArgs: a default viewport, repeatable flags, and a url it insists on",
   assert.equal(o.allowErrors, true);
   assert.equal(o.full, true);
   assert.equal(o.reducedMotion, true);
+  assert.equal(o.allowHscroll, true);
 
   // Each of these is off unless it is asked for. A run must not silently
   // tolerate a page error, and it must not silently emulate a media feature —
@@ -65,6 +66,7 @@ test("parseArgs: a default viewport, repeatable flags, and a url it insists on",
   assert.equal(d2.allowErrors, false);
   assert.equal(d2.full, false);
   assert.equal(d2.reducedMotion, false);
+  assert.equal(d2.allowHscroll, false);
 
   assert.throws(() => parseArgs([]), /needs a url/);
   assert.throws(() => parseArgs(["http://x/", "--bogus"]), /unknown option/);
@@ -92,4 +94,50 @@ test("a page that never loaded is not a passing shot", () => {
   assert.match(src, /if \(nav\.errorText\) throw/, "a failed navigation must throw");
   assert.match(src, /status >= 400\) throw/, "a 4xx/5xx main document must throw");
   assert.match(src, /"Network\.responseReceived"/, "…which means the status must be captured");
+});
+
+// The Pokalraum scrolled sideways for two commits. The symptom showed up in a
+// `position: fixed` overlay two DOM levels away — it opened 46px off-centre,
+// because a fixed box inherits the layout viewport that some grid track widened.
+// A session went into finding that a `<button>` in a `repeat(4, 1fr)` grid
+// floors its track at its longest unbreakable word ("Rechenschieber").
+test("a page wider than its viewport is not a passing shot", () => {
+  const size = "360x640";
+  assert.equal(hscrollMessage(size, null), null, "no measurement, no complaint");
+  assert.equal(hscrollMessage(size, { viewport: 360, pageWidth: 360, innerWidth: 360, culprits: [] }), null);
+
+  const msg = hscrollMessage(size, {
+    viewport: 360, pageWidth: 406, innerWidth: 406,
+    culprits: [{ el: "button.tcard.slot.earned", left: 314, right: 406, width: 92 }],
+  });
+  assert.match(msg, /46px wider/, "say by how much");
+  assert.match(msg, /406 > 360/);
+  assert.match(msg, /button\.tcard\.slot\.earned \(314…406\)/, "…and name where the width is born");
+
+  // A page can be too wide with no single element to blame — a grid track, a
+  // min-width. Saying "no culprits" is more honest than saying nothing.
+  const vague = hscrollMessage(size, { viewport: 360, pageWidth: 400, innerWidth: 400, culprits: [] });
+  assert.match(vague, /no single element/);
+});
+
+// The trap that made the naive check useless: under mobile emulation Chrome
+// grows `innerWidth` to fit the overflow, so in the broken case above BOTH
+// scrollWidth and innerWidth read 406 and `scrollWidth > innerWidth` is false.
+test("horizontal overflow is measured against the viewport that was asked for", () => {
+  const src = overflowScript(360);
+  assert.match(src, /const lim = 360 \+ 0\.5;/, "the requested width, not innerWidth");
+  assert.match(src, /viewport: 360/);
+  assert.ok(!/scrollWidth\s*>\s*(window\.)?innerWidth/.test(src), "that comparison is always false here");
+
+  // innerWidth is still reported, because it is the clue that explains the bug.
+  assert.match(src, /innerWidth: window\.innerWidth/);
+
+  // An ancestor of an overflowing box is wide *because of* it. Only the
+  // outermost element whose own parent still fits is worth naming.
+  assert.match(src, /!over\.has\(el\.parentElement\)/);
+  assert.match(src, /el !== document\.documentElement && el !== document\.body/);
+
+  const shoot = readFileSync(new URL("../tools/shoot.mjs", import.meta.url), "utf8");
+  assert.match(shoot, /if \(!opt\.allowHscroll\)/, "the guard must be on by default");
+  assert.match(shoot, /report\.overflowX = overflow/, "…and the measurement must reach the report");
 });

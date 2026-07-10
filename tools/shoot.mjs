@@ -37,6 +37,7 @@
 //   --reduced-motion   emulate `prefers-reduced-motion: reduce`. This project
 //                      treats that as non-negotiable, so it must be testable.
 //   --allow-errors     do not fail when the page logs an error
+//   --allow-hscroll    do not fail when the page scrolls sideways
 //   --keep             leave the browser open (debugging this script)
 //
 // A run fails (exit 1) when the page does not load — a dead host, a 404 — and
@@ -46,6 +47,21 @@
 // buttons. The first is subtler: Chrome renders its *own* error page for a
 // dead server and fires `load` on it, so every page once "passed" while
 // nothing was serving them. A screenshot alone calls both a success.
+//
+// A run also fails when the page is **wider than the viewport it was asked
+// for**. This site never scrolls sideways (§5.1), and when it did, the symptom
+// showed up somewhere else entirely: a `<button>` in a `repeat(4, 1fr)` grid
+// floors its track at the longest unbreakable word, "Rechenschieber" pushed the
+// Pokalraum's shelf to 406px inside a 360px phone, and the *modal overlay* — a
+// `position: fixed` box, which inherits the widened layout viewport — opened
+// 46px off to one side. A session went into finding that.
+//
+// The check cannot be `scrollWidth > innerWidth`: under mobile emulation Chrome
+// *widens `innerWidth` itself* to fit the overflowing content, so in the broken
+// case above both were 406 and the naive check passes. It is measured against
+// the width `--size` asked for. The report names the outermost elements whose
+// own parent still fits — those are where the width is born, not where it is
+// merely passed along.
 //
 // Example — is the wrong-answer aid clipped by the stage on a short phone?
 //
@@ -76,7 +92,7 @@ const CHROMES = [
 const die = (msg) => { throw new Error(msg); };
 
 export function parseArgs(argv) {
-  const opt = { sizes: [], cookies: [], probes: [], actions: [], out: null, json: null, clip: null, keep: false, help: false, allowErrors: false, full: false, reducedMotion: false };
+  const opt = { sizes: [], cookies: [], probes: [], actions: [], out: null, json: null, clip: null, keep: false, help: false, allowErrors: false, allowHscroll: false, full: false, reducedMotion: false };
   let url = null;
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -94,6 +110,7 @@ export function parseArgs(argv) {
     else if (a === "--full") opt.full = true;
     else if (a === "--reduced-motion") opt.reducedMotion = true;
     else if (a === "--allow-errors") opt.allowErrors = true;
+    else if (a === "--allow-hscroll") opt.allowHscroll = true;
     else if (a === "--keep") opt.keep = true;
     else if (a === "-h" || a === "--help") return { ...opt, help: true };
     else if (a.startsWith("-")) die(`unknown option ${a}`);
@@ -350,6 +367,60 @@ const probeScript = (probes, clip) => `(() => {
   return out;
 })()`;
 
+// ── horizontal overflow ─────────────────────────────────────────────────────
+
+// Measured against `w`, the width `--size` asked for — NOT against innerWidth,
+// which Chrome grows to fit overflowing content under mobile emulation, so that
+// `scrollWidth > innerWidth` is false in exactly the case worth catching.
+//
+// `culprits` are the outermost elements that stick out while their own parent
+// still fits: an ancestor of an overflowing box is wide because of it, not with
+// it, and listing the whole chain buries the one line you need. <html> and
+// <body> are always in that chain, so they are never culprits.
+export const overflowScript = (w) => `(() => {
+  const lim = ${w} + 0.5;
+  const sticksOut = (el) => {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 && r.height === 0) return false;
+    return r.right > lim || r.left < -0.5;
+  };
+  const over = new Set();
+  for (const el of document.querySelectorAll("*")) if (sticksOut(el)) over.add(el);
+  const name = (el) => {
+    const cls = typeof el.className === "string" ? el.className.trim() : "";
+    return el.tagName.toLowerCase()
+      + (el.id ? "#" + el.id : "")
+      + (cls ? "." + cls.split(/\\s+/).join(".") : "");
+  };
+  const culprits = [...over]
+    .filter((el) => el !== document.documentElement && el !== document.body)
+    .filter((el) => !over.has(el.parentElement))
+    .slice(0, 6)
+    .map((el) => {
+      const r = el.getBoundingClientRect();
+      return { el: name(el), left: Math.round(r.left), right: Math.round(r.right), width: Math.round(r.width) };
+    });
+  return {
+    viewport: ${w},
+    pageWidth: Math.round(document.documentElement.scrollWidth),
+    innerWidth: window.innerWidth,
+    culprits,
+  };
+})()`;
+
+// null when the page fits. A message when it does not — one that names where to
+// look, because "the page is 406px wide" sends you hunting through the DOM.
+export function hscrollMessage(size, overflow) {
+  if (!overflow || overflow.pageWidth <= overflow.viewport) return null;
+  const by = overflow.pageWidth - overflow.viewport;
+  const where = overflow.culprits.length
+    ? overflow.culprits.map((c) => `${c.el} (${c.left}…${c.right})`).join(", ")
+    : "no single element — check a grid track or a min-width";
+  return `${size}: the page is ${by}px wider than its viewport `
+    + `(${overflow.pageWidth} > ${overflow.viewport}; innerWidth grew to ${overflow.innerWidth}). `
+    + `Widened by: ${where}`;
+}
+
 // ── one run at one viewport ─────────────────────────────────────────────────
 
 async function shoot(cdp, opt, size) {
@@ -406,6 +477,11 @@ async function shoot(cdp, opt, size) {
 
   if (opt.probes.length) report.probes = await evaluate(cdp, sid, probeScript(opt.probes, opt.clip));
 
+  // After the actions: an overlay that opens too wide is as broken as a shelf
+  // that renders too wide, and only one of the two is on screen at load.
+  const overflow = await evaluate(cdp, sid, overflowScript(size.w));
+  if (overflow.pageWidth > overflow.viewport) report.overflowX = overflow;
+
   if (opt.out) {
     const file = outName(opt.out, size, opt.sizes.length > 1);
     // A scrolling page (the privacy and parents views) is not one screenful,
@@ -452,6 +528,18 @@ async function main(argv) {
     if (broke.length && !opt.allowErrors) {
       failed = true;
       for (const r of broke) console.error(`shoot: ${r.size} logged ${r.errors.length} page error(s): ${r.errors[0]}`);
+    }
+
+    // This site never scrolls sideways (§5.1). When it did, the symptom appeared
+    // in a fixed overlay two DOM levels away; the screenshot showed a centring
+    // bug and the cause was a grid track.
+    if (!opt.allowHscroll) {
+      for (const r of reports) {
+        const msg = hscrollMessage(r.size, r.overflowX);
+        if (!msg) continue;
+        failed = true;
+        console.error(`shoot: ${msg}`);
+      }
     }
   } catch (err) {
     failed = true;

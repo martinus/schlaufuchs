@@ -223,11 +223,33 @@ test("tapping a trophy she just won holds it up, without leaving the round", () 
 // caption, so she never tried pressing it.
 test("the chip looks like the button it is", () => {
   const css = read("assets/css/schlaufuchs.css");
-  const block = css.slice(css.indexOf(".pickheading {"), css.indexOf(".pickheading:active"));
-  assert.match(block, /border: 2px solid var\(--orange-soft\)/, "a chip needs an edge");
-  assert.match(css, /\.pickheading::after \{ content: " ▾"/, "…and a caret that says it opens");
-  // The caret must be a pseudo-element: updateChip() writes textContent, which
-  // would silently eat a glyph carried in the string.
+  // The comments in this rule explain what was removed, so they name it. Read
+  // the declarations, not the prose around them.
+  const block = css
+    .slice(css.indexOf(".pickheading {"), css.indexOf(".pickheading::after"))
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.match(block, /border: 2px solid var\(--orange\)/, "a chip needs an edge");
+
+  // Regression, reported from a phone: `.stage` is a flex column, so this button
+  // is a flex item, and a flex item shrinks. With `min-height: 0` the Schwer
+  // keypad — one row taller than Leicht's four choice buttons — squeezed the
+  // button to 16px while its content needed 27px, and the bottom border cut
+  // through the text. Invisible on Leicht, and invisible to any probe that
+  // measured only the label.
+  assert.match(block, /flex: 0 0 auto/, "a control must not give up its size");
+  assert.match(block, /min-height: 44px/, "…nor its touch target");
+  assert.ok(!block.includes("min-height: 0"), "min-height: 0 is what let it be crushed");
+
+  // The caret is geometry, not a glyph. `content: "▾"` is U+25BE, and on a phone
+  // that is whatever font the device falls back to — on Android Firefox it came
+  // out small and sitting on the baseline.
+  const caret = css.slice(css.indexOf(".pickheading::after {"));
+  const rule = caret.slice(0, caret.indexOf("}"));
+  assert.match(rule, /content: "";/, "no glyph");
+  assert.match(rule, /border-top: \d+px solid var\(--orange\)/, "a drawn triangle");
+  assert.ok(!css.replace(/\/\*[\s\S]*?\*\//g, "").includes("▾"), "the glyph must be gone from the stylesheet");
+  // …and it must stay a pseudo-element: updateChip() writes innerHTML, and a
+  // caret carried in the label would be rewritten away on every round.
   assert.ok(!read("games/einmaleins/einmaleins.js").includes("▾"));
 });
 
