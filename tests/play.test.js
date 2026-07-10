@@ -40,7 +40,10 @@ for (const divSign of ["÷", ":"]) {
     for (let i = 0; i < 3000; i++) {
       const id = Math.floor(rng() * POOL_COUNT);
       const diff = Math.floor(rng() * 3);
-      const q = questionFor(id, diff, rng, divSign);
+      // mixed rounds and fixed tables shape their questions differently (the
+      // fixed table is never the unknown, §10.2) — the driver must read both
+      const table = rng() < 0.5 ? 0 : 1 + Math.floor(id / 10);
+      const q = questionFor(id, diff, rng, divSign, table);
       seen.add(q.kind);
       // the page renders `text` with "?" replaced by the gap span, whose text is
       // "?" before anything is typed — so this is exactly what the driver reads
