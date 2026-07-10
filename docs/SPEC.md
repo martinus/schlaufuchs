@@ -925,14 +925,21 @@ walks the village lane; goal node: ringing the school bell.
 
    It is **one scrollable
    list of every level the game has**, in three colour-coded bands — Leicht
-   green, Mittel amber, Schwer red — each under a plain, unclickable heading.
+   green, Mittel amber, Schwer red — each under a plain, unclickable heading,
+   **three tiles to a row**. Four to a row squeezed a Schwer tile's nine stars
+   and its tempo badge into ~73px, where six stars read as three and the badge
+   read as a smudge; three gives each tile the room to carry its two promises at
+   a legible size, and the list simply scrolls a little further.
    The bands are **saturated enough to carry a gold star**, and each star wears
    a **white outline** (four hard drop-shadows — `-webkit-text-stroke` does not
    touch a colour emoji). Gold on a warm band is gold on gold at any opacity;
    what separates them is an edge, not more colour. The stars a tile still has
-   to give are the whole promise of the tile. A tile that has also been
-   *known fast* wears its tempo badge in the corner (§10.6) — which is what a
-   mastered tile, all stars taken, still has left to promise.
+   to give are the whole promise of the tile, set three to a row so nine read as
+   a filled 3×3 card and six as two even rows — the fullness is the message. A
+   tile that has also been *known fast* wears its tempo badge as a small **medal
+   — a white disc** — in the corner (§10.6): the disc lifts 🐇/🚗/🚀 off the busy
+   band and marks it as a thing *won*, apart from the stars still on *offer*. It
+   is what a mastered tile, all stars taken, still has left to promise.
    Difficulty is not a control: choosing a tile chooses both. Leicht shows its
    five tiles (Reihen 1, 2, 5, 10 + „🎲 Alle"), Mittel eleven, Schwer nine
    (Reihen 2–9 + „🎲 Alle" — nothing about ×1 or ×10 is hard, §10.2); **no
@@ -1115,8 +1122,9 @@ additive collectible** for *knowing* the fact.
   bolt the instant it lands (transition, not keyframe — reduced motion sees it
   briefly and calmly, §10.5). A slow answer sees *nothing*; there is no
   negative moment anywhere in the ladder.
-- **Where it shows**: as a corner badge on the picker tile (`aria-label` says
-  it in words: „Tempo: Rennauto"), and as one quiet line in the summary —
+- **Where it shows**: as a corner medal — a small white disc — on the picker
+  tile (`aria-label` says it in words: „Tempo: Rennauto"), and as one quiet line
+  in the summary —
   symbol and name, with „Neuer Tempo-Rekord!" when the tile's tier improved.
   **Never a number with a unit of time**, anywhere the child can see (§10.3).
 - **Worth nothing but itself**: no stars, no points, no trophies. ⭐ stays the

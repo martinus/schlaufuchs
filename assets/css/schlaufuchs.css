@@ -782,25 +782,32 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .lvl-head.lvl-medium { color: #b26a00; }
 .lvl-head.lvl-hard { color: var(--err); }
 
+/* Three tiles to a row, not four. Four squeezed a Schwer tile's nine stars and
+   its tempo medal into 73px, where six stars read as three and the medal read
+   as a smudge (the very complaint that widened them). Three gives every tile
+   ~104px, room for a 3×3 star grid at a legible size and a medal that is a
+   medal. The list scrolls; legibility is worth the extra height. */
 .tilegrid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 
 .tilegrid button {
   position: relative;
   overflow: hidden;
-  min-height: 76px;
+  /* tall enough to hold the fullest tile — nine stars in three rows — under its
+     name without either crowding the other */
+  min-height: 112px;
   border-radius: var(--radius);
   background: var(--panel);
   box-shadow: var(--shadow);
   font-weight: 800;
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 5px 4px;
+  padding: 9px 6px 6px;
 }
 
 /* Easy is green, hard is red, and the middle is between them. The colour says
@@ -819,20 +826,23 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   position: absolute;
   /* below the name, never behind it: a lone star sat exactly under the digits
      and vanished, so a tile with one star left looked like a tile with none */
-  inset: 26px 6px 5px;
+  inset: 36px 7px 8px;
   display: flex;
   flex-wrap: wrap;
   align-content: center;
   justify-content: center;
+  row-gap: 2px;
   pointer-events: none;
   line-height: 1;
 }
 /* A gold star on a warm band is gold on gold, at any opacity. What separates it
    is not more colour but an edge: a white outline, drawn as four hard
-   drop-shadows because `-webkit-text-stroke` does not touch a colour emoji. */
+   drop-shadows because `-webkit-text-stroke` does not touch a colour emoji.
+   Three to a row (the 33.333% width), so nine read as a filled 3×3 card and six
+   as two even rows — the fullness is the message (§8.3, §10.2). */
 .tilegrid .tstars i {
   font-style: normal;
-  font-size: 14px;
+  font-size: 22px;
   width: 33.333%;
   text-align: center;
   opacity: 0.95;
@@ -841,19 +851,26 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
     drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);
 }
 /* nothing left to give */
-.tilegrid .tstars .tdone { font-size: 34px; color: #1e6b2c; opacity: 0.9; }
+.tilegrid .tstars .tdone { font-size: 44px; color: #1e6b2c; opacity: 0.9; }
 
-/* The tempo badge (§10.6): the pace this tile has been *known* at, in its top
-   corner. There is no tier-0 badge — an empty corner is the lowest state. */
+/* The tempo badge (§10.6): the pace this tile has been *known* at, worn as a
+   small medal in its top corner. A bare emoji with a white outline was a smudge
+   on the busy bands; a white disc makes it a thing she earned and won — and
+   sets it apart from the stars, which are the thing still on offer. There is no
+   tier-0 medal: an empty corner is the lowest state, never a snail. */
 .tilegrid .ttempo {
   position: absolute;
-  top: 3px;
-  right: 4px;
+  top: 6px;
+  right: 6px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(74, 44, 23, 0.28);
   pointer-events: none;
   line-height: 1;
-  filter:
-    drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff)
-    drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);
 }
 
 .tilegrid .tname { position: relative; color: var(--ink); }

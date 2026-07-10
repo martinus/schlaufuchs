@@ -601,7 +601,7 @@ function renderPicker() {
       // Tier 0 draws nothing at all — an empty corner, never a snail.
       const tempo = starDigit(tempoByDiff[d], tbl);
       const badge = tempo > 0
-        ? `<span class="ttempo" aria-hidden="true">${iconHTML(TEMPO_ICONS[tempo], { size: 16 })}</span>`
+        ? `<span class="ttempo" aria-hidden="true">${iconHTML(TEMPO_ICONS[tempo], { size: 18 })}</span>`
         : "";
       b.innerHTML = `<span class="tstars" aria-hidden="true">${art}</span>`
         + badge + `<span class="tname">${name}</span>`;
