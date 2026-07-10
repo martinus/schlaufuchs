@@ -92,6 +92,23 @@ test("a tap sends the fox there first, and the region opens when it arrives", ()
   assert.match(travel.slice(0, 200), /if \(walking\) return;/);
 });
 
+// Regression: `travelTo` sets `walking = true` and never clears it — the walk's
+// callback navigates away and the reload was meant to reset the flag. But the
+// back-forward cache freezes the page instead of reloading it, so a
+// walk-then-navigate leaves the map in bfcache with `walking` stuck true. On the
+// way back (Android back gesture, browser back button) every tap then dies on
+// `if (walking) return` — the label turns orange on :hover and nothing walks.
+test("a bfcache restore clears the stuck walk flag, or the map goes dead", () => {
+  // The one signal a bfcache restore fired is `pageshow` with `persisted`.
+  assert.match(mapJs, /addEventListener\("pageshow"/, "nothing listens for a bfcache restore");
+  const handler = mapJs.slice(mapJs.indexOf('addEventListener("pageshow"'));
+  const body = handler.slice(0, handler.indexOf("});") + 1);
+  assert.match(body, /\.persisted/, "must react to a bfcache restore, not every load");
+  assert.match(body, /walking = false/, "the stuck flag must be cleared, or every tap is a no-op");
+  // ...and the stars/trophies she earned in the game she left must not be stale.
+  assert.match(body, /render\(\)/, "re-render, or the map shows a count from before she played");
+});
+
 // Regression: these are SVG anchors. `region.href` is an SVGAnimatedString, not
 // a string, so `location.href = region.href` sent the child to the 404 page
 // "/[object%20SVGAnimatedString]". Every region on the map was a dead end, and

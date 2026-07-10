@@ -217,6 +217,21 @@ function travelTo(region) {
   });
 }
 
+// The back-forward cache freezes this page instead of reloading it. A tap sends
+// the fox walking and then navigates (travelTo), which sets `walking = true` and
+// counts on the reload to clear it — but a walk-then-navigate leaves the map in
+// bfcache with that flag stuck true. Come back with the Android gesture or the
+// browser's back button and the restored page never ran a fresh load, so every
+// tap dies on `if (walking) return`: the label goes orange on :hover and nothing
+// else happens. `pageshow` with `persisted` is the one signal that a bfcache
+// restore happened; clear the flag, and re-render because the stars and trophy
+// count may have changed in the game she just left (§3.1).
+window.addEventListener("pageshow", (e) => {
+  if (!e.persisted) return; // a fresh load already ran render() with walking=false
+  walking = false;
+  render();
+});
+
 // Registered once, on the map itself: `render()` runs again on every settings
 // change, and a listener added there would fire twice, then three times.
 document.querySelector(".worldmap")?.addEventListener("click", (e) => {
