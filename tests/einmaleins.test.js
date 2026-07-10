@@ -9,7 +9,7 @@ import {
   POOL_COUNT, EASY_TABLES, pairIndex, pairOf, poolFor, questionFor,
   choicesFor, starsFor, nextStarGoal, starGoalNeed, ownedStars, STAR_SLOTS, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
   retryStep, ALL_TABLES, HARD_TABLES, ROUND_SIZE, pairHardness, hardnessBoost,
-  median, tempoTier, awardTempo, TEMPO_TIERS, TEMPO_SLOTS,
+  median, tempoTier, awardTempo, TEMPO_TIERS, TEMPO_SLOTS, recallStep, foldRecall,
 } from "../games/einmaleins/logic.js";
 import { tilePointsLeft } from "../assets/js/rewards.js";
 import { BUDGET } from "../assets/js/storage.js";
@@ -783,17 +783,72 @@ test("tempo strings exist in both languages, and none of them names a time", () 
   }
 });
 
+// --- per-fact recall telemetry (§20) ------------------------------------------
+// The digit a parent reads must be earned repeatedly: it drifts ONE step per
+// observation toward what was seen, so a lucky tap cannot paint "auswendig"
+// and one distracted answer cannot erase it.
+test("recallStep: damped — no single observation repaints a cell", () => {
+  assert.equal(recallStep(0, 3), 4, "the first observation seeds the digit directly");
+  assert.equal(recallStep(0, 0), 1, "…including a slow one: counting is information");
+  assert.equal(recallStep(1, 3), 2, "a settled digit moves one step, not four");
+  assert.equal(recallStep(4, 0), 3, "…in both directions: recall that fades drifts down");
+  assert.equal(recallStep(4, 3), 4, "confirmed is confirmed");
+  // total: junk observations change nothing, junk digits read as unseen
+  for (const junk of [undefined, null, -1, 4, 1.5, NaN, "2"]) {
+    assert.equal(recallStep(2, junk), 2, `tier=${String(junk)}`);
+  }
+  assert.equal(recallStep(9, 3), 4, "a corrupt digit is treated as unseen, then seeded");
+});
+
+test("foldRecall: a round's observations land in the right slots, junk does not", () => {
+  const rc = foldRecall(undefined, { [pairIndex(7, 8)]: 3, [pairIndex(2, 2)]: 0 });
+  assert.equal(rc.length, POOL_COUNT);
+  assert.equal(rc[pairIndex(7, 8)], "4");
+  assert.equal(rc[pairIndex(2, 2)], "1");
+  assert.equal(rc[pairIndex(3, 3)], "0", "unobserved facts stay unseen");
+  // folding again drifts, never jumps
+  const rc2 = foldRecall(rc, { [pairIndex(7, 8)]: 0 });
+  assert.equal(rc2[pairIndex(7, 8)], "3");
+  // junk ids and a short/corrupt string never throw and never leak
+  const rc3 = foldRecall("x9", { "-1": 3, 999: 3, abc: 3 });
+  assert.equal(rc3.length, POOL_COUNT);
+  assert.ok([...rc3].every((c) => "01234".includes(c)), rc3);
+  assert.equal(foldRecall("", null).length, POOL_COUNT);
+});
+
+test("the recall tracker is wired: observed on first tries, folded at round end", () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  assert.match(src, /recallObs\[currentId\] = tempoTier\(took, diff\)/);
+  assert.match(src, /recallObs = \{\}/, "…and the observations reset with the round");
+  assert.match(src, /rc: foldRecall\(saved\.rc, recallObs\)/);
+});
+
+// The child must never meet this data: it exists for the parents' page only.
+// The two places the child looks — the painted summary and the level picker —
+// must not touch a recall digit.
+test("the recall digits never surface in the child's own UI", () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  const painted = src.slice(src.indexOf("function endRound"))
+    .slice(src.slice(src.indexOf("function endRound")).indexOf("setTimeout("));
+  const picker = src.slice(src.indexOf("function renderPicker"), src.indexOf("$(\"pickchip\")"));
+  for (const [name, block] of [["summary", painted], ["picker", picker]]) {
+    assert.ok(!/\brc\b|foldRecall|recallObs|recallDigit/.test(block),
+      `the ${name} reads the parents' recall data`);
+  }
+});
+
 // The cookie carries a second digit-string family now. It must stay far from
 // the 3500-byte budget even at its fullest (§9.2, §10.4).
 test("a maxed einmaleins section stays a small fraction of the cookie budget", () => {
   const full11 = { 0: "3".repeat(11), 1: "3".repeat(11), 2: "3".repeat(11) };
   const maxed = {
     d: 2, t: 0, box: "4".repeat(100), stars: full11, tempo: full11,
-    p: { 0: [999, 99999], 1: [999, 99999], 2: [999, 99999] },
+    rc: "4".repeat(100),
+    tm: [99999, 99999, 99999], rd: [9999, 9999, 9999],
   };
   const bytes = JSON.stringify({ einmaleins: maxed }).length;
-  assert.ok(bytes < 400, `einmaleins section is ${bytes} bytes`);
-  assert.ok(bytes < BUDGET / 8, "…and a small fraction of the whole budget");
+  assert.ok(bytes < 550, `einmaleins section is ${bytes} bytes`);
+  assert.ok(bytes < BUDGET / 6, "…and a small fraction of the whole budget");
 });
 
 test("ownedStars is total: junk in, a sane basket out", () => {

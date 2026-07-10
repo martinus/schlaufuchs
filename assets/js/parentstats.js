@@ -12,6 +12,31 @@ export const HEAT = { 0: "weak", 1: "weak", 2: "open", 3: "solid", 4: "solid" };
 
 export const heatOf = (box) => HEAT[box] ?? "open";
 
+// The recall digit of one fact, from the `rc` string the game writes (§20):
+// 0 = never timed, 1..4 = the damped tracker's tempoTier + 1. Total: a short,
+// missing or corrupt string reads as "never timed".
+export function recallDigit(rc, id) {
+  const d = Number.parseInt(String(rc ?? "")[id], 10);
+  return Number.isInteger(d) && d >= 0 && d <= 4 ? d : 0;
+}
+
+// One cell of the grid: the box is the diagnosis of ACCURACY, the recall digit
+// answers the question the box cannot — does she know it, or compute it? Only
+// a solid fact can be "fast": speed on a fact that still slips is not
+// knowledge, it is guessing. And absence of timing never demotes: a solid fact
+// without a fast record is simply solid, not accused of counting.
+export function cellState(box, rc) {
+  const base = heatOf(box);
+  return base === "solid" && rc === 4 ? "fast" : base;
+}
+
+// How the 100 facts are spread across the four states a parent can act on.
+export function cellCounts(boxes, rc, count) {
+  const tally = { weak: 0, open: 0, solid: 0, fast: 0 };
+  for (let id = 0; id < count; id++) tally[cellState(boxes[id], recallDigit(rc, id))]++;
+  return tally;
+}
+
 // The facts a parent should sit down with: box 0 or 1, hardest first, then in
 // table order so the list reads like a times table and not like a shuffle.
 export function weakFacts(boxes, count) {

@@ -4,7 +4,10 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { heatOf, weakFacts, heatCounts, practiceSummary, minutesOf, secondsPerRound } from "../assets/js/parentstats.js";
+import {
+  heatOf, weakFacts, heatCounts, practiceSummary, minutesOf, secondsPerRound,
+  recallDigit, cellState, cellCounts,
+} from "../assets/js/parentstats.js";
 import { boxesFromString, clampBox } from "../assets/js/adaptive.js";
 import { pairOf, POOL_COUNT } from "../games/einmaleins/logic.js";
 
@@ -24,6 +27,39 @@ test("heatOf maps the Leitner boxes onto what a parent can act on", () => {
   assert.equal(heatOf(3), "solid");
   assert.equal(heatOf(4), "solid");
   for (const junk of [undefined, null, -1, 5, "x", NaN]) assert.equal(heatOf(junk), "open");
+});
+
+// The recall split (§20): the box says whether a fact is RIGHT; the recall
+// digit says whether it is KNOWN — the one thing the box cannot see. A cell
+// darkens to "fast" only when it is solid AND repeatedly rocket-fast.
+test("cellState: only a solid fact can be 'by heart', and absence never accuses", () => {
+  assert.equal(cellState(4, 4), "fast");
+  assert.equal(cellState(3, 4), "fast");
+  assert.equal(cellState(4, 3), "solid", "quick-but-not-rocket stays plain solid");
+  assert.equal(cellState(4, 0), "solid", "no timing record does not demote to 'counting'");
+  assert.equal(cellState(0, 4), "weak", "speed on a slipping fact is guessing, not knowledge");
+  assert.equal(cellState(2, 4), "open");
+});
+
+test("recallDigit is total: short, missing and corrupt strings read as never-timed", () => {
+  assert.equal(recallDigit("0402", 1), 4);
+  assert.equal(recallDigit("0402", 0), 0);
+  assert.equal(recallDigit("04", 99), 0, "beyond the string is unseen");
+  for (const junk of [undefined, null, "", "x9"]) {
+    assert.equal(recallDigit(junk, 0), 0, `rc=${String(junk)}`);
+  }
+  assert.equal(recallDigit("9", 0), 0, "a digit outside 0..4 is corrupt, not a claim");
+});
+
+test("cellCounts: a fresh child shows no red and nothing 'by heart'", () => {
+  const fresh = boxesFromString(undefined, POOL_COUNT);
+  assert.deepEqual(cellCounts(fresh, undefined, POOL_COUNT),
+    { weak: 0, open: 100, solid: 0, fast: 0 });
+  // one solid fact, timed at rocket speed, twice — exactly one dark cell
+  const boxes = { ...fresh, 5: 4 };
+  const rc = "0".repeat(5) + "4" + "0".repeat(POOL_COUNT - 6);
+  assert.deepEqual(cellCounts(boxes, rc, POOL_COUNT),
+    { weak: 0, open: 99, solid: 0, fast: 1 });
 });
 
 test("weakFacts lists the hardest first, and names real questions", () => {

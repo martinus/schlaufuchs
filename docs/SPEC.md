@@ -1002,11 +1002,12 @@ still have one star.
   "d": 1, "t": 7,
   "box": "342103...",                    // 100 digits: pairs 1..10 × 1..10 canonical order
   "stars": { "0": "302...", "1": "...", "2": "..." },  // per difficulty: 11 digits (10 tables + mixed)
-  "tempo": { "0": "030...", "1": "...", "2": "..." }   // same layout: tempo tier 0-3 per tile (§10.6)
+  "tempo": { "0": "030...", "1": "...", "2": "..." },  // same layout: tempo tier 0-3 per tile (§10.6)
+  "rc": "040100..."                      // 100 digits: recall class per pair, parents only (§20)
 }
 ```
 
-~210 bytes. The box string is shared across difficulties.
+~320 bytes. The box and rc strings are shared across difficulties.
 
 ### 10.5 The round's scene (sky, meadow, basket, fox)
 
@@ -1111,6 +1112,8 @@ additive collectible** for *knowing* the fact.
   site's only currency (§8.3); the badge is the prize, like the fox's poses.
   What it buys the game is a reason to replay a mastered (✓) tile — which is
   exactly where fluency training happens.
+- The same per-question observations feed the parents' **per-fact recall
+  grid** (§20) — as a damped class per pair, never as a stored time.
 
 ---
 
@@ -1458,16 +1461,30 @@ all they have. This site has the **knowledge**, so it shows that.
   Not linked from inside a round: it is not for the child.
 - **Read-only.** It imports no setter, writes no state, sends nothing anywhere.
   `tests/parents.test.js` enforces that it never imports `setGame`/`setRewards`.
-- **The Leitner box is the diagnosis** (§7.1), and it is already stored. Boxes
-  0–1 render as *slips*, 2 as *not practised yet*, 3–4 as *solid*, laid out as
-  the 10×10 times table a parent learned at school. `clampBox` defaults an
-  unknown fact to **2**, not 0, which is why a beginner's grid shows no red:
-  reporting an unasked fact as one the child got wrong would be a lie.
+- **The Leitner box is the diagnosis of accuracy** (§7.1), and it is already
+  stored. Boxes 0–1 render as *slips*, 2 as *not practised yet*, 3–4 as
+  *solid*, laid out as the 10×10 times table a parent learned at school.
+  `clampBox` defaults an unknown fact to **2**, not 0, which is why a
+  beginner's grid shows no red: reporting an unasked fact as one the child got
+  wrong would be a lie.
+- **The recall digit answers the one question the box cannot**: does she
+  *know* 7×8, or does she compute it every time? The game writes one digit per
+  pair (`rc`, 100 chars beside `box`): 0 = never timed, 1–4 = the tempo tier
+  (§10.6) + 1 that a **damped tracker** has settled on — each first-try-correct
+  answer moves the digit one step toward what was just seen
+  (`recallStep`/`foldRecall` in `games/einmaleins/logic.js`), so a lucky tap
+  cannot paint "auswendig" and one distracted answer cannot erase it. Unlike
+  the child's tile badge it also drifts *down*: this is diagnosis, not reward,
+  and recall that fades must show. In the grid, a **solid** fact whose digit
+  is 4 darkens to **auswendig / by heart** (`cellState` in `parentstats.js`);
+  a solid fact without a fast record is simply solid — absence of timing never
+  accuses a child of counting, and speed on a slipping fact is guessing, not
+  knowledge, so it never lightens *weak*. The legend carries all four counts.
 - „Hier hilfst du am meisten" lists boxes 0–1, hardest first, capped at twelve.
 - **Practice time is the one clock in the product** (§10.3 keeps it away from
-  the child). Aggregated per difficulty as `tm`/`rd`, never per question: a
-  per-fact timer would cost cookie budget and tell a parent nothing the box does
-  not already say. `addPractice()` caps one round at `MAX_ROUND_SECONDS` (a
-  forgotten tab is not practice) and banks **no** time for a non-finite clock —
-  capping a NaN to fifteen minutes would credit practice that never happened.
-  The pace line says out loud that time is not a goal.
+  the child). Aggregated per difficulty as `tm`/`rd`; per question only the
+  recall *class* above survives the round — never a stored time.
+  `addPractice()` caps one round at `MAX_ROUND_SECONDS` (a forgotten tab is
+  not practice) and banks **no** time for a non-finite clock — capping a NaN
+  to fifteen minutes would credit practice that never happened. The pace line
+  says out loud that time is not a goal.
