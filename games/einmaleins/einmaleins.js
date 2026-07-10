@@ -163,9 +163,17 @@ function fitQuestion() {
   if (fitted !== size) el.style.fontSize = `${fitted}px`;
 }
 
+// German writes division as a colon, and a colon sits on the baseline: between
+// two big numbers "12 : 3" reads as a label and its value, not as a division.
+// Lifted to the optical middle it reads as an operator. "÷" is already centred
+// and never appears here as a colon, so the wrap is a no-op in English.
+function eqHTML(text) {
+  return text.replaceAll(":", '<span class="divsign">:</span>');
+}
+
 function renderQuestion() {
   const shown = input === "" ? "?" : input;
-  $("question").innerHTML = question.text.replace(
+  $("question").innerHTML = eqHTML(question.text).replace(
     "?",
     `<span class="gap">${shown}</span>`
   );
@@ -301,8 +309,8 @@ function showFeedback(wrong) {
   const { t: a, f: b } = question;
   // Both lines are built from the question that was asked, never rebuilt from
   // `t`/`f`, which would print a division sign this language does not use.
-  const wrongEq = question.text.replace("?", wrong);
-  const rightEq = question.text.replace("?", `<b class="ans">${question.answer}</b>`);
+  const wrongEq = eqHTML(question.text).replace("?", wrong);
+  const rightEq = eqHTML(question.text).replace("?", `<b class="ans">${question.answer}</b>`);
   const fb = $("feedback");
   fb.innerHTML = `<span class="eq eq-wrong"><s>${wrongEq}</s></span>
     <span class="eq">${rightEq}</span>

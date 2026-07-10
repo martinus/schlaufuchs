@@ -86,8 +86,25 @@ test("the aid reprints the question that was asked, not a new one", () => {
   const src = read("games/einmaleins/einmaleins.js");
   const fn = src.slice(src.indexOf("function showFeedback"));
   assert.ok(!fn.slice(0, 600).includes("÷"), "showFeedback must not hardcode a division sign");
-  assert.match(fn.slice(0, 600), /question\.text\.replace/, "it builds from question.text");
+  assert.match(fn.slice(0, 600), /eqHTML\(question\.text\)\.replace/, "it builds from question.text");
   assert.match(src, /questionFor\(id, diff, Math\.random, t\("divSign"\)\)/);
+});
+
+// German divides with a colon, which sits on the baseline: between two 40px
+// numerals "12 : 3" reads as a label and its value. It is lifted to the optical
+// middle — in the question AND in the aid, which prints the same equation twice.
+test("the division colon is lifted wherever the equation is drawn", () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  const css = read("assets/css/schlaufuchs.css");
+  assert.match(src, /function eqHTML/);
+  for (const caller of ["function renderQuestion", "function showFeedback"]) {
+    const fn = src.slice(src.indexOf(caller), src.indexOf(caller) + 700);
+    assert.match(fn, /eqHTML\(/, `${caller} draws an unlifted colon`);
+  }
+  // "÷" is already centred, so only the colon may ever be wrapped
+  assert.match(src, /replaceAll\(":"/);
+  assert.ok(!/replaceAll\("÷"/.test(src), "the English sign must not be moved");
+  assert.match(css, /\.question \.divsign,\s*\n\.feedback-aid \.divsign \{/, "both places, one rule");
 });
 
 test("easy/medium difficulties only produce plain multiplication", () => {
@@ -267,43 +284,42 @@ test("the picker opens on the tile she is on", () => {
 // Mara clicked "Verstanden" after a wrong answer without ever registering that
 // she had erred. Now the aid asks her to enter the right answer herself, which
 // is the smallest act that proves she read it (§8.1).
-test("retryStep: typing the answer ends the aid, at the last digit", () => {
+// The aid is answered the way the question was: digits, then OK. It used to be
+// cleverer than the game around it — the answer completed itself at the last
+// digit, and a digit that could no longer be right was refused before it was
+// finished. Two sets of rules on one keypad, told apart only by whether the
+// child had just been wrong.
+test("retryStep: typing never ends the aid, however right it looks", () => {
   for (let answer = 1; answer <= 100; answer++) {
     const digits = [...String(answer)];
-    // every prefix but the last keeps typing; the last one is done
-    for (let i = 1; i < digits.length; i++) {
+    for (let i = 1; i <= digits.length; i++) {
       const step = typeAll(digits.slice(0, i), answer);
-      assert.equal(step.state, "typing", `${answer}: prefix "${step.input}"`);
+      assert.deepEqual(step, { input: digits.slice(0, i).join(""), state: "typing" },
+        `${answer}: "${step.input}" must wait for OK`);
     }
-    const done = typeAll(digits, answer);
-    assert.deepEqual(done, { input: String(answer), state: "done" },
-      `${answer}: the answer must be accepted without an OK`);
+    // …and OK on the full answer is what ends it
+    assert.deepEqual(retryStep(String(answer), "OK", answer),
+      { input: String(answer), state: "done" });
   }
 });
 
-test("retryStep: a digit that cannot become the answer is refused at once", () => {
-  // 30: "4" is refused immediately, not after a second digit
-  assert.deepEqual(retryStep("", "4", 30), { input: "", state: "reject" });
-  // 30: "3" is a prefix, "1" then kills it
-  assert.deepEqual(retryStep("", "3", 30), { input: "3", state: "typing" });
-  assert.deepEqual(retryStep("3", "1", 30), { input: "", state: "reject" });
-  // a rejected input is cleared, so the child starts from an empty gap
-  assert.equal(typeAll(["4", "9"], 30).input, "");
+test("retryStep: a wrong digit is refused by OK, not while it is being typed", () => {
+  // 30: "4" can never become 30, and the aid says nothing until OK
+  assert.deepEqual(retryStep("", "4", 30), { input: "4", state: "typing" });
+  assert.deepEqual(retryStep("4", "9", 30), { input: "49", state: "typing" });
+  assert.deepEqual(retryStep("49", "OK", 30), { input: "", state: "reject" });
 
-  for (let answer = 1; answer <= 100; answer++) {
-    for (const d of "0123456789") {
-      const step = retryStep("", d, answer);
-      const wanted = String(answer).startsWith(d);
-      assert.equal(step.state === "reject", !wanted, `${answer}: first digit ${d}`);
-    }
-  }
+  // a rejected input is cleared, so the child starts from an empty gap
+  assert.equal(typeAll(["4", "9", "OK"], 30).input, "");
+
+  // backspace still repairs a typo, exactly as in the round
+  assert.deepEqual(typeAll(["4", "⌫", "3", "0", "OK"], 30), { input: "30", state: "done" });
 });
 
 test("retryStep: backspace, OK and junk keys never strand the child", () => {
   assert.deepEqual(retryStep("4", "⌫", 42), { input: "", state: "typing" });
   assert.deepEqual(retryStep("", "⌫", 42), { input: "", state: "typing" }, "backspace on empty is harmless");
 
-  // OK is redundant — the answer completes itself — but it must still behave
   assert.deepEqual(retryStep("42", "OK", 42), { input: "42", state: "done" });
   assert.deepEqual(retryStep("", "OK", 42), { input: "", state: "typing" }, "OK on empty does nothing");
   assert.deepEqual(retryStep("4", "OK", 42), { input: "", state: "reject" });
@@ -314,6 +330,19 @@ test("retryStep: backspace, OK and junk keys never strand the child", () => {
   }
   // and the input never grows past what a two-digit answer could need
   assert.ok(typeAll(["1", "0", "0", "0"], 100).input.length <= 3);
+});
+
+// The aid's keypad IS the round's keypad — the same DOM, built once per round.
+// So whatever `retryStep` does, it must do it with the same three verbs the
+// round's own `keyPress` uses: a digit, a backspace, an OK.
+test("retryStep answers to exactly the keys the round's keypad sends", () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  const build = src.slice(src.indexOf("function buildKeypad"), src.indexOf("function keyPress"));
+  for (const key of ["⌫", "OK"]) {
+    assert.ok(build.includes(`"${key}"`), `the keypad has no ${key}`);
+    assert.notDeepEqual(retryStep("1", key, 12), { input: "1", state: "typing" },
+      `${key} must mean something to the aid`);
+  }
 });
 
 test("the aid shows the child's own wrong answer, struck through", () => {

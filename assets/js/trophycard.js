@@ -32,6 +32,8 @@ export function trophyCardHTML(trophy, { size = 34, lang = "de", href, button = 
   const cup = iconHTML("deco-trophy", { size, cls: "t-cup" });
   const theme = iconHTML(trophy.icon, { size: Math.round(size * THEME_RATIO), cls: "t-theme" });
 
-  return `<${tag} ${attrs}><span class="t-art" aria-hidden="true">${cup}${theme}</span>` +
+  // The symbol comes FIRST: `.t-art` is a column, and the prize stands on the
+  // cup. Emitted the other way round, the cup stood on the prize.
+  return `<${tag} ${attrs}><span class="t-art" aria-hidden="true">${theme}${cup}</span>` +
     `<span class="sname">${trophy[lang]}</span></${tag}>`;
 }
