@@ -634,7 +634,10 @@ anything, no lives, no damage, no losing.
 
 - Correct: green flash, cheerful sound, fox reaction pose (happy / cheering /
   thumbs-up, rotating). There is **no hot-streak counter** — see §10.5, and the
-  flame that went with it is gone from the graphics registry too.
+  flame that went with it is gone from the graphics registry too. In
+  einmaleins, an answer at rocket speed additionally flashes the **⚡ moment**
+  (§10.6) — visible only when it happens; a slow answer sees nothing, because
+  there is no negative moment.
 - Wrong: soft neutral sound (no harsh buzzer). The fox pauses to "catch its
   breath" — it never falls, never gets hurt. The aid card then shows, in this
   order: **the child's own answer, struck through in red**; the true equation
@@ -686,6 +689,9 @@ unique item** in the round and the fox token on the current node.
 The **star** (⭐) is the site's **one and only currency**: it accumulates per
 region and unlocks the next trophy at fixed thresholds. The words *sticker* and
 *Punkte / points* are retired; **neither appears anywhere a child can read**.
+(The tempo badge of §10.6 is not a currency: it counts toward nothing, unlocks
+nothing, and is never a number — it is a per-tile collectible, like the fox's
+poses.)
 
 Internally the counter is still called `pr`, and the functions still say
 `roundPoints`, `starValue`, `MAX_POINTS` — those names are cheap and the cookie
@@ -878,12 +884,13 @@ walks the village lane; goal node: ringing the school bell.
    card can hold ten rows of dots, so the dots scale with the viewport and the
    scene yields its row.
 4. Summary overlay, kept deliberately quiet: stars, one muted line of numbers
-   (`{ok}/{total}` and `+6 ⭐`), the price of the next star (§10.3), the trophy
-   if one was earned, and **one** button carrying a random congratulation,
-   which opens the level picker (§3.4). A child who has just won reads almost
-   nothing — the stars say how it went and the trophy is the prize, so neither
-   gets a sentence of its own. The map and the level picker stay reachable
-   above the sheet, in the bar and on the chip.
+   (`{ok}/{total}` and `+6 ⭐`), the price of the next star (§10.3), the tempo
+   symbol when the round awarded one (§10.6 — a symbol and its name, never a
+   time), the trophy if one was earned, and **one** button carrying a random
+   congratulation, which opens the level picker (§3.4). A child who has just
+   won reads almost nothing — the stars say how it went and the trophy is the
+   prize, so neither gets a sentence of its own. The map and the level picker
+   stay reachable above the sheet, in the bar and on the chip.
 5. **The level picker** is where the game starts and where every round ends. It
    also opens from the chip (which wears a border and a caret, because it read
    as a caption and was never pressed). The chip carries the **village's own
@@ -912,7 +919,9 @@ walks the village lane; goal node: ringing the school bell.
    a **white outline** (four hard drop-shadows — `-webkit-text-stroke` does not
    touch a colour emoji). Gold on a warm band is gold on gold at any opacity;
    what separates them is an edge, not more colour. The stars a tile still has
-   to give are the whole promise of the tile.
+   to give are the whole promise of the tile. A tile that has also been
+   *known fast* wears its tempo badge in the corner (§10.6) — which is what a
+   mastered tile, all stars taken, still has left to promise.
    Difficulty is not a control: choosing a tile chooses both. Leicht shows its
    five tiles (Reihen 1, 2, 5, 10 + „🎲 Alle"), Mittel eleven, Schwer nine
    (Reihen 2–9 + „🎲 Alle" — nothing about ×1 or ×10 is hard, §10.2); **no
