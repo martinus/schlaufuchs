@@ -6,6 +6,12 @@ export default {
   language: "Sprache",
   resetAll: "Fortschritt löschen",
   close: "Schließen",
+  // The question a swipe or a stray tap on the map button asks mid-round
+  // (§10.7). It never says "Fortschritt" — a child counts stars.
+  leaveTitle: "Runde verlassen?",
+  leaveBody: "Die Sterne aus dieser Runde sind dann weg.",
+  leaveStay: "Weiterspielen",
+  leaveGo: "Zur Karte",
   parentsLink: "Für Eltern",
   parentsTitle: "Für Eltern",
   parentsIntro: "Alles hier stammt aus dem Fortschritt auf diesem Gerät. Nichts davon wird irgendwohin gesendet, und dein Kind sieht diese Seite im Spiel nicht.",

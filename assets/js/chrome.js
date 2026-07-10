@@ -68,10 +68,15 @@ export function topBarHTML({ back = "./", title = null } = {}) {
 //
 // A language or sound change always repaints the chip before the page's own
 // onChange runs — three pages used to remember that, and one of them forgot.
-export function initTopBar({ back = "./", title = null, onChange, onClose } = {}) {
+//
+// `onLeave` is handed the map button once, for a page that has something to
+// lose when it is pressed (einmaleins: a round that is not saved yet, §10.7).
+// The bar does not know what that is and does not ask; it only offers the link.
+export function initTopBar({ back = "./", title = null, onChange, onClose, onLeave } = {}) {
   const bar = document.getElementById("topbar");
   if (!bar) return { refresh() {}, settings: null };
   bar.innerHTML = topBarHTML({ back, title });
+  if (back !== null) onLeave?.(bar.querySelector("a.iconbtn"));
 
   if (title) return { refresh() {}, settings: null };
 

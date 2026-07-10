@@ -65,6 +65,13 @@ html, body {
   color: var(--ink);
   font-family: var(--font-body);
   -webkit-tap-highlight-color: transparent;
+  /* A round lives in memory until it ends (§10.7), and on Android a downward
+     drag near the top of the screen reloads the page — which throws the round
+     away without asking. The stage never scrolls, so there is nothing here an
+     overscroll could usefully do: no pull-to-refresh, no rubber band, and no
+     overscroll history navigation either. The system back gesture is NOT
+     covered by this — that one is caught in `leaveguard.js`. */
+  overscroll-behavior: none;
 }
 
 /* The display face is reserved for names, numbers and headings. Everything
@@ -929,6 +936,24 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   box-shadow: var(--shadow);
   margin-top: 14px;
 }
+
+/* The second answer to a question the child did not ask (§10.7). It has to be
+   reachable and unmistakable, and it must not compete with the orange one:
+   leaving costs stars, staying costs nothing. Same 60px target — a thumb that
+   means it must not have to aim. */
+.ghost {
+  display: block;
+  width: 100%;
+  min-height: 60px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: var(--radius);
+  color: var(--ink-soft);
+  margin-top: 8px;
+}
+
+.leaveask .sheet { text-align: center; }
+.leaveask .lg-body { margin: 0; color: var(--ink-soft); }
 
 .summary { text-align: center; }
 

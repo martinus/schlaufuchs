@@ -319,7 +319,9 @@ The bar has exactly two shapes:
 - **Map button (🗺️)** → back to the map (1 tap). The map icon, not the fox
   — the fox is the player, the map is the place to go back to. On the map
   itself it stays, flat and unpressable: a bar whose shape shifts between the
-  map and the place it sends you is two bars.
+  map and the place it sends you is two bars. A page with something to lose on
+  that tap takes it back through `initTopBar({ onLeave })` and asks first
+  (§10.7); it is a real link either way.
 - **Fox chip** (`renderFoxChip`): the fox, the total star count, the total
   trophy count. It is a readout, not a control: no panel, no shadow, no tap
   target.
@@ -1114,6 +1116,42 @@ additive collectible** for *knowing* the fact.
   exactly where fluency training happens.
 - The same per-question observations feed the parents' **per-fact recall
   grid** (§20) — as a damped class per pair, never as a stored time.
+
+### 10.7 Guarding a round that is not saved yet
+
+Nothing is written until `endRound()` (§10.4), so a round exists only in memory
+while it is played, and every way off the page costs all of it. A child on a
+phone finds three of them by accident, and each needs its own answer.
+
+- **Pull-to-refresh** — a downward drag near the top of the screen. Closed for
+  good with `overscroll-behavior: none` on the root (`schlaufuchs.css`). The
+  stage never scrolls, so no overscroll on this site was ever doing anything a
+  child wanted.
+- **The Android back gesture** — a swipe in from the screen's edge. **It cannot
+  be disabled.** It belongs to the operating system; no web API suppresses it,
+  and `overscroll-behavior-x` — routinely named as the fix — is not one, since
+  it governs only the browser's own overscroll navigation. What a page *can* do
+  is own a history entry for the gesture to consume, so that going back lands
+  inside the document instead of leaving it. `leaveguard.js` pushes that
+  sentinel, and pushes another on every `popstate`: a child swiping twice in a
+  second is caught twice. The page therefore never travels backwards on its
+  own — when leaving is the answer, the guard navigates to the map itself.
+- **The map button** in the top bar (§3.3), one tap from the keypad. It stays a
+  real link — it says where it goes, and it works with JS broken — and
+  `initTopBar({ onLeave })` hands it to the same guard.
+
+All three arrive at one decision (`leaveAction`, pure and tested):
+
+| on screen | what a leave attempt does |
+| --- | --- |
+| the question is already up | **stay** — this gesture answers it with „Weiterspielen", like Escape |
+| a round is running | **ask** — „Runde verlassen? Die Sterne aus dieser Runde sind dann weg." |
+| the picker, or the summary | **leave** — nothing is at stake; no dialog nobody needs |
+
+The question is a normal overlay (§3.4), so Escape and the backdrop answer it
+with „Weiterspielen". That safe answer is the orange button and it takes the
+focus: a child who presses Enter on a question she did not ask keeps her round.
+„Zur Karte" is the quiet second button — never the reflex, always reachable.
 
 ---
 
