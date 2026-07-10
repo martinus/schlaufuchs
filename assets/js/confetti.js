@@ -1,11 +1,13 @@
 // Celebration confetti (§8): DOM particles with CSS animation, removed after
 // the show. No-op under prefers-reduced-motion (§15).
 
+import { prefersReducedMotion } from "./motion.js";
+
 const COLORS = ["#e8590c", "#f4b400", "#2f9e44", "#1d6fb8", "#c1121f", "#9c36b5"];
 
 export function confetti(count = 80) {
   if (typeof document === "undefined") return;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (prefersReducedMotion()) return;
   const box = document.createElement("div");
   box.className = "confetti-box";
   box.setAttribute("aria-hidden", "true");

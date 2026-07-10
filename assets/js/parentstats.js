@@ -4,11 +4,13 @@
 // Everything here is derived from state the site already keeps. The Leitner
 // box of a fact is the diagnosis; nothing extra is stored to produce it.
 
+import { practiceTriple } from "./rewards.js";
+
 // Box semantics (§7.1). `clampBox` defaults an unknown fact to 2, and a fact
 // leaves box 2 the moment it is asked (correct → 3, wrong → 0). So box 2 means
 // "not practised yet" in all but one case: a fact climbing back out of box 1.
 // We therefore call it *open* rather than *unseen* — a claim we can defend.
-export const HEAT = { 0: "weak", 1: "weak", 2: "open", 3: "solid", 4: "solid" };
+const HEAT = { 0: "weak", 1: "weak", 2: "open", 3: "solid", 4: "solid" };
 
 export const heatOf = (box) => HEAT[box] ?? "open";
 
@@ -48,24 +50,13 @@ export function weakFacts(boxes, count) {
   return out.sort((a, b) => a.box - b.box || a.id - b.id);
 }
 
-// How the 100 facts are spread across the three states.
-export function heatCounts(boxes, count) {
-  const tally = { weak: 0, open: 0, solid: 0 };
-  for (let id = 0; id < count; id++) tally[heatOf(boxes[id])]++;
-  return tally;
-}
-
-const triple = (v) =>
-  Array.isArray(v) && v.length === 3
-    ? v.map((n) => (Number.isFinite(n) && n > 0 ? Math.round(n) : 0))
-    : [0, 0, 0];
-
 // Practice time per difficulty, plus totals. Reads whatever the cookie holds,
 // including nothing at all: a parent opening this page before the child has
-// played must see zeroes, not a crash.
+// played must see zeroes, not a crash. `practiceTriple` is the same sanitizer
+// `addPractice` writes through, so reader and writer cannot drift.
 export function practiceSummary(saved = {}) {
-  const seconds = triple(saved.tm);
-  const rounds = triple(saved.rd);
+  const seconds = practiceTriple(saved.tm);
+  const rounds = practiceTriple(saved.rd);
   return {
     perDiff: seconds.map((s, i) => ({ seconds: s, rounds: rounds[i] })),
     totalSeconds: seconds.reduce((a, b) => a + b, 0),

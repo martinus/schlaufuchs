@@ -13,6 +13,21 @@ export const HARD_TABLES = [2, 3, 4, 5, 6, 7, 8, 9];
 // Questions per round, by difficulty (§7.3): Schwer rounds run longer.
 export const ROUND_SIZE = [10, 10, 12];
 
+// How the three difficulty indices are *named*: the i18n key the child reads
+// and the CSS slug that colours a picker section. Data, not DOM — they sit
+// beside ROUND_SIZE because everything indexed by difficulty starts here.
+export const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
+export const DIFF_SLUGS = ["easy", "medium", "hard"];
+
+// Which tables a difficulty offers (§10.2): Leicht teaches four tables, Mittel
+// all ten, Schwer the eight with something hard in them. Each ends with 0,
+// "Alle gemischt". This list is the picker's whole vocabulary, and the round
+// setup uses it to catch a saved tile the difficulty no longer offers.
+export function tablesFor(difficulty) {
+  const tables = difficulty === 0 ? EASY_TABLES : difficulty === 2 ? HARD_TABLES : ALL_TABLES;
+  return [...tables, 0];
+}
+
 export const pairIndex = (t, f) => (t - 1) * 10 + (f - 1);
 export const pairOf = (id) => [Math.floor(id / 10) + 1, (id % 10) + 1];
 
@@ -174,6 +189,12 @@ export const TEMPO_TIERS = [
   [11000, 7000, 4500], // Mittel
   [11000, 7000, 4500], // Schwer
 ];
+
+// The ladder's three faces, indexed by tier: the icon name (graphics.js) and
+// the i18n key. Index 0 is the point of both: below the hare there is nothing
+// to draw and nothing to say — never a snail.
+export const TEMPO_ICONS = [null, "tempo-hare", "tempo-car", "tempo-rocket"];
+export const TEMPO_KEYS = [null, "tempo1", "tempo2", "tempo3"];
 
 // The median, because one long think about a new fact must not cost the round
 // its tempo — a sum or a mean would hand the slowest question a veto.

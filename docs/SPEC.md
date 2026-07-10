@@ -103,21 +103,24 @@ in HTML/CSS/JS — never absolute paths like `/assets/...`.
 │   ├── i18n/
 │   │   ├── de.js             # Shared UI strings, German
 │   │   └── en.js             # Shared UI strings, English
-│   ├── js/
+│   ├── js/                   # shared modules — the full map of them, with
+│   │   │                     # their dependency rules, is docs/ARCHITECTURE.md
 │   │   ├── storage.js        # Cookie-backed state store (§9)
 │   │   ├── i18n.js           # Translation runtime (§6)
 │   │   ├── adaptive.js       # Weakness-tracking practice engine (§7)
-│   │   ├── rewards.js        # Stars, trophies, streak, fox level (§8)
+│   │   ├── rewards.js        # Stars, trophies, streak, region states (§8)
 │   │   ├── journey.js        # Journey path strip used inside rounds (§8.2)
 │   │   ├── mapwalk.js        # Fox anchors + walk arithmetic, pure (§3.1)
+│   │   ├── motion.js         # The one walk driver; reduced-motion (§15)
 │   │   ├── showcase.js       # One trophy, held up — shelf & summary (§3.2)
 │   │   ├── audio.js          # Feedback sounds (WebAudio, no asset files)
 │   │   └── confetti.js       # Celebration effect
 │   └── img/
-│       ├── fuchs.svg         # Mascot: poses (§15)
-│       └── favicon.svg
+│       ├── favicon.svg
+│       └── icons/            # real SVGs for the graphics registry (fox.js
+│                             # draws the mascot in code — there is no fuchs.svg)
 ├── games/
-│   ├── einmaleins/           # §10  index.html, einmaleins.js, i18n.js
+│   ├── einmaleins/           # §10  index.html, einmaleins.js, logic.js, picker.js, i18n.js
 │   ├── tippen/               # §11  + levels.js
 │   ├── rechnungen/           # §12
 │   ├── vokabeln/             # §13  + packs.js
@@ -803,9 +806,16 @@ and an 8-year-old understood neither.
 
 Playing ≥ 1 round on consecutive calendar days (local time) increments the
 streak; a missed day resets it to 1 on the next play. Stored as
-`[lastDateISO, count]` — no history log. Milestone celebrations at 3, 7, 14,
-30 days. The child's top bar does not show it (§3.3); the parents' view does
-(§20), because a streak is a thing a parent tracks and a child is nagged by.
+`[lastDateISO, count]` — no history log. `recordRound` reports when a
+milestone (3, 7, 14, 30 days) is crossed.
+
+**Nothing currently renders the streak.** The child's top bar never shows it
+(§3.3, §10.5 — a streak is a thing a child is nagged by), and the parents'
+view dropped its 🔥 chip too: a symbol that exists on one page only is a
+symbol nobody learns. The counter keeps being recorded and the milestone
+signal keeps being returned, so a future parents' row can show a streak the
+child has actually been building — but today `streakMilestone` has no
+consumer, by decision rather than by omission.
 
 ---
 

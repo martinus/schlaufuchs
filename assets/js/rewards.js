@@ -166,7 +166,15 @@ for (const g of GAMES) TROPHIES[g].forEach((s, i) => { s.icon = `trophy-${g}-${i
 // never contribute more than this.
 export const MAX_ROUND_SECONDS = 900;
 
-const triple = (v) =>
+// The three difficulties are the site's only axis of worth (§10.2): anything
+// that is not 0 (Leicht), 1 (Mittel) or 2 (Schwer) reads as Leicht, so a
+// corrupt cookie can never pay more than the easiest tier.
+export const clampDifficulty = (d) => ([0, 1, 2].includes(d) ? d : 0);
+
+// One practice counter per difficulty, sanitized: whatever the cookie holds,
+// what comes back is three non-negative integers. Shared with the parents'
+// arithmetic (parentstats.js), which reads what `addPractice` writes.
+export const practiceTriple = (v) =>
   Array.isArray(v) && v.length === 3
     ? v.map((n) => (Number.isFinite(n) && n > 0 ? Math.round(n) : 0))
     : [0, 0, 0];
@@ -177,9 +185,9 @@ const triple = (v) =>
 // Infinity to MAX_ROUND_SECONDS would quietly credit fifteen minutes of
 // practice that never happened, and a parent would read it as fact.
 export function addPractice(saved = {}, difficulty = 0, seconds = 0) {
-  const d = [0, 1, 2].includes(difficulty) ? difficulty : 0;
-  const tm = triple(saved.tm);
-  const rd = triple(saved.rd);
+  const d = clampDifficulty(difficulty);
+  const tm = practiceTriple(saved.tm);
+  const rd = practiceTriple(saved.rd);
   tm[d] += Number.isFinite(seconds) && seconds > 0
     ? Math.min(Math.round(seconds), MAX_ROUND_SECONDS)
     : 0;
@@ -187,7 +195,7 @@ export function addPractice(saved = {}, difficulty = 0, seconds = 0) {
   return { tm, rd };
 }
 
-export const STREAK_MILESTONES = [3, 7, 14, 30];
+const STREAK_MILESTONES = [3, 7, 14, 30]; // §8.5 — see recordRound's streakMilestone
 
 // Every game has 12 trophies, so this is the whole collection (§8.3). It counts
 // the four games that do not exist yet: the island promises six regions, and
@@ -224,13 +232,12 @@ export function totalTrophies(pr) {
 // buys a trophy.
 export function roundPoints({ oldStars = 0, newStars = 0, difficulty = 0 } = {}) {
   if (!(newStars > oldStars)) return 0;
-  const perStar = ([0, 1, 2].includes(difficulty) ? difficulty : 0) + 1;
-  return (newStars - oldStars) * perStar;
+  return (newStars - oldStars) * starValue(difficulty);
 }
 
 // What a single star is worth here. The picker prints it as "×2" / "×3": the
 // stars are always three, but each one counts double or triple (§10.2).
-export const starValue = (difficulty = 0) => ([0, 1, 2].includes(difficulty) ? difficulty : 0) + 1;
+export const starValue = (difficulty = 0) => clampDifficulty(difficulty) + 1;
 
 // What a tile can still pay. The picker no longer prints this — it shows the
 // three stars instead — but the trophy economy is balanced against it, and

@@ -12,7 +12,7 @@ import { boxesFromString } from "./adaptive.js";
 import { totalPoints, totalTrophies } from "./rewards.js";
 import { iconHTML } from "./graphics.js";
 import { initTopBar } from "./chrome.js";
-import { cellState, cellCounts, recallDigit, weakFacts, heatCounts, practiceSummary, minutesOf, secondsPerRound } from "./parentstats.js";
+import { cellState, cellCounts, recallDigit, weakFacts, practiceSummary, minutesOf, secondsPerRound } from "./parentstats.js";
 import { POOL_COUNT, pairIndex, pairOf } from "../../games/einmaleins/logic.js";
 
 initI18n();
@@ -108,7 +108,10 @@ function renderHelp() {
 }
 
 function render() {
-  const played = practice.totalRounds > 0 || heatCounts(boxes, POOL_COUNT).open < POOL_COUNT;
+  // "played" means any fact has left box 2, or any round was banked — the
+  // recall string cannot say more here, so `open` is read off the same tally
+  // the legend under the grid prints.
+  const played = practice.totalRounds > 0 || cellCounts(boxes, saved.rc, POOL_COUNT).open < POOL_COUNT;
   $("p-empty").hidden = played;
   $("p-body").hidden = !played;
   renderChips();

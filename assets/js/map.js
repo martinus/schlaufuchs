@@ -7,7 +7,8 @@ import { gameStarsOf, regionState, starBadgeTier, totalTrophies, TOTAL_TROPHIES,
 import { foxSVG } from "./fox.js";
 import { iconSVG, applyIcons } from "./graphics.js";
 import { initTopBar } from "./chrome.js";
-import { ANCHORS, walkPoint, walkMs } from "./mapwalk.js";
+import { ANCHORS } from "./mapwalk.js";
+import { prefersReducedMotion, runWalk } from "./motion.js";
 
 initI18n();
 applyIcons(document); // upgrade static [data-icon] decorations if SVGs exist
@@ -187,22 +188,6 @@ function placeFox([x, y]) {
     ?.setAttribute("transform", `translate(${(x - 22).toFixed(1)}, ${(y - 40).toFixed(1)})`);
 }
 
-// Walk the fox to `to`, then call `done`. Nothing else may start a walk while
-// one is running: two rAF loops would fight over the same transform, and the
-// second `location.href` would cancel the first navigation half-done.
-function walkFox(from, to, done) {
-  walking = true;
-  const ms = walkMs(from, to);
-  const t0 = performance.now();
-  const step = (now) => {
-    const p = Math.min(1, (now - t0) / ms);
-    placeFox(walkPoint(from, to, p));
-    if (p < 1) requestAnimationFrame(step);
-    else done();
-  };
-  requestAnimationFrame(step);
-}
-
 // A region opens only once the fox is standing in front of it. The map remembers
 // where she went, so the fox is there again when she comes back (§3.1).
 //
@@ -218,12 +203,15 @@ function travelTo(region) {
   // deploy needs (§ never emit an absolute /assets path).
   const href = region.getAttribute("href");
   setRewards({ at: game });
-  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!to || reduced || game === foxAt) {
+  if (!to || prefersReducedMotion() || game === foxAt) {
     location.href = href;
     return;
   }
-  walkFox(ANCHORS[foxAt] ?? ANCHORS.einmaleins, to, () => {
+  // Nothing else may start a walk while one runs: two rAF loops would fight
+  // over the same transform, and the second `location.href` would cancel the
+  // first navigation half-done.
+  walking = true;
+  runWalk(ANCHORS[foxAt] ?? ANCHORS.einmaleins, to, placeFox, () => {
     foxAt = game;
     location.href = href;
   });
