@@ -520,9 +520,12 @@ footer p { margin: 0; }
 
 /* German divides with a colon, and a colon sits on the baseline. Between two
    40px numerals it reads as "12: three", a label and its value. Lifted to the
-   optical middle it reads as an operator (einmaleins.js: `eqHTML`). */
+   optical middle it reads as an operator (einmaleins.js: `eqHTML`).
+   The middle of a digit is roughly cap-height/2 above the baseline; the middle
+   of a colon is roughly x-height/2. The lift is the difference, and no more —
+   at 0.18em the dots floated above the numbers instead of between them. */
 .question .divsign,
-.feedback-aid .divsign { vertical-align: 0.18em; }
+.feedback-aid .divsign { vertical-align: 0.08em; }
 
 /* Reserving its line keeps the question from jumping when a streak starts, but
    the aid needs every pixel: an empty streak line takes none. */
@@ -878,13 +881,15 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   margin: 10px auto;
   font-weight: 800;
 }
-.summary .trophy-earn .won { width: 5.5em; }
-/* Three at once is the most a round can win (18 points crosses 2, 9 and 18).
-   Long names like "Rechenschieber" would wrap the row 2+1 on a 360px phone. */
-.summary .trophy-earn:has(.won:nth-child(3)) .won {
-  width: 4.6em;
-  font-size: 0.78rem;
-}
+/* The card's width, in `rem` — it was `5.5em`, and `.tcard` sets `font-size:
+   1.9rem`, so the "5.5em" card came out 167px. A lone won trophy was a big
+   white square with a small cup adrift in the middle of it, and two of them
+   stacked instead of standing side by side.
+   Three at once is the most a round can win (18 points crosses 2, 9 and 18).
+   The cup inside is sized by einmaleins.js, which counts the same three cases. */
+.summary .trophy-earn .won { width: 10rem; }
+.summary .trophy-earn:has(.won:nth-child(2)) .won { width: 8.4rem; }
+.summary .trophy-earn:has(.won:nth-child(3)) .won { width: 6.2rem; }
 
 /* ---- Pokalraum / Trophy Room (§3.2) ---- */
 /* The page is the room the map sends you to, so it should feel like one: a
@@ -902,15 +907,6 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   position: sticky;
   top: 0;
   background: #fdf1de;
-}
-.maplink {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  max-width: 560px;
-  margin: 18px auto 4px;
-  text-decoration: none;
 }
 /* The room announces itself with its symbol, not with its name: the same trophy
    that marks it on the map. A written heading and a paragraph about where
@@ -948,8 +944,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   box-shadow: 0 4px 7px rgba(74, 44, 23, 0.28);
 }
 
-.album-section h2 { font-size: 1.05rem; margin: 4px 0 6px; }
-.album-progress { margin: 0 0 10px; font-size: 0.8rem; color: var(--ink-soft); font-weight: 700; }
+.album-section h2 { font-size: 1.05rem; margin: 4px 0 10px; }
 
 /* `minmax(0, …)`, not a bare `1fr`: a bare fraction floors the track at the
    item's min-content, and the item is a <button> whose min-content is its
@@ -1001,7 +996,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .tcard .t-theme {
   position: relative;
   z-index: 1;
-  margin-bottom: -0.34em;
+  margin-bottom: -0.26em;
   /* a gold bell on a gold cup is one gold blob; the halo separates them */
   filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 2px #fff) drop-shadow(0 2px 2px rgba(74, 44, 23, 0.3));
 }
@@ -1054,6 +1049,16 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   display: block;
   height: 100%;
   background: var(--depth);
+}
+
+/* What the next trophy still costs, written under its own bar and inside its
+   own slot. It used to be a sentence above the shelf, about a trophy three
+   slots to the right. It is the one number here worth chasing, so it is stated
+   in the ownership colour and not in the muted grey the prices wear. */
+.trophies .slot.locked .sfoot.snext {
+  color: var(--depth);
+  font-size: 0.68rem;
+  margin-top: 2px;
 }
 
 /* what you own is stated in --depth, the ownership colour */

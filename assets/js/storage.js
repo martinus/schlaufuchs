@@ -74,14 +74,9 @@ export function setGame(name, data) {
   return save(patchSection(loadState(), name, data));
 }
 
-export function resetGame(name) {
-  const state = loadState();
-  delete state[name];
-  if (state.rewards?.pr) delete state.rewards.pr[name];
-  if (state.rewards?.at === name) delete state.rewards.at;
-  return save(state);
-}
-
+// There is no per-game reset. The settings sheet is the same on every page that
+// has a gear (§3.4), and a sheet that resets "this game" on one page and the
+// whole site on another is two sheets wearing one name.
 export function resetAll() {
   if (typeof document === "undefined") return;
   document.cookie = `${NAME}=;path=/;max-age=0;SameSite=Lax`;

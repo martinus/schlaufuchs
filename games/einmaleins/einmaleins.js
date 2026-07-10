@@ -9,6 +9,7 @@ import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
 import { trophyCardHTML } from "../../assets/js/trophycard.js";
+import { openShowcase } from "../../assets/js/showcase.js";
 import { initTopBar } from "../../assets/js/chrome.js";
 import { iconHTML } from "../../assets/js/graphics.js";
 import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
@@ -83,6 +84,7 @@ let choices = []; // Leicht: this question's four options, so the aid can reuse 
 let phase = "answer"; // answer | correct-wait | wrong-wait
 let best = 0; // stars already won on this tile, before the round
 let roundOver = false;
+let wonTrophies = []; // what this round just handed over, for the showcase
 // Only ever flows into the parents' view (§20). The child is never shown it.
 let t0 = 0;
 
@@ -387,19 +389,26 @@ function endRound() {
     // first would quietly swallow two prizes (§8.3).
     const st = $("sum-trophy");
     const won = res.newTrophies;
+    wonTrophies = won;
     st.hidden = won.length === 0;
     if (won.length > 0) {
       // The very same card the album shelf shows, so the child can find it
-      // again: the cup, her emoji in it, its name. Mara tapped the trophy she
-      // had won and nothing happened — now it is the door to the room it
-      // belongs in.
-      const size = won.length > 1 ? 34 : 44;
+      // again: the cup, her emoji on it, its name. Mara tapped the trophy she
+      // had won and nothing happened.
+      //
+      // It was then a link to the Pokalraum, which celebrated by taking her out
+      // of the round she had just finished and dropping her in a room full of
+      // empty slots. It is a button now, and it holds the trophy up right here
+      // (`showcase.js`, the same one the room uses).
+      //
+      // The cup fills its card. At 44px in a 167px card it was a token adrift in
+      // a white square — the one thing the round handed over, drawn small. The
+      // three widths are in the CSS (`.summary .trophy-earn .won`).
+      const size = [82, 68, 48][won.length - 1] ?? 48;
       const lang = getLang();
       st.innerHTML = won
-        .map((s) => trophyCardHTML(s, {
-          size, lang, cls: "won",
-          href: "../../album.html",
-          label: `${s[lang]} — ${t("region_pokalraum")}`,
+        .map((s, i) => trophyCardHTML(s, {
+          size, lang, cls: "won", button: true, attrs: `data-won="${i}"`,
         }))
         .join("");
       sfx.trophy();
@@ -418,6 +427,14 @@ function endRound() {
 // picker on the chip — both reachable while the summary is up, which is where
 // Mara reached for them.
 $("sum-ok").addEventListener("click", startRound);
+
+// A trophy she just won, held up the way the Pokalraum holds it up — without
+// sending her to the Pokalraum. Delegated once: `endRound` rewrites this row's
+// innerHTML on every round that pays.
+$("sum-trophy").addEventListener("click", (e) => {
+  const card = e.target.closest(".won");
+  if (card) openShowcase(wonTrophies[Number(card.dataset.won)]);
+});
 
 // --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------
 
@@ -486,11 +503,10 @@ function renderPicker() {
 $("pickchip").addEventListener("click", picker.open);
 
 // --- the shared top bar (§3.3) ----------------------------------------------
-// Its gear resets this game only; the global reset lives on the map.
+// Its gear opens the one settings sheet, the same one the map and the Pokalraum
+// open (§3.4).
 const bar = initTopBar({
   back: "../../",
-  resetKind: "game",
-  game: "einmaleins",
   onChange() {
     updateChip();
     if (!roundOver) renderQuestion();

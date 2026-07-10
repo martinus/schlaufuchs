@@ -108,6 +108,8 @@ in HTML/CSS/JS — never absolute paths like `/assets/...`.
 │   │   ├── adaptive.js       # Weakness-tracking practice engine (§7)
 │   │   ├── rewards.js        # Stars, trophies, streak, fox level (§8)
 │   │   ├── journey.js        # Journey path strip used inside rounds (§8.2)
+│   │   ├── mapwalk.js        # Fox anchors + walk arithmetic, pure (§3.1)
+│   │   ├── showcase.js       # One trophy, held up — shelf & summary (§3.2)
 │   │   ├── audio.js          # Feedback sounds (WebAudio, no asset files)
 │   │   └── confetti.js       # Celebration effect
 │   └── img/
@@ -241,8 +243,8 @@ a room: a warm wall, and a wooden shelf under each game's collection.
 One page, five sections (one per region, translated heading). Each section
 shows **12 trophy slots** in a grid: earned trophies as the shared **trophy
 card** (`trophycard.js` — the trophy's own emoji **standing on** the cup, two
-thirds of its size (`THEME_RATIO`) and dipping into the bowl by a third of its
-own height. `.t-art` is a column, symbol above cup, so the pair is taller than
+thirds of its size (`THEME_RATIO`) and dipping into the bowl by about a quarter
+of its own height. `.t-art` is a column, symbol above cup, so the pair is taller than
 the cup alone: you see what you won before you see what it came in. Buried
 inside the bowl at half the size, twelve trophies on a shelf were twelve
 identical cups); unearned slots as **silhouettes** of the trophy you
@@ -251,8 +253,12 @@ keep collecting. The round summary draws the same card (§3.4), so a child
 recognises the trophy she just won when she meets it on the shelf.
 
 **A locked slot states its price where a child can see it**: `⭐ 62` under the
-silhouette, and for the next slot to fall, a small progress bar instead. It
-used to live in a `title` tooltip, which no child on a phone will ever see.
+silhouette. It used to live in a `title` tooltip, which no child on a phone will
+ever see. **The next slot to fall** shows a progress bar instead, and under the
+bar what is still owing — `+2 ⭐`, in the ownership colour, because it is the one
+number on this shelf worth chasing. That number used to be a sentence above the
+shelf ("Noch 2 ⭐ bis zum nächsten Pokal"), about a trophy three slots to the
+right; the screen reader still hears the sentence, on the slot itself.
 
 **The room says what it is with its symbol**, not with a sentence: the heading
 is the same trophy that marks the room on the map, and it carries the room's
@@ -263,21 +269,29 @@ trophies. Each section still shows its earned count and how many stars remain
 until its next trophy. Trophies are earned via stars (§8.3). Reached from the
 map via the **Pokalraum** region (§3.1).
 
-**Tapping a trophy she owns holds it up** (`openShowcase()` in `album.js`): the
-cup fills the screen — the card is sized against the viewport in JS, because the
-cup is an emoji and no CSS length can be derived from the box it has to fit into
-— confetti falls, the fox jumps at its corner and stars blink around it. A trophy is for showing to somebody, and a 77px shelf slot that does
+**Tapping a trophy she owns holds it up** (`openShowcase()` in `showcase.js`):
+the cup fills the screen — the card is sized against the viewport in JS, because
+the cup is an emoji and no CSS length can be derived from the box it has to fit
+into — confetti falls, the fox jumps at its corner and stars blink around it.
+
+**The round summary opens the same showcase**, from the trophy it just handed
+over (§10.1). That card used to be a *link to this room*, which celebrated by
+taking the child out of the round she had just finished and dropping her among
+empty slots. The showcase's overlay sits above the summary's (z-index 50 vs 40),
+so the round is still there behind it, and the focus goes back to the trophy she
+pressed. One celebration, one module, two callers. A trophy is for showing to somebody, and a 77px shelf slot that does
 nothing when pressed is a receipt. An earned slot is therefore a `<button>`
 (`trophyCardHTML({ button: true })`) carrying `data-trophy="<game>:<index>"`,
 and one delegated listener on `#album` opens the showcase. A locked slot is not
 a door. The blink and the hop are CSS animations, so `prefers-reduced-motion`
 silences both and leaves the trophy, full size (§15).
 
-The room carries the same top bar as every other page (§3.3), gear included —
-its settings offer no reset, because the global one belongs on the map. The bar
-is **sticky**, and the page ends with a **big button back to the map**: the
-shelves scroll for several screens, and the only exit used to scroll away with
-them. The shelves are built as markup, not as `[data-i18n]` nodes, so a
+The room carries the same top bar as every other page (§3.3), gear and reset
+included (§3.4). The bar is **sticky**, so the way out follows the child down
+the shelves — which is also why the room no longer ends with a second big
+button back to the map: the sticky bar carries the map button already, and the
+room's own symbol sits under it. The shelves are built as markup, not as
+`[data-i18n]` nodes, so a
 language change rebuilds them instead of translating them in place.
 
 ### 3.3 The top bar (every page)
@@ -306,8 +320,12 @@ The bar has exactly two shapes:
   difficulty and table; tapping opens the picker **as an overlay** on the same
   page, never a separate page.
 - **Settings gear** → shared overlay (`initSettingsOverlay`, `chrome.js`):
-  sound toggle, language toggle, and reset (global on the map, per-game inside
-  a game; two-step confirm on the destructive action).
+  the **same six rows on every page that has a gear** — sound, language, reset,
+  and the three links out. The reset is always the whole site's, with a two-step
+  confirm. It used to take a `resetKind`: "all" on the map, "game" inside a
+  game, and *nothing at all* in the Pokalraum — so one gear opened three sheets,
+  and in the room a parent looking for the reset found a row that was missing.
+  There is no per-game reset: a child is never told which game she is "in".
 
 Round summaries are overlays too. The browser back button always means
 "back to the map".
@@ -594,8 +612,8 @@ anything, no lives, no damage, no losing.
 ### 8.1 In the moment (every answer)
 
 - Correct: green flash, cheerful sound, fox reaction pose (happy / cheering /
-  thumbs-up, rotating). From 3 correct in a row, a hot-streak counter appears
-  („5 richtig hintereinander! 🔥").
+  thumbs-up, rotating). There is **no hot-streak counter** — see §10.5, and the
+  flame that went with it is gone from the graphics registry too.
 - Wrong: soft neutral sound (no harsh buzzer). The fox pauses to "catch its
   breath" — it never falls, never gets hurt. The aid card then shows, in this
   order: **the child's own answer, struck through in red**; the true equation
@@ -715,8 +733,9 @@ and an 8-year-old understood neither.
   Deterministic — no randomness, fully derivable from the counter, so only
   the counter is stored.
 - Earning a trophy shows it in the round summary as the shared trophy card
-  (§3.2): the cup, its emoji, its name, no sentence (§10.1) — and it links to
-  the Pokalraum. A round can earn more than one at a time.
+  (§3.2): the cup, its emoji, its name, no sentence (§10.1). Tapping it opens
+  the same showcase the Pokalraum opens, over the summary — it does not
+  navigate. A round can earn more than one at a time.
 - Total: 60 trophies. The Pokalraum (§3.2) renders earned/unearned from the
   counters.
 
@@ -800,8 +819,8 @@ getGame(name): object          // state[name] ?? {}
 setGame(name, data): boolean   // merge + write; false if over budget
 getRewards() / setRewards()
 getSettings() / setSettings()
-resetGame(name)                // per-game reset (settings overlay)
-resetAll()                     // delete cookie (map footer)
+// (there is no per-game reset: one settings sheet, one reset — §3.4)
+resetAll()                     // delete the cookie (settings overlay, any page)
 ```
 
 > **Trade-off note**: `localStorage` would allow more space; the cookie is a

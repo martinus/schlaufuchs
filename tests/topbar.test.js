@@ -88,3 +88,41 @@ test("the stub pages carry no script of their own", () => {
     assert.ok(page.includes(`games/${game}/`), `${page}: says it is "${game}"`);
   }
 });
+
+// One gear, one sheet. It used to take a `resetKind`: "all" on the map, "game"
+// inside a game, and *nothing at all* in the Pokalraum — so the same button
+// opened three different screens, and in the room a parent looking for the reset
+// found a row that simply was not there.
+// The comments in these files explain what was removed, so they name it. The
+// tests below read the code, not the prose around it.
+const codeOf = (p) => read(p).replace(/^\s*\/\/.*$/gm, "");
+
+test("every gear on this site opens the same settings sheet", () => {
+  const chrome = codeOf("assets/js/chrome.js");
+  for (const gone of ["resetKind", "resetGame"]) {
+    assert.ok(!chrome.includes(gone), `chrome.js still branches on ${gone}`);
+  }
+  // the reset row is unconditional markup, not a ternary
+  assert.match(chrome, /<div class="setrow"><span class="cx-l-reset">/);
+  assert.ok(!/\$\{resetKind \?/.test(chrome));
+  assert.match(chrome, /resetBtn\.addEventListener\("click"/, "…and it is always wired");
+  assert.match(chrome, /resetAll\(\);\s*\n\s*location\.reload\(\);/, "…to the one reset there is");
+
+  // …and no caller may ask for a different one
+  for (const page of PAGES) {
+    const src = sourcesOf(page).replace(/^\s*\/\/.*$/gm, "");
+    assert.ok(!src.includes("resetKind"), `${page} asks its gear for a special reset`);
+    assert.ok(!src.includes("resetGame"), `${page} still knows about a per-game reset`);
+  }
+  assert.ok(!codeOf("assets/js/storage.js").includes("resetGame"), "storage.js keeps a reset nobody calls");
+});
+
+// A reader's page has no gear at all, so it must never build the sheet: it has
+// no fox chip either, and the sheet's reset would wipe a child's progress from
+// a page written for adults.
+test("the reader's bar builds no settings sheet", () => {
+  const chrome = codeOf("assets/js/chrome.js");
+  const init = chrome.slice(chrome.indexOf("export function initTopBar"));
+  const early = init.indexOf("if (title) return");
+  assert.ok(early > -1 && early < init.indexOf("initSettingsOverlay("), "the title bar must return first");
+});
