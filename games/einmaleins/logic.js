@@ -154,6 +154,53 @@ export function starGoalNeed(stars, total) {
 // The three stars a tile can ever hold (§10.3).
 export const STAR_SLOTS = 3;
 
+// --- the tempo ladder (§10.6) ------------------------------------------------
+// A second, purely additive ladder beside the stars: 0 = nothing yet,
+// 1 = hare, 2 = race car, 3 = rocket. Stars pay for being right; the tempo
+// symbol pays for *knowing* — a child who counts her way to every answer keeps
+// all her stars and simply has not won the rocket yet. Nothing is ever lost,
+// and the lowest visible state is an empty slot, never a snail.
+export const TEMPO_SLOTS = 3;
+
+// Upper bounds (ms) on the round's median answer time, per difficulty:
+// [hare, car, rocket]. Leicht is a tap on one of four choices; the keypad
+// rows also pay for finding and typing one to three digits, so their bounds
+// sit later. Deliberately plain named numbers — retune them after watching a
+// real child, nothing else has to move.
+export const TEMPO_TIERS = [
+  [8000, 5000, 3000], // Leicht
+  [11000, 7000, 4500], // Mittel
+  [11000, 7000, 4500], // Schwer
+];
+
+// The median, because one long think about a new fact must not cost the round
+// its tempo — a sum or a mean would hand the slowest question a veto.
+export function median(values) {
+  const v = (values ?? []).filter(Number.isFinite).sort((a, b) => a - b);
+  if (v.length === 0) return null;
+  const m = v.length >> 1;
+  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+}
+
+// Tier for a time (the round's median — or a single answer: tier 3 on one
+// answer is what triggers the in-round ⚡). Total: junk in, no tier out.
+export function tempoTier(ms, difficulty) {
+  const limits = TEMPO_TIERS[difficulty];
+  if (!limits || !Number.isFinite(ms) || ms < 0) return 0;
+  if (ms <= limits[2]) return 3;
+  if (ms <= limits[1]) return 2;
+  return ms <= limits[0] ? 1 : 0;
+}
+
+// What the tile stores after the round: fast-and-wrong must never pay, so a
+// round below two stars (§10.3) awards nothing — and like the star basket,
+// the stored tier only ever climbs (§10.5).
+export function awardTempo({ stars = 0, tier = 0, best = 0 } = {}) {
+  const held = Number.isInteger(best) && best > 0 ? Math.min(best, TEMPO_SLOTS) : 0;
+  const won = Number.isInteger(tier) && tier > 0 ? Math.min(tier, TEMPO_SLOTS) : 0;
+  return stars >= 2 ? Math.max(held, won) : held;
+}
+
 // The stars you own on this tile if the round stopped right now: your best ever
 // on it, or what this round has already banked, whichever is higher (§10.5).
 //

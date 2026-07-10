@@ -970,11 +970,13 @@ i18n. Anything that reprints the equation (the aid card) must build it from
 (`starsFor` is a ratio, so a 12-question Schwer round needs 8 / 10 / 12 where
 a 10-question round needs 6 / 8 / 10).
 
-**Accuracy is the only criterion.** Speed is not: a child who reads or taps
-slowly knows the times tables just as well, and a clock is not something they
-can act on. The round is not timed at all — a duration shown "as a fact" still
-whispers *faster is better* to the child who is slow and right, so the summary
-does not show one.
+**Accuracy is the only criterion for stars.** Speed is not: a child who reads
+or taps slowly knows the times tables just as well, and being slow must never
+cost anything. Speed has its own, purely additive ladder (§10.6), and the rule
+that survives is: **the child never sees a number of time** — no seconds, no
+duration "shown as a fact", because a number still whispers *faster is better*
+to the child who is slow and right. A symbol that only ever climbs is allowed;
+a figure is not.
 
 A wrong answer leaves its item unsolved, so the round asks it again: a round
 ends only when every drawn item is *solved*, and only the first try counts for
@@ -990,11 +992,12 @@ still have one star.
 {
   "d": 1, "t": 7,
   "box": "342103...",                    // 100 digits: pairs 1..10 × 1..10 canonical order
-  "stars": { "0": "302...", "1": "...", "2": "..." }  // per difficulty: 11 digits (10 tables + mixed)
+  "stars": { "0": "302...", "1": "...", "2": "..." },  // per difficulty: 11 digits (10 tables + mixed)
+  "tempo": { "0": "030...", "1": "...", "2": "..." }   // same layout: tempo tier 0-3 per tile (§10.6)
 }
 ```
 
-~160 bytes. The box string is shared across difficulties.
+~210 bytes. The box string is shared across difficulties.
 
 ### 10.5 The round's scene (sky, meadow, basket, fox)
 
@@ -1063,6 +1066,42 @@ For the same reason there is **no mid-round restart button**: it would reward
 quitting after one mistake, and the Leitner boxes are only written in
 `endRound()`, so a restart would hide the child's misses from the adaptive
 engine and from the parents' view. „Nochmal" after the round is enough.
+
+### 10.6 The tempo ladder (memorized, not counted)
+
+A child who counts her way to every answer keeps every star — accuracy is all
+they measure — and that is exactly why counting is the rational strategy. The
+tempo ladder is the reward that counting can never reach: **a second, purely
+additive collectible** for *knowing* the fact.
+
+- **Three tiers, only upward**: 🐇 hare → 🚗 race car → 🚀 rocket
+  (`tempo-hare/-car/-rocket` in the graphics registry). Tier 0 draws
+  **nothing at all** — an empty corner is the lowest state. There is no snail:
+  the ladder must pull, never label.
+- **Measured per question**: time from the question appearing to its first
+  answer, kept only for **first-try-correct** questions. The round's verdict
+  is the **median** of those times (`median` in `logic.js`) — one long think
+  about a new fact must not hand the slowest question a veto, as a sum or a
+  mean would.
+- **Tiers** (`tempoTier(ms, difficulty)`, bounds in `TEMPO_TIERS`): Leicht is
+  a tap on one of four choices (🚀 ≤ 3 s, 🚗 ≤ 5 s, 🐇 ≤ 8 s median); the
+  keypad rows also pay for typing, so their bounds sit later (≤ 4.5 / 7 /
+  11 s). Plain named constants — retune them after watching a real child.
+- **Gated by two stars** (`awardTempo`): a round below ⭐⭐ (80 % first-try)
+  awards no tier, so fast-and-wrong never pays. The stored tier merges by
+  `max` — like the star basket, it can only climb (§10.5).
+- **The ⚡ moment**: a single answer at rocket speed flashes a small decorative
+  bolt the instant it lands (transition, not keyframe — reduced motion sees it
+  briefly and calmly, §10.5). A slow answer sees *nothing*; there is no
+  negative moment anywhere in the ladder.
+- **Where it shows**: as a corner badge on the picker tile (`aria-label` says
+  it in words: „Tempo: Rennauto"), and as one quiet line in the summary —
+  symbol and name, with „Neuer Tempo-Rekord!" when the tile's tier improved.
+  **Never a number with a unit of time**, anywhere the child can see (§10.3).
+- **Worth nothing but itself**: no stars, no points, no trophies. ⭐ stays the
+  site's only currency (§8.3); the badge is the prize, like the fox's poses.
+  What it buys the game is a reason to replay a mastered (✓) tile — which is
+  exactly where fluency training happens.
 
 ---
 

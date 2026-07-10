@@ -495,6 +495,7 @@ footer p { margin: 0; }
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  position: relative; /* anchors the ⚡ moment (§10.6) */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -503,6 +504,25 @@ footer p { margin: 0; }
   /* nudge the group below the optical centre, towards the answers */
   padding: clamp(4px, 7vh, 64px) 14px 4px;
   text-align: center;
+}
+
+/* The ⚡ moment (§10.6): one answer at rocket speed. It flies up and fades on
+   a TRANSITION, never a keyframe — under reduced motion both are killed and
+   the bolt is simply there for a beat and then removed, not hanging mid-air
+   (the same contract as the journey's stars, §10.5). */
+.stage .blitz {
+  position: absolute;
+  right: 12%;
+  bottom: 14%;
+  font-size: 2.2rem;
+  pointer-events: none;
+  opacity: 1;
+  transform: none;
+  transition: transform 0.6s ease-out, opacity 0.6s ease-out;
+}
+.stage .blitz.gone {
+  opacity: 0;
+  transform: translateY(-56px) scale(1.5);
 }
 
 /* The aid is the tallest thing the stage ever holds: equation, dot grid and a
@@ -816,6 +836,19 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 /* nothing left to give */
 .tilegrid .tstars .tdone { font-size: 34px; color: #1e6b2c; opacity: 0.9; }
 
+/* The tempo badge (§10.6): the pace this tile has been *known* at, in its top
+   corner. There is no tier-0 badge — an empty corner is the lowest state. */
+.tilegrid .ttempo {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  pointer-events: none;
+  line-height: 1;
+  filter:
+    drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff)
+    drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);
+}
+
 .tilegrid .tname { position: relative; color: var(--ink); }
 
 /* Two states, two looks: mastered pays nothing more, and the level she is
@@ -918,6 +951,10 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .summary .sline { margin: 6px 0; font-weight: 700; }
 /* the next star's price: present, but never louder than the score */
 .summary .sline.goal { font-weight: 400; font-size: .82rem; color: var(--ink-soft); }
+/* the tempo ladder's verdict (§10.6): a symbol and its name, never seconds */
+.summary .sline.tempo { font-size: .95rem; }
+.summary .sline.tempo .gicon { vertical-align: -4px; }
+.summary .sline.tempo b { color: var(--orange); }
 /* A round can win several trophies at once, so this is a row, not a slot. The
    cards inside it carry the panel and the frame (see .tcard); the row is only
    the arrangement. */

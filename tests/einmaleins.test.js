@@ -9,8 +9,12 @@ import {
   POOL_COUNT, EASY_TABLES, pairIndex, pairOf, poolFor, questionFor,
   choicesFor, starsFor, nextStarGoal, starGoalNeed, ownedStars, STAR_SLOTS, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
   retryStep, ALL_TABLES, HARD_TABLES, ROUND_SIZE, pairHardness, hardnessBoost,
+  median, tempoTier, awardTempo, TEMPO_TIERS, TEMPO_SLOTS,
 } from "../games/einmaleins/logic.js";
 import { tilePointsLeft } from "../assets/js/rewards.js";
+import { BUDGET } from "../assets/js/storage.js";
+import { GRAPHICS } from "../assets/js/graphics.js";
+import strings from "../games/einmaleins/i18n.js";
 
 // Type a whole string through retryStep, returning the final step.
 function typeAll(keys, answer, start = "") {
@@ -582,8 +586,8 @@ test("the round is timed for the parents, and never shown to the child", () => {
   const painted = endRound.slice(endRound.indexOf("setTimeout("));
   assert.ok(painted.includes('t("roundStat"'), "the summary must still report the score");
   assert.ok(
-    !/Date\.now|seconds|\bt0\b|elapsed/i.test(painted),
-    "the summary must not mention the round's duration",
+    !/Date\.now|seconds|\bt0\b|elapsed|\bms\b|sekunde|answerTimes|qShownAt|median/i.test(painted),
+    "the summary must not mention the round's duration — the tempo ladder is painted as a symbol, never a number (§10.6)",
   );
   assert.match(
     painted,
@@ -690,6 +694,106 @@ test("a mastered tile opens with a full basket and promises nothing more", () =>
   assert.equal(ownedStars({ firstTrySolved: 10, total: TOTAL }, 2), 3, "10/10 wins the last one");
   assert.equal(ownedStars({ firstTrySolved: 0, total: TOTAL }, 0), 0);
   assert.equal(ownedStars({ firstTrySolved: 6, total: TOTAL }, 0), 1);
+});
+
+// --- the tempo ladder (§10.6) ------------------------------------------------
+// Stars pay for being right; the tempo symbol pays for KNOWING. A child who
+// counts her way to every answer keeps every star and simply has not won the
+// rocket yet — nothing is ever lost, and the lowest visible state is an empty
+// corner, never a snail.
+
+test("median: robust round verdict — one slow question has no veto", () => {
+  assert.equal(median([1000, 2000, 60000]), 2000, "the outlier does not move the middle");
+  assert.equal(median([4000]), 4000);
+  assert.equal(median([1000, 3000]), 2000, "even count averages the middle two");
+  assert.equal(median([3000, 1000, 2000]), 2000, "order must not matter");
+  // total: an empty or junk-filled round yields null, never NaN
+  assert.equal(median([]), null);
+  assert.equal(median(), null);
+  assert.equal(median([NaN, undefined, "9"]), null);
+  assert.equal(median([NaN, 5000]), 5000, "junk entries are dropped, not counted");
+});
+
+test("tempoTier: bounds per difficulty, and junk earns nothing", () => {
+  assert.equal(TEMPO_SLOTS, 3);
+  for (const d of [0, 1, 2]) {
+    const [hare, car, rocket] = TEMPO_TIERS[d];
+    assert.ok(rocket < car && car < hare, `difficulty ${d}: tiers must climb`);
+    assert.equal(tempoTier(rocket, d), 3, "on the bound still counts");
+    assert.equal(tempoTier(rocket + 1, d), 2);
+    assert.equal(tempoTier(car, d), 2);
+    assert.equal(tempoTier(hare, d), 1);
+    assert.equal(tempoTier(hare + 1, d), 0, "slower than the hare is simply nothing");
+  }
+  // the keypad rows pay for typing too, so their bounds sit later than a tap
+  assert.ok(TEMPO_TIERS[1][2] > TEMPO_TIERS[0][2]);
+  for (const junk of [null, undefined, NaN, -1, "3000", Infinity]) {
+    assert.equal(tempoTier(junk, 1), 0, `tempoTier(${String(junk)})`);
+  }
+  assert.equal(tempoTier(1000, 9), 0, "an unknown difficulty awards nothing");
+});
+
+test("awardTempo: fast-and-wrong never pays, and the tier only ever climbs", () => {
+  // gated by two stars (§10.6): guessing at speed must be worthless
+  assert.equal(awardTempo({ stars: 0, tier: 3, best: 0 }), 0);
+  assert.equal(awardTempo({ stars: 1, tier: 3, best: 0 }), 0);
+  assert.equal(awardTempo({ stars: 2, tier: 3, best: 0 }), 3);
+  assert.equal(awardTempo({ stars: 3, tier: 1, best: 0 }), 1);
+  // monotone like the star basket: a slow day takes nothing away
+  assert.equal(awardTempo({ stars: 3, tier: 1, best: 3 }), 3);
+  assert.equal(awardTempo({ stars: 0, tier: 0, best: 2 }), 2, "a failed round keeps the badge");
+  // total: junk in, a sane tier out
+  for (const bad of [undefined, null, -1, 9, 1.5, NaN, "2"]) {
+    const n = awardTempo({ stars: 3, tier: bad, best: bad });
+    assert.ok(Number.isInteger(n) && n >= 0 && n <= TEMPO_SLOTS, `tier=${String(bad)} -> ${n}`);
+  }
+  assert.equal(awardTempo(), 0, "no round, no tempo");
+});
+
+test("the tempo ladder is wired: first tries only, symbol only above nothing", () => {
+  const src = read("games/einmaleins/einmaleins.js");
+  // only a first try feeds the ladder — an item missed this round is out
+  assert.match(src, /if \(!missedIds\.has\(currentId\)\)/);
+  assert.match(src, /missedIds\.add\(currentId\)/);
+  assert.match(src, /missedIds = new Set\(\)/, "…and the set resets with the round");
+  // the round's verdict: median, gated award, stored beside the stars
+  assert.match(src, /tempoTier\(median\(answerTimes\), diff\)/);
+  assert.match(src, /awardTempo\(\{ stars, tier, best: oldTempo \}\)/);
+  assert.match(src, /tempo: tempoObj/);
+  // the picker draws a badge only when there is one; tier 0 draws NOTHING
+  assert.match(src, /const badge = tempo > 0\n\s*\? `<span class="ttempo"/);
+  // the ⚡ moment: a single rocket-speed answer, marked as it lands
+  assert.match(src, /tempoTier\(took, diff\) === 3\) blitzFlash\(\)/);
+  // the summary line exists in the sheet
+  assert.match(read("games/einmaleins/index.html"), /id="sum-tempo"/);
+  // the three faces live in the registry, with their emoji fallbacks
+  for (const [name, emoji] of [["tempo-hare", "🐇"], ["tempo-car", "🚗"], ["tempo-rocket", "🚀"]]) {
+    assert.equal(GRAPHICS[name]?.emoji, emoji, `${name} missing from the registry`);
+  }
+});
+
+test("tempo strings exist in both languages, and none of them names a time", () => {
+  for (const lang of ["de", "en"]) {
+    for (const key of ["tempo1", "tempo2", "tempo3", "tempoBest", "tileTempo"]) {
+      const s = strings[lang][key];
+      assert.equal(typeof s, "string", `${lang}.${key} is missing`);
+      assert.ok(!/\d/.test(s), `${lang}.${key} contains a number: "${s}"`);
+      assert.ok(!/\bs\b|sek|\bsec|\bms\b|minut/i.test(s), `${lang}.${key} names a unit of time: "${s}"`);
+    }
+  }
+});
+
+// The cookie carries a second digit-string family now. It must stay far from
+// the 3500-byte budget even at its fullest (§9.2, §10.4).
+test("a maxed einmaleins section stays a small fraction of the cookie budget", () => {
+  const full11 = { 0: "3".repeat(11), 1: "3".repeat(11), 2: "3".repeat(11) };
+  const maxed = {
+    d: 2, t: 0, box: "4".repeat(100), stars: full11, tempo: full11,
+    p: { 0: [999, 99999], 1: [999, 99999], 2: [999, 99999] },
+  };
+  const bytes = JSON.stringify({ einmaleins: maxed }).length;
+  assert.ok(bytes < 400, `einmaleins section is ${bytes} bytes`);
+  assert.ok(bytes < BUDGET / 8, "…and a small fraction of the whole budget");
 });
 
 test("ownedStars is total: junk in, a sane basket out", () => {

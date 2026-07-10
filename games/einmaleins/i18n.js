@@ -12,6 +12,13 @@ export default {
     tileStarsLeft: "noch {n} Sterne zu holen",
     tileMastered: "geschafft",
     tileHere: "hier stehst du",
+    // The tempo ladder (§10.6). Never a number with a unit of time — the
+    // child sees an animal or a vehicle, never seconds.
+    tempo1: "Hase",
+    tempo2: "Rennauto",
+    tempo3: "Rakete",
+    tempoBest: "Neuer Tempo-Rekord!",
+    tileTempo: "Tempo: {name}",
     // German schools write division as ":" — Mara did not recognise "÷".
     divSign: ":",
   },
@@ -24,6 +31,11 @@ export default {
     tileStarsLeft: "{n} stars still to win",
     tileMastered: "mastered",
     tileHere: "you are here",
+    tempo1: "Hare",
+    tempo2: "Race car",
+    tempo3: "Rocket",
+    tempoBest: "New speed record!",
+    tileTempo: "Speed: {name}",
     divSign: "÷",
   },
 };
