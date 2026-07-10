@@ -76,6 +76,19 @@
           <ellipse cx="316" cy="384" rx="42" ry="18"/>
           <ellipse cx="52" cy="370" rx="40" ry="17"/>
         </g>
+        <!-- A bush and a few daisies where the roads cross open grass: the
+             island's heart was bare, and bare green reads as unfinished page,
+             not as meadow. Decorative only — no handler, no hit shape. -->
+        <g class="meadow-deco">
+          <ellipse cx="163" cy="303" rx="15" ry="7" fill="#8fbf7f"/>
+          <ellipse cx="175" cy="299" rx="10" ry="6" fill="#a6cd8f"/>
+          <circle cx="150" cy="320" r="3.5" fill="#fff"/>
+          <circle cx="150" cy="320" r="1.4" fill="#f4b400"/>
+          <circle cx="196" cy="290" r="3.5" fill="#fff"/>
+          <circle cx="196" cy="290" r="1.4" fill="#f4b400"/>
+          <circle cx="207" cy="322" r="3.5" fill="#fff"/>
+          <circle cx="207" cy="322" r="1.4" fill="#f4b400"/>
+        </g>
         <!-- compass rose -->
         <g transform="translate(44,48)">
           <circle r="19" fill="#fdf6e6" stroke="#c9a978" stroke-width="2"/>
@@ -86,11 +99,11 @@
         <!-- Roads from the village. A mastered region's road paves itself
              (class `paved`, set by map.js) — the map records the child. -->
         <g class="roads" fill="none" stroke-linecap="round">
-          <path class="road" id="road-vokabeln" d="M180 388 q-48 -80 -92 -196"/>
-          <path class="road" id="road-rechnungen" d="M180 388 q66 -76 102 -198"/>
-          <path class="road" id="road-tippen" d="M180 388 q52 -36 90 -68"/>
-          <path class="road" id="road-lesen" d="M148 414 q-24 8 -38 28"/>
-          <path class="road" id="road-pokalraum" d="M214 418 q16 22 24 44"/>
+          <path class="road" id="road-vokabeln" d="M170 388 q-38 -80 -82 -196"/>
+          <path class="road" id="road-rechnungen" d="M170 388 q76 -76 112 -198"/>
+          <path class="road" id="road-tippen" d="M170 388 q62 -36 100 -68"/>
+          <path class="road" id="road-lesen" d="M138 414 q-14 8 -28 28"/>
+          <path class="road" id="road-pokalraum" d="M204 418 q26 22 34 44"/>
         </g>
         <!-- the dashed centre line of a dirt track; hidden once it is paved -->
         <g class="roadlines" fill="none" stroke-linecap="round">
@@ -176,29 +189,29 @@
              its game: one name to learn, not two (§3.1). -->
         <a href="games/einmaleins/" class="region" id="region-einmaleins" data-game="einmaleins">
           <!-- Mara tapped the gap between the two houses and nothing happened. -->
-          <rect class="hit" fill="transparent" x="122" y="350" width="110" height="120"/>
+          <rect class="hit" fill="transparent" x="112" y="350" width="110" height="120"/>
           <g>
-            <ellipse cx="180" cy="428" rx="62" ry="11" fill="#96c47f"/>
-            <rect x="130" y="395" width="38" height="32" fill="#f3d9b1"/>
-            <polygon points="126,396 149,376 172,396" fill="#c1121f"/>
-            <rect x="143" y="410" width="12" height="17" fill="#6b4423"/>
-            <rect x="180" y="390" width="48" height="37" fill="#f5f2ec"/>
-            <polygon points="176,391 204,366 232,391" fill="#b06f3c"/>
-            <circle cx="204" cy="381" r="4.5" fill="#f4b400"/>
-            <rect x="188" y="400" width="10" height="10" fill="#5aa7d6"/>
-            <rect x="210" y="400" width="10" height="10" fill="#5aa7d6"/>
-            <rect x="197" y="410" width="14" height="17" fill="#6b4423"/>
+            <ellipse cx="170" cy="428" rx="62" ry="11" fill="#96c47f"/>
+            <rect x="120" y="395" width="38" height="32" fill="#f3d9b1"/>
+            <polygon points="116,396 139,376 162,396" fill="#c1121f"/>
+            <rect x="133" y="410" width="12" height="17" fill="#6b4423"/>
+            <rect x="170" y="390" width="48" height="37" fill="#f5f2ec"/>
+            <polygon points="166,391 194,366 222,391" fill="#b06f3c"/>
+            <circle cx="194" cy="381" r="4.5" fill="#f4b400"/>
+            <rect x="178" y="400" width="10" height="10" fill="#5aa7d6"/>
+            <rect x="200" y="400" width="10" height="10" fill="#5aa7d6"/>
+            <rect x="187" y="410" width="14" height="17" fill="#6b4423"/>
             <!-- the village is the crossroads, so it has no road of its own:
                  mastering it cobbles its square instead (§3.1) -->
-            <ellipse class="plaza" id="plaza-einmaleins" cx="180" cy="433" rx="46" ry="8"/>
+            <ellipse class="plaza" id="plaza-einmaleins" cx="170" cy="433" rx="46" ry="8"/>
           </g>
           <g class="layer-thriving">
-            <text data-icon="deco-sparkle" data-icon-size="13" x="125" y="375" font-size="13">✨</text>
-            <text data-icon="deco-sparkle" data-icon-size="13" x="228" y="368" font-size="13">✨</text>
+            <text data-icon="deco-sparkle" data-icon-size="13" x="115" y="375" font-size="13">✨</text>
+            <text data-icon="deco-sparkle" data-icon-size="13" x="218" y="368" font-size="13">✨</text>
           </g>
-          <g class="layer-mastered"><text data-icon="deco-circus" data-icon-size="15" x="172" y="360" font-size="15">🎪</text></g>
-          <text class="region-label" x="180" y="448" data-i18n="region_einmaleins">Einmaleins</text>
-          <g class="region-badge" data-badge="einmaleins" transform="translate(180,463)"></g>
+          <g class="layer-mastered"><text data-icon="deco-circus" data-icon-size="15" x="162" y="360" font-size="15">🎪</text></g>
+          <text class="region-label" x="170" y="448" data-i18n="region_einmaleins">Einmaleins</text>
+          <g class="region-badge" data-badge="einmaleins" transform="translate(170,463)"></g>
         </a>
 
         <!-- Pokalraum (Trophy Room) bottom right -> trophy album -->
