@@ -55,7 +55,6 @@ export default {
   aboutPortal: "An overview of all my sites",
   privacyLink: "Privacy",
   starsOwned: "{n} of 3 stars collected",
-  diffWorth: "{d} — each star counts {n}×",
   starsTotal: "{n} stars",
   lockedHint: "Not available yet",
   soonBubble: "Soon!",

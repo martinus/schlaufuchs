@@ -513,16 +513,6 @@ footer p { margin: 0; }
    button. The status row yields, whether or not it has anything to say. */
 .stage:has(#feedback:not([hidden])) .journey-wrap { display: none; }
 
-/* A tile's three stars, gold for taken and grey for open — the same language
-   the sky speaks above the round (§10.5). The points a tile pays are not shown:
-   what a star is worth belongs to the difficulty, and the difficulty says so. */
-.tilegrid .tstars { display: inline-flex; gap: 1px; font-style: normal; }
-.tilegrid .tstars i { font-style: normal; font-size: 12px; line-height: 1; }
-.tilegrid .tstars i.off { filter: grayscale(1); opacity: 0.3; }
-
-/* "×2 ⭐": the stars are always three; here each one counts double */
-.seg button .dmul { display: block; font-size: 0.7rem; font-weight: 700; opacity: 0.85; }
-
 /* The round's title: same width as the scene beneath it, so the two read as
    one block rather than as a chip that wandered out of the top bar. */
 /* The round's title is also its level picker, and Mara never found it: it read
@@ -701,30 +691,20 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 
 .sheet h2 { margin: 0 0 12px; font-size: 1.2rem; }
 
-.seg {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.seg button {
-  min-height: 52px;
+/* The level picker (§10.2): one scrollable list of every level there is, in
+   three colour-coded bands. There used to be a row of difficulty buttons above
+   a grid that they rewrote — a child had to understand that the first control
+   changed the second, and that "×2 ⭐" on a button she had not pressed was a
+   promise about stars she could not see. */
+.lvl-head {
+  margin: 14px 2px 6px;
+  font-size: 0.95rem;
   font-weight: 800;
-  border-radius: var(--radius);
-  background: var(--panel);
-  box-shadow: var(--shadow);
 }
-
-/* Which difficulty is chosen has to survive a glance: colour alone was too
-   quiet next to two identical neighbours, so the pressed one is also ringed
-   and a shade larger. */
-.seg button[aria-pressed="true"] {
-  background: var(--orange);
-  color: #fff;
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.55), var(--shadow);
-  transform: scale(1.04);
-}
+.lvl-head:first-child { margin-top: 0; }
+.lvl-head.lvl-easy { color: #2f7d32; }
+.lvl-head.lvl-medium { color: #b26a00; }
+.lvl-head.lvl-hard { color: var(--err); }
 
 .tilegrid {
   display: grid;
@@ -733,42 +713,59 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 
 .tilegrid button {
-  min-height: 64px;
+  position: relative;
+  overflow: hidden;
+  min-height: 76px;
   border-radius: var(--radius);
   background: var(--panel);
   box-shadow: var(--shadow);
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 2px;
+  padding: 5px 4px;
 }
 
-.tilegrid button:disabled { cursor: default; }
-.tilegrid .tstars { font-size: 0.7rem; letter-spacing: -1px; }
+/* Easy is green, hard is red, and the middle is between them. The colour says
+   which band a tile belongs to without its heading having to be on screen. */
+.tilegrid.lvl-easy button { background: #e8f5e2; }
+.tilegrid.lvl-medium button { background: #fdf1d9; }
+.tilegrid.lvl-hard button { background: #fbe4e3; }
 
-/* Each tile says what it is still worth, in the ownership colour. This is the
-   whole rulebook: an untouched Schwer tile shows +18, a mastered one shows ✓.
-   Nobody reads rules; everybody reads numbers (§10.2). */
-
-
-/* Three states, three looks — a locked tile must never be mistaken for a
-   finished one (§10.2):
-   locked   — not taught at this difficulty, cannot be played, promises nothing
-   mastered — finished, may be replayed, pays nothing more
-   open     — pays the number it shows */
-.tilegrid button.locked {
-  opacity: 0.4;
-  background: none;
-  box-shadow: none;
-  border: 2px dashed var(--orange-soft);
+/* **The stars a tile still has to give**, behind its name: three on a fresh
+   Leicht tile, six on Mittel, nine on Schwer (`tilePointsLeft`). That a harder
+   level pays three times as much is not written anywhere — the tile is three
+   times as full. As stars are won the picture empties (§8.3, §10.2). */
+.tilegrid .tstars {
+  position: absolute;
+  /* below the name, never behind it: a lone star sat exactly under the digits
+     and vanished, so a tile with one star left looked like a tile with none */
+  inset: 26px 6px 5px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
+  pointer-events: none;
+  line-height: 1;
 }
-.tilegrid button.mastered {
-  background: #eff7f0;
-  box-shadow: inset 0 0 0 2px var(--ok);
+/* pale: they are what the tile promises, not what it shouts */
+.tilegrid .tstars i {
+  font-style: normal;
+  font-size: 14px;
+  width: 33.333%;
+  text-align: center;
+  opacity: 0.42;
 }
+/* nothing left to give */
+.tilegrid .tstars .tdone { font-size: 34px; color: var(--ok); opacity: 0.75; }
+
+.tilegrid .tname { position: relative; color: var(--ink); }
+
+/* Two states, two looks: mastered pays nothing more, and the level she is
+   playing right now is where the list opens. */
+.tilegrid button.mastered { box-shadow: inset 0 0 0 2px var(--ok), var(--shadow); }
+.tilegrid button.current { box-shadow: inset 0 0 0 3px var(--orange), var(--shadow); }
 
 
 /* the points just earned, beside the numbers that earned them */

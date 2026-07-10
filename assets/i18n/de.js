@@ -55,7 +55,6 @@ export default {
   aboutPortal: "Übersicht über alle meine Seiten",
   privacyLink: "Datenschutz",
   starsOwned: "{n} von 3 Sternen gesammelt",
-  diffWorth: "{d} — jeder Stern zählt {n}×",
   starsTotal: "{n} Sterne",
   lockedHint: "Noch nicht verfügbar",
   // shown in a bubble when a child taps a fogged region — she stays on the map

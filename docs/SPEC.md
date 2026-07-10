@@ -631,16 +631,16 @@ and an 8-year-old understood neither.
   The third star used to carry a `+3 × difficulty` mastery bonus, so three
   equal-looking stars were worth 1, 1 and 4 on Leicht. It made the picker's
   numbers unexplainable, and it made the star display a lie.
-- **The rules are shown, not written.** Every tile in the picker shows its
-  **three stars**, gold for taken and grey for still open — the same language
-  the sky speaks above the round (§10.5). It does not show a point total: what a
-  star is *worth* belongs to the difficulty, and the difficulty says so itself
-  („Mittel ×2 ⭐") — a claim that is now literally true, because the counter it
-  refers to *is* the star count. Three tile states, three looks: **open** (grey
-  stars), **mastered** (green-ringed, three gold stars, may be replayed for
-  nothing), **locked** (a table Leicht does not teach — faded, padlock, promises
-  nothing). The round summary shows the stars just earned next to the score
-  („+6 ⭐"); that is the only place a number appears.
+- **The rules are shown, not written.** Every tile in the picker draws **the
+  stars it still has to give** (`tilePointsLeft`): three on a fresh Leicht tile,
+  six on Mittel, nine on Schwer, emptying as they are won. Nobody has to be told
+  that hard work pays three times as much — the tile is three times as full. No
+  tile carries a „×2" or „×3" anywhere; that claim used to sit on a difficulty
+  button a child had never pressed, promising stars she could not see. Two tile
+  states, two looks: **open** (the stars it owes you) and **mastered**
+  (green-ringed, a tick, may be replayed for nothing). The round summary shows
+  the stars just earned next to the score („+6 ⭐"); that is the only place a
+  number appears.
 - Each region keeps a lifetime **star** counter (`rewards.pr`, §9.2). The
   field keeps its short name for the cookie budget (§9.2).
 - Each region has **12 fixed trophies** (emoji + translated name, defined in
@@ -793,11 +793,17 @@ walks the village lane; goal node: ringing the school bell.
    if one was earned, and **one** button carrying a random congratulation,
    which starts the next round (§3.4). A child who has just won reads almost
    nothing — the stars say how it went and the trophy is the prize, so neither
-   gets a sentence of its own. The map and the table picker stay reachable
-   above the sheet, in the bar and on the chip. Table picker via that chip
-   (which wears a border and a caret, because it read as a caption and was
-   never pressed): an 11-tile overlay (Reihen 1–10 + „🎲 Alle") each showing its
-   star state.
+   gets a sentence of its own. The map and the level picker stay reachable
+   above the sheet, in the bar and on the chip.
+5. **The level picker** opens from that chip (which wears a border and a caret,
+   because it read as a caption and was never pressed). It is **one scrollable
+   list of every level the game has**, in three colour-coded bands — Leicht
+   green, Mittel amber, Schwer red — each under a plain, unclickable heading.
+   Difficulty is not a control: choosing a tile chooses both. Leicht shows its
+   five tiles (Reihen 1, 2, 5, 10 + „🎲 Alle"), the others eleven; **no tile is
+   ever disabled**, where six padlocked ones used to sit in the Leicht grid. The
+   list opens focused on the tile being played (`aria-current`), which scrolls
+   it into view.
 
 ### 10.2 Difficulties
 
