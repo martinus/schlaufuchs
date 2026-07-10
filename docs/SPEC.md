@@ -160,7 +160,10 @@ Map requirements:
   `aria-label` = translated game name) with a translated name label and a small
   `region-badge` group showing that game's star count. The badge has three
   tiers via CSS class: `badge-t1` (plain), `badge-t2` (gold, ≥ ⅓ of
-  `MAX_POINTS[game]`), `badge-t3` (glowing gold, 100 %).
+  `MAX_POINTS[game]`), `badge-t3` (glowing gold, 100 %). **Only playable
+  regions show the badge**: a locked game cannot pay a star, so a "⭐ 0" under
+  its name would promise what the clouds just took back. The group stays in
+  the markup for the day the game ships.
 - **Exactly one `<rect class="hit" fill="transparent">` per region**, the first
   child of its `<a>`, ≥ 64×64 px, spanning that region's art and its own label
   anchor — and never a neighbour's, because SVG paints in document order and
@@ -209,11 +212,14 @@ Map requirements:
   The village is the crossroads and has no road of its own, so mastering it
   cobbles the village square instead. The Trophy Room road paves at 20
   trophies. See `.road` / `.roadline` / `.plaza` and `pave()` in `map.js`.
-- **Unbuilt games sit under fog, and do not open.** A region whose game is a
-  stub is veiled by code-generated mist (`fogRegion()` in `map.js`, driven by
-  `PLAYABLE` in `rewards.js`), so the island never promises what the site
-  cannot deliver. Tapping it **stays on the map**: the click is
-  `preventDefault`ed, the fog wiggles, and a transient "Bald!" / "Soon!" bubble
+- **Unbuilt games sit under clouds, and do not open.** A region whose game is
+  a stub is covered by code-generated clouds (`fogRegion()` in `map.js`, driven
+  by `PLAYABLE` in `rewards.js`), so the island never promises what the site
+  cannot deliver. The clouds are drawn cumulus shapes with a visible rim over a
+  soft blurred veil — pure blur had no edge, and art under an edgeless white
+  wash read as a rendering mistake, not as weather that will lift. Tapping it
+  **stays on the map**: the click is
+  `preventDefault`ed, the cover wiggles, and a transient "Bald!" / "Soon!" bubble
   appears above the label. It is removed by a timer, never by `animationend` —
   under `prefers-reduced-motion` no animation starts, so no event would ever
   fire. The `href` stays (deep links to the stub pages still work) and the

@@ -335,13 +335,16 @@ a.chip { color: var(--ink); text-decoration: none; }
    must not leave six black boxes on the island. */
 .worldmap .region .hit { cursor: pointer; }
 
-/* Fog over a region whose game is not built yet (§3.1). It must never take
-   the tap: it is unbounded and spills over its neighbours, so the region's own
-   `.hit` rect answers instead. */
+/* Clouds over a region whose game is not built yet (§3.1). They must never
+   take the tap: they are unbounded and spill over their neighbours, so the
+   region's own `.hit` rect answers instead. The puffs have an edge and a
+   shaded underside so they read as weather, not as washed-out art; only the
+   veil beneath them is blurred (map.js). */
 .worldmap .region .fog { pointer-events: none; }
-.worldmap .region .fog ellipse { fill: #f4f7f8; }
+.worldmap .region .fog .fog-veil { fill: #eef4f6; opacity: 0.42; }
+.worldmap .region .fog .cloud-rim { fill: #d7e5ec; }
+.worldmap .region .fog .cloud-puff { fill: #fff; }
 .worldmap .region.locked .region-label { fill: var(--ink-soft); }
-.worldmap .region.locked .region-badge { opacity: 0.55; }
 
 /* Tapping a fogged region shakes its fog instead of leaving the map. */
 .worldmap .region .fog.wiggle { animation: fog-wiggle 0.42s ease-in-out 2; }
