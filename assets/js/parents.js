@@ -27,9 +27,9 @@ const practice = practiceSummary(saved);
 const rewards = getRewards();
 
 // The two numbers the child's own top bar shows, and nothing else. A third chip
-// used to count the daily streak behind a 🔥 — the flame is gone from the site
-// (there is no streak counter anywhere a child can see it, §10.5), and a symbol
-// that exists on one page only is a symbol nobody learns.
+// used to count a daily streak behind a 🔥 — the streak left this page first
+// (a symbol that exists on one page only is a symbol nobody learns) and then
+// the site (§8.5): a year of tracking, and nothing ever rendered it.
 function renderChips() {
   $("p-chips").innerHTML = [
     `<span class="pchip">${iconHTML("ui-star", { size: 16 })} ${totalPoints(rewards.pr)}</span>`,

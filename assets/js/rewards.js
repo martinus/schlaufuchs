@@ -1,6 +1,6 @@
-// Motivation system (§8): stars, deterministic trophies, daily streak, map
-// region states. Pure functions are exported for tests; the record/read
-// functions use storage.js.
+// Motivation system (§8): stars, deterministic trophies, map region states.
+// Pure functions are exported for tests; the record/read functions use
+// storage.js.
 
 import { loadState, getRewards, setRewards } from "./storage.js";
 
@@ -195,8 +195,6 @@ export function addPractice(saved = {}, difficulty = 0, seconds = 0) {
   return { tm, rd };
 }
 
-const STREAK_MILESTONES = [3, 7, 14, 30]; // §8.5 — see recordRound's streakMilestone
-
 // Every game has 12 trophies, so this is the whole collection (§8.3). It counts
 // the four games that do not exist yet: the island promises six regions, and
 // the Pokalraum promises what the island does.
@@ -307,42 +305,23 @@ export function nextTrophyInfo(game, pr) {
   return { earned, threshold: ladder[earned], remaining: ladder[earned] - (pr ?? 0) };
 }
 
-// Daily streak (§8.5): consecutive local calendar days.
-export function updateStreak(prev, todayISO) {
-  if (!Array.isArray(prev) || prev.length !== 2) return [todayISO, 1];
-  const [last, count] = prev;
-  if (last === todayISO) return [todayISO, count];
-  const days = Math.round((Date.parse(todayISO) - Date.parse(last)) / 86400000);
-  return days === 1 ? [todayISO, count + 1] : [todayISO, 1];
-}
-
-export function todayLocalISO(d = new Date()) {
-  const p = (n) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
 // ---- storage-backed functions ---------------------------------------------
 
-// Called by games at the end of every round (§8). Updates fox map position,
-// streak and perfect-round counters; returns what to celebrate.
+// Called by games at the end of every round (§8). Updates the fox's map
+// position and the per-game star counter; returns the trophies the round won.
+//
+// `streak: undefined` scrubs the daily streak from cookies that still carry
+// it. It was tracked for a year and rendered nowhere (§8.5 — removed), and
+// JSON.stringify drops undefined values, so the field vanishes on the next
+// finished round and its bytes go back to the cookie budget.
 export function recordRound(game, { points = 0 }) {
-  const r = getRewards();
-  const today = todayLocalISO();
-  const prevCount = Array.isArray(r.streak) ? r.streak[1] : 0;
-  const prevDate = Array.isArray(r.streak) ? r.streak[0] : null;
-  const streak = updateStreak(r.streak, today);
-  const pr = { ...(r.pr ?? {}) };
+  const pr = { ...(getRewards().pr ?? {}) };
   let newTrophies = [];
   if (points > 0) {
     const before = trophyCount(game, pr[game]);
     pr[game] = (pr[game] ?? 0) + points;
     newTrophies = TROPHIES[game].slice(before, trophyCount(game, pr[game]));
   }
-  setRewards({ at: game, streak, pr });
-  const grew = streak[1] > prevCount || prevDate !== streak[0];
-  return {
-    newTrophies,
-    streak,
-    streakMilestone: grew && STREAK_MILESTONES.includes(streak[1]),
-  };
+  setRewards({ at: game, pr, streak: undefined });
+  return { newTrophies };
 }

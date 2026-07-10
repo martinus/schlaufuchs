@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
-  THRESHOLDS, TROPHIES, GAMES, trophyCount, totalTrophies, TOTAL_TROPHIES, updateStreak,
+  THRESHOLDS, TROPHIES, GAMES, trophyCount, totalTrophies, TOTAL_TROPHIES,
   gameStarsOf, totalPoints, regionState, starBadgeTier, nextTrophyInfo,
   roundPoints, tilePointsLeft, starValue, clampDifficulty, addPractice, MAX_ROUND_SECONDS,
-  ladderFor, MAX_POINTS, TROPHIES_PER_GAME, todayLocalISO,
+  ladderFor, MAX_POINTS, TROPHIES_PER_GAME,
 } from "../assets/js/rewards.js";
 import { read } from "./pages.js";
 
@@ -108,16 +108,6 @@ test("trophies are counted across every game (§8.3)", () => {
   assert.equal(totalTrophies(maxed), TOTAL_TROPHIES);
 });
 
-test("todayLocalISO: local calendar days, zero-padded (§8.5)", () => {
-  // The streak compares these strings for equality, so "2026-1-5" and
-  // "2026-01-05" would be two different days and every streak would reset.
-  assert.equal(todayLocalISO(new Date(2026, 0, 5)), "2026-01-05");
-  assert.equal(todayLocalISO(new Date(2026, 11, 31)), "2026-12-31");
-  // local time, not UTC: practising at 23:30 must count for the day the child
-  // experienced, or a bedtime round breaks tomorrow's streak
-  assert.equal(todayLocalISO(new Date(2026, 6, 10, 23, 30)), "2026-07-10");
-});
-
 test("clampDifficulty: anything that is not a real tier reads as Leicht", () => {
   assert.deepEqual([0, 1, 2].map(clampDifficulty), [0, 1, 2]);
   for (const junk of [undefined, null, -1, 3, 1.5, "1", NaN]) {
@@ -125,13 +115,18 @@ test("clampDifficulty: anything that is not a real tier reads as Leicht", () => 
   }
 });
 
-test("daily streak: same day, next day, gap (§8.5)", () => {
-  assert.deepEqual(updateStreak(null, "2026-07-08"), ["2026-07-08", 1]);
-  assert.deepEqual(updateStreak(["2026-07-08", 4], "2026-07-08"), ["2026-07-08", 4]);
-  assert.deepEqual(updateStreak(["2026-07-07", 4], "2026-07-08"), ["2026-07-08", 5]);
-  assert.deepEqual(updateStreak(["2026-07-05", 4], "2026-07-08"), ["2026-07-08", 1]);
-  // month boundary
-  assert.deepEqual(updateStreak(["2026-06-30", 2], "2026-07-01"), ["2026-07-01", 3]);
+// The daily streak is gone (§8.5): a year of tracking that nothing ever
+// rendered. It is not enough to stop writing it — cookies in the wild still
+// carry the field, and patchSection merges, so without the scrub those bytes
+// would ride along until the reset button. The mechanism (undefined drops a
+// key through JSON.stringify) is tested in storage.test.js.
+test("recordRound scrubs the removed streak field, and nothing computes one", () => {
+  const src = read("assets/js/rewards.js");
+  assert.match(src, /setRewards\(\{ at: game, pr, streak: undefined \}\)/,
+    "every finished round must clean the dead field out of the cookie");
+  for (const dead of ["updateStreak", "todayLocalISO", "STREAK_MILESTONES", "streakMilestone"]) {
+    assert.ok(!src.includes(dead), `${dead} survived the streak removal`);
+  }
 });
 
 // The site has ONE number a child collects. `pr` — once called "Punkte" —

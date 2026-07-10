@@ -37,8 +37,8 @@ the browser.
 - **Really teaches something**: every game has explicit difficulty levels and
   a shared adaptive engine that detects what the child struggles with and
   practices exactly that more often (§7).
-- **Really motivates, never punishes**: journeys, stars, trophies, streaks,
-  a site-wide fox level (§8). A wrong answer never costs anything.
+- **Really motivates, never punishes**: journeys, stars, trophies (§8).
+  A wrong answer never costs anything.
 - **Translatable**: every page ships in **German and English** from string
   dictionaries; adding a language means adding files, not HTML (§6).
 - **Zero infrastructure**: static HTML/CSS/JS, no build step; `python -m
@@ -108,7 +108,7 @@ in HTML/CSS/JS — never absolute paths like `/assets/...`.
 │   │   ├── storage.js        # Cookie-backed state store (§9)
 │   │   ├── i18n.js           # Translation runtime (§6)
 │   │   ├── adaptive.js       # Weakness-tracking practice engine (§7)
-│   │   ├── rewards.js        # Stars, trophies, streak, region states (§8)
+│   │   ├── rewards.js        # Stars, trophies, region states (§8)
 │   │   ├── journey.js        # Journey path strip used inside rounds (§8.2)
 │   │   ├── mapwalk.js        # Fox anchors + walk arithmetic, pure (§3.1)
 │   │   ├── motion.js         # The one walk driver; reduced-motion (§15)
@@ -802,20 +802,19 @@ and an 8-year-old understood neither.
   scarf, a cap, glasses, a backpack, a medal, two crowns. The fox is who the
   child is, not a display of what they own; the two counters say that once.
 
-### 8.5 Tagesserie (daily streak)
+### 8.5 Tagesserie (daily streak) — removed
 
-Playing ≥ 1 round on consecutive calendar days (local time) increments the
-streak; a missed day resets it to 1 on the next play. Stored as
-`[lastDateISO, count]` — no history log. `recordRound` reports when a
-milestone (3, 7, 14, 30 days) is crossed.
+There is no daily streak. One existed — consecutive local calendar days,
+stored as `[lastDateISO, count]`, with milestones at 3/7/14/30 — and it was
+never rendered anywhere: not in the child's top bar (§3.3, §10.5 — a streak
+is a thing a child is nagged by), and after its 🔥 chip left the parents'
+view, not there either. A year of tracking with no consumer was dead state
+in a 3500-byte cookie, so in July 2026 the machinery went too.
 
-**Nothing currently renders the streak.** The child's top bar never shows it
-(§3.3, §10.5 — a streak is a thing a child is nagged by), and the parents'
-view dropped its 🔥 chip too: a symbol that exists on one page only is a
-symbol nobody learns. The counter keeps being recorded and the milestone
-signal keeps being returned, so a future parents' row can show a streak the
-child has actually been building — but today `streakMilestone` has no
-consumer, by decision rather than by omission.
+`recordRound` actively scrubs the old `rewards.streak` field from cookies
+that still carry it (a patch of `streak: undefined` — JSON.stringify drops
+the key). If a streak ever comes back, it belongs on the parents' page, and
+it starts from zero.
 
 ---
 
@@ -842,7 +841,6 @@ URL-encoded compact JSON with a version field:
   "v": 1,
   "settings": { "sound": true, "lang": "de" },
   "rewards": {
-    "streak": ["2026-07-08", 4],
     "at": "einmaleins",
     "pr": { "einmaleins": 3, "rechnungen": 1 }
   },
@@ -1402,8 +1400,7 @@ language-neutral.
 - **Pure logic lives in DOM-free modules** and is unit-tested with
   `node --test` in `tests/`: adaptive engine (selection weights, re-queue
   timing, box transitions), question generators, scoring/stars, trophy
-  thresholds, streak date logic, i18n lookup/fallback, cookie
-  encode/decode/budget.
+  thresholds, i18n lookup/fallback, cookie encode/decode/budget.
 - GitHub Actions workflow runs the tests on every push.
 - **i18n completeness test**: every key present in every language, fails CI
   otherwise.
