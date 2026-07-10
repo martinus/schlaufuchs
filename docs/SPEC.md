@@ -1373,10 +1373,15 @@ language-neutral.
 - GitHub Actions workflow runs the tests on every push.
 - **i18n completeness test**: every key present in every language, fails CI
   otherwise.
+- **A test that cannot fail is decoration.** Every new test is verified by
+  breaking the behaviour it guards and watching it go red — `tools/mutate.sh`
+  does this safely, restoring the file from a copy rather than from git, and
+  refusing to claim anything when its pattern matched nothing.
 - Manual checklist per release: fresh-profile smoke test on a real phone,
   cookie round-trip after browser restart, subpath serving, language toggle
   on every page, SpeechSynthesis on iOS Safari (user-gesture rule), map
-  region states at 0/⅓/100 % stars.
+  region states at 0/⅓/100 % stars, **and the back gesture mid-round** —
+  §10.7 is the one guarantee no emulator can fully confirm.
 
 ---
 

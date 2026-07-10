@@ -49,6 +49,27 @@ test("the guard owns a history entry and re-arms after every pop", () => {
   assert.match(pop[0], /arm\(\);[\s\S]*attempt\(/, "re-arm must precede the decision");
 });
 
+// The leave sheet leans on three things `overlay.js` does and does not promise
+// in writing: it focuses the FIRST focusable control, Escape closes the topmost
+// DISMISSIBLE overlay, and the backdrop does the same. Together they mean the
+// sheet's safe answer must come first in its markup — otherwise a child who
+// presses Enter on a question she did not ask leaves the round.
+//
+// `tests/overlay.test.js` holds up the other end of this contract. This end is
+// the source order, which no browser test would ever explain.
+test("the sheet's safe answer is its first control, so the overlay focuses it", () => {
+  const src = read("assets/js/leaveguard.js");
+  const stay = src.indexOf('id="lg-stay"');
+  const go = src.indexOf('id="lg-go"');
+  assert.ok(stay > 0 && go > 0, "the sheet lost one of its two buttons");
+  assert.ok(stay < go, '"keep playing" must precede "to the map" in the markup');
+});
+
+test("the sheet is dismissible, so Escape and the backdrop mean 'keep playing'", () => {
+  const src = read("assets/js/leaveguard.js");
+  assert.doesNotMatch(src, /dismissible:\s*false/, "a trapped child cannot keep playing");
+});
+
 // Regression: the map button sits one tap from the keypad and was a bare <a>.
 // It must stay a real link (it says where it goes, and works without JS), and
 // the game must be the thing that decides whether the tap is free.
