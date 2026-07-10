@@ -1,7 +1,8 @@
 # CLAUDE.md — Schlaufuchs
 
 Orientation for an agent working on this repo. Read this first, then
-`docs/SPEC.md` for the authoritative product spec.
+`docs/SPEC.md` for the authoritative product spec. `docs/ARCHITECTURE.md`
+maps the code — layers, dependency rules, testing kinds, extension recipes.
 
 ## What this is
 
@@ -140,7 +141,9 @@ workflow runs it before publishing.
   wiring exists over trusting that a missing element is "handled".
 - **Dead strings and stale comments accumulate.** When you remove a feature,
   remove its i18n keys and fix the comments that describe the old behaviour.
-  The i18n tests now fail on both a missing and an unused key.
+  The i18n tests now fail on both a missing and an unused key, and
+  `tests/exports.test.js` fails on an export nothing references — delete the
+  export, or write the test it was exported for.
 - **A merged PR ends its branch — and you will not be told when it happens.**
   Martin merges out of band, between your turns, often right after you open the
   PR. So the branch you are standing on may already be dead, and a merged branch
@@ -232,9 +235,10 @@ Shared modules in `assets/js/`:
   the four unbuilt games — recompute when one ships.
 - `journey.js` — the round's scene; `sceneGeometry(nodes, theme)` is the pure
   arithmetic (tested), `createJourney` is the DOM around it.
-- `mapwalk.js` / `levelfox.js` — the fox's walk, on the island and in the level
-  picker. Both open a place only once the fox has arrived on it; the second
-  borrows the first's `walkPoint`/`walkMs`, so there is one gait.
+- `mapwalk.js` / `motion.js` / `levelfox.js` — the fox's walk: pure gait
+  arithmetic; the one rAF driver (`runWalk`) plus `prefersReducedMotion()`;
+  the fox element in the level picker. The island and the picker share the
+  driver and the gait, and both open a place only once the fox has arrived.
 - `graphics.js` — the icon registry (see below). `applyIcons` only matters where
   a page has static `[data-icon]` markup, which today is `index.html` alone.
 - `trophycard.js` — `trophyCardHTML(trophy, {size, lang, href, cls, label})`,

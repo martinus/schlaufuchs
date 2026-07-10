@@ -5,7 +5,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  heatOf, weakFacts, heatCounts, practiceSummary, minutesOf, secondsPerRound,
+  heatOf, weakFacts, practiceSummary, minutesOf, secondsPerRound,
   recallDigit, cellState, cellCounts,
 } from "../assets/js/parentstats.js";
 import { boxesFromString, clampBox } from "../assets/js/adaptive.js";
@@ -17,7 +17,6 @@ test("a fresh child has no weak facts, because nothing has been asked yet", () =
   assert.equal(clampBox(undefined), 2);
   const fresh = boxesFromString(undefined, POOL_COUNT);
   assert.deepEqual(weakFacts(fresh, POOL_COUNT), []);
-  assert.deepEqual(heatCounts(fresh, POOL_COUNT), { weak: 0, open: 100, solid: 0 });
 });
 
 test("heatOf maps the Leitner boxes onto what a parent can act on", () => {
@@ -72,9 +71,11 @@ test("weakFacts lists the hardest first, and names real questions", () => {
   assert.deepEqual(pairOf(weak[0].id), [6, 7]);
   assert.deepEqual(pairOf(weak[1].id), [7, 8]);
 
-  const tally = heatCounts(boxes, POOL_COUNT);
-  assert.deepEqual(tally, { weak: 2, open: 97, solid: 1 });
-  assert.equal(tally.weak + tally.open + tally.solid, POOL_COUNT, "every fact is counted once");
+  // the same boxes through the grid's own tally (heatCounts is gone: parents.js
+  // reads `open` off cellCounts, so the legend and the empty-state check agree)
+  const tally = cellCounts(boxes, undefined, POOL_COUNT);
+  assert.deepEqual(tally, { weak: 2, open: 97, solid: 1, fast: 0 });
+  assert.equal(tally.weak + tally.open + tally.solid + tally.fast, POOL_COUNT, "every fact is counted once");
 });
 
 test("practiceSummary survives an empty, absent or corrupted cookie", () => {

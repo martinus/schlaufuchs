@@ -10,7 +10,7 @@
 // pixels. One fox, one walk.
 
 import { foxSVG } from "./fox.js";
-import { walkPoint, walkMs } from "./mapwalk.js";
+import { prefersReducedMotion, runWalk } from "./motion.js";
 
 // Small, and standing low: the fox shares its tile with the stars that tile
 // still has to give, and at 40px it stood on top of the top row of them.
@@ -34,10 +34,6 @@ export function tileAnchor({ offsetLeft, offsetTop, offsetWidth, offsetHeight })
 export function foxOrigin([x, y], size = FOX_SIZE) {
   return [x - size / 2, y - size * FEET];
 }
-
-const reduced = () =>
-  typeof window !== "undefined"
-  && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // A fox that lives inside `container` (a positioned element holding the tiles).
 // `jumpTo` puts it somewhere without a walk — the first render, and every
@@ -74,28 +70,18 @@ export function createLevelFox(container, { size = FOX_SIZE } = {}) {
     walkTo(tile, done) {
       if (walking) return;
       const to = tileAnchor(tile);
-      if (!at || reduced()) {
+      if (!at || prefersReducedMotion()) {
         at = to;
         draw(at);
         done();
         return;
       }
       walking = true;
-      const from = at;
-      const ms = walkMs(from, to);
-      const t0 = performance.now();
-      const step = (now) => {
-        const p = Math.min(1, (now - t0) / ms);
-        draw(walkPoint(from, to, p));
-        if (p < 1) {
-          requestAnimationFrame(step);
-        } else {
-          at = to;
-          walking = false;
-          done();
-        }
-      };
-      requestAnimationFrame(step);
+      runWalk(at, to, draw, () => {
+        at = to;
+        walking = false;
+        done();
+      });
     },
   };
 }

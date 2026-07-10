@@ -85,7 +85,7 @@ test("a tap sends the fox there first, and the region opens when it arrives", ()
   assert.match(travel.slice(0, 700), /setRewards\(\{ at: game \}\)/,
     "the map must remember where she went, or the fox is not there when she returns");
   // the navigation is the walk's callback, never a statement beside it
-  assert.match(mapJs, /walkFox\([\s\S]{0,120}location\.href = href;/,
+  assert.match(mapJs, /runWalk\([\s\S]{0,160}location\.href = href;/,
     "the region must open only once the fox has arrived");
   // Regression risk: two rAF loops fighting over one transform, and two
   // navigations racing each other.
@@ -105,10 +105,10 @@ test("a fox that cannot be watched walking still ends up at the new region", () 
   // `prefers-reduced-motion` is not negotiable (§15): no walk, and `at` is
   // written before the branch, so the fox stands there on the way back.
   const travel = mapJs.slice(mapJs.indexOf("function travelTo"));
-  const head = travel.slice(0, travel.indexOf("walkFox("));
-  assert.match(head, /prefers-reduced-motion/);
+  const head = travel.slice(0, travel.indexOf("runWalk("));
+  assert.match(head, /prefersReducedMotion\(\)/);
   assert.ok(
-    head.indexOf("setRewards") < head.indexOf("prefers-reduced-motion"),
+    head.indexOf("setRewards") < head.indexOf("prefersReducedMotion"),
     "`at` must be written before the reduced-motion shortcut takes the navigation",
   );
   assert.match(head, /location\.href = href;/, "…and it must still open");

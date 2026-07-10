@@ -8,7 +8,7 @@ import { read } from "./pages.js";
 import {
   POOL_COUNT, EASY_TABLES, pairIndex, pairOf, poolFor, questionFor,
   choicesFor, starsFor, nextStarGoal, starGoalNeed, ownedStars, STAR_SLOTS, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
-  retryStep, ALL_TABLES, HARD_TABLES, ROUND_SIZE, pairHardness, hardnessBoost,
+  retryStep, ALL_TABLES, HARD_TABLES, ROUND_SIZE, tablesFor, pairHardness, hardnessBoost,
   median, tempoTier, awardTempo, TEMPO_TIERS, TEMPO_SLOTS, recallStep, foldRecall,
 } from "../games/einmaleins/logic.js";
 import { tilePointsLeft } from "../assets/js/rewards.js";
@@ -361,8 +361,8 @@ test("the chip looks like the button it is", () => {
 });
 
 test('the "Alle" tile says with a picture that it mixes the tables', () => {
-  const src = read("games/einmaleins/einmaleins.js");
-  assert.match(src, /tbl === 0 \? `🎲 \$\{tbl2short\(tbl\)\}`/);
+  const src = read("games/einmaleins/picker.js");
+  assert.match(src, /tbl === 0 \? `🎲 \$\{tableName\(tbl\)\}`/);
 });
 
 // The picker was two controls: three difficulty buttons that silently rewrote
@@ -370,7 +370,7 @@ test('the "Alle" tile says with a picture that it mixes the tables', () => {
 // pressed. It is now one scrollable list of every level the game has.
 test("the picker is one list of levels, not a switch above a grid", () => {
   const page = read("games/einmaleins/index.html");
-  const src = read("games/einmaleins/einmaleins.js");
+  const src = read("games/einmaleins/picker.js");
   const css = read("assets/css/schlaufuchs.css");
 
   assert.match(page, /id="pick-levels"/);
@@ -394,7 +394,7 @@ test("the picker is one list of levels, not a switch above a grid", () => {
 // Schwer 9 — so "harder pays three times as much" needs no words. As she wins
 // them the tile empties, and an empty one shows a tick.
 test("a tile shows the stars it still has to give", () => {
-  const src = read("games/einmaleins/einmaleins.js");
+  const src = read("games/einmaleins/picker.js");
   assert.match(src, /tilePointsLeft\(starDigit\(starsByDiff\[d\], tbl\), d\)/);
   assert.match(src, /left > 0 \? "<i>⭐<\/i>"\.repeat\(left\) : '<b class="tdone">✓<\/b>'/);
   assert.match(src, /if \(left === 0\) b\.classList\.add\("mastered"\)/);
@@ -411,24 +411,26 @@ test("a tile shows the stars it still has to give", () => {
 // hard in them. The old picker showed tables a difficulty does not teach as
 // padlocked tiles — dead buttons a child could tap and be refused by.
 test("each difficulty offers its own tiles, and nothing is disabled anywhere", () => {
-  const src = read("games/einmaleins/einmaleins.js");
-  assert.match(
-    src,
-    /const tablesFor = \(d\) =>\s*\(d === 0 \? \[\.\.\.EASY_TABLES, 0\] : d === 2 \? \[\.\.\.HARD_TABLES, 0\] : \[\.\.\.ALL_TABLES, 0\]\)/,
-  );
+  // tablesFor is pure now (logic.js), so the offer is asserted as behaviour,
+  // not as a source pattern
+  assert.deepEqual(tablesFor(0), [...EASY_TABLES, 0]);
+  assert.deepEqual(tablesFor(1), [...ALL_TABLES, 0]);
+  assert.deepEqual(tablesFor(2), [...HARD_TABLES, 0]);
   assert.equal(EASY_TABLES.length + 1, 5, "four easy tables plus 'Alle'");
   assert.equal(ALL_TABLES.length + 1, 11);
   assert.equal(HARD_TABLES.length + 1, 9, "no 1er or 10er on Schwer");
+  const src = read("games/einmaleins/picker.js");
   assert.ok(!/b\.disabled|classList\.add\("locked"\)|ui-lock/.test(src), "no padlocked tiles");
 
   // a saved tile the current difficulty does not offer must fall back, not
   // leave the fox standing on a level that no longer exists
-  assert.match(src, /if \(!tablesFor\(diff\)\.includes\(table\)\) table = 2;/);
+  assert.match(read("games/einmaleins/einmaleins.js"),
+    /if \(!tablesFor\(diff\)\.includes\(table\)\) table = 2;/);
 });
 
 // The list is long enough to scroll. It must open on the level she is playing.
 test("the picker opens on the tile she is on", () => {
-  const src = read("games/einmaleins/einmaleins.js");
+  const src = read("games/einmaleins/picker.js");
   assert.match(src, /initialFocus: "\[aria-current='true'\]"/);
   assert.match(src, /b\.setAttribute\("aria-current", "true"\)/);
   assert.match(read("assets/css/schlaufuchs.css"), /\.tilegrid button\.current \{/);
@@ -761,7 +763,7 @@ test("the tempo ladder is wired: first tries only, symbol only above nothing", (
   assert.match(src, /awardTempo\(\{ stars, tier, best: oldTempo \}\)/);
   assert.match(src, /tempo: tempoObj/);
   // the picker draws a badge only when there is one; tier 0 draws NOTHING
-  assert.match(src, /const badge = tempo > 0\n\s*\? `<span class="ttempo"/);
+  assert.match(read("games/einmaleins/picker.js"), /const badge = tempo > 0\n\s*\? `<span class="ttempo"/);
   // the ⚡ moment: a single rocket-speed answer, marked as it lands
   assert.match(src, /tempoTier\(took, diff\) === 3\) blitzFlash\(\)/);
   // the summary line exists in the sheet

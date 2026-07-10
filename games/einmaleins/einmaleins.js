@@ -4,7 +4,7 @@
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString } from "../../assets/js/adaptive.js";
-import { recordRound, roundPoints, starValue, tilePointsLeft, addPractice } from "../../assets/js/rewards.js";
+import { recordRound, roundPoints, starValue, clampDifficulty, addPractice } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
@@ -14,10 +14,10 @@ import { initTopBar } from "../../assets/js/chrome.js";
 import { createLeaveGuard } from "../../assets/js/leaveguard.js";
 import { iconHTML } from "../../assets/js/graphics.js";
 import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
-import { createLevelFox } from "../../assets/js/levelfox.js";
 import strings from "./i18n.js";
+import { createLevelPicker, tableName } from "./picker.js";
 import {
-  POOL_COUNT, EASY_TABLES, ALL_TABLES, HARD_TABLES, ROUND_SIZE, poolFor,
+  POOL_COUNT, ROUND_SIZE, tablesFor, DIFF_KEYS, TEMPO_ICONS, TEMPO_KEYS, poolFor,
   questionFor, choicesFor, hardnessBoost,
   starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit, fittedFontSize, retryStep,
   median, tempoTier, awardTempo, foldRecall,
@@ -27,20 +27,23 @@ initI18n(strings);
 
 const $ = (id) => document.getElementById(id);
 
-// The two overlays this page owns. The picker can be waved away — the summary
+// The two overlays this page owns (picker.js holds the picker's tiles and fox;
+// the round state stays here). The picker can be waved away — the summary
 // cannot: closing it would leave a finished round with nothing to press (§3.3).
 //
 // The picker is also where the game begins and where every round ends, so
 // waving it away must never leave the child looking at an empty stage: with no
 // round behind it, dismissing it starts the level the fox is standing on.
-const picker = overlayFrom(document.getElementById("pick-overlay"), {
-  onOpen: renderPicker,
-  // The list is long enough to scroll. Open it on the level she is playing,
-  // not on the first tile of the first difficulty — focusing it scrolls it
-  // into view, so she sees where she is before she chooses where to go.
-  initialFocus: "[aria-current='true']",
-  onClose() {
-    if (levelFox?.walking) return; // the walk opens the level it is walking to
+const picker = createLevelPicker(document.getElementById("pick-overlay"), {
+  current: () => ({ diff, table }),
+  // Runs BEFORE the picker closes — the round clears `roundOver` and fills
+  // `session`, which is exactly what onDismiss reads.
+  onPick(d, tbl) {
+    diff = d;
+    table = tbl;
+    startRound();
+  },
+  onDismiss() {
     if (roundOver) summary.open();
     else if (!session) startRound();
   },
@@ -51,12 +54,6 @@ const summary = overlayFrom(document.getElementById("sum-overlay"), {
   dismissible: false,
   initialFocus: "#sum-ok",
 });
-const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
-const DIFF_SLUGS = ["easy", "medium", "hard"];
-// The tempo ladder's three faces (§10.6), indexed by tier. Index 0 is the
-// point: below the hare there is nothing to draw, never a snail.
-const TEMPO_ICONS = [null, "tempo-hare", "tempo-car", "tempo-rocket"];
-const TEMPO_KEYS = [null, "tempo1", "tempo2", "tempo3"];
 const SUM_OK_KEYS = ["sumOk1", "sumOk2", "sumOk3", "sumOk4", "sumOk5", "sumOk6"];
 const NEXT_MS = 250;
 
@@ -79,7 +76,7 @@ function fastPress(btn, fn) {
 
 // --- persistent state ------------------------------------------------------
 let saved = getGame("einmaleins");
-let diff = [0, 1, 2].includes(saved.d) ? saved.d : 0;
+let diff = clampDifficulty(saved.d);
 let table = Number.isInteger(saved.t) && saved.t >= 0 && saved.t <= 10 ? saved.t : 2;
 
 // Each difficulty offers its own tiles (§10.2); a saved table the current
@@ -92,7 +89,6 @@ function coerceTable() {
 // `session` is also the answer to "is there a round on the stage?" — the picker
 // asks it when it is dismissed rather than chosen from.
 let session = null;
-let levelFox = null; // rebuilt with the tiles on every open of the picker
 let journey = null;
 let question = null;
 let currentId = null;
@@ -114,17 +110,13 @@ let answerTimes = [];
 let missedIds = new Set();
 let recallObs = {}; // {id: tier} per first-try answer, for the parents' grid (§20)
 
-function tbl2short(tbl) {
-  return tbl === 0 ? t("emMixed") : t("emTableShort", { t: tbl });
-}
-
 // The round's title carries the village's own symbol, so the child can see
 // which place on the map she is standing in without reading its name (§3.1).
 // The symbol is decorative; `.ph-txt` is the button's accessible name.
 function updateChip() {
   $("pickchip").innerHTML =
     `<span class="ph-sym" aria-hidden="true">${iconHTML("region-einmaleins", { size: 20 })}</span>`
-    + `<span class="ph-txt">${t(DIFF_KEYS[diff])} · ${tbl2short(table)}</span>`;
+    + `<span class="ph-txt">${t(DIFF_KEYS[diff])} · ${tableName(table)}</span>`;
 }
 
 function startRound() {
@@ -525,107 +517,7 @@ $("sum-trophy").addEventListener("click", (e) => {
 });
 
 // --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------
-
-// Leicht teaches four tables, Mittel all ten, Schwer the eight with something
-// hard in them (§10.2). Each ends with "Alle gemischt".
-const tablesFor = (d) =>
-  (d === 0 ? [...EASY_TABLES, 0] : d === 2 ? [...HARD_TABLES, 0] : [...ALL_TABLES, 0]);
-
-// The picker used to be two controls: three difficulty buttons on top, and one
-// grid of tables that changed underneath them. A child had to understand that
-// the first row rewrote the second, and that "×2 ⭐" on a button she had not
-// pressed was a promise about stars she could not see.
-//
-// It is now one scrollable list of every level the game has. The difficulty is
-// where a tile sits, what colour it has, and — the whole point — **how many
-// stars it still has to give**: three on a fresh Leicht tile, six on Mittel,
-// nine on Schwer. Nobody has to be told that hard work pays more; the tile is
-// three times as full. A tile with nothing left to give shows a tick.
-// Open the level `tile` stands for. Called when the fox has arrived on it, so a
-// round never starts under a fox that is still in the air.
-function openLevel(d, tbl) {
-  diff = d;
-  table = tbl;
-  // Started BEFORE the picker closes, and the order is the whole contract: the
-  // round clears `roundOver` and fills `session`, which is exactly what onClose
-  // reads. Close first and it would reopen the summary of the round she just
-  // walked away from, or start a second round on top of this one.
-  startRound();
-  picker.close();
-}
-
-// A tile she tapped. The fox walks there first — that walk is the answer to the
-// tap, and the level it opens is where the fox came to rest.
-function chooseLevel(d, tbl, tile) {
-  if (levelFox?.walking) return;
-  if (d === diff && tbl === table) return openLevel(d, tbl); // already standing there
-  // The list scrolls, and a fox walking to a tile below the fold walks off the
-  // screen. Bring the destination into view; the fox's coordinates are the
-  // list's own, so the scroll moves it with the tiles.
-  tile.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  levelFox.walkTo(tile, () => openLevel(d, tbl));
-}
-
-function renderPicker() {
-  const box = $("pick-levels");
-  box.innerHTML = "";
-  // not the module's `saved`: the picker must read the cookie as it is now
-  const savedNow = getGame("einmaleins");
-  const starsByDiff = savedNow.stars ?? {};
-  const tempoByDiff = savedNow.tempo ?? {};
-  let currentTile = null;
-
-  DIFF_KEYS.forEach((key, d) => {
-    // A heading, not a control: pressing a difficulty is choosing a tile in it.
-    const head = document.createElement("h3");
-    head.className = `lvl-head lvl-${DIFF_SLUGS[d]}`;
-    head.textContent = t(key);
-    box.appendChild(head);
-
-    const grid = document.createElement("div");
-    grid.className = `tilegrid lvl-${DIFF_SLUGS[d]}`;
-    for (const tbl of tablesFor(d)) {
-      const left = tilePointsLeft(starDigit(starsByDiff[d], tbl), d);
-      const b = document.createElement("button");
-      if (left === 0) b.classList.add("mastered");
-      if (d === diff && tbl === table) {
-        b.classList.add("current");
-        b.setAttribute("aria-current", "true");
-        currentTile = b;
-      }
-      // "Alle" is the only tile whose name is a word rather than a number, and
-      // a child who reads nothing cannot tell it from the rest. A die can.
-      const name = tbl === 0 ? `🎲 ${tbl2short(tbl)}` : tbl2short(tbl);
-      const art = left > 0 ? "<i>⭐</i>".repeat(left) : '<b class="tdone">✓</b>';
-      // The tempo symbol the tile has earned (§10.6), a badge in the corner.
-      // Tier 0 draws nothing at all — an empty corner, never a snail.
-      const tempo = starDigit(tempoByDiff[d], tbl);
-      const badge = tempo > 0
-        ? `<span class="ttempo" aria-hidden="true">${iconHTML(TEMPO_ICONS[tempo], { size: 18 })}</span>`
-        : "";
-      b.innerHTML = `<span class="tstars" aria-hidden="true">${art}</span>`
-        + badge + `<span class="tname">${name}</span>`;
-      // The fox on the current tile is decorative markup; a screen reader is
-      // told where it stands in words.
-      const here = b === currentTile ? ` · ${t("tileHere")}` : "";
-      const pace = tempo > 0 ? ` · ${t("tileTempo", { name: t(TEMPO_KEYS[tempo]) })}` : "";
-      b.setAttribute(
-        "aria-label",
-        `${t(key)} · ${tbl2short(tbl)}${here} — ${left > 0 ? t("tileStarsLeft", { n: left }) : t("tileMastered")}${pace}`,
-      );
-      b.addEventListener("click", () => chooseLevel(d, tbl, b));
-      grid.appendChild(b);
-    }
-    box.appendChild(grid);
-  });
-
-  // The fox is drawn last, over the tiles, and is placed after they are laid
-  // out — `tileAnchor` reads offsets, and the overlay is already shown by the
-  // time onOpen runs, so the numbers are real.
-  levelFox = createLevelFox(box);
-  if (currentTile) levelFox.jumpTo(currentTile);
-}
-
+// The tiles, the fox on them, and the walk-then-open rule live in picker.js.
 $("pickchip").addEventListener("click", picker.open);
 
 // --- leaving a round that is not saved yet (§10.7) ---------------------------
