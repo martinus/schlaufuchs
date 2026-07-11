@@ -107,3 +107,13 @@ export function createSession(pool, boxes, opts = {}) {
     },
   };
 }
+
+// Has this round been touched? An answer of either kind counts: a solve grows
+// `solved`, and a first wrong answer drops `firstTryOk` below `total` without
+// growing `solved` (the miss is re-queued, not solved). The leave guard
+// (§10.7) asks this before it asks the child — a round nobody has answered
+// has nothing to lose, so leaving it deserves no dialog.
+export function hasProgress(progress) {
+  const { solved = 0, firstTryOk = 0, total = 0 } = progress ?? {};
+  return solved > 0 || firstTryOk < total;
+}

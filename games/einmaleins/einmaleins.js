@@ -3,7 +3,7 @@
 
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
-import { createSession, boxesFromString, boxesToString } from "../../assets/js/adaptive.js";
+import { createSession, boxesFromString, boxesToString, hasProgress } from "../../assets/js/adaptive.js";
 import { recordRound, roundPoints, starValue, clampDifficulty, addPractice } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
@@ -521,12 +521,13 @@ $("sum-trophy").addEventListener("click", (e) => {
 $("pickchip").addEventListener("click", picker.open);
 
 // --- leaving a round that is not saved yet (§10.7) ---------------------------
-// A round lives in memory until `endRound()` writes it. `session && !roundOver`
-// is exactly that window: the picker (no session) and the summary (round over,
-// cookie written) have nothing to lose, and are left without a question.
+// A round lives in memory until `endRound()` writes it, but it is only worth a
+// dialog once an answer was given: the picker (no session), the summary (round
+// over, cookie written) and a round the child has merely looked at all have
+// nothing to lose, and are left without a question.
 const guard = createLeaveGuard({
   mapUrl: new URL("../../", import.meta.url).href,
-  inRound: () => session !== null && !roundOver,
+  inRound: () => session !== null && !roundOver && hasProgress(session.progress()),
 });
 
 // --- the shared top bar (§3.3) ----------------------------------------------

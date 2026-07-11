@@ -285,6 +285,17 @@ test("the top bar and the chip stay above the round summary", () => {
   assert.ok(z(".topbar") < overlay, "a real modal sheet still covers the bar");
   assert.ok(z(".pickheading") < overlay, "…and the chip");
 
+  // The level picker sits under the bar too: the map button is the one-tap way
+  // out of a game, and the picker (where nothing is at stake) must not swallow
+  // it. But it stays above the summary — the summary opens the picker and both
+  // remain open, and the picker comes first in the DOM, so at equal z the
+  // summary would paint over the picker it just opened. And above the chip,
+  // whose lit pill would otherwise sit as a dead spot on the picker's sheet.
+  assert.ok(z("#pick-overlay") < z(".topbar"), "the map button must stay reachable over the picker");
+  assert.ok(z("#sum-overlay") < z("#pick-overlay"), "the picker opens over the summary, not under it");
+  assert.ok(z(".pickheading") < z("#pick-overlay"), "the chip must dim under the picker's backdrop");
+  assert.ok(z("#pick-overlay") < overlay, "a real modal sheet still covers the picker");
+
   // …and the sheet must not claim otherwise: a screen reader told that the
   // summary is modal is told that its only exit does not exist.
   const page = read("games/einmaleins/index.html");
