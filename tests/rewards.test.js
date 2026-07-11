@@ -9,6 +9,8 @@ import {
   ladderFor, MAX_POINTS, TROPHIES_PER_GAME,
 } from "../assets/js/rewards.js";
 import { read } from "./pages.js";
+import { maxPoints as lesenMaxPoints } from "../games/lesen/logic.js";
+import { CONTENT } from "../games/lesen/content.js";
 
 // einmaleins' ladder is the one a real child has been climbing, so it is spelled
 // out here rather than imported: if it ever changes, this file must say so.
@@ -32,7 +34,7 @@ test("every game has its own ladder, and every ladder climbs", () => {
 });
 
 // Regression: one ladder served all five games, tuned to einmaleins' 180-point
-// economy. `lesen` is worth 18 points in total, so its thresholds 29 through
+// economy. `lesen` was then budgeted at 18 points, so its thresholds 29 through
 // 112 — trophies five to twelve — could never be reached, and its shelf in the
 // Pokalraum could never fill. The child would never learn why.
 test("every game's twelfth trophy is reachable by mastering that game", () => {
@@ -76,7 +78,7 @@ test("trophyCount maps a game's counter to its earned trophies", () => {
   assert.equal(trophyCount("einmaleins", 9999), 12, "there are only twelve");
 
   // the same points buy different trophies in different regions
-  assert.equal(trophyCount("lesen", 12), 12, "lesen is a small game; 12 points is all of it");
+  assert.equal(trophyCount("lesen", 12), 4, "lesen is a smaller game; 12 points go further");
   assert.equal(trophyCount("tippen", 12), 2, "tippen is a big one; 12 points is barely a start");
 
   assert.equal(trophyCount("nosuchgame", 9999), 0, "an unknown game has no shelf");
@@ -174,9 +176,9 @@ test("nextTrophyInfo: progress toward the next trophy (§8.3)", () => {
   assert.equal(nextTrophyInfo("einmaleins", 112), null);
 
   // the same counter, a different promise, because the region is different
-  assert.equal(nextTrophyInfo("lesen", 1).threshold, 2);
-  assert.equal(nextTrophyInfo("tippen", 1).threshold, 3);
-  assert.equal(nextTrophyInfo("lesen", 12), null, "a small game can finish");
+  assert.equal(nextTrophyInfo("lesen", 12).threshold, 15);
+  assert.equal(nextTrophyInfo("tippen", 12).threshold, 16);
+  assert.equal(nextTrophyInfo("lesen", MAX_POINTS.lesen), null, "a mastered game can finish");
   assert.equal(nextTrophyInfo("nosuchgame", 0), null);
 });
 
@@ -196,6 +198,17 @@ test("region states at 0 / one third / 100 % (§3.1)", () => {
     assert.ok(MAX_POINTS[game] > 0, `${game}: a zero maximum divides by zero`);
     assert.equal(regionState({ [game]: MAX_POINTS[game] }, game), "mastered");
   }
+});
+
+// The lesen twin of the einmaleins balance above: its maximum is computed from
+// its real tiles — 5 per difficulty, four packs and an "Alle" (§14.3) — and a
+// first Leicht round must already pay the first trophy, so a beginner meets
+// the reward system on day one.
+test("lesen's economy is computed from its real tiles (§14.3)", () => {
+  assert.equal(lesenMaxPoints(CONTENT.de), MAX_POINTS.lesen, "rewards.js and logic.js disagree");
+  assert.equal(5 * 3 * 1 + 5 * 3 * 2 + 5 * 3 * 3, MAX_POINTS.lesen);
+  assert.equal(trophyCount("lesen", MAX_POINTS.lesen), TROPHIES_PER_GAME);
+  assert.equal(THRESHOLDS.lesen[0], 1, "one Leicht star buys the first trophy");
 });
 
 // §8.3: points reward progress and difficulty. They must never reward

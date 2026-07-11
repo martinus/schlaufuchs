@@ -737,6 +737,96 @@ footer p { margin: 0; }
 button.flash-ok { background: var(--ok) !important; color: #fff !important; }
 button.flash-err { background: var(--err) !important; color: #fff !important; }
 
+/* ---- lesen: the word card and the blitz (§14.2) ---- */
+/* The hide is DECIDED by a JS timer and merely decorated by these transitions:
+   prefers-reduced-motion kills every transition site-wide, so the fade
+   degrades to an instant flip and the mechanic survives. Never a keyframe
+   animation here — one that never runs would never hide the word. */
+.wordcard {
+  position: relative;
+  width: 100%;
+  min-height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.wordcard .question {
+  font-size: clamp(2rem, 13vw, 3.4rem);
+  transition: opacity 0.2s ease;
+}
+
+.wordcard.wc-hidden .question { opacity: 0; }
+
+.wordcard .wordback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.wordcard.wc-hidden .wordback { opacity: 1; }
+
+/* A sentence is read, not blitzed (§14.1): it wraps, at a size a second-grader
+   can hold onto, and the card never turns. */
+.wordcard.sent .question {
+  white-space: normal;
+  font-size: 1.45rem;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+/* Four emoji to choose from: the emoji is the label, so it has to be big. */
+.mc-emoji button {
+  font-size: 2.4rem;
+  min-height: clamp(64px, 9.5vh, 96px);
+}
+
+/* Stimmt / Quatsch (§14.1): two verdicts, each wearing its symbol in colour —
+   a child who reads nothing fluently yet still sees which side is "yes". */
+.verdict {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.verdict button {
+  min-height: clamp(64px, 10vh, 96px);
+  font-size: 1.35rem;
+  font-weight: 800;
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.verdict button:active { transform: scale(0.96); }
+.verdict .v-sym { font-size: 1.7rem; }
+.verdict .v-yes .v-sym { color: var(--ok); }
+.verdict .v-no .v-sym { color: var(--err); }
+
+/* the aid's sentence, above the verdict it should have got (§14.2) */
+.feedback-aid .fb-sent {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.4;
+  margin-bottom: 6px;
+  white-space: normal;
+}
+
 /* ---- overlays (§3.3): same page, never separate pages ---- */
 .overlay {
   position: fixed;

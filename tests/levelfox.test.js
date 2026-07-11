@@ -110,12 +110,12 @@ test("a dismissed picker never leaves the stage empty", () => {
 });
 
 test("the fox on the tile is drawn, and said", () => {
-  // It is aria-hidden, so a screen reader is told in words where the fox stands.
+  // It is aria-hidden, so a screen reader is told in words where the fox
+  // stands. The string is shared: every game's picker speaks it (§3.3).
   const src = read("games/einmaleins/picker.js");
-  const de = read("games/einmaleins/i18n.js");
   assert.match(src, /t\("tileHere"\)/);
-  assert.match(de, /tileHere: "hier stehst du"/);
-  assert.match(de, /tileHere: "you are here"/);
+  assert.match(read("assets/i18n/de.js"), /tileHere: "hier stehst du"/);
+  assert.match(read("assets/i18n/en.js"), /tileHere: "you are here"/);
 });
 
 test("the fox scrolls with the tiles instead of sailing over them", () => {

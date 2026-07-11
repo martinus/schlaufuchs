@@ -3,47 +3,98 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Schlaufuchs</title>
+  <title>Lesen — Schlaufuchs</title>
   <link rel="icon" href="../../assets/img/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="../../assets/css/schlaufuchs.css?v=49">
+  <link rel="stylesheet" href="../../assets/css/schlaufuchs.css?v=50">
   <!-- cache coherence: see tools/version-assets.js -->
   <script type="importmap">
   {
     "imports": {
-      "../../assets/js/about.js": "../../assets/js/about.js?v=49",
-      "../../assets/js/adaptive.js": "../../assets/js/adaptive.js?v=49",
-      "../../assets/js/album.js": "../../assets/js/album.js?v=49",
-      "../../assets/js/audio.js": "../../assets/js/audio.js?v=49",
-      "../../assets/js/chrome.js": "../../assets/js/chrome.js?v=49",
-      "../../assets/js/confetti.js": "../../assets/js/confetti.js?v=49",
-      "../../assets/js/fox.js": "../../assets/js/fox.js?v=49",
-      "../../assets/js/graphics.js": "../../assets/js/graphics.js?v=49",
-      "../../assets/js/i18n.js": "../../assets/js/i18n.js?v=49",
-      "../../assets/js/journey.js": "../../assets/js/journey.js?v=49",
-      "../../assets/js/leaveguard.js": "../../assets/js/leaveguard.js?v=49",
-      "../../assets/js/levelfox.js": "../../assets/js/levelfox.js?v=49",
-      "../../assets/js/map.js": "../../assets/js/map.js?v=49",
-      "../../assets/js/mapwalk.js": "../../assets/js/mapwalk.js?v=49",
-      "../../assets/js/motion.js": "../../assets/js/motion.js?v=49",
-      "../../assets/js/overlay.js": "../../assets/js/overlay.js?v=49",
-      "../../assets/js/parents.js": "../../assets/js/parents.js?v=49",
-      "../../assets/js/parentstats.js": "../../assets/js/parentstats.js?v=49",
-      "../../assets/js/privacy.js": "../../assets/js/privacy.js?v=49",
-      "../../assets/js/rewards.js": "../../assets/js/rewards.js?v=49",
-      "../../assets/js/showcase.js": "../../assets/js/showcase.js?v=49",
-      "../../assets/js/storage.js": "../../assets/js/storage.js?v=49",
-      "../../assets/js/stub.js": "../../assets/js/stub.js?v=49",
-      "../../assets/js/trophycard.js": "../../assets/js/trophycard.js?v=49",
-      "../../assets/i18n/de.js": "../../assets/i18n/de.js?v=49",
-      "../../assets/i18n/en.js": "../../assets/i18n/en.js?v=49",
-      "../einmaleins/logic.js": "../einmaleins/logic.js?v=49"
+      "../../assets/js/about.js": "../../assets/js/about.js?v=50",
+      "../../assets/js/adaptive.js": "../../assets/js/adaptive.js?v=50",
+      "../../assets/js/album.js": "../../assets/js/album.js?v=50",
+      "../../assets/js/audio.js": "../../assets/js/audio.js?v=50",
+      "../../assets/js/chrome.js": "../../assets/js/chrome.js?v=50",
+      "../../assets/js/confetti.js": "../../assets/js/confetti.js?v=50",
+      "../../assets/js/fox.js": "../../assets/js/fox.js?v=50",
+      "../../assets/js/graphics.js": "../../assets/js/graphics.js?v=50",
+      "../../assets/js/i18n.js": "../../assets/js/i18n.js?v=50",
+      "../../assets/js/journey.js": "../../assets/js/journey.js?v=50",
+      "../../assets/js/leaveguard.js": "../../assets/js/leaveguard.js?v=50",
+      "../../assets/js/levelfox.js": "../../assets/js/levelfox.js?v=50",
+      "../../assets/js/map.js": "../../assets/js/map.js?v=50",
+      "../../assets/js/mapwalk.js": "../../assets/js/mapwalk.js?v=50",
+      "../../assets/js/motion.js": "../../assets/js/motion.js?v=50",
+      "../../assets/js/overlay.js": "../../assets/js/overlay.js?v=50",
+      "../../assets/js/parents.js": "../../assets/js/parents.js?v=50",
+      "../../assets/js/parentstats.js": "../../assets/js/parentstats.js?v=50",
+      "../../assets/js/privacy.js": "../../assets/js/privacy.js?v=50",
+      "../../assets/js/rewards.js": "../../assets/js/rewards.js?v=50",
+      "../../assets/js/showcase.js": "../../assets/js/showcase.js?v=50",
+      "../../assets/js/storage.js": "../../assets/js/storage.js?v=50",
+      "../../assets/js/stub.js": "../../assets/js/stub.js?v=50",
+      "../../assets/js/trophycard.js": "../../assets/js/trophycard.js?v=50",
+      "../../assets/i18n/de.js": "../../assets/i18n/de.js?v=50",
+      "../../assets/i18n/en.js": "../../assets/i18n/en.js?v=50",
+      "../einmaleins/logic.js": "../einmaleins/logic.js?v=50",
+      "./logic.js": "./logic.js?v=50",
+      "./content.js": "./content.js?v=50",
+      "./i18n.js": "./i18n.js?v=50",
+      "./lesen.js": "./lesen.js?v=50",
+      "./picker.js": "./picker.js?v=50"
     }
   }
   </script>
 </head>
-<body class="stubpage" data-game="lesen">
-  <header class="topbar" id="topbar"></header>
-  <main class="stub" id="stub"></main>
-  <script type="module" src="../../assets/js/stub.js?v=49"></script>
+<body>
+  <div class="game">
+    <header class="topbar" id="topbar"></header>
+
+    <!-- the path and the question are one group: "here is how far you are,
+         here is what is next". The answers sit under the thumb. -->
+    <div class="stage">
+      <!-- The pack and difficulty read as the round's title, so they sit above
+           the scene and share its width instead of crowding the top bar. -->
+      <button class="chip pickheading" id="pickchip"></button>
+      <!-- one picture, no words: sky = stars still to win, basket = stars you
+           own, path = the fox. See §10.5. -->
+      <div class="journey-wrap" id="journey" role="img"></div>
+      <!-- The word card (§14.2): the word on its face, a ❓ on its back. The
+           blitz turns it over; a sentence never turns. -->
+      <div class="wordcard" id="wordcard">
+        <div class="question" id="question"></div>
+        <div class="wordback" role="img" data-i18n-label="lesenCardHidden">❓</div>
+      </div>
+      <div class="feedback-aid" id="feedback" hidden></div>
+    </div>
+
+    <div class="answers" id="answers"></div>
+  </div>
+
+  <!-- Level picker (§3.3: overlay, never a separate page). One scrollable list
+       of every tile there is: four themed packs and an "Alle" per difficulty,
+       each showing the stars it still has to give. -->
+  <div class="overlay" id="pick-overlay" hidden>
+    <div class="sheet" role="dialog" aria-modal="true">
+      <h2 data-i18n="lesenPickTitle">Thema &amp; Schwierigkeit</h2>
+      <div class="levels" id="pick-levels"></div>
+    </div>
+  </div>
+
+  <!-- round summary (§10.1): stars say how it went, the trophy is the prize,
+       ONE button says what happens next. NOT aria-modal: the top bar and the
+       chip above it stay tappable, on purpose (§3.4). -->
+  <div class="overlay" id="sum-overlay" hidden>
+    <div class="sheet summary" role="dialog" aria-modal="false">
+      <div class="bigstars" id="sum-stars"></div>
+      <p class="sline stat" id="sum-score"></p>
+      <p class="sline goal" id="sum-goal" hidden></p>
+      <p class="sline best" id="sum-best" hidden></p>
+      <div class="trophy-earn" id="sum-trophy" hidden></div>
+      <button class="primary" id="sum-ok"></button>
+    </div>
+  </div>
+
+  <script type="module" src="lesen.js?v=50"></script>
 </body>
 </html>
