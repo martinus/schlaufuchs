@@ -12,6 +12,7 @@ import { read } from "./pages.js";
 import { PLAYABLE } from "../assets/js/rewards.js";
 import { maxPoints as lesenMaxPoints } from "../games/lesen/logic.js";
 import { CONTENT } from "../games/lesen/content.js";
+import { maxPoints as rechnenMaxPoints } from "../games/rechnungen/logic.js";
 
 // The album shelves and the gear's reset rows both iterate GAMES in order. A
 // child looks for Lesewiese right under Einmaleins — the games she can play —
@@ -249,6 +250,31 @@ test("lesen: one round no longer floods the Pokalraum (§8.3, §14.3)", () => {
   // Filling the shelf needs play across difficulties: Schwer alone caps at
   // 5 tiles × 9 = 45, short of the twelfth trophy at 62.
   assert.ok(THRESHOLDS.lesen.at(-1) > 5 * 3 * 3, "Schwer alone must not fill the shelf");
+});
+
+// The rechnungen twin of the balance tests above: its maximum is computed from
+// its real tiles — five mode chips (＋ − × ÷ Mix) per difficulty (§12.2) — and a
+// first sitting must already pay the first trophy.
+test("rechnungen's economy is computed from its real tiles (§12.2)", () => {
+  assert.equal(rechnenMaxPoints(), MAX_POINTS.rechnungen, "rewards.js and logic.js disagree");
+  assert.equal(5 * (3 * 1 + 3 * 2 + 3 * 3), MAX_POINTS.rechnungen, "5 modes × three difficulties");
+  assert.equal(trophyCount("rechnungen", MAX_POINTS.rechnungen), TROPHIES_PER_GAME,
+    "mastering every mode must fill the shelf");
+  assert.ok(THRESHOLDS.rechnungen[0] <= 3, "a first sitting still reaches the first trophy");
+  // filling the shelf needs play across modes: three modes cap at 3 × (3+6+9) = 54,
+  // short of the twelfth trophy
+  assert.ok(THRESHOLDS.rechnungen.at(-1) > 3 * (3 + 6 + 9), "one or two modes must not fill the shelf");
+});
+
+// rechnungen shares lesen's 90-point economy, so it inherits the hand-tuned
+// ladder rather than the generated einmaleins curve — which would drop three
+// trophies from one perfect Schwer round and flood the Pokalraum (§8.3, §12.2).
+test("rechnungen: one round no longer floods the Pokalraum", () => {
+  assert.deepEqual(THRESHOLDS.rechnungen, [3, 7, 12, 17, 23, 29, 35, 41, 47, 52, 57, 62]);
+  // a first perfect Schwer round pays 3 × 3 = 9 — at most two trophies
+  assert.equal(trophyCount("rechnungen", 9), 2, "one Schwer round must not drop three trophies");
+  // Schwer alone (5 modes × 9 = 45) must not reach the twelfth trophy
+  assert.ok(THRESHOLDS.rechnungen.at(-1) > 5 * 9, "Schwer alone must not fill the shelf");
 });
 
 // §8.3: points reward progress and difficulty. They must never reward
