@@ -2,14 +2,16 @@
 // they played: every commercial kids' app shows streaks and stars, because
 // engagement is all they have. This site has the knowledge, so it shows that.
 //
-// Read-only. Nothing here writes state, nothing here leaves the device, and no
-// number on this page is ever shown to the child (the round's duration least of
-// all — see §10.3).
+// Almost read-only: nothing here leaves the device, and no number on this page
+// is ever shown to the child (the round's duration least of all — see §10.3).
+// The one thing it writes is a deliberate adult action: resetting one game's
+// progress (§20). The child's gear still resets the whole site and nothing less
+// (§3.4) — per-game reset is named and adult, so it lives only here.
 
 import { initI18n, t } from "./i18n.js";
-import { getGame, getRewards } from "./storage.js";
+import { getGame, getRewards, loadState, resetGame, hasGameData } from "./storage.js";
 import { boxesFromString } from "./adaptive.js";
-import { totalPoints, totalTrophies } from "./rewards.js";
+import { GAMES, totalPoints, totalTrophies } from "./rewards.js";
 import { iconHTML } from "./graphics.js";
 import { initTopBar } from "./chrome.js";
 import { cellState, cellCounts, recallDigit, weakFacts, practiceSummary, minutesOf, secondsPerRound, sightState, sightTally } from "./parentstats.js";
@@ -143,6 +145,50 @@ function renderLesen() {
   $("p-lesen").innerHTML = `<p class="wchips">${words.join("")}</p>${legend}${sentLine}`;
 }
 
+// One reset button per game the cookie actually holds something for — real
+// progress or a stale dev-cookie entry alike (§20). Named games, adult surface:
+// the one place a per-game reset can exist without becoming the child's
+// "which game am I in?" question (§3.4). The section hides itself when there is
+// nothing to reset.
+function renderReset() {
+  const state = loadState();
+  const games = GAMES.filter((g) => hasGameData(state, g));
+  $("p-reset-sec").hidden = games.length === 0;
+  $("p-reset").innerHTML = games
+    .map((g) => `<div class="resetrow">
+      <span>${t(`game_${g}`)}</span>
+      <button class="resetbtn" type="button" data-reset="${g}">${t("parentsResetBtn")}</button>
+    </div>`)
+    .join("");
+}
+
+// Two-step confirm, like the site-wide reset (§3.4): the first tap arms the row
+// and names the stakes, a second within a few seconds does it. Arming one row
+// disarms the others, so two half-pressed buttons can never both fire.
+let armTimer = null;
+function disarmAll() {
+  clearTimeout(armTimer);
+  for (const b of $("p-reset").querySelectorAll("[data-reset]")) {
+    delete b.dataset.armed;
+    b.classList.remove("armed");
+    b.textContent = t("parentsResetBtn");
+  }
+}
+$("p-reset").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-reset]");
+  if (!btn) return;
+  if (btn.dataset.armed !== "1") {
+    disarmAll();
+    btn.dataset.armed = "1";
+    btn.classList.add("armed");
+    btn.textContent = t("parentsResetConfirm");
+    armTimer = setTimeout(disarmAll, 4000);
+    return;
+  }
+  resetGame(btn.dataset.reset);
+  location.reload(); // module-level reads are stale after the write; start fresh
+});
+
 function render() {
   // "played" means any item has left box 2, or any round was banked — box 2 is
   // what an untouched item reads as (§7.1), so `open` is the honest test.
@@ -153,6 +199,7 @@ function render() {
   $("p-empty").hidden = played;
   $("p-body").hidden = !played;
   renderChips();
+  renderReset(); // independent of "played": a stale cookie must still be clearable
   if (!played) return;
   // each game's block stands only once that game has something to say
   $("p-em-sec").hidden = !emPlayed;

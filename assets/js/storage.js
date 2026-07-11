@@ -74,10 +74,44 @@ export function setGame(name, data) {
   return save(patchSection(loadState(), name, data));
 }
 
-// There is no per-game reset. The settings sheet is the same on every page that
-// has a gear (§3.4), and a sheet that resets "this game" on one page and the
-// whole site on another is two sheets wearing one name.
+// The child's gear resets the WHOLE site and nothing less: the settings sheet is
+// the same on every page that has a gear (§3.4), so a sheet that wiped "this
+// game" on one page and everything on another would be two sheets wearing one
+// name. She is never told which game she is "in".
 export function resetAll() {
   if (typeof document === "undefined") return;
   document.cookie = `${NAME}=;path=/;max-age=0;SameSite=Lax`;
+}
+
+// Per-game reset lives in the parents' view instead (§20), where the surface is
+// adult and each game is named. Pure so it is unit-testable: the state with one
+// game's whole footprint removed — its own section (stars, boxes, practice
+// time) AND its trophy counter in `rewards.pr`. The fox's saved position resets
+// only if it was standing on that game; every other game, settings and language
+// are left exactly as they were.
+export function withoutGame(state, name) {
+  const next = { ...state };
+  delete next[name];
+  const rew = next.rewards;
+  if (rew && typeof rew === "object" && !Array.isArray(rew)) {
+    const pr = { ...(rew.pr ?? {}) };
+    delete pr[name];
+    // undefined drops out of JSON.stringify, so `at` is scrubbed, not blanked.
+    next.rewards = { ...rew, pr, at: rew.at === name ? undefined : rew.at };
+  }
+  return next;
+}
+
+// Whether the cookie holds anything worth resetting for `name`: a section of
+// its own, or a trophy counter. Drives the parents' view list, so a stale
+// dev-cookie entry still offers its reset.
+export function hasGameData(state, name) {
+  const section = state?.[name];
+  const hasSection = section && typeof section === "object" && Object.keys(section).length > 0;
+  const pr = state?.rewards?.pr?.[name];
+  return Boolean(hasSection) || (Number.isFinite(pr) && pr > 0);
+}
+
+export function resetGame(name) {
+  return save(withoutGame(loadState(), name));
 }

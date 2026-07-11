@@ -26,15 +26,23 @@ test("the page exists and is bilingual", () => {
   for (const k of keys) assert.equal(typeof en[k], "string", `en.js is missing ${k}`);
 });
 
-// A page that reports on the child's progress must not be able to change it.
-// One stray setGame() while rendering a heat grid would rewrite the boxes it is
-// drawing, and nothing else in the suite would notice.
-test("the parents' view never writes state", () => {
+// A page that reports on the child's progress must not DRIFT it. One stray
+// setGame() while rendering a heat grid would rewrite the boxes it is drawing,
+// and nothing else in the suite would notice. The one write this page is allowed
+// is the deliberate, adult, click-driven per-game reset (§20) — never a passive
+// write during render, and never the whole-site reset (that is the child's gear,
+// §3.4).
+test("the parents' view writes nothing but a deliberate per-game reset", () => {
   const src = read("assets/js/parents.js");
-  for (const setter of ["setGame", "setRewards", "setSettings", "resetAll", "resetGame", "recordRound", "addPractice"]) {
-    assert.ok(!src.includes(setter), `parents.js must not import or call ${setter}`);
+  // word-boundaried: `resetGame` (the one allowed write) contains the substring
+  // "setGame", so a plain includes() would false-positive on it.
+  for (const setter of ["setGame", "setRewards", "setSettings", "resetAll", "recordRound", "addPractice"]) {
+    assert.ok(!new RegExp(`\\b${setter}\\b`).test(src), `parents.js must not import or call ${setter}`);
   }
   assert.ok(src.includes("getGame") && src.includes("getRewards"), "it does have to read");
+  // the only write, and it hangs off a click, not off render()
+  assert.ok(src.includes("resetGame("), "the per-game reset is the one allowed write");
+  assert.match(src, /addEventListener\("click"[\s\S]*resetGame\(/, "reset must be click-driven, not passive");
   // and parentstats.js is pure: no storage, no DOM
   const stats = read("assets/js/parentstats.js");
   assert.ok(!/storage\.js|document|window/.test(stats), "parentstats.js must stay pure");
