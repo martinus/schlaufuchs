@@ -1469,6 +1469,12 @@ plain named numbers to be retuned after watching a real child, like
   buttons. On Schwer the question is shown again with the answer she should have
   chosen in green („Richtig: …"); the way out is that answer on the same four
   buttons. No timer, no "Verstanden" button.
+- **Schwer's question is set in the SAME body font, size and weight as the
+  passage** — not the bold display face. A question that stood out let a child
+  skim straight to it and answer without reading the passage; set identically,
+  she has to read down the text to find it. The round's scene (sky + basket,
+  §10.5) also stays on screen for a reading question, so she always sees how far
+  she is; it steps aside only while the wrong-answer aid is up (as for every kind).
 
 ### 14.3 Content (`content.js`), tiles and the adaptive engine
 

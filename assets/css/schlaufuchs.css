@@ -862,36 +862,44 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   gap: 8px;
   padding: 12px 14px;
 }
-.wordcard .passage {
+/* The passage and its question read as ONE block, in the SAME body font at the
+   same size and weight (§14.2): the question used to be set in the bold display
+   face, so it stood out and a child could skim straight to it and answer without
+   reading the passage. Set identically, she has to read down the text to find
+   it. (The base .question is the display face — this overrides it for read.) */
+.wordcard .passage,
+.wordcard.read .question {
+  font-family: var(--font-body);
   font-size: 1.02rem;
   line-height: 1.4;
+  font-weight: 400;
   text-align: left;
   color: var(--ink);
-}
-.wordcard.read .question {
   white-space: normal;
-  font-size: 1.15rem;
-  line-height: 1.3;
-  font-weight: 800;
-  text-align: left;
 }
 
 /* Four reading answers (§14.2): a single column of Choice tiles whose text
-   wraps, so a whole answer sentence fits and reads left-to-right like a list. */
-.mc-read { grid-template-columns: 1fr; }
+   wraps, so a whole answer sentence fits and reads left-to-right like a list.
+   Kept a touch tighter than the emoji buttons so a full passage, its question
+   and all four answers share one no-scroll screen with the round's scene. */
+.mc-read { grid-template-columns: 1fr; gap: 6px; }
 .mc-read button {
-  min-height: 48px;
+  min-height: 44px;
   font-size: 1.05rem;
   font-weight: 700;
   line-height: 1.25;
   text-align: left;
   white-space: normal;
-  padding: 8px 14px;
+  padding: 7px 14px;
 }
 
-/* Reading needs the room, so the round's scene steps aside during a passage
-   question (the progress is still tracked; it simply is not drawn here). */
-.stage:has(#wordcard.read) .journey-wrap { display: none; }
+/* The journey scene (sky + basket of stars) stays on screen for a reading
+   question too, so the child always sees how far she is (§10.5). A passage plus
+   its question needs the vertical room, so here the scene is drawn compact —
+   narrower, hence shorter (its aspect is fixed) — still large enough to read the
+   sky's stars and the filling basket. It only steps aside while the wrong-answer
+   aid is up, which every kind shares (below). */
+.stage:has(#wordcard.read) .journey { max-width: 42%; margin-inline: auto; }
 
 /* the aid's "Correct:" label, before the answer she should have chosen (§14.2) */
 .feedback-aid .fb-lbl { color: var(--ink-soft); font-weight: 700; font-size: 0.9rem; }

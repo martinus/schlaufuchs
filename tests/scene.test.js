@@ -79,6 +79,30 @@ test("the scene yields the stage to the feedback aid", () => {
   assert.match(css, /\.stage:has\(#feedback:not\(\[hidden\]\)\) \.journey-wrap \{ display: none; \}/);
 });
 
+// A reading question keeps the scene on screen so the child always sees how far
+// she is (§14.2) — it does NOT hide the journey the way the old passage layout
+// did. It only draws it compact, to leave room for the passage and question.
+test("the scene stays for a reading question, only smaller", () => {
+  assert.ok(
+    !/\.stage:has\(#wordcard\.read\)\s+\.journey-wrap\s*\{[^}]*display:\s*none/.test(css),
+    "a reading question must not hide the journey — the stars have to stay visible",
+  );
+  assert.match(css, /\.stage:has\(#wordcard\.read\) \.journey \{ max-width:/,
+    "the reading journey is drawn compact so passage + question + answers still fit");
+});
+
+// The reading question is set in the SAME body font as the passage (§14.2): a
+// bold display-face question stood out, and a child could skim to it and answer
+// without reading the passage. Guard against a revert to the display face.
+test("the reading question shares the passage's body font", () => {
+  const start = css.indexOf(".wordcard .passage,");
+  assert.ok(start >= 0, "the passage and the reading question must share one rule");
+  const rule = css.slice(start, css.indexOf("}", start) + 1);
+  assert.match(rule, /\.wordcard\.read \.question/, "the question must be in that shared rule");
+  assert.match(rule, /font-family: var\(--font-body\)/,
+    "the reading question must use the body font, not the bold display face");
+});
+
 // Regression: the round showed a goal line in the body face at 0.8rem, next to
 // display-face text, and it promised stars on a tile that could pay none.
 test("the scene carries no prose, and the dead strings are gone", () => {
