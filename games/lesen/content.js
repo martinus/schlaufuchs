@@ -5,9 +5,14 @@
 // every child's Leitner boxes shift under her.
 //
 // Authoring rules (enforced by tests/lesen-content.test.js):
-//  - every word has ONE unambiguous, mainstream emoji; inside a pack, words
-//    and emoji are unique, and no two emoji are near-twins (🐶 vs 🐺 is fine,
-//    🐶 vs 🐕 is a bug) — distractors are drawn from the same pack (§14.3);
+//  - a Leicht item is a word `{ w, e }` with ONE unambiguous, mainstream emoji;
+//    inside a pack, words and emoji are unique, and no two emoji are near-twins
+//    (🐶 vs 🐺 is fine, 🐶 vs 🐕 is a bug) — distractors are drawn from the same
+//    pack (§14.3);
+//  - a Mittel item is a Stimmt/Quatsch pair `{ ok, no }`: `ok` a true sentence,
+//    `no` a nonsense one on the same theme, each ≤ 60 chars and ending ".", the
+//    two faces distinct and every sentence unique game-wide. questionFor shows
+//    one of the two per encounter, so the verdict cannot be memorised (§14.1);
 //  - a Schwer item is a reading passage `{ text, q, a }`: `text` is a short
 //    passage (~3 lines, ≤ 175 chars, sentences ending "."), `q` a question
 //    ending "?", and `a` FOUR distinct answers with the CORRECT one FIRST
@@ -69,54 +74,60 @@ export const CONTENT = {
         { w: "Pilz", e: "🍄" },
         { w: "Blatt", e: "🍁" },
       ] },
-      // --- Mittel: compounds & consonant clusters, 10 each ---
+      // --- Mittel: Stimmt/Quatsch (§14.1) — one whole sentence to read and a
+      // verdict to give. Each item is a `{ ok, no }` pair: `ok` is a true
+      // sentence, `no` a nonsense one on the same theme, and questionFor draws
+      // one of the two per encounter, so the child cannot memorise "the fourth
+      // one is true" — she has to read it. Rewritten IN PLACE from the old
+      // Mittel word packs (their pack keys are unchanged, so their i18n names
+      // and every child's Leitner box position stay put — §9.2). 10 pairs each. ---
       { key: "tierwelt", diff: 1, items: [
-        { w: "Schmetterling", e: "🦋" },
-        { w: "Eichhörnchen", e: "🐿️" },
-        { w: "Schildkröte", e: "🐢" },
-        { w: "Elefant", e: "🐘" },
-        { w: "Pinguin", e: "🐧" },
-        { w: "Krokodil", e: "🐊" },
-        { w: "Marienkäfer", e: "🐞" },
-        { w: "Papagei", e: "🦜" },
-        { w: "Delfin", e: "🐬" },
-        { w: "Känguru", e: "🦘" },
+        { ok: "Ein Pinguin kann gut schwimmen.", no: "Ein Pinguin fährt gern Fahrrad." },
+        { ok: "Der Elefant hat einen langen Rüssel.", no: "Der Elefant schläft in einem Vogelnest." },
+        { ok: "Eine Schildkröte trägt ihr Haus mit sich.", no: "Eine Schildkröte rennt schneller als ein Auto." },
+        { ok: "Das Krokodil hat viele scharfe Zähne.", no: "Das Krokodil strickt sich einen warmen Schal." },
+        { ok: "Ein Papagei kann Wörter nachsprechen.", no: "Ein Papagei taucht tief auf den Meeresgrund." },
+        { ok: "Der Delfin lebt im Meer.", no: "Der Delfin wohnt in einem Baumhaus." },
+        { ok: "Das Känguru hüpft mit großen Sprüngen.", no: "Das Känguru schläft kopfüber an der Decke." },
+        { ok: "Ein Schmetterling hat bunte Flügel.", no: "Ein Schmetterling zieht einen schweren Anhänger." },
+        { ok: "Das Eichhörnchen sammelt gern Nüsse.", no: "Das Eichhörnchen spielt Trompete im Zirkus." },
+        { ok: "Ein Marienkäfer hat rote Flügel mit Punkten.", no: "Ein Marienkäfer bellt laut wie ein Hund." },
       ] },
       { key: "unterwegs", diff: 1, items: [
-        { w: "Fahrrad", e: "🚲" },
-        { w: "Feuerwehrauto", e: "🚒" },
-        { w: "Flugzeug", e: "✈️" },
-        { w: "Straßenbahn", e: "🚋" },
-        { w: "Hubschrauber", e: "🚁" },
-        { w: "Traktor", e: "🚜" },
-        { w: "Rakete", e: "🚀" },
-        { w: "Polizeiauto", e: "🚓" },
-        { w: "Segelboot", e: "⛵" },
-        { w: "Krankenwagen", e: "🚑" },
+        { ok: "Ein Flugzeug fliegt hoch am Himmel.", no: "Ein Flugzeug fährt unter Wasser zur Schule." },
+        { ok: "Das Feuerwehrauto löscht das Feuer.", no: "Das Feuerwehrauto backt einen Kuchen." },
+        { ok: "Ein Segelboot braucht Wind zum Fahren.", no: "Ein Segelboot fliegt bis zum Mond." },
+        { ok: "Der Traktor arbeitet auf dem Feld.", no: "Der Traktor schläft in einem Bett." },
+        { ok: "Eine Rakete fliegt in den Weltraum.", no: "Eine Rakete schwimmt gemütlich im Teich." },
+        { ok: "Der Krankenwagen bringt Kranke ins Krankenhaus.", no: "Der Krankenwagen verkauft Eis am Strand." },
+        { ok: "Ein Hubschrauber hat einen großen Rotor.", no: "Ein Hubschrauber gräbt sich unter die Erde." },
+        { ok: "Die Straßenbahn fährt auf Schienen.", no: "Die Straßenbahn klettert auf hohe Bäume." },
+        { ok: "Ein Fahrrad hat zwei Räder.", no: "Ein Fahrrad legt jeden Morgen ein Ei." },
+        { ok: "Das Polizeiauto hat ein lautes Blaulicht.", no: "Das Polizeiauto wächst in einem Blumenbeet." },
       ] },
       { key: "kueche", diff: 1, items: [
-        { w: "Schokolade", e: "🍫" },
-        { w: "Erdbeere", e: "🍓" },
-        { w: "Spiegelei", e: "🍳" },
-        { w: "Geburtstagskuchen", e: "🎂" },
-        { w: "Wassermelone", e: "🍉" },
-        { w: "Brezel", e: "🥨" },
-        { w: "Pfannkuchen", e: "🥞" },
-        { w: "Kartoffel", e: "🥔" },
-        { w: "Zitrone", e: "🍋" },
-        { w: "Karotte", e: "🥕" },
+        { ok: "Schokolade schmeckt süß.", no: "Schokolade schmeckt scharf wie Pfeffer." },
+        { ok: "Eine Zitrone schmeckt sauer.", no: "Eine Zitrone schmeckt süß wie Honig." },
+        { ok: "Eine Erdbeere ist rot und klein.", no: "Eine Erdbeere ist so groß wie ein Haus." },
+        { ok: "Ein Spiegelei macht man aus einem Ei.", no: "Ein Spiegelei macht man aus Steinen." },
+        { ok: "Die Wassermelone ist innen rot und saftig.", no: "Die Wassermelone ist innen voller Schrauben." },
+        { ok: "Eine Brezel ist gebacken und salzig.", no: "Eine Brezel ist aus hartem Metall." },
+        { ok: "Pfannkuchen brät man in der Pfanne.", no: "Pfannkuchen wachsen an hohen Bäumen." },
+        { ok: "Eine Kartoffel wächst in der Erde.", no: "Eine Kartoffel fliegt wie ein Vogel." },
+        { ok: "Eine Karotte ist orange und knackig.", no: "Eine Karotte leuchtet nachts wie eine Lampe." },
+        { ok: "Auf den Geburtstagskuchen kommen Kerzen.", no: "Auf den Geburtstagskuchen kommt Zahnpasta." },
       ] },
       { key: "draussen", diff: 1, items: [
-        { w: "Regenbogen", e: "🌈" },
-        { w: "Gewitter", e: "⛈️" },
-        { w: "Schneemann", e: "⛄" },
-        { w: "Schneeflocke", e: "❄️" },
-        { w: "Drachen", e: "🪁" },
-        { w: "Zelt", e: "⛺" },
-        { w: "Fußball", e: "⚽" },
-        { w: "Luftballon", e: "🎈" },
-        { w: "Sonnenblume", e: "🌻" },
-        { w: "Regenschirm", e: "☔" },
+        { ok: "Ein Regenbogen hat viele Farben.", no: "Ein Regenbogen ist immer ganz schwarz." },
+        { ok: "Bei einem Gewitter blitzt und donnert es.", no: "Bei einem Gewitter regnet es Bonbons." },
+        { ok: "Einen Schneemann baut man aus Schnee.", no: "Einen Schneemann baut man aus warmem Sand." },
+        { ok: "Eine Schneeflocke ist weiß und kalt.", no: "Eine Schneeflocke ist heiß wie Feuer." },
+        { ok: "Ein Drachen steigt im Wind in die Luft.", no: "Ein Drachen fliegt tief unter der Erde." },
+        { ok: "In einem Zelt kann man übernachten.", no: "In einem Zelt fährt man über das Meer." },
+        { ok: "Einen Fußball tritt man mit dem Fuß.", no: "Einen Fußball isst man mit Messer und Gabel." },
+        { ok: "Ein Luftballon ist mit Luft gefüllt.", no: "Ein Luftballon ist aus schwerem Stein." },
+        { ok: "Eine Sonnenblume dreht sich zur Sonne.", no: "Eine Sonnenblume wächst kopfüber im Keller." },
+        { ok: "Ein Regenschirm schützt vor dem Regen.", no: "Ein Regenschirm schützt vor lauter Musik." },
       ] },
       // --- Schwer: reading passages, comprehension question, 4 answers (§14.2).
       // `text` is a short passage (~3 lines), `q` the question, and `a` the four

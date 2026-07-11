@@ -19,6 +19,11 @@ export default {
     lesenPackLeseNatur: "Natur",
     lesenPackLeseAbenteuer: "Abenteuer",
     lesenMixed: "Alle",
+    // The Mittel verdict buttons (§14.1) and the aid's answer line (§8.1).
+    lesenTrue: "Stimmt!",
+    lesenFalse: "Quatsch!",
+    lesenIsTrue: "Das stimmt wirklich!",
+    lesenIsFalse: "Das ist Quatsch!",
     // The Schwer reading aid names the right answer after a wrong one (§14.2).
     lesenAnswerIs: "Richtig:",
     // What a screen reader hears once the blitz has hidden the word (§14.2).
@@ -49,6 +54,10 @@ export default {
     lesenPackLeseNatur: "Nature",
     lesenPackLeseAbenteuer: "Adventure",
     lesenMixed: "All",
+    lesenTrue: "True!",
+    lesenFalse: "Nonsense!",
+    lesenIsTrue: "That is really true!",
+    lesenIsFalse: "That is nonsense!",
     lesenAnswerIs: "Correct:",
     lesenCardHidden: "The word is hiding",
     lesenReady: "Ready? Tap",

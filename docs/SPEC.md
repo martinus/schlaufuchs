@@ -635,7 +635,7 @@ the child never sees the mechanism.
 
 ### 7.3 Round composition
 
-A round draws **10 unique items** (6 for Lesen; einmaleins Schwer draws 12,
+A round draws **10 unique items** (8 for Lesen; einmaleins Schwer draws 12,
 §10.2). Re-queued repeats extend the round; **the round only ends when every
 item has been answered correctly**, so every round ends in success (see
 journey framing, §8.2). "First-try correct" is tracked per item for scoring.
@@ -1408,44 +1408,50 @@ letter stage** — this supersedes the earlier "Leicht = Buchstaben" plan
 (resolved decision; a reader who still needs letters is below this game's
 floor, and speech support for true beginners is deferred with §14.6).
 
-Journey theme: `meadow`. Rounds of **6** items (§7.3). No SpeechSynthesis in
-this version: **emoji are the meaning anchors**, and everything is playable
-without reading any UI text.
+Journey theme: `meadow`. Rounds of **8** items (§7.3) — lengthened from six so a
+tile's three stars are real work to collect and a full Pokal ladder asks enough
+reading. No SpeechSynthesis in this version: **emoji are the meaning anchors**,
+and everything is playable without reading any UI text.
 
 ### 14.1 Stages (= difficulty)
 
 | | Stage | Exercise |
 |---|---|---|
-| Leicht | **Blitzwörter kurz** | a word flashes on a card, then hides; pick its emoji from 4. Short frequent words, 1–2 syllables |
-| Mittel | **Blitzwörter lang** | same, with long words — compounds and consonant clusters („Schmetterling") |
+| Leicht | **Blitzwörter** | a word flashes on a card, then hides; pick its emoji from 4. Short frequent words, 1–2 syllables |
+| Mittel | **Stimmt/Quatsch** | a whole sentence shown **statically, never flashed**; read it and judge it — tap **Stimmt!** or **Quatsch!**. Two verdicts, but guessing does not pay (below) |
 | Schwer | **Leseverständnis** | a short passage (~3 lines) shown **statically, never flashed**; read it, then answer a question about it by picking one of **4 answers**. Comprehension, not a coin-flip verdict |
 
-Schwer is never flashed on purpose, and the child never sees a clock: the skill
-trained there is comprehension of a whole passage, and a flash would punish
-exactly the child this stage trains. It replaced the old Stimmt/Quatsch verdict
-(a two-choice question is half a guess); four answers over a passage she must
-actually read do not pay a guesser. The tempo ladder (§14.4) observes silently,
-with bounds sized to a real passage read (far more generous than the word
-stages) and the ⭐⭐ gate keeping a lucky guess unprofitable.
+The three stages climb the fluency ladder: a single word grasped whole (Leicht),
+a whole sentence read and judged (Mittel), a passage read and understood
+(Schwer). Only Leicht flashes — Mittel and Schwer put the text on screen to be
+read, and neither shows a clock. The two-choice Stimmt/Quatsch is the *easier*
+reading step, not a coin-flip pay-out: stars count first-try only (all 8 by
+coin-flip ≈ 0.4 %), a wrong verdict forces the aid and re-queues the item
+(guessing is slower than reading), the tempo ladder's ⭐⭐ gate makes a fast
+guess unprofitable, and `roundPoints` pays only improvements. Schwer raises the
+bar to four answers over a passage she must actually read. The tempo ladder
+(§14.4) observes silently, its bounds sized to real reading time.
 
 ### 14.2 The blitz (`flashMs`, the adaptive hook)
 
-How long a word stays readable comes from its own Leitner box: `FLASH_MS`
-(games/lesen/logic.js) runs from generous (box 0: 2.4s Leicht / 3.0s Mittel)
-to a real blitz (box 4: 0.55s / 0.7s — Mittel later, its words are physically
-longer). A word the child misses drops to box 0 and comes back generous. This
-is the mechanic that makes fluency *felt*: the same word flashes shorter and
-shorter, and she keeps catching it. The bounds are plain named numbers to be
-retuned after watching a real child, like `TEMPO_TIERS` (§10.6).
+Only **Leicht** flashes — it is the one stage that shows a single word; Mittel
+(a sentence) and Schwer (a passage) are read, so `FLASH_MS` has one row and
+`flashMs` returns `null` for both. How long a word stays readable comes from its
+own Leitner box: `FLASH_MS` (games/lesen/logic.js) runs from generous (box 0:
+1.9s) to a real blitz (box 4: 0.5s). A word the child misses drops to box 0 and
+comes back generous. This is the mechanic that makes fluency *felt*: the same
+word flashes shorter and shorter, and she keeps catching it. The bounds are
+plain named numbers to be retuned after watching a real child, like
+`TEMPO_TIERS` (§10.6).
 
 - **The child starts the blitz, not the clock.** A word waits behind a
   tap-to-reveal cover (👀 „Bereit? Tippen"); the flash is armed only when she
   taps it, so it never runs before she has looked or even knows a word is
   coming. Until the reveal the four answer emoji are shown but **disabled** —
   she can see what is coming without being able to guess at a word she has not
-  seen. A reading passage never covers (it does not flash — nothing is taken
-  away), so its four answers are live at once. The cover is a real `<button>`
-  (keyboard-reachable); `armFlash()` lives in `reveal()`, never in `askNext()`.
+  seen. A Mittel sentence and a Schwer passage never cover (they do not flash —
+  nothing is taken away), so their answers are live at once. The cover is a real
+  `<button>` (keyboard-reachable); `armFlash()` lives in `reveal()`, not `askNext()`.
 - Answering **during** the flash is allowed — that is the fluent path.
 - The hide is **decided by a JS timer and decorated by a CSS transition**,
   never a keyframe animation: `prefers-reduced-motion` kills transitions
@@ -1455,12 +1461,14 @@ retuned after watching a real child, like `TEMPO_TIERS` (§10.6).
   the *next* word.
 - The word never wraps; an overlong word is shrunk to fit its one line
   (`fittedFontSize`, the §10.1 contract).
-- **Wrong answer** (§8.1 aid contract): the tapped emoji struck through in
-  red, the word shown again **persistently** — no blitz — over the SAME four
-  options; the way out is tapping the right one. On Schwer the question is shown
-  again with the answer she should have chosen in green („Richtig: …"); the way
-  out is tapping that answer on the same four buttons. No timer, no "Verstanden"
-  button.
+- **Wrong answer** (§8.1 aid contract): on Leicht the tapped emoji struck
+  through in red, the word shown again **persistently** — no blitz — over the
+  SAME four options; the way out is tapping the right one. On Mittel the sentence
+  is shown again with the verdict it should have got (😊 „Das stimmt wirklich!"
+  or 😜 „Das ist Quatsch!"); the way out is the right verdict on the same two
+  buttons. On Schwer the question is shown again with the answer she should have
+  chosen in green („Richtig: …"); the way out is that answer on the same four
+  buttons. No timer, no "Verstanden" button.
 
 ### 14.3 Content (`content.js`), tiles and the adaptive engine
 
@@ -1468,35 +1476,37 @@ Data-driven and **append-only**: the canonical item order (packs in file
 order, items in theirs) is the box digit string's index, so reordering
 shifts every child's boxes. German first; content is keyed by language.
 
-- **12 packs**: per difficulty four themed packs — Leicht 4×10 short words,
-  Mittel 4×10 long words, Schwer 4×12 reading passages `{ text, q, a }` (the
-  correct answer authored first, shuffled by `optionsFor`) — 128 items. The
-  Schwer packs were rewritten **in place** from the old Quatsch pairs: same item
-  positions, so no child's Leitner box shifted (the append-only invariant is
-  about order, which was preserved).
-- Every word carries ONE unambiguous mainstream emoji, unique inside its
+- **12 packs**: per difficulty four themed packs — Leicht 4×10 short words
+  `{ w, e }`, Mittel 4×10 Stimmt/Quatsch pairs `{ ok, no }`, Schwer 4×12 reading
+  passages `{ text, q, a }` (the correct answer authored first, shuffled by
+  `optionsFor`) — 128 items. Both non-word difficulties were rewritten **in
+  place** — Schwer from the old Quatsch pairs to passages, Mittel from the old
+  long-word packs to Stimmt/Quatsch pairs (their pack keys kept, so their i18n
+  names stayed too): same item positions, so no child's Leitner box shifted (the
+  append-only invariant is about order, which was preserved).
+- A Leicht word carries ONE unambiguous mainstream emoji, unique inside its
   pack, no near-twins. **Distractors are the item's own pack-mates**
   (`optionsFor`): same theme ⇒ plausible, pack-unique emoji ⇒ clearly
   distinct. That holds on the mixed tile too — the home pack supplies them.
-- A Schwer item is a **pair**: a true sentence and a silly one about the same
-  subject, alike in shape and length. `questionFor` draws which face shows
-  per encounter, so an item's truth cannot be memorized — only read. Guessing
-  is unprofitable by the existing machinery alone: stars count first-try only
-  (6/6 by coin-flip ≈ 1.6 %), a wrong verdict forces the aid and re-queues
-  the item (guessing is slower than reading), and `roundPoints` pays only
-  improvements.
+- A Mittel item is a **pair** `{ ok, no }`: a true sentence and a silly one on
+  the same theme, alike in shape and length (each ≤ 60 chars). `questionFor`
+  draws which face shows per encounter, so an item's verdict cannot be memorized
+  — only read. Guessing stays unprofitable by the existing machinery alone
+  (§14.1): first-try-only stars, the aid re-queue, the tempo ⭐⭐ gate, and
+  improvement-only points. `optionsFor` returns `null` — a verdict is not a
+  choice of options.
 - **Tiles** (the picker): difficulty × (4 packs + „🎲 Alle" mixing the whole
   difficulty) = 15 tiles, each worth three stars. Same picker contract as
   einmaleins (§10.2): stars-left drawn on the tile, the fox walks, the walk
   opens the tile. `MAX_POINTS.lesen = 5·3·1 + 5·3·2 + 5·3·3 = 90`, computed
   from the real tiles (`maxPoints()`), no longer a guess.
-- Boxes per item (§7), rounds of 6, no hardness boost — the Leitner weights
+- Boxes per item (§7), rounds of 8, no hardness boost — the Leitner weights
   alone decide what returns.
 
 ### 14.4 Stars & tempo
 
 Stars are the einmaleins ratios exactly (§10.3): ≥60 % ⭐ · ≥80 % ⭐⭐ · 100 %
-⭐⭐⭐ first-try — on a round of six that is 4, 5, 6. The earlier "⭐⭐⭐ = three
+⭐⭐⭐ first-try — on a round of eight that is 5, 7, 8. The earlier "⭐⭐⭐ = three
 consecutive perfect rounds" plan and its `c3` counter are **dropped**
 (resolved): a counter that resets is loss framing (§8), and it bought nothing
 the ratio does not.
@@ -1511,13 +1521,15 @@ two lesen-specific rules:
 
 - **The clock starts when the child can see the question**: at the reveal tap
   for a Blitzwort (the cover time is hers for free — she starts the blitz
-  *and* the clock, §14.2), and at the show for a sentence.
+  *and* the clock, §14.2), and at the show for a Mittel sentence or a Schwer
+  passage.
 - **`TEMPO_TIERS` are lesen's own** (games/lesen/logic.js): Leicht mirrors
-  einmaleins' Leicht (a tap on one of four choices), Mittel sits later like
-  `FLASH_MS` does, and Schwer's bounds are sized to *reading* a whole sentence
-  (rocket ≤ 6s), so the rocket rewards fluent reading, never lucky guessing.
-  Educated guesses — retune after watching a real child, via
-  `playLesen({ delayMs })`.
+  einmaleins' Leicht (a tap on one of four choices); Mittel is sized to
+  *reading* a whole sentence then judging it (rocket ≤ 5s); Schwer's bounds are
+  the most generous, sized to reading a whole passage (rocket ≤ 10s). Each stage
+  sits strictly later than the one before, so the rocket rewards fluent reading,
+  never lucky guessing. Educated guesses — retune after watching a real child,
+  via `playLesen({ delayMs })`.
 
 The mechanics (`median`, `tempoTier`, `awardTempo`, the icons and keys) are
 duplicated from einmaleins like the star rules, pinned by the D11 parity test;

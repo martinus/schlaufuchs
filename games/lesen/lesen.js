@@ -159,14 +159,15 @@ function askNext() {
   $("feedback").hidden = true;
   card.hidden = false;
   card.classList.toggle("read", question.kind === "read");
+  card.classList.toggle("sent", question.kind === "sent");
   card.classList.remove("wc-hidden");
   renderQuestion();
   renderAnswers();
   renderStatus();
   // A word waits behind a cover until the child taps it (§14.2): the blitz must
   // not start before she has looked, or a word she never saw counts as a miss.
-  // A reading passage never flashes — nothing is taken away — so it shows at
-  // once, its answers live immediately, and its clock starts here (§14.4).
+  // A Mittel sentence or a Schwer passage never flashes — nothing is taken away
+  // — so it shows at once, its answers live immediately, its clock starts here.
   if (question.kind === "word") {
     phase = "ready";
     card.classList.add("covered");
@@ -250,13 +251,27 @@ function renderQuestion() {
 window.addEventListener("resize", () => question && fitQuestion());
 document.fonts?.ready.then(() => question && fitQuestion());
 
-// Answers: four big emoji for a word (§14.1), four wrapping text answers for a
-// reading passage (§14.2). Built once per question and left alone — the aid
-// re-uses the SAME buttons, so nothing moves under the finger already going for
-// one. Both kinds submit the chosen option itself, matched against the answer.
+// Answers: four big emoji for a word (§14.1), two verdicts for a Mittel sentence
+// (§14.1), four wrapping text answers for a Schwer passage (§14.2). Built once
+// per question and left alone — the aid re-uses the SAME buttons, so nothing
+// moves under the finger already going for one. The word and reading kinds
+// submit the chosen option itself; the sentence submits its boolean verdict.
 function renderAnswers() {
   const box = $("answers");
   box.innerHTML = "";
+  if (question.kind === "sent") {
+    const v = document.createElement("div");
+    v.className = "verdict";
+    for (const [val, key, cls, sym] of [[true, "lesenTrue", "v-yes", "✓"], [false, "lesenFalse", "v-no", "✗"]]) {
+      const b = document.createElement("button");
+      b.className = cls;
+      b.innerHTML = `<span class="v-sym" aria-hidden="true">${sym}</span>${t(key)}`;
+      fastPress(b, () => answerPress(val, b));
+      v.appendChild(b);
+    }
+    box.appendChild(v);
+    return;
+  }
   const mc = document.createElement("div");
   mc.className = question.kind === "word" ? "mc mc-emoji" : "mc mc-read";
   for (const opt of options) {
@@ -340,13 +355,18 @@ function submit(value, btn) {
 
 // Wrong answer (§8.1, §14.2): what she tapped, retracted, and the right answer
 // given — the way out is choosing it on the same buttons. For a word: the right
-// emoji. For a reading passage: the question again and the answer she should
-// have picked. No "Verstanden" button, no timer — the einmaleins aid contract.
+// emoji. For a Mittel sentence: the sentence and the verdict it should have got.
+// For a Schwer passage: the question again and the answer she should have picked.
+// No "Verstanden" button, no timer — the einmaleins aid contract.
 function showFeedback(wrong) {
   const fb = $("feedback");
   if (question.kind === "word") {
     fb.innerHTML = `<span class="eq eq-wrong"><s>${wrong}</s></span>
       <span class="eq"><b class="ans">${question.text}</b></span>`;
+  } else if (question.kind === "sent") {
+    const verdict = question.answer ? `😊 ${t("lesenIsTrue")}` : `😜 ${t("lesenIsFalse")}`;
+    fb.innerHTML = `<span class="fb-sent">${question.text}</span>
+      <span class="eq"><b class="ans">${verdict}</b></span>`;
   } else {
     fb.innerHTML = `<span class="fb-sent">${question.text}</span>
       <span class="eq"><span class="fb-lbl">${t("lesenAnswerIs")}</span> <b class="ans">${question.answer}</b></span>`;
@@ -480,9 +500,12 @@ const bar = initTopBar({
   onLeave: guard.guardLink,
   onChange() {
     updateChip();
-    // The answers are content (emoji, or the passage's own answers), not UI
-    // chrome, so a language switch does not change them — but the chip's
-    // difficulty·pack label is translated, and it has just been repainted above.
+    // Word and passage answers are content (emoji, or the passage's own answers)
+    // and do not translate — but a Mittel sentence's verdict buttons say
+    // "Stimmt!/Quatsch!" in the UI language, so they are rebuilt on a switch.
+    // Only between answers: inside the aid the buttons hold her struck verdict,
+    // and that state outranks a translation (the chip above is already redone).
+    if (!roundOver && session && phase === "answer" && question?.kind === "sent") renderAnswers();
   },
   onClose() {
     if (roundOver) summary.open();
