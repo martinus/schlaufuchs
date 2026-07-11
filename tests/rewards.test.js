@@ -85,6 +85,18 @@ test("trophyCount maps a game's counter to its earned trophies", () => {
   assert.equal(trophyCount(undefined, 9999), 0);
 });
 
+// Each region keeps its own counter: `pr` is keyed per game, and a game's
+// trophies derive ONLY from that game's key. A wall of einmaleins stars must
+// never light up a single reading trophy — the shelves are earned separately.
+test("a game's trophies count only its own stars, never another game's (§8.3)", () => {
+  const pr = { einmaleins: 9999 }; // mastered einmaleins, never opened a book
+  assert.equal(trophyCount("lesen", pr.lesen), 0, "einmaleins stars buy no reading trophy");
+  assert.equal(totalTrophies(pr), 12, "…only einmaleins' own twelve");
+
+  // and once reading is played, only the reading stars move its shelf
+  assert.equal(trophyCount("lesen", ({ ...pr, lesen: 9 }).lesen), 2);
+});
+
 test("every game has exactly 12 trophies with de+en names (§8.3)", () => {
   for (const g of GAMES) {
     assert.equal(TROPHIES[g].length, 12, g);
