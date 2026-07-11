@@ -1471,11 +1471,27 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .textpage .linklist span { display: block; font-size: 0.85rem; color: var(--ink-soft); }
 .textpage .mail { color: var(--depth); font-weight: 700; }
 
-/* the privacy link sits in the settings overlay, the one screen every page has */
-.cx-privacy, .cx-parents, .cx-about {
+/* A line, then the one link out of the sheet: the parents' view, as a button.
+   Privacy and About left the gear (they live on the footers); Für Eltern stays,
+   set apart from the settings above it by the rule and styled as a real button,
+   quieter than the orange primary — it goes to an adult page, not an action. */
+.cx-sep {
+  border: 0;
+  border-top: 1px solid var(--orange-soft);
+  margin: 14px 0 4px;
+}
+.cx-parents.btn-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  border-radius: var(--radius);
+  background: var(--depth-soft);
   color: var(--depth);
-  font-weight: 700;
-  text-decoration: underline;
+  font-weight: 800;
+  font-size: 1.1rem;
+  text-decoration: none;
 }
 
 /* ---- Parents' view (§14) ---- */

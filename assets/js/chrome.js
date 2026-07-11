@@ -20,12 +20,12 @@ import { iconHTML } from "./graphics.js";
 import { createOverlay } from "./overlay.js";
 import { sfx } from "./audio.js";
 
-// The settings overlay is the one screen every page has, so the privacy page
-// hangs off it. Resolved from this module's own URL — an absolute "/privacy"
-// would break a subpath deploy, and "../privacy.html" is wrong from the map.
-const PRIVACY_URL = new URL("../../privacy.html", import.meta.url).href;
+// The settings overlay links the parents' view (the one adult screen reachable
+// from every gear). Privacy and About are not in the gear — they hang off the
+// footers (map, album, parents, …) — so the parents' view is the gear's route to
+// them. Resolved from this module's own URL: an absolute "/parents" would break
+// a subpath deploy, and "../parents.html" is wrong from the map.
 const PARENTS_URL = new URL("../../parents.html", import.meta.url).href;
-const ABOUT_URL = new URL("../../about.html", import.meta.url).href;
 
 // The fox chip: the mascot, the star count, the trophy count. Nothing else, and
 // the same three things on every page that has it (§3.3). It is a status
@@ -113,9 +113,8 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
       </div>
       <div class="setrow setrow-reset"><span class="cx-l-reset"></span></div>
       <div class="resetlist" id="cx-resetlist"></div>
-      <div class="setrow"><a class="cx-parents" href="${PARENTS_URL}"></a></div>
-      <div class="setrow"><a class="cx-privacy" href="${PRIVACY_URL}"></a></div>
-      <div class="setrow"><a class="cx-about" href="${ABOUT_URL}"></a></div>
+      <hr class="cx-sep">
+      <a class="cx-parents btn-menu" href="${PARENTS_URL}"></a>
       <button class="primary" id="cx-close"></button>`,
     onOpen: renderRows,
   });
@@ -135,8 +134,6 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
     el.querySelector(".cx-l-reset").textContent = t("resetAll");
     renderResetList();
     el.querySelector(".cx-parents").textContent = t("parentsLink");
-    el.querySelector(".cx-privacy").textContent = t("privacyLink");
-    el.querySelector(".cx-about").textContent = t("aboutLink");
     closeBtn.textContent = t("close");
   }
 

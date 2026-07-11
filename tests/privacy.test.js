@@ -20,22 +20,19 @@ test("the privacy page exists and says the things it must say", () => {
   assert.match(en.privacyCookieBody, /schlaufuchs/);
 });
 
-// The gear reaches it from every page that wears the child's bar. The reader's
-// pages have no gear and carry a footer link instead. No page is a dead end.
+// No page is a dead end for privacy. Privacy left the gear (it lives on the
+// footers now), so a gear page reaches it through the gear's one link out — the
+// parents' view — whose footer carries the privacy link. Footer pages carry it
+// themselves.
 test("every page can reach the privacy page", () => {
-  const chrome = read("assets/js/chrome.js");
-  // Both halves, named separately. Asserting only that "cx-privacy" appears
-  // somewhere passed happily when the anchor was deleted and the line that
-  // fills it survived — which is a null dereference, not a missing link.
   assert.match(
-    chrome,
-    /<a class="cx-privacy" href="\$\{PRIVACY_URL\}"><\/a>/,
-    "the settings overlay must render the privacy anchor",
+    read("assets/js/chrome.js"),
+    /<a[^>]*\bcx-parents\b[^>]*href="\$\{PARENTS_URL\}"/,
+    "the gear links the parents' view — its one route to the footer pages",
   );
-  assert.match(
-    chrome,
-    /\.cx-privacy"\)\.textContent = t\("privacyLink"\)/,
-    "and must give it its translated label",
+  assert.ok(
+    read("parents.html").includes('href="privacy.html"'),
+    "the parents' view footers the privacy page, so the gear reaches it in two hops",
   );
 
   for (const page of PAGES) {
@@ -46,16 +43,10 @@ test("every page can reach the privacy page", () => {
 });
 
 // Regression risk: `/privacy.html` works on schlaufuchs.ankerl.com and 404s on
-// any subpath deploy, and `../privacy.html` is wrong from the map.
-test("the privacy URL is resolved from the module, never rooted at /", () => {
-  const chrome = read("assets/js/chrome.js");
-  assert.match(
-    chrome,
-    /new URL\("\.\.\/\.\.\/privacy\.html", import\.meta\.url\)/,
-    "resolve the privacy page against chrome.js's own URL",
-  );
-  assert.ok(!/href="\/privacy/.test(chrome), "an absolute path breaks subpath deploys");
+// any subpath deploy. The footer links are relative, so they resolve either way.
+test("the privacy link never roots at / (subpath deploys)", () => {
   for (const page of PAGES) assert.ok(!read(page).includes('href="/privacy'), `${page}: absolute path`);
+  assert.ok(!/href="\/privacy/.test(read("assets/js/chrome.js")), "chrome.js must not root the path either");
 });
 
 // The footer link must be a sibling of the translated paragraph: translateDOM

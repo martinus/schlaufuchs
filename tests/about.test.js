@@ -36,16 +36,19 @@ test("every outbound link is absolute and https", () => {
   }
 });
 
-// The gear covers every page that wears the child's bar. The reader's pages
-// have no gear and carry links instead. No page may be a dead end.
+// No page may be a dead end for About. About left the gear (it lives on the
+// footers now), so a gear page reaches it through the gear's one link out — the
+// parents' view — whose footer carries the About link. Footer pages carry it
+// themselves.
 test("every page can reach the about page", () => {
-  const chrome = read("assets/js/chrome.js");
-  assert.match(chrome, /<a class="cx-about" href="\$\{ABOUT_URL\}"><\/a>/);
-  assert.match(chrome, /\.cx-about"\)\.textContent = t\("aboutLink"\)/);
   assert.match(
-    chrome,
-    /new URL\("\.\.\/\.\.\/about\.html", import\.meta\.url\)/,
-    "an absolute path breaks a subpath deploy",
+    read("assets/js/chrome.js"),
+    /<a[^>]*\bcx-parents\b[^>]*href="\$\{PARENTS_URL\}"/,
+    "the gear links the parents' view — its one route to the footer pages",
+  );
+  assert.ok(
+    read("parents.html").includes('href="about.html"'),
+    "the parents' view footers the About page, so the gear reaches it in two hops",
   );
 
   for (const page of PAGES) {
