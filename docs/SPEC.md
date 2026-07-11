@@ -339,16 +339,15 @@ The bar has exactly two shapes:
   difficulty and table; tapping opens the picker **as an overlay** on the same
   page, never a separate page.
 - **Settings gear** → shared overlay (`initSettingsOverlay`, `chrome.js`):
-  the **same six rows on every page that has a gear** — sound, language, reset,
-  and the three links out. The reset here is always the whole site's, with a
-  two-step confirm. It used to take a
-  `resetKind`: "all" on the map, "game" inside a game, and *nothing at all* in
-  the Pokalraum — so one gear opened three sheets, and in the room a parent
-  looking for the reset found a row that was missing. The child's gear offers no
-  per-game reset: she is never told which game she is "in". **Per-game reset
-  lives in the parents' view instead** (§20) — an adult surface where each game
-  is named — so a grown-up can clear one game (`resetGame(name)` in `storage.js`)
-  without touching the others.
+  the **same rows on every page that has a gear** — sound, language, reset,
+  and the three links out. The overlay used to take a `resetKind` and open
+  three different sheets (all / game / nothing); it is one sheet now, identical
+  everywhere. **Reset is per game**: the "Fortschritt löschen" section lists one
+  row per game the cookie holds progress for (`hasGameData`), plus an "Alles"
+  row for the whole site — each a named, two-step confirm calling
+  `resetGame(name)` or `resetAll()` (`storage.js`). This is where reset lives;
+  the parents' view is read-only information (§20). A fresh cookie shows only
+  the "Alles" row, so the sheet is never empty of a reset.
 
 Round summaries are overlays too. The browser back button always means
 "back to the map".
@@ -888,8 +887,8 @@ getGame(name): object          // state[name] ?? {}
 setGame(name, data): boolean   // merge + write; false if over budget
 getRewards() / setRewards()
 getSettings() / setSettings()
-resetAll()                     // delete the cookie (child's gear, any page — §3.4)
-resetGame(name): boolean       // drop one game's section + its pr counter (parents' view, §20)
+resetAll()                     // delete the cookie (settings gear "Alles" row — §3.4)
+resetGame(name): boolean       // drop one game's section + its pr counter (settings gear — §3.4)
 withoutGame(state, name)       // the pure core of resetGame, unit-tested
 ```
 
@@ -1633,12 +1632,11 @@ all they have. This site has the **knowledge**, so it shows that.
 
 - Reachable from the settings overlay on every screen, and from the map's foot.
   Not linked from inside a round: it is not for the child.
-- **Read-only while reporting.** It sends nothing anywhere and writes no state
-  during render — one stray `setGame` while drawing the heat grid would rewrite
-  the boxes it is drawing. `tests/parents.test.js` enforces that it never
-  imports `setGame`/`setRewards`/`recordRound`/`addPractice`. Its **one** write
-  is the deliberate per-game reset below, and it hangs off a click, never off
-  render.
+- **Read-only.** It imports no writer, writes no state, sends nothing anywhere —
+  one stray `setGame` while drawing the heat grid would rewrite the boxes it is
+  drawing. `tests/parents.test.js` enforces that it never imports any setter,
+  reset included. Resetting progress is not here at all: it is a per-game reset
+  in the settings gear (§3.4), so this page is only ever information.
 - **The Leitner box is the diagnosis of accuracy** (§7.1), and it is already
   stored. Boxes 0–1 render as *slips*, 2 as *not practised yet*, 3–4 as
   *solid*, laid out as the 10×10 times table a parent learned at school.
@@ -1679,12 +1677,10 @@ all they have. This site has the **knowledge**, so it shows that.
   not practice) and banks **no** time for a non-finite clock — capping a NaN
   to fifteen minutes would credit practice that never happened. The pace line
   says out loud that time is not a goal.
-- **Per-game reset.** One row per game the cookie actually holds something for
-  (`hasGameData` — real progress or a stale entry alike), each with a two-step
-  confirm like the site-wide reset. Confirming calls `resetGame(name)`, which
-  drops that game's own section (stars, boxes, practice time) **and** its `pr`
-  trophy counter, scrubs the fox's saved spot if it sat there, and leaves every
-  other game, the settings and the language untouched — then reloads. This is
-  the **only** per-game reset in the product (the child's gear stays whole-site,
-  §3.4): the surface is adult and each game is named, and it doubles as the way
-  to tidy a stale dev cookie. The section hides itself when nothing is stored.
+
+Resetting progress is **not** on this page — it is the per-game reset in the
+settings gear (§3.4). `resetGame(name)` (and its pure core `withoutGame`) drop
+one game's section (stars, boxes, practice time) **and** its `pr` trophy
+counter, scrub the fox's saved spot if it sat there, and leave every other game,
+the settings and the language untouched. It doubles as the way to tidy a stale
+dev cookie.

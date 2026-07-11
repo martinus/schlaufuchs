@@ -13,8 +13,8 @@
 // carries its `data-i18n` attribute, so `setLang()` reaches the parts that stay.
 
 import { t, getLang, setLang, LANGUAGES } from "./i18n.js";
-import { getSettings, setSettings, resetAll } from "./storage.js";
-import { foxInfo, TOTAL_TROPHIES } from "./rewards.js";
+import { getSettings, setSettings, resetAll, resetGame, hasGameData, loadState } from "./storage.js";
+import { foxInfo, TOTAL_TROPHIES, GAMES } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconHTML } from "./graphics.js";
 import { createOverlay } from "./overlay.js";
@@ -97,12 +97,11 @@ export function initTopBar({ back = "./", title = null, onChange, onClose, onLea
 
 // Build the settings overlay and return its handle (§3.4).
 //
-// **The same rows on every page that has a gear.** The overlay used to take
-// a `resetKind`: "all" on the map, "game" on a game page, and nothing at all in
-// the Pokalraum — so the gear opened three different sheets, and in the room a
-// parent looked for the reset and there was none. One sheet, one reset, and the
-// reset is the whole site's, because that is the only one a child's screen can
-// honestly offer: she is never told which game she is "in".
+// **The same rows on every page that has a gear.** The overlay used to take a
+// `resetKind` and open three different sheets; it is one sheet now, identical
+// everywhere. Reset is per game: one row per game the cookie holds progress for,
+// plus an "everything" row — each a named, two-step confirm. (This is where the
+// reset lives; the parents' view is read-only information, §20.)
 export function initSettingsOverlay({ onChange, onClose } = {}) {
   const overlay = createOverlay({
     onClose,
@@ -112,7 +111,8 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
         <span class="cx-l-lang"></span>
         <div class="langpick" id="cx-lang" role="group"></div>
       </div>
-      <div class="setrow"><span class="cx-l-reset"></span><button class="iconbtn" id="cx-reset"></button></div>
+      <div class="setrow setrow-reset"><span class="cx-l-reset"></span></div>
+      <div class="resetlist" id="cx-resetlist"></div>
       <div class="setrow"><a class="cx-parents" href="${PARENTS_URL}"></a></div>
       <div class="setrow"><a class="cx-privacy" href="${PRIVACY_URL}"></a></div>
       <div class="setrow"><a class="cx-about" href="${ABOUT_URL}"></a></div>
@@ -123,9 +123,8 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
 
   const soundBtn = el.querySelector("#cx-sound");
   const langPick = el.querySelector("#cx-lang");
-  const resetBtn = el.querySelector("#cx-reset");
+  const resetList = el.querySelector("#cx-resetlist");
   const closeBtn = el.querySelector("#cx-close");
-  let resetArmed = false;
 
   function renderRows() {
     el.querySelector(".cx-title").textContent = t("settings");
@@ -134,12 +133,25 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
     soundBtn.innerHTML = iconHTML(getSettings().sound !== false ? "ui-sound-on" : "ui-sound-off", { size: 22 });
     renderLangPick();
     el.querySelector(".cx-l-reset").textContent = t("resetAll");
-    if (!resetArmed) resetBtn.innerHTML = iconHTML("ui-trash", { size: 22 });
+    renderResetList();
     el.querySelector(".cx-parents").textContent = t("parentsLink");
     el.querySelector(".cx-privacy").textContent = t("privacyLink");
     el.querySelector(".cx-about").textContent = t("aboutLink");
     closeBtn.textContent = t("close");
   }
+
+  // One reset row per game the cookie actually holds progress for (real or a
+  // stale entry alike), then an "everything" row. Rebuilt on every open, so a
+  // game played since last time appears, and a game just cleared drops off.
+  function renderResetList() {
+    const state = loadState();
+    const rows = GAMES.filter((g) => hasGameData(state, g)).map((g) => resetRowHTML(g, t(`game_${g}`)));
+    rows.push(resetRowHTML("__all__", t("resetEverything")));
+    resetList.innerHTML = rows.join("");
+  }
+  const resetRowHTML = (id, label) =>
+    `<div class="resetrow"><span>${label}</span>`
+    + `<button class="resetbtn" type="button" data-reset="${id}">${t("resetBtn")}</button></div>`;
 
   soundBtn.addEventListener("click", () => {
     setSettings({ sound: getSettings().sound === false });
@@ -169,18 +181,33 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
     onChange?.();
   });
 
-  // two-step confirm for the destructive reset (§3.4)
-  resetBtn.addEventListener("click", () => {
-    if (!resetArmed) {
-      resetArmed = true;
-      resetBtn.textContent = "❗";
-      setTimeout(() => {
-        resetArmed = false;
-        resetBtn.innerHTML = iconHTML("ui-trash", { size: 22 });
-      }, 3000);
+  // Two-step confirm for every reset row (§3.4): the first tap arms the row and
+  // names the stakes, a second within a few seconds does it. Arming one row
+  // disarms the others, so two half-pressed buttons can never both fire.
+  let armTimer = null;
+  function disarmReset() {
+    clearTimeout(armTimer);
+    for (const b of resetList.querySelectorAll("[data-reset]")) {
+      delete b.dataset.armed;
+      b.classList.remove("armed");
+      b.textContent = t("resetBtn");
+    }
+  }
+  resetList.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-reset]");
+    if (!btn) return;
+    if (btn.dataset.armed !== "1") {
+      disarmReset();
+      btn.dataset.armed = "1";
+      btn.classList.add("armed");
+      btn.textContent = t("resetConfirm");
+      sfx.click();
+      armTimer = setTimeout(disarmReset, 4000);
       return;
     }
-    resetAll();
+    const id = btn.dataset.reset;
+    if (id === "__all__") resetAll();
+    else resetGame(id);
     location.reload();
   });
   closeBtn.addEventListener("click", overlay.close);
