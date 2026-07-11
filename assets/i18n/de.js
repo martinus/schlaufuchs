@@ -17,7 +17,7 @@ export default {
   parentsIntro: "Alles hier stammt aus dem Fortschritt auf diesem Gerät. Nichts davon wird irgendwohin gesendet, und dein Kind sieht diese Seite im Spiel nicht.",
   parentsEmpty: "Hier steht noch nichts — sobald dein Kind eine Runde gespielt hat, siehst du, was sitzt und wo es hakt.",
   parentsGameH: "Einmaleins",
-  parentsOtherGames: "Für die drei übrigen Spiele gibt es noch keine Auswertung — sie sind noch nicht gebaut.",
+  parentsOtherGames: "Für die anderen Spiele gibt es hier noch keine Auswertung.",
   parentsTimeH: "Geübte Zeit",
   parentsColRounds: "Runden",
   parentsColTime: "Zeit",

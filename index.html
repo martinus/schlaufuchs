@@ -40,7 +40,8 @@
       "./assets/i18n/en.js": "./assets/i18n/en.js?v=70",
       "./games/einmaleins/logic.js": "./games/einmaleins/logic.js?v=70",
       "./games/lesen/logic.js": "./games/lesen/logic.js?v=70",
-      "./games/lesen/content.js": "./games/lesen/content.js?v=70"
+      "./games/lesen/content.js": "./games/lesen/content.js?v=70",
+      "./games/rechnungen/logic.js": "./games/rechnungen/logic.js?v=70"
     }
   }
   </script>
@@ -120,23 +121,6 @@
           <use class="roadline" id="roadline-pokalraum" href="#road-pokalraum"/>
         </g>
 
-        <!-- Rechenberg (Rechnungen) top right -->
-        <a href="games/rechnungen/" class="region" id="region-rechnungen" data-game="rechnungen">
-          <rect class="hit" fill="transparent" x="202" y="40" width="148" height="184"/>
-          <!-- foothills seat the peaks on the ground — nothing floats (§3.1) -->
-          <ellipse cx="276" cy="188" rx="66" ry="14" fill="#96c47f"/>
-          <polygon points="232,188 294,60 348,188" fill="#9aa0a6"/>
-          <polygon points="268,112 294,60 320,112 307,104 294,118 281,103" fill="#f5f2ec"/>
-          <polygon points="204,188 246,108 288,188" fill="#7d858c"/>
-          <g class="layer-thriving"><text data-icon="deco-goat" data-icon-size="16" x="255" y="150" font-size="16">🐐</text></g>
-          <g class="layer-mastered">
-            <text data-icon="deco-flag" data-icon-size="16" x="286" y="58" font-size="16">🚩</text>
-            <text data-icon="deco-eagle" data-icon-size="14" x="322" y="122" font-size="14">🦅</text>
-          </g>
-          <text class="region-label" x="282" y="208" data-i18n="region_rechnungen">Rechenberg</text>
-          <g class="region-badge" data-badge="rechnungen" transform="translate(282,222)"></g>
-        </a>
-
         <!-- Wörterwald (Vokabeln) left -->
         <a href="games/vokabeln/" class="region" id="region-vokabeln" data-game="vokabeln">
           <rect class="hit" fill="transparent" x="14" y="102" width="144" height="142"/>
@@ -174,6 +158,24 @@
           <g class="region-badge" data-badge="tippen" transform="translate(282,361)"></g>
         </a>
 
+        <!-- Rechenberg (Rechnungen) top right. Painted after the fogged regions
+             (Wörterwald, Tippsee) so their fog banks never wash out its label —
+             SVG paints in document order (tests/map.test.js, §3.1). -->
+        <a href="games/rechnungen/" class="region" id="region-rechnungen" data-game="rechnungen">
+          <rect class="hit" fill="transparent" x="202" y="40" width="148" height="184"/>
+          <!-- foothills seat the peaks on the ground — nothing floats (§3.1) -->
+          <ellipse cx="276" cy="188" rx="66" ry="14" fill="#96c47f"/>
+          <polygon points="232,188 294,60 348,188" fill="#9aa0a6"/>
+          <polygon points="268,112 294,60 320,112 307,104 294,118 281,103" fill="#f5f2ec"/>
+          <polygon points="204,188 246,108 288,188" fill="#7d858c"/>
+          <g class="layer-thriving"><text data-icon="deco-goat" data-icon-size="16" x="255" y="150" font-size="16">🐐</text></g>
+          <g class="layer-mastered">
+            <text data-icon="deco-flag" data-icon-size="16" x="286" y="58" font-size="16">🚩</text>
+            <text data-icon="deco-eagle" data-icon-size="14" x="322" y="122" font-size="14">🦅</text>
+          </g>
+          <text class="region-label" x="282" y="208" data-i18n="region_rechnungen">Rechenberg</text>
+          <g class="region-badge" data-badge="rechnungen" transform="translate(282,222)"></g>
+        </a>
 
         <!-- Lesewiese (Lesen) bottom left. It sits a step down and away from
              the village: its tree once leaned on the left house, and their hit

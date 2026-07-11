@@ -17,7 +17,7 @@ export default {
   parentsIntro: "Everything here comes from the progress stored on this device. None of it is sent anywhere, and your child does not see this page from inside the game.",
   parentsEmpty: "Nothing here yet — once your child has played a round you will see what is solid and where it slips.",
   parentsGameH: "Times tables",
-  parentsOtherGames: "The three remaining games have no report yet — they are not built yet.",
+  parentsOtherGames: "The other games do not have a report here yet.",
   parentsTimeH: "Time practised",
   parentsColRounds: "Rounds",
   parentsColTime: "Time",
