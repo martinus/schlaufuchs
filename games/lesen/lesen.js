@@ -98,6 +98,11 @@ let flashTimer = 0;
 
 const card = document.getElementById("wordcard");
 
+// The cover is the whole card face while a word waits (§14.2): tapping it — the
+// same fast pointer path the answers use — reveals the word and starts its
+// blitz. Keyboard activation reaches it as a click, because it is a <button>.
+fastPress(document.getElementById("wc-cover"), reveal);
+
 // The round's title carries the meadow's own symbol, so the child can see
 // which place on the map she is standing in without reading its name (§3.1).
 function updateChip() {
@@ -132,7 +137,6 @@ function askNext() {
   currentId = id;
   question = questionFor(id, CONTENT.de);
   options = question.kind === "word" ? optionsFor(id, CONTENT.de) : null;
-  phase = "answer";
   qToken++;
   $("feedback").hidden = true;
   card.hidden = false;
@@ -141,6 +145,36 @@ function askNext() {
   renderQuestion();
   renderAnswers();
   renderStatus();
+  // A word waits behind a cover until the child taps it (§14.2): the blitz must
+  // not start before she has looked, or a word she never saw counts as a miss.
+  // A sentence never flashes — nothing is taken away — so it shows at once, and
+  // its verdicts are live immediately.
+  if (question.kind === "word") {
+    phase = "ready";
+    card.classList.add("covered");
+    setAnswersEnabled(false);
+  } else {
+    phase = "answer";
+    card.classList.remove("covered");
+    setAnswersEnabled(true);
+  }
+}
+
+// Every answer button on or off in one place: while a word waits behind the
+// cover, tapping an emoji would be a guess at a word not yet seen, so the
+// buttons are inert until the reveal.
+function setAnswersEnabled(on) {
+  for (const b of $("answers").querySelectorAll("button")) b.disabled = !on;
+}
+
+// The child tapped the cover: show the word and start its blitz from this
+// moment (§14.2). Idempotent and word-only — a second tap, or a tap on a
+// sentence card, does nothing.
+function reveal() {
+  if (phase !== "ready") return;
+  phase = "answer";
+  card.classList.remove("covered");
+  setAnswersEnabled(true);
   armFlash();
 }
 

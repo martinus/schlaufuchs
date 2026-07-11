@@ -252,6 +252,33 @@ test("the blitz is a JS timer wearing a CSS transition, never an animation", () 
   assert.ok(!/animation\s*:|@keyframes/.test(cardCss), "a keyframe animation would survive nothing");
 });
 
+test("a word waits behind the ready cover; the blitz arms only on reveal (§14.2)", () => {
+  // The blitz used to start the instant a word appeared, so the first word of a
+  // round flashed before the child had looked or knew one was coming. A word now
+  // waits behind a tap-to-reveal cover, and the flash is armed on the reveal, not
+  // on the show — otherwise the clock would run again before she is ready.
+  const game = read("games/lesen/lesen.js");
+
+  const ask = game.slice(game.indexOf("function askNext"), game.indexOf("function setAnswersEnabled"));
+  assert.ok(!/armFlash\(\)/.test(ask), "askNext must NOT arm the blitz — that would flash before the tap");
+  assert.match(ask, /kind === "word"[\s\S]*?phase = "ready"[\s\S]*?add\("covered"\)[\s\S]*?setAnswersEnabled\(false\)/,
+    "a word starts covered, in the ready phase, with its answers disabled");
+  assert.match(ask, /else \{[\s\S]*?phase = "answer"[\s\S]*?remove\("covered"\)/,
+    "a sentence never covers — nothing is taken away, so it shows at once");
+
+  // bounded to reveal itself: armFlash() is defined right after it, and its
+  // `function armFlash()` header would otherwise satisfy the /armFlash\(\)/ below
+  const reveal = game.slice(game.indexOf("function reveal"), game.indexOf("function armFlash"));
+  assert.match(reveal, /phase !== "ready"/, "reveal is idempotent: only a covered word reveals");
+  assert.match(reveal, /remove\("covered"\)[\s\S]*?setAnswersEnabled\(true\)[\s\S]*?armFlash\(\)/,
+    "reveal uncovers, enables the answers, THEN starts the blitz");
+
+  // the cover is a real button, wired to reveal, so keyboard reaches it
+  assert.match(game, /fastPress\(document\.getElementById\("wc-cover"\), reveal\)/);
+  const html = read("games/lesen/index.html");
+  assert.match(html, /<button[^>]*id="wc-cover"/, "the cover is a button, not a bare div");
+});
+
 test("the aid keeps the same buttons, and only the right one lets the round on", () => {
   // The einmaleins aid contract (§8.1): after a wrong answer the options never
   // reshuffle under the finger that is already going for one, and the way out

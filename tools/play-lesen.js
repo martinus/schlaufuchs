@@ -63,10 +63,12 @@
   const aidUp = () => !$("feedback").hidden;
   const card = () => $("wordcard");
   const hidden = () => card().classList.contains("wc-hidden");
+  const covered = () => card().classList.contains("covered");
 
   globalThis.readLesenScene = () => ({
+    // ready = a word waits behind the "ready" cover, not yet revealed (§14.2);
     // away = the aid owns the stage; hidden = the blitz took the word
-    card: card().hidden ? "away" : hidden() ? "hidden" : "faceUp",
+    card: card().hidden ? "away" : covered() ? "ready" : hidden() ? "hidden" : "faceUp",
     kind: card().classList.contains("sent") ? "sent" : "word",
     stars: document.querySelectorAll(".j-star.landed").length,
     aria: $("journey")?.getAttribute("aria-label") ?? null,
@@ -147,6 +149,15 @@
       stamp = q.stamp;
       const res = resolveLesen(q.text, m);
       n += 1;
+
+      // A word now waits behind the "ready" cover (§14.2): tap to reveal it —
+      // and to make the answer buttons live — before the blitz, exactly as the
+      // child does. A sentence never covers.
+      if (res.kind === "word" && covered()) {
+        $("wc-cover").click();
+        for (let i = 0; i < 50 && covered(); i++) await sleep(20);
+        if (covered()) throw new Error("the word never revealed");
+      }
 
       if (waitHidden && res.kind === "word") {
         // the reduced-motion proof: the blitz must still take the word away
