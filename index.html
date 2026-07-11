@@ -119,7 +119,7 @@
           <path class="road" id="road-vokabeln" d="M170 388 q-38 -80 -82 -196"/>
           <path class="road" id="road-rechnungen" d="M170 388 q76 -76 112 -198"/>
           <path class="road" id="road-tippen" d="M170 388 q62 -36 100 -68"/>
-          <path class="road" id="road-lesen" d="M138 414 q-14 8 -28 28"/>
+          <path class="road" id="road-lesen" d="M138 414 q-16 12 -34 36"/>
           <path class="road" id="road-pokalraum" d="M204 418 q26 22 34 44"/>
         </g>
         <!-- the dashed centre line of a dirt track; hidden once it is paved -->
@@ -133,7 +133,7 @@
 
         <!-- Rechenberg (Rechnungen) top right -->
         <a href="games/rechnungen/" class="region" id="region-rechnungen" data-game="rechnungen">
-          <rect class="hit" fill="transparent" x="202" y="40" width="148" height="190"/>
+          <rect class="hit" fill="transparent" x="202" y="40" width="148" height="184"/>
           <!-- foothills seat the peaks on the ground — nothing floats (§3.1) -->
           <ellipse cx="276" cy="188" rx="66" ry="14" fill="#96c47f"/>
           <polygon points="232,188 294,60 348,188" fill="#9aa0a6"/>
@@ -186,27 +186,30 @@
         </a>
 
 
-        <!-- Lesewiese (Lesen) bottom left -->
+        <!-- Lesewiese (Lesen) bottom left. It sits a step down and away from
+             the village: its tree once leaned on the left house, and their hit
+             rects shared a 40px strip where SVG paint order decided the tap. -->
         <a href="games/lesen/" class="region" id="region-lesen" data-game="lesen">
-          <rect class="hit" fill="transparent" x="24" y="400" width="128" height="138"/>
-          <ellipse cx="88" cy="472" rx="62" ry="30" fill="#a8d08d"/>
-          <rect x="78" y="442" width="12" height="30" fill="#6b4423"/>
-          <circle cx="84" cy="429" r="26" fill="#3f7d3a"/>
-          <text data-icon="deco-book" data-icon-size="16" x="84" y="437" font-size="16" text-anchor="middle">📖</text>
+          <rect class="hit" fill="transparent" x="14" y="412" width="96" height="130"/>
+          <ellipse cx="78" cy="484" rx="62" ry="30" fill="#a8d08d"/>
+          <rect x="68" y="454" width="12" height="30" fill="#6b4423"/>
+          <circle cx="74" cy="441" r="26" fill="#3f7d3a"/>
+          <text data-icon="deco-book" data-icon-size="16" x="74" y="449" font-size="16" text-anchor="middle">📖</text>
           <g class="layer-thriving">
-            <text data-icon="deco-flower" data-icon-size="13" x="46" y="482" font-size="13">🌼</text>
-            <text data-icon="deco-flower" data-icon-size="13" x="120" y="486" font-size="13">🌼</text>
+            <text data-icon="deco-flower" data-icon-size="13" x="36" y="494" font-size="13">🌼</text>
+            <text data-icon="deco-flower" data-icon-size="13" x="110" y="498" font-size="13">🌼</text>
           </g>
-          <g class="layer-mastered"><text data-icon="deco-rainbow" data-icon-size="15" x="116" y="446" font-size="15">🌈</text></g>
-          <text class="region-label" x="88" y="516" data-i18n="region_lesen">Lesewiese</text>
-          <g class="region-badge" data-badge="lesen" transform="translate(88,530)"></g>
+          <g class="layer-mastered"><text data-icon="deco-rainbow" data-icon-size="15" x="106" y="458" font-size="15">🌈</text></g>
+          <text class="region-label" x="78" y="528" data-i18n="region_lesen">Lesewiese</text>
+          <g class="region-badge" data-badge="lesen" transform="translate(78,542)"></g>
         </a>
 
         <!-- Einmaleins, the village at the crossroads. The place is named after
              its game: one name to learn, not two (§3.1). -->
         <a href="games/einmaleins/" class="region" id="region-einmaleins" data-game="einmaleins">
-          <!-- Mara tapped the gap between the two houses and nothing happened. -->
-          <rect class="hit" fill="transparent" x="112" y="350" width="110" height="120"/>
+          <!-- Mara tapped the gap between the two houses and nothing happened.
+               The width stops short of the lake's rect at x=218. -->
+          <rect class="hit" fill="transparent" x="112" y="350" width="104" height="120"/>
           <g>
             <ellipse cx="170" cy="428" rx="62" ry="11" fill="#96c47f"/>
             <rect x="120" y="395" width="38" height="32" fill="#f3d9b1"/>
