@@ -860,6 +860,10 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    flex column, so the passage and question flow together as one paragraph. */
 .wordcard.read {
   display: block;
+  /* left-aligned like a book: `.stage` sets text-align:center, and since the
+     passage and question run as inline text their alignment comes from this
+     block, not from themselves — so it must be reset here, not on them. */
+  text-align: left;
   padding: 12px 14px;
 }
 /* The passage and its question read as ONE flowing paragraph, in the SAME body
