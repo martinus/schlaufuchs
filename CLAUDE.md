@@ -64,6 +64,14 @@ unit-tested against every shape `questionFor()` can produce
 (`tests/play.test.js`), because a driver that answers the wrong thing proves
 nothing, quietly.
 
+`tools/play-lesen.js` is the same thing for lesen: `playLesen({...})` with the
+same options plus `stopInAid: true` (stop with the aid card still open, for
+screenshots) and `waitHidden: true` (answer a word only after the blitz hid
+it — the reduced-motion proof). Seed the cookie with difficulty `d` and pack
+tile `p` (0–3 = themed packs, 4 = Alle); `readLesenScene()` reports the card
+as `faceUp | hidden | away`. Its resolver is unit-tested the same way
+(`tests/play-lesen.test.js`).
+
 The hooks refuse a commit that fails `node --test` or that deletes tests
 without saying so, and a push that would delete a file from `main`. Wave one
 through with `SKIP_TEST_GUARD=1`.
@@ -205,10 +213,12 @@ Pages (each an entry point):
 - `index.html` — the world map (inline SVG, viewBox `0 0 360 560`), driven by
   `assets/js/map.js`. Six regions: 5 games + the Trophy Room (→ album).
 - `album.html` — trophy album, driven by `assets/js/album.js`.
-- `games/<name>/index.html` + `<name>.js` — one folder per game. Only
-  `einmaleins` is fully implemented; `rechnungen`, `tippen`, `vokabeln`,
-  `lesen` are stubs and share one module: their page is a `<body data-game>`
-  and `assets/js/stub.js` is the rest.
+- `games/<name>/index.html` + `<name>.js` — one folder per game. Two are
+  fully implemented: `einmaleins` and `lesen` (Blitzwörter + Quatsch-Sätze,
+  §14 — content in `games/lesen/content.js`, which is **append-only**: item
+  order is the box string's index). `rechnungen`, `tippen`, `vokabeln` are
+  stubs and share one module: their page is a `<body data-game>` and
+  `assets/js/stub.js` is the rest.
 
 **Every page contributes an empty `<header class="topbar" id="topbar">` and
 nothing else.** The bar is built by `initTopBar()` (`chrome.js`), in one of two
@@ -232,7 +242,8 @@ Shared modules in `assets/js/`:
   **⭐ is the site's only currency.** `rewards.pr` is the weighted star counter
   (Leicht 1, Mittel 2, Schwer 3); internally the code says `points`, the UI
   never does. `MAX_POINTS` is its denominator everywhere and is a **guess** for
-  the four unbuilt games — recompute when one ships.
+  the three unbuilt games — recompute when one ships (einmaleins and lesen are
+  computed from their real tiles).
 - `journey.js` — the round's scene; `sceneGeometry(nodes, theme)` is the pure
   arithmetic (tested), `createJourney` is the DOM around it.
 - `mapwalk.js` / `motion.js` / `levelfox.js` — the fox's walk: pure gait

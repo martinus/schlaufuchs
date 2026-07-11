@@ -8,6 +8,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { topBarHTML } from "../assets/js/chrome.js";
+import { PLAYABLE } from "../assets/js/rewards.js";
 import { PAGES, read, sourcesOf, hasFoxBar } from "./pages.js";
 
 test("the child's bar is a map button, the fox chip and the gear", () => {
@@ -77,9 +78,10 @@ test("the child's pages get the child's bar, the reader's pages the reader's", (
   for (const page of reader) assert.ok(!hasFoxBar(page), `${page} shows a child's chip`);
 });
 
-// The four unbuilt games were four copies of one script. One word differed.
+// The unbuilt games were four copies of one script. One word differed.
 test("the stub pages carry no script of their own", () => {
-  for (const page of PAGES.filter((p) => p.startsWith("games/") && !p.includes("einmaleins"))) {
+  const stubs = PAGES.filter((p) => p.startsWith("games/") && !PLAYABLE.some((g) => p.includes(`/${g}/`)));
+  for (const page of stubs) {
     const html = read(page);
     assert.match(html, /<body class="stubpage" data-game="([a-z]+)">/, `${page}: no game named on the body`);
     assert.match(html, /src="\.\.\/\.\.\/assets\/js\/stub\.js/, `${page}: does not use the shared stub`);

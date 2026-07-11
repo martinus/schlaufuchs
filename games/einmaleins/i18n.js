@@ -7,11 +7,6 @@ export default {
     emTableShort: "{t}er",
     emMixed: "Alle",
     emPickTitle: "Reihe & Schwierigkeit",
-    // The picker's tiles are pictures; these three are what a screen reader
-    // hears — including the fox, which is drawn but never announced.
-    tileStarsLeft: "noch {n} Sterne zu holen",
-    tileMastered: "geschafft",
-    tileHere: "hier stehst du",
     // The tempo ladder (§10.6). Never a number with a unit of time — the
     // child sees an animal or a vehicle, never seconds.
     tempo1: "Hase",
@@ -28,9 +23,6 @@ export default {
     emTableShort: "×{t}",
     emMixed: "All",
     emPickTitle: "Table & difficulty",
-    tileStarsLeft: "{n} stars still to win",
-    tileMastered: "mastered",
-    tileHere: "you are here",
     tempo1: "Hare",
     tempo2: "Race car",
     tempo3: "Rocket",

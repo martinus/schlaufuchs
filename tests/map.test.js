@@ -315,15 +315,15 @@ test("no region art is drawn at the edge of the viewBox", () => {
   }
 });
 
-// Four of the five games are stubs. A map that shows six inviting regions and
-// delivers one is a map that lies, so the unbuilt ones sit under fog.
+// Three of the five games are stubs. A map that shows six inviting regions and
+// delivers two is a map that lies, so the unbuilt ones sit under fog.
 test("every region without a game is fogged, and every playable one is not", () => {
-  assert.deepEqual(PLAYABLE, ["einmaleins"], "update this test when a game ships");
+  assert.deepEqual(PLAYABLE, ["einmaleins", "lesen"], "update this test when a game ships");
   assert.ok(html.includes('id="fog-blur"'), "the fog needs its blur filter in <defs>");
   assert.ok(mapJs.includes("fogRegion"), "map.js must build the fog");
   assert.ok(mapJs.includes("isPlayable"), "and it must ask which games exist");
   for (const g of GAMES) assert.equal(typeof isPlayable(g), "boolean");
-  assert.ok(!isPlayable("lesen") && isPlayable("einmaleins"));
+  assert.ok(!isPlayable("tippen") && isPlayable("einmaleins") && isPlayable("lesen"));
 });
 
 // Regression: the fog is drawn inside its own <a>, and SVG paints in document

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import de from "../assets/i18n/de.js";
 import en from "../assets/i18n/en.js";
 import einmaleins from "../games/einmaleins/i18n.js";
+import lesen from "../games/lesen/i18n.js";
 import { t, LANGUAGES, isLang } from "../assets/js/i18n.js";
 
 const abs = (p) => fileURLToPath(new URL(`../${p}`, import.meta.url));
@@ -25,6 +26,7 @@ test("shared dictionaries: every key exists in every language (§6.3)", () => {
 
 test("game dictionaries: every key exists in every language (§6.3)", () => {
   assertKeyParity(einmaleins.de, einmaleins.en, "einmaleins");
+  assertKeyParity(lesen.de, lesen.en, "lesen");
 });
 
 test("t(): placeholder substitution and fallback to key", () => {
@@ -49,7 +51,7 @@ test("no naked concatenation markers in strings (§6.1 templates rule)", () => {
 // UI would have shown the literal text "roundDone" to a child.
 test("every key the code asks for exists in both languages", () => {
   const shared = { ...de };
-  const gameDicts = { einmaleins: einmaleins.de };
+  const gameDicts = { einmaleins: einmaleins.de, lesen: lesen.de };
 
   const files = [
     ...readdirSync(abs("assets/js")).map((f) => [`assets/js/${f}`, null]),

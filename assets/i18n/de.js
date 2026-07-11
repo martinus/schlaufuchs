@@ -17,7 +17,7 @@ export default {
   parentsIntro: "Alles hier stammt aus dem Fortschritt auf diesem Gerät. Nichts davon wird irgendwohin gesendet, und dein Kind sieht diese Seite im Spiel nicht.",
   parentsEmpty: "Hier steht noch nichts — sobald dein Kind eine Runde gespielt hat, siehst du, was sitzt und wo es hakt.",
   parentsGameH: "Einmaleins",
-  parentsOtherGames: "Die anderen vier Spiele gibt es noch nicht, deshalb steht hier nur das Einmaleins.",
+  parentsOtherGames: "Für die anderen Spiele gibt es hier noch keine Auswertung, deshalb steht hier nur das Einmaleins.",
   parentsTimeH: "Geübte Zeit",
   parentsColRounds: "Runden",
   parentsColTime: "Zeit",
@@ -61,6 +61,12 @@ export default {
   aboutPortal: "Übersicht über alle meine Seiten",
   privacyLink: "Datenschutz",
   starsOwned: "{n} von 3 Sternen gesammelt",
+  // The level pickers' tiles are pictures; these three are what a screen
+  // reader hears — including the fox, which is drawn but never announced.
+  // Shared: every game's picker speaks them (§3.3).
+  tileStarsLeft: "noch {n} Sterne zu holen",
+  tileMastered: "geschafft",
+  tileHere: "hier stehst du",
   starsTotal: "{n} Sterne",
   lockedHint: "Noch nicht verfügbar",
   // shown in a bubble when a child taps a fogged region — she stays on the map

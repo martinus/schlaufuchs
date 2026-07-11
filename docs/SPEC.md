@@ -451,9 +451,10 @@ Section intentionally unused to keep numbering stable across revisions.
 - Accessibility baseline: semantic HTML, visible focus states, contrast
   ≥ 4.5:1, keyboard reachability, `prefers-reduced-motion` respected.
 - Sounds via WebAudio (synthesized, no audio files), persisted mute toggle.
-  Speech output (Lesen, Vokabeln) via the browser **SpeechSynthesis API**
-  with the voice matching the active language. iOS Safari requires a user
-  gesture before speech — always trigger speech from tap handlers.
+  Speech output (Vokabeln; Lesen defers it, §14.6) via the browser
+  **SpeechSynthesis API** with the voice matching the active language. iOS
+  Safari requires a user gesture before speech — always trigger speech from
+  tap handlers.
 
 ### 5.1a Graphics registry (`assets/js/graphics.js`)
 
@@ -562,7 +563,7 @@ setLang(lang)            // persist, re-translate DOM, update <html lang>
 | Einmaleins / Rechnungen | UI strings only |
 | Tippen | word/sentence lists **and keyboard layout** (DE → QWERTZ, EN → QWERTY); umlaut levels DE-only |
 | Vokabeln | question direction (DE↔EN packs serve both audiences) |
-| Lesen | fully language-specific; German first (§14.4) |
+| Lesen | fully language-specific; German first (§14.6) |
 | Speech | SpeechSynthesis voice matches active language |
 
 ### 6.3 CI check
@@ -755,8 +756,8 @@ and an 8-year-old understood neither.
   game's** counter reaches `THRESHOLDS[game][s-1]`.
 
   **The ladder is per game, because the games are not worth the same.** It used
-  to be one shared ladder, tuned to einmaleins: `lesen` is worth 18 points in
-  total, so its trophies five through twelve stood at 29 … 112 points and could
+  to be one shared ladder, tuned to einmaleins: `lesen` was then budgeted at 18
+  points, so its trophies five through twelve stood at 29 … 112 points and could
   never be won. Its shelf could never fill, and nothing on screen said why.
 
   Each game declares `MAX_POINTS[game]` — what mastering every tile it offers
@@ -1329,42 +1330,119 @@ string is dropped (stars kept).
 
 ## 14. Game 5: Lesen — region **Lesewiese**
 
-Learning to read, for the youngest users: almost no UI text, everything
-speakable (tap any word/letter to hear it), extra-large targets. Journey
-theme: `meadow`; goal node: the giant book-tree opens. Rounds of **6** items.
+Reading **fluency**, not first decoding: the target reader has finished her
+letters (2nd grade) and reads sentences correctly but slowly, word by word.
+Fluency is fast whole-word recognition, and the two exercise forms here are
+the two the reading didactics know for training it as a game: **Blitzlesen**
+(a word shown too briefly to spell through — it must be grasped whole) and
+**sense decisions** (read a sentence, judge it). There is deliberately **no
+letter stage** — this supersedes the earlier "Leicht = Buchstaben" plan
+(resolved decision; a reader who still needs letters is below this game's
+floor, and speech support for true beginners is deferred with §14.6).
+
+Journey theme: `meadow`. Rounds of **6** items (§7.3). No SpeechSynthesis in
+this version: **emoji are the meaning anchors**, and everything is playable
+without reading any UI text.
 
 ### 14.1 Stages (= difficulty)
 
-| | Stage | Exercise types |
+| | Stage | Exercise |
 |---|---|---|
-| Leicht | **Buchstaben** | letter shown & spoken → pick from 4; sound played → tap the letter |
-| Mittel | **Silben & Wörter** | syllable blending („MA + MA" → tap the word); word → pick matching emoji; emoji → assemble word from syllable tiles |
-| Schwer | **Sätze** | read a short sentence, tap the matching picture („Der Hund schläft." → 3 emoji scenes) |
+| Leicht | **Blitzwörter kurz** | a word flashes on a card, then hides; pick its emoji from 4. Short frequent words, 1–2 syllables |
+| Mittel | **Blitzwörter lang** | same, with long words — compounds and consonant clusters („Schmetterling") |
+| Schwer | **Stimmt / Quatsch** | a sentence is shown **statically, never flashed**; tap ✓ Stimmt or ✗ Quatsch. Silly sentences are the motor: to find the joke you must read |
 
-### 14.2 Content (`content.js`)
+Schwer is never timed and never flashed on purpose: the skill trained there
+is comprehension of a whole sentence, a flash would punish exactly the child
+this stage trains, and a timed 50/50 verdict makes guessing the rational
+strategy.
 
-Data-driven: letters with example words, ~150 syllable-friendly German words
-with emoji, ~60 simple sentences with 3-picture choices. All content chosen
-so **emoji serve as the pictures** — no drawn assets.
+### 14.2 The blitz (`flashMs`, the adaptive hook)
 
-### 14.3 Adaptive & rewards
+How long a word stays readable comes from its own Leitner box: `FLASH_MS`
+(games/lesen/logic.js) runs from generous (box 0: 2.4s Leicht / 3.0s Mittel)
+to a real blitz (box 4: 0.55s / 0.7s — Mittel later, its words are physically
+longer). A word the child misses drops to box 0 and comes back generous. This
+is the mechanic that makes fluency *felt*: the same word flashes shorter and
+shorter, and she keeps catching it. The bounds are plain named numbers to be
+retuned after watching a real child, like `TEMPO_TIERS` (§10.6).
 
-Boxes per letter/word/sentence item (§7), rounds of 6, extra-frequent fox
-celebrations. Stars per stage: ⭐ ≥ 5/6 first-try · ⭐⭐ 6/6 · ⭐⭐⭐ 6/6 in three
-consecutive rounds (stored as a small counter).
+- Answering **during** the flash is allowed — that is the fluent path.
+- The hide is **decided by a JS timer and decorated by a CSS transition**,
+  never a keyframe animation: `prefers-reduced-motion` kills transitions
+  site-wide, so the fade degrades to an instant flip and the mechanic
+  survives (same rule as the star flight, §10.5). A stale timer is fenced by
+  a question token, so a fast answer plus the 250ms transition can never hide
+  the *next* word.
+- The word never wraps; an overlong word is shrunk to fit its one line
+  (`fittedFontSize`, the §10.1 contract).
+- **Wrong answer** (§8.1 aid contract): the tapped emoji struck through in
+  red, the word shown again **persistently** — no blitz — over the SAME four
+  options; the way out is tapping the right one. On Schwer the sentence stays
+  and the true verdict is shown in green („😜 Das ist Quatsch!"); the way out
+  is tapping that verdict. No timer, no "Verstanden" button.
 
-### 14.4 English version
+### 14.3 Content (`content.js`), tiles and the adaptive engine
 
-German content first. English reading needs a genuine phonics approach (CVC
-words, sight words) — a separate content set, later milestone. The exercise
-engine (pick-from-4, tile assembly, picture questions) is shared and
-language-neutral.
+Data-driven and **append-only**: the canonical item order (packs in file
+order, items in theirs) is the box digit string's index, so reordering
+shifts every child's boxes. German first; content is keyed by language.
+
+- **12 packs**: per difficulty four themed packs — Leicht 4×10 short words,
+  Mittel 4×10 long words, Schwer 4×12 sentence *pairs* — 128 items.
+- Every word carries ONE unambiguous mainstream emoji, unique inside its
+  pack, no near-twins. **Distractors are the item's own pack-mates**
+  (`optionsFor`): same theme ⇒ plausible, pack-unique emoji ⇒ clearly
+  distinct. That holds on the mixed tile too — the home pack supplies them.
+- A Schwer item is a **pair**: a true sentence and a silly one about the same
+  subject, alike in shape and length. `questionFor` draws which face shows
+  per encounter, so an item's truth cannot be memorized — only read. Guessing
+  is unprofitable by the existing machinery alone: stars count first-try only
+  (6/6 by coin-flip ≈ 1.6 %), a wrong verdict forces the aid and re-queues
+  the item (guessing is slower than reading), and `roundPoints` pays only
+  improvements.
+- **Tiles** (the picker): difficulty × (4 packs + „🎲 Alle" mixing the whole
+  difficulty) = 15 tiles, each worth three stars. Same picker contract as
+  einmaleins (§10.2): stars-left drawn on the tile, the fox walks, the walk
+  opens the tile. `MAX_POINTS.lesen = 5·3·1 + 5·3·2 + 5·3·3 = 90`, computed
+  from the real tiles (`maxPoints()`), no longer a guess.
+- Boxes per item (§7), rounds of 6, no hardness boost — the Leitner weights
+  alone decide what returns.
+
+### 14.4 Stars & tempo
+
+Stars are the einmaleins ratios exactly (§10.3): ≥60 % ⭐ · ≥80 % ⭐⭐ · 100 %
+⭐⭐⭐ first-try — on a round of six that is 4, 5, 6. The earlier "⭐⭐⭐ = three
+consecutive perfect rounds" plan and its `c3` counter are **dropped**
+(resolved): a counter that resets is loss framing (§8), and it bought nothing
+the ratio does not.
+
+**No tempo ladder in this version** (resolved deferral): the blitz IS the
+felt speed mechanic on ten of the fifteen tiles, a badge only Schwer could
+earn would make the picker read inconsistently, and the tiers need
+real-child calibration first. The einmaleins hooks (`answerTimes`, §10.6)
+are trivial to add later.
 
 ### 14.5 Cookie state (`lesen`)
 
 ```json
-{ "d": 0, "box": { "de": "3421..." }, "stars": { "de": "21" }, "c3": 1 }
+{ "d": 1, "p": 2, "box": { "de": "3421…(128)" }, "stars": { "0": "31000", "1": "00000", "2": "00000" } }
 ```
+
+`d` difficulty 0–2, `p` tile 0–4 (4 = Alle), star digit strings with five
+slots per difficulty (Alle last). `box` is keyed by language, so an English
+set adds a second string without migration. Maxed ≈ 220 bytes raw — the
+budget test in tests/lesen.test.js holds the whole cookie under §9.2's 3500
+even with every game maxed.
+
+### 14.6 English version & speech
+
+German content only for now. English reading needs a genuine phonics
+approach (CVC words, sight words) — a separate content set, later milestone;
+the engine and the cookie shape are ready for it. SpeechSynthesis (tap a
+word to hear it) is deferred to the same milestone: for a fluency trainer
+the emoji anchor suffices, and speech is what a true-beginner stage would
+need first.
 
 ---
 
@@ -1515,9 +1593,10 @@ and language; touch-only devices get the hint screen.
 *Accept:* all three modes incl. tolerant typed checking; direction flip;
 speech on tap; cookie stays under budget with all packs played.
 
-**M6 — Lesen.** Per §14, German content.
-*Accept:* every exercise fully playable without reading UI text; everything
-speakable on tap; rounds of 6; iOS speech works from tap handlers.
+**M6 — Lesen.** Per §14, German content, no speech (§14.6).
+*Accept:* every exercise fully playable without reading UI text; rounds of
+6; the blitz survives `prefers-reduced-motion`; guessing on Stimmt/Quatsch
+never pays.
 
 **M7 — Polish.** Refined map/fox art, service worker for offline play,
 `prefers-reduced-motion` audit.
