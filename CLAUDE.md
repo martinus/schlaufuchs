@@ -306,6 +306,10 @@ Shared modules in `assets/js/`:
 ## Where things live
 
 - `docs/SPEC.md` — full product specification (authoritative).
+- `docs/NEW_GAME.md` — **the checklist for shipping a game**: every cross-file
+  fact the PLAYABLE flip pins (test pins, i18n gameDicts, importmaps, parents'
+  view, drivers). Work through it before building `rechnungen`/`tippen`/
+  `vokabeln` — each item on it failed once while `lesen` shipped.
 - `docs/PLAN_*.md` — past plans, all fully implemented and archived. Kept for
   their reasoning (the colour/type tokens live in the UI design one); SPEC wins
   wherever they disagree. There is no open plan.

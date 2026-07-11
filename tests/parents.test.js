@@ -66,3 +66,23 @@ test("the copy never calls an unpractised fact a mistake", () => {
   assert.match(de.parentsPace1, /Zeit ist kein Ziel/);
   assert.match(en.parentsPace1, /Time is not a goal/);
 });
+
+// Two games report now (§20): each game's block stands on its own, and a child
+// who has only read must not see her page claim she has done nothing.
+test("the lesen section is wired, and either game alone defeats the empty state", () => {
+  const html = read("parents.html");
+  for (const id of ["p-em-sec", "p-lesen-sec", "p-lesen"]) {
+    assert.ok(html.includes(`id="${id}"`), `parents.html lost #${id}`);
+  }
+  assert.ok(html.includes('data-i18n="parentsLesenHint"'));
+
+  const src = read("assets/js/parents.js");
+  assert.match(src, /const played = emPlayed \|\| lesenPlayed/, "one game played must unhide the page");
+  assert.match(src, /"p-em-sec"\)\.hidden = !emPlayed/);
+  assert.match(src, /"p-lesen-sec"\)\.hidden = !lesenPlayed/);
+  // the words come from the content module, never from a copied list
+  assert.match(src, /games\/lesen\/content\.js/);
+  // the sentence line merges "fast" into solid: a sentence is comprehension,
+  // not sight speed, and a tally that drops a state would miscount
+  assert.match(src, /s\.solid \+ s\.fast/);
+});

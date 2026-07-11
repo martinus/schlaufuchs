@@ -12,8 +12,10 @@ import { boxesFromString } from "./adaptive.js";
 import { totalPoints, totalTrophies } from "./rewards.js";
 import { iconHTML } from "./graphics.js";
 import { initTopBar } from "./chrome.js";
-import { cellState, cellCounts, recallDigit, weakFacts, practiceSummary, minutesOf, secondsPerRound } from "./parentstats.js";
+import { cellState, cellCounts, recallDigit, weakFacts, practiceSummary, minutesOf, secondsPerRound, sightState, sightTally } from "./parentstats.js";
 import { POOL_COUNT, pairIndex, pairOf } from "../../games/einmaleins/logic.js";
+import { poolFor as lesenPoolFor, itemAt as lesenItemAt, MIXED as LESEN_MIXED } from "../../games/lesen/logic.js";
+import { CONTENT as LESEN_CONTENT, itemCount as lesenItemCount } from "../../games/lesen/content.js";
 
 initI18n();
 initTopBar({ back: "./", title: "parentsTitle" });
@@ -25,6 +27,15 @@ const saved = getGame("einmaleins");
 const boxes = boxesFromString(saved.box, POOL_COUNT);
 const practice = practiceSummary(saved);
 const rewards = getRewards();
+
+// Lesen keeps its boxes per language (§14.5); only German content exists.
+const lesenDe = LESEN_CONTENT.de;
+const lesenBoxes = boxesFromString((getGame("lesen").box ?? {}).de, lesenItemCount("de"));
+const lesenWordIds = [
+  ...lesenPoolFor(0, LESEN_MIXED, lesenDe),
+  ...lesenPoolFor(1, LESEN_MIXED, lesenDe),
+];
+const lesenSentIds = lesenPoolFor(2, LESEN_MIXED, lesenDe);
 
 // The two numbers the child's own top bar shows, and nothing else. A third chip
 // used to count a daily streak behind a 🔥 — the streak left this page first
@@ -107,18 +118,51 @@ function renderHelp() {
   }).join("");
 }
 
+// Every word from the reading game as a small card, its state as the same
+// colour square the legend wears (§20): which words she reads at a glance,
+// which she still spells through — the one thing the Leitner boxes know that
+// no score shows. Sentences get a tally line, not a wall: a parent acts on
+// words, and forty sentences of chip would bury them.
+function renderLesen() {
+  const words = lesenWordIds.map((id) => {
+    const { item } = lesenItemAt(id, lesenDe);
+    return `<span class="wchip"><i class="h-${sightState(lesenBoxes[id])}"></i>${item.w}</span>`;
+  });
+  const tally = sightTally(lesenBoxes, lesenWordIds);
+  const legend = `<p class="legend">
+    <span><i class="h-weak"></i> ${t("parentsLegendWeak")} (${tally.weak})</span>
+    <span><i class="h-open"></i> ${t("parentsLegendOpen")} (${tally.open})</span>
+    <span><i class="h-solid"></i> ${t("parentsLegendSolid")} (${tally.solid})</span>
+    <span><i class="h-fast"></i> ${t("parentsLesenFast")} (${tally.fast})</span>
+  </p>`;
+  // a sentence is comprehension, not sight speed, so box 4 counts as "sitzt"
+  const s = sightTally(lesenBoxes, lesenSentIds);
+  const sentLine = `<p class="muted">${t("parentsLesenSents", {
+    solid: s.solid + s.fast, weak: s.weak, open: s.open,
+  })}</p>`;
+  $("p-lesen").innerHTML = `<p class="wchips">${words.join("")}</p>${legend}${sentLine}`;
+}
+
 function render() {
-  // "played" means any fact has left box 2, or any round was banked — the
-  // recall string cannot say more here, so `open` is read off the same tally
-  // the legend under the grid prints.
-  const played = practice.totalRounds > 0 || cellCounts(boxes, saved.rc, POOL_COUNT).open < POOL_COUNT;
+  // "played" means any item has left box 2, or any round was banked — box 2 is
+  // what an untouched item reads as (§7.1), so `open` is the honest test.
+  const emPlayed = practice.totalRounds > 0 || cellCounts(boxes, saved.rc, POOL_COUNT).open < POOL_COUNT;
+  const lesenPlayed =
+    sightTally(lesenBoxes, [...lesenWordIds, ...lesenSentIds]).open < lesenItemCount("de");
+  const played = emPlayed || lesenPlayed;
   $("p-empty").hidden = played;
   $("p-body").hidden = !played;
   renderChips();
   if (!played) return;
-  renderTime();
-  renderHeat();
-  renderHelp();
+  // each game's block stands only once that game has something to say
+  $("p-em-sec").hidden = !emPlayed;
+  $("p-lesen-sec").hidden = !lesenPlayed;
+  if (emPlayed) {
+    renderTime();
+    renderHeat();
+    renderHelp();
+  }
+  if (lesenPlayed) renderLesen();
 }
 
 render();

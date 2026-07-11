@@ -1634,6 +1634,19 @@ all they have. This site has the **knowledge**, so it shows that.
   accuses a child of counting, and speed on a slipping fact is guessing, not
   knowledge, so it never lightens *weak*. The legend carries all four counts.
 - „Hier hilfst du am meisten" lists boxes 0–1, hardest first, capped at twelve.
+- **Lesen reports beside einmaleins**, from the same boxes and nothing more:
+  every word as a small card whose colour square is its box state
+  (`sightState` in `parentstats.js`). For a word, **box 4 honestly means „auf
+  einen Blick"** — the blitz (§14.2) shortens the flash as the box climbs, so
+  box 4 is only reached and held by reading the word at the shortest flash;
+  the box itself carries the speed story and no `rc`-style second tracker is
+  needed. Sentences get a tally line, not a card wall (a parent acts on
+  words; box 4 counts as *sitzt* there — a sentence is comprehension, not
+  sight speed). Each game's block appears only once that game has been
+  played, and either alone defeats the page's empty state. Lesen keeps no
+  `tm`/`rd` practice counters yet, so it has no time table — deliberate:
+  cookie state earns its bytes only with a consumer, and the word cards are
+  the consumer the boxes already pay for.
 - **Practice time is the one clock in the product** (§10.3 keeps it away from
   the child). Aggregated per difficulty as `tm`/`rd`; per question only the
   recall *class* above survives the round — never a stored time.
