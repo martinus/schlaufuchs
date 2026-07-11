@@ -766,11 +766,20 @@ and an 8-year-old understood neither.
   (`[2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112]` over the 180 points the
   game was worth when the ladder was tuned), which einmaleins keeps verbatim so
   no child loses a trophy already won; a test asserts `ladderFor(180)`
-  reproduces it. Every ladder therefore keeps the two properties that were
-  tuned by hand: the **twelfth trophy lands at ~62 %** of everything the game
-  is worth (a realistic goal, not a grind), and the **first arrives in the
-  first sitting**. Thresholds climb strictly, so no two trophies are ever
-  bought with the same point.
+  reproduces it. The three **unbuilt** games use the generated ladder. Every
+  ladder keeps the two properties that were tuned by hand: the **twelfth trophy
+  lands at ~62–69 %** of everything the game is worth (a realistic goal, not a
+  grind), and the **first arrives in the first sitting**. Thresholds climb
+  strictly, so no two trophies are ever bought with the same point.
+
+  **lesen is hand-tuned, not generated.** It is a small game — 15 tiles for 12
+  trophies, where einmaleins has 25 — so the generated einmaleins curve
+  (thresholds 1, 3, 6 over lesen's 90) started too low: one perfect Schwer
+  round is worth 9 and cleared all three, so a single round dropped three
+  trophies and the shelf filled after roughly one play-through. Its ladder is
+  therefore `[3, 7, 12, 17, 23, 29, 35, 41, 47, 52, 57, 62]`: a first Schwer
+  round now buys two trophies (the einmaleins pace), and the twelfth at 62 of
+  90 needs play across all three difficulties, since Schwer alone caps at 45.
 
   `MAX_POINTS` is exact for einmaleins (25 tiles: 5×3 + 11×6 + 9×9 = 162 —
   Schwer lost its 1er and 10er tiles, §10.2, and the hand-tuned ladder tops out
