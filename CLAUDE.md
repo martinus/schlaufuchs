@@ -76,6 +76,16 @@ as `ready | faceUp | hidden | away` (`ready` = a word waits behind the
 tap-to-reveal cover, §14.2 — `playLesen` taps it before answering). Its
 resolver is unit-tested the same way (`tests/play-lesen.test.js`).
 
+`tools/play-rechnungen.js` drives rechnungen: `playRechnung({...})` with the
+same options as play.js (`wrongAt`, `delayMs`, `stopAt`/`questions`, plus
+`stopInAid`). Keypad input on every difficulty, so it types digits and OK like
+play.js. Seed the cookie with difficulty `d` and mode `m` (`"+" "-" "x" ":"
+"mix"`). A new question is announced on `#question`'s `dataset.q` stamp (like
+lesen), because a re-queued skill asks a fresh question that may read the same.
+`resolveRechnung(text)` reads the printed equation — plain binary, a ± chain, or
+a gap — and is unit-tested against every `questionFor` shape
+(`tests/play-rechnungen.test.js`).
+
 The hooks refuse a commit that fails `node --test` or that deletes tests
 without saying so, and a push that would delete a file from `main`. Wave one
 through with `SKIP_TEST_GUARD=1`.
@@ -217,12 +227,14 @@ Pages (each an entry point):
 - `index.html` — the world map (inline SVG, viewBox `0 0 360 560`), driven by
   `assets/js/map.js`. Six regions: 5 games + the Trophy Room (→ album).
 - `album.html` — trophy album, driven by `assets/js/album.js`.
-- `games/<name>/index.html` + `<name>.js` — one folder per game. Two are
-  fully implemented: `einmaleins` and `lesen` (Blitzwörter + Quatsch-Sätze,
-  §14 — content in `games/lesen/content.js`, which is **append-only**: item
-  order is the box string's index). `rechnungen`, `tippen`, `vokabeln` are
-  stubs and share one module: their page is a `<body data-game>` and
-  `assets/js/stub.js` is the rest.
+- `games/<name>/index.html` + `<name>.js` — one folder per game. Three are
+  fully implemented: `einmaleins`, `lesen` (Blitzwörter + Quatsch-Sätze, §14 —
+  content in `games/lesen/content.js`, which is **append-only**: item order is
+  the box string's index) and `rechnungen` (mental arithmetic ＋ − × ÷ Mix,
+  §12 — skill buckets in `games/rechnungen/logic.js`, also **append-only**: a
+  bucket's index is its box-string slot). `tippen`, `vokabeln` are stubs and
+  share one module: their page is a `<body data-game>` and `assets/js/stub.js`
+  is the rest.
 
 **Every page contributes an empty `<header class="topbar" id="topbar">` and
 nothing else.** The bar is built by `initTopBar()` (`chrome.js`), in one of two
@@ -246,8 +258,8 @@ Shared modules in `assets/js/`:
   **⭐ is the site's only currency.** `rewards.pr` is the weighted star counter
   (Leicht 1, Mittel 2, Schwer 3); internally the code says `points`, the UI
   never does. `MAX_POINTS` is its denominator everywhere and is a **guess** for
-  the three unbuilt games — recompute when one ships (einmaleins and lesen are
-  computed from their real tiles).
+  the two unbuilt games (`tippen`, `vokabeln`) — recompute when one ships
+  (einmaleins, lesen and rechnungen are computed from their real tiles).
 - `journey.js` — the round's scene; `sceneGeometry(nodes, theme)` is the pure
   arithmetic (tested), `createJourney` is the DOM around it.
 - `mapwalk.js` / `motion.js` / `levelfox.js` — the fox's walk: pure gait

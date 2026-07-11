@@ -1315,36 +1315,73 @@ progress display. Requires a physical keyboard (friendly hint otherwise).
 
 ## 12. Game 3: Rechnungen — region **Rechenberg**
 
-Mental arithmetic: **＋ − × ÷** and „Mix". Journey theme: `mountain` — the
-fox climbs; goal node: planting the summit flag. The map's mastered-state
-flag on Rechenberg mirrors this.
+Mental arithmetic: **＋ − × ÷** and „Mix". Journey theme: `mountain` — the fox
+climbs; the basket at the summit is the goal, exactly as in the other games
+(§10.5). Keypad input on every difficulty (like einmaleins, §10; never multiple
+choice). Rounds of **10** (§7.3). **Shipped 2026-07.**
 
 ### 12.1 Modes & difficulties
 
-Mode chips (＋ − × ÷ Mix) inside the difficulty picker overlay:
+Five mode tiles (＋ − × ÷ 🎲Mix) per difficulty section in the picker overlay —
+a mode's operator symbol is its tile face, „Mix" is the die. „Mix" pools the
+four operations at the chosen difficulty. The difficulty × mode grid the
+generators realise:
 
 | | ＋ / − | × / ÷ |
 |---|---|---|
-| Leicht | 0–10, no carrying | tables 1–5, no remainder |
-| Mittel | 0–100 with carrying/borrowing | full tables 1–10, halving/doubling |
-| Schwer | 0–1000, chains (`17 + 25 − 8`), gaps | beyond tables (`14 × 6`), division with remainder |
+| Leicht | within 10, no carrying/borrowing | ×: tables 1–5 · ÷: exact, tables 1–5 |
+| Mittel | 0–100, carrying / borrowing | ×: full tables 1–10 · ÷: exact, full tables |
+| Schwer | three-digit sums, gaps (`? + 27 = 61`), chains (`45 + 38 − 17`) | ×: beyond the tables (`14 × 6`) · ÷: larger exact division |
 
-Question generation is parameterized (range, carrying, gap position); ×/÷
-reuse the Einmaleins generator. Wrong answers show a one-line visual aid
-(number line for ±, dot grid for ×).
+×/÷ reuse the einmaleins multiplication generator where they overlap the tables
+(`games/einmaleins/logic.js`). The division sign is injected (`t("divSign")`:
+„:" German, „÷" English), so the logic module stays i18n-free — the einmaleins
+convention. Wrong answers show a one-line visual aid (§8.1: number line for
+＋/−/gaps/chains, a dot grid for ×/÷; no timer, no „Verstanden" — the way out is
+entering the right answer).
+
+**Scoped down at shipping** (§12 was a plan; these are the honest deviations,
+see the shipping PR): Schwer division is *larger exact* division, not
+division-with-remainder — a remainder needs two answer slots, which the single
+keypad answer cannot carry cleanly. Halving/doubling is not a separate Mittel
+skill; it falls out of the full-tables ×/÷ buckets.
 
 ### 12.2 Adaptive & stars
 
-The adaptive engine tracks **~30 fixed skill buckets** (e.g. „subtraction
-with borrowing, tens", „division with remainder"), listed canonically in
-`rechnungen.js` — not individual questions. Rounds of 10; stars per mode &
-difficulty with the same criteria as Einmaleins (§10.3).
+The adaptive engine tracks a small fixed set of **skill buckets** (20 as
+shipped — e.g. „addition within ten", „subtraction with borrowing, two-digit",
+„division, larger exact"), listed canonically and **append-only** in
+`games/rechnungen/logic.js` (`BUCKETS`): a bucket's index is its slot in the
+Leitner box string, so a new one joins at the end and no saved box shifts.
+
+A round does not ask a bucket once — it asks **ten concrete questions**, each
+freshly generated from a bucket, so a re-queued miss returns as the same skill
+with new numbers. The shared engine (`adaptive.js`) draws over the cell's
+buckets *expanded* into variant item-ids (`bucketId + BUCKET_COUNT · v`); each
+variant's box is seeded from its bucket, so weak skills are weighted up, and the
+round's per-bucket outcome is folded back at the end (`foldBoxes`). Stars per
+mode & difficulty with the einmaleins criteria (§10.3); the tempo ladder (§10.6)
+rides along per mode, its own bounds for mental arithmetic.
+
+The Rechenberg point economy is **90** (five modes × three difficulties, three
+stars each, worth 1/2/3): `maxPoints()` in `logic.js` computes it and
+`rewards.js`'s `MAX_POINTS.rechnungen` must equal it. It shares lesen's 90-point
+economy, so it inherits lesen's hand-tuned trophy ladder rather than the
+generated einmaleins curve, which would flood the Pokalraum (§8.3).
 
 ### 12.3 Cookie state (`rechnungen`)
 
+`box` is one Leitner digit per skill bucket (not per question). `stars`/`tempo`
+are keyed by mode, each a three-digit string indexed by difficulty — transposed
+from einmaleins/lesen, which key by difficulty.
+
 ```json
-{ "d": 0, "m": "+", "box": "232...", "stars": { "+": "310", "-": "2", "x": "", ":": "", "mix": "" } }
+{ "d": 0, "m": "+", "box": "22322...", "stars": { "+": "310", "-": "2", "x": "", ":": "", "mix": "" }, "tempo": { "+": "200" } }
 ```
+
+The parents' view (§20) has **no Rechenberg section**: its skill buckets do not
+map to a fact grid a parent recognises, so a report was consciously skipped and
+the game writes no telemetry beyond `box` — no dead cookie bytes.
 
 ---
 
