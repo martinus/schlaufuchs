@@ -17,7 +17,7 @@ export const ANCHORS = {
   rechnungen: [282, 196],
   tippen: [300, 266],
   vokabeln: [88, 198],
-  lesen: [78, 490],
+  lesen: [104, 496],
   pokalraum: [220, 498],
 };
 

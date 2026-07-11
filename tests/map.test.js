@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { GAMES, PLAYABLE, isPlayable } from "../assets/js/rewards.js";
+import { ANCHORS } from "../assets/js/mapwalk.js";
 
 const root = new URL("../", import.meta.url);
 const read = (p) => readFileSync(fileURLToPath(new URL(p, root)), "utf8");
@@ -357,6 +358,31 @@ test("playable regions are painted after the fogged ones", () => {
   assert.ok(
     lockedLast < playableFirst,
     "a fogged region painted after a playable one washes out its label",
+  );
+});
+
+// The fox stood dead-centre on the Lesewiese anchor, and the anchor sat right
+// on the tree's trunk — the fox's body hid it, so the tree read as a green ball
+// floating over the grass. The fox is drawn 44 wide, centred on its anchor
+// (map.js placeFox translates by x - 22), so its span must clear the trunk rect.
+test("the fox on the Lesewiese does not stand over the tree trunk", () => {
+  const region = html.slice(
+    html.indexOf('id="region-lesen"'),
+    html.indexOf("</a>", html.indexOf('id="region-lesen"')),
+  );
+  // the trunk is the short brown rect inside the region
+  const trunk = region.match(/<rect x="(\d+)" y="\d+" width="(\d+)" height="\d+" fill="#6b4423"\/>/);
+  assert.ok(trunk, "the Lesewiese trunk rect must exist to be cleared");
+  const trunkLeft = Number(trunk[1]);
+  const trunkRight = trunkLeft + Number(trunk[2]);
+
+  const FOX_HALF = 22; // half of foxSVG size 44 (map.js: translate by x - 22)
+  const [fx] = ANCHORS.lesen;
+  const foxLeft = fx - FOX_HALF;
+  const foxRight = fx + FOX_HALF;
+  assert.ok(
+    foxLeft >= trunkRight || foxRight <= trunkLeft,
+    `fox span [${foxLeft}, ${foxRight}] overlaps the trunk [${trunkLeft}, ${trunkRight}]`,
   );
 });
 
