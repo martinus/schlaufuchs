@@ -50,8 +50,8 @@
      the FILL, and the fill obeys the site's colour law (orange = what you DO,
      --depth = what you HAVE):
        • ACTION  — solid --orange, white text (.primary). One per screen.
-       • CHOICE  — white --panel, ink text (.mc/.keypad/.tilegrid/.langbtn/
-                   .iconbtn). The default tappable tile.
+       • CHOICE  — white --panel, ink text (.mc/.keypad/.verdict/.tilegrid/
+                   .langbtn/.iconbtn). The default tappable tile.
        • INFO    — --depth-soft fill, --depth text (.btn-menu: For parents,
                    Save/Load). Leads to what-you-have / the grown-up's side.
        • SELECTED (a toggle that is on) flips to solid --orange (.langbtn,
@@ -842,6 +842,16 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .wc-cover-eye { font-size: 2.2rem; line-height: 1; }
 .wc-cover-txt { font-size: 1.05rem; }
 
+/* A Mittel sentence is read, not blitzed (§14.1): it wraps, at a size a
+   second-grader can hold onto, and the card never turns or hides. */
+.wordcard.sent .question {
+  white-space: normal;
+  font-size: 1.45rem;
+  line-height: 1.4;
+  font-weight: 700;
+  text-align: center;
+}
+
 /* Schwer's reading card (§14.2): a passage to read with the question below it,
    both left-aligned and wrapping. No cover, no flip, no blitz — the passage
    stays put the whole time while she reads and answers it. */
@@ -900,6 +910,30 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   opacity: 0.4;
   cursor: default;
 }
+
+/* Stimmt / Quatsch (§14.1): two verdicts, each wearing its symbol in colour —
+   a child who reads nothing fluently yet still sees which side is "yes". */
+.verdict {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.verdict button {
+  min-height: clamp(64px, 10vh, 96px);
+  font-size: 1.35rem;
+  font-weight: 800;
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.verdict button:active { transform: scale(0.96); }
+.verdict .v-sym { font-size: 1.7rem; }
+.verdict .v-yes .v-sym { color: var(--ok); }
+.verdict .v-no .v-sym { color: var(--err); }
 
 /* the aid's question (§14.2), above the answer she should have chosen */
 .feedback-aid .fb-sent {

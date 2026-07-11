@@ -8,9 +8,12 @@
 
 import { clampBox } from "../../assets/js/adaptive.js";
 
-// Questions per round (§7.3): Lesen rounds are short — six items, because a
-// young reader's round must end before her patience does.
-export const ROUND_SIZE = 6;
+// Questions per round (§7.3): eight items. Lesen rounds were six — kept short
+// for a young reader's patience — but every tile's three stars were too quick
+// to collect, so a full Pokal ladder asked too little reading. Eight makes a
+// round meatier without outlasting a child, and three-starring one (all eight
+// first try) is real work. Every pack still outgrows the round (smallest is 10).
+export const ROUND_SIZE = 8;
 
 // How the three difficulty indices are *named*: the i18n key the child reads
 // and the CSS slug that colours a picker section (same contract as einmaleins).
@@ -26,21 +29,19 @@ export const STAR_TILES = 5;
 // --- the blitz clock (§14.2) -------------------------------------------------
 // How long a word stays readable before it hides, in ms, by Leitner box: a new
 // word (box 0) is generous, a settled one (box 4) is a real blitz. This is the
-// adaptive hook — the child *feels* getting faster without being told. Mittel
-// rows sit later because its words are physically longer. Deliberately plain
-// named numbers — retune after watching a real child, nothing else has to move.
+// adaptive hook — the child *feels* getting faster without being told.
+// Deliberately plain named numbers — retune after watching a real child.
 //
-// Schwer has no row: reading passages are never flashed (§14.2). The skill
-// trained there is comprehension — the passage stays on screen the whole time,
-// and the child answers a question about it from four choices.
+// Only Leicht flashes: it is the one difficulty that shows a single word (§14.1).
+// Mittel (Stimmt/Quatsch) and Schwer (reading passages) both put a whole
+// sentence or passage on screen to be read and judged, and nothing is ever
+// taken away — so there is no row for them, and flashMs returns null.
 // Retuned harder after "the reading is too easy" (§14): the reveal is ~20–25%
 // shorter across the curve, so even a fresh word is a real glance and a settled
-// one is a genuine blitz. Floor is 500ms (a word must stay readable), Mittel
-// stays above Leicht per box (its words are physically longer), and each box is
-// strictly faster than the last — all pinned by tests/lesen.test.js.
+// one is a genuine blitz. Floor is 500ms (a word must stay readable) and each
+// box is strictly faster than the last — pinned by tests/lesen.test.js.
 export const FLASH_MS = [
   [1900, 1350, 1000, 720, 500], // Leicht, box 0..4
-  [2400, 1750, 1300, 950, 620], // Mittel, box 0..4
 ];
 
 // The flash duration for one word, or null when this difficulty does not
@@ -93,15 +94,23 @@ export function itemAt(id, content) {
 }
 
 // --- questions ---------------------------------------------------------------
-// A word item asks for its emoji (§14.1). A Schwer item is a reading passage:
-// the child reads `text` and answers the question `q`, the correct answer being
-// the first option (§14.2). `text` is carried as `passage`, and `text` on the
-// question is the *question* — the same field the word card renders.
-export function questionFor(id, content) {
+// A Leicht word item asks for its emoji (§14.1). A Mittel item is a Stimmt/
+// Quatsch pair: one of its two faces is shown per encounter — drawn here, so the
+// truth of "the sentence about the moon" cannot be memorised, only read (§14.1).
+// A Schwer item is a reading passage: the child reads `text` and answers the
+// question `q`, the correct answer being the first option (§14.2). `text` is
+// carried as `passage`, and `text` on the question is the *question* — the same
+// field the word card renders.
+export function questionFor(id, content, rng = Math.random) {
   const found = itemAt(id, content);
   if (!found) return null;
   const { item } = found;
   if (item.w !== undefined) return { kind: "word", text: item.w, answer: item.e };
+  if (item.ok !== undefined) {
+    return rng() < 0.5
+      ? { kind: "sent", text: item.ok, answer: true }
+      : { kind: "sent", text: item.no, answer: false };
+  }
   return { kind: "read", passage: item.text, text: item.q, answer: item.a[0] };
 }
 
@@ -117,8 +126,9 @@ function shuffle(arr, rng) {
 // pack-mates, so distractors are same-theme yet distinct (pack emoji are unique,
 // tested); on the "Alle" tile the word's home pack still supplies them. For a
 // READING passage: the item's own four answers (the correct one is authored
-// first, and shuffled in here so its position never gives it away). Null for
-// anything that is not a valid answerable item.
+// first, and shuffled in here so its position never gives it away). Null for a
+// Stimmt/Quatsch sentence — it answers with a verdict, not a choice of options —
+// and for anything that is not a valid answerable item.
 export function optionsFor(id, content, rng = Math.random) {
   const found = itemAt(id, content);
   if (!found) return null;
@@ -195,18 +205,18 @@ export function fittedFontSize(size, avail, width) {
 export const TEMPO_SLOTS = 3;
 
 // Upper bounds (ms) on the round's median answer time, per difficulty:
-// [hare, car, rocket]. The clock starts when the child sees the word — the
-// reveal tap (§14.2) — so Leicht mirrors einmaleins' Leicht (a tap on one of
-// four choices). Mittel sits later because its words are physically longer,
-// like FLASH_MS does. Schwer is a whole PASSAGE read (~3 lines) plus a four-way
-// comprehension choice: a second grader reading one or two words a second needs
-// well over ten seconds to read and answer honestly, so the tiers are far more
-// generous here and the rocket still rewards fluent reading, never a guess (the
-// ⭐⭐ gate below keeps guessing unprofitable). Deliberately plain named
-// numbers — retune after watching a real child, nothing else has to move.
+// [hare, car, rocket]. The clock starts when the child sees the question — the
+// reveal tap for a word (§14.2), the show for a sentence or passage — so Leicht
+// mirrors einmaleins' Leicht (a tap on one of four choices). Mittel is a whole
+// SENTENCE read (§14.1) plus a Stimmt/Quatsch verdict: reading ~8 words at one
+// or two a second is several seconds before she can judge it, so its bounds sit
+// well past the word rows'. Schwer is a whole PASSAGE read (~3 lines) plus a
+// four-way comprehension choice, more generous still — the rocket rewards fluent
+// reading, never a guess (the ⭐⭐ gate below keeps guessing unprofitable).
+// Deliberately plain named numbers — retune after watching a real child.
 export const TEMPO_TIERS = [
-  [8000, 5000, 3000], // Leicht
-  [9000, 6000, 3500], // Mittel
+  [8000, 5000, 3000], // Leicht — a word and four emoji
+  [12000, 8000, 5000], // Mittel — read a sentence, then judge it
   [25000, 16000, 10000], // Schwer — reading a passage takes real time
 ];
 
