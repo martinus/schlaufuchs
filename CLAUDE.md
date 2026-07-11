@@ -67,7 +67,10 @@ nothing, quietly.
 `tools/play-lesen.js` is the same thing for lesen: `playLesen({...})` with the
 same options plus `stopInAid: true` (stop with the aid card still open, for
 screenshots) and `waitHidden: true` (answer a word only after the blitz hid
-it — the reduced-motion proof). Seed the cookie with difficulty `d` and pack
+it — the reduced-motion proof). Its `delayMs` sleep sits AFTER the reveal tap,
+so it counts on lesen's tempo clock (§14.4) — the knob for reaching the slow
+tempo tiers and calibrating lesen's `TEMPO_TIERS`, exactly like play.js for
+einmaleins. Seed the cookie with difficulty `d` and pack
 tile `p` (0–3 = themed packs, 4 = Alle); `readLesenScene()` reports the card
 as `ready | faceUp | hidden | away` (`ready` = a word waits behind the
 tap-to-reveal cover, §14.2 — `playLesen` taps it before answering). Its

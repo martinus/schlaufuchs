@@ -1156,8 +1156,9 @@ additive collectible** for *knowing* the fact.
   `max` — like the star basket, it can only climb (§10.5).
 - **The ⚡ moment**: a single answer at rocket speed flashes a small decorative
   bolt the instant it lands (transition, not keyframe — reduced motion sees it
-  briefly and calmly, §10.5). A slow answer sees *nothing*; there is no
-  negative moment anywhere in the ladder.
+  briefly and calmly, §10.5), with a short bright zap (`sfx.blitz`, muted like
+  every sound, §5). A slow answer sees *nothing*; there is no negative moment
+  anywhere in the ladder.
 - **Where it shows**: as a corner medal — a small white disc — on the picker
   tile (`aria-label` says it in words: „Tempo: Rennauto"), and as one quiet line
   in the summary —
@@ -1169,6 +1170,8 @@ additive collectible** for *knowing* the fact.
   exactly where fluency training happens.
 - The same per-question observations feed the parents' **per-fact recall
   grid** (§20) — as a damped class per pair, never as a stored time.
+- **Lesen carries the same ladder** with its own bounds and clock start
+  (§14.4); the mechanics are duplicated, pinned by a parity test.
 
 ### 10.7 Guarding a round that is not saved yet
 
@@ -1377,10 +1380,11 @@ without reading any UI text.
 | Mittel | **Blitzwörter lang** | same, with long words — compounds and consonant clusters („Schmetterling") |
 | Schwer | **Stimmt / Quatsch** | a sentence is shown **statically, never flashed**; tap ✓ Stimmt or ✗ Quatsch. Silly sentences are the motor: to find the joke you must read |
 
-Schwer is never timed and never flashed on purpose: the skill trained there
-is comprehension of a whole sentence, a flash would punish exactly the child
-this stage trains, and a timed 50/50 verdict makes guessing the rational
-strategy.
+Schwer is never flashed on purpose, and the child never sees a clock: the
+skill trained there is comprehension of a whole sentence, and a flash would
+punish exactly the child this stage trains. The tempo ladder (§14.4) observes
+silently, with bounds sized to a real sentence read and the ⭐⭐ gate keeping a
+timed 50/50 guess unprofitable.
 
 ### 14.2 The blitz (`flashMs`, the adaptive hook)
 
@@ -1450,23 +1454,41 @@ consecutive perfect rounds" plan and its `c3` counter are **dropped**
 (resolved): a counter that resets is loss framing (§8), and it bought nothing
 the ratio does not.
 
-**No tempo ladder in this version** (resolved deferral): the blitz IS the
-felt speed mechanic on ten of the fifteen tiles, a badge only Schwer could
-earn would make the picker read inconsistently, and the tiers need
-real-child calibration first. The einmaleins hooks (`answerTimes`, §10.6)
-are trivial to add later.
+**The tempo ladder applies, per §10.6** (the earlier deferral is lifted: with
+the tap-to-reveal cover every tile can be timed fairly, so all fifteen tiles
+can earn the badge and the picker reads consistently). Everything §10.6 says
+holds — median of first-try-correct answers, `awardTempo`'s ⭐⭐ gate, stored
+only upward as `tempo` digit strings beside `stars`, shown as the corner medal
+on the picker tile and one quiet summary line, never a number of time — with
+two lesen-specific rules:
+
+- **The clock starts when the child can see the question**: at the reveal tap
+  for a Blitzwort (the cover time is hers for free — she starts the blitz
+  *and* the clock, §14.2), and at the show for a sentence.
+- **`TEMPO_TIERS` are lesen's own** (games/lesen/logic.js): Leicht mirrors
+  einmaleins' Leicht (a tap on one of four choices), Mittel sits later like
+  `FLASH_MS` does, and Schwer's bounds are sized to *reading* a whole sentence
+  (rocket ≤ 6s), so the rocket rewards fluent reading, never lucky guessing.
+  Educated guesses — retune after watching a real child, via
+  `playLesen({ delayMs })`.
+
+The mechanics (`median`, `tempoTier`, `awardTempo`, the icons and keys) are
+duplicated from einmaleins like the star rules, pinned by the D11 parity test;
+no recall telemetry (`rc`, §20) for lesen. The ⚡ moment additionally plays a
+small zap (`sfx.blitz`, §10.6) — in both games.
 
 ### 14.5 Cookie state (`lesen`)
 
 ```json
-{ "d": 1, "p": 2, "box": { "de": "3421…(128)" }, "stars": { "0": "31000", "1": "00000", "2": "00000" } }
+{ "d": 1, "p": 2, "box": { "de": "3421…(128)" }, "stars": { "0": "31000", "1": "00000", "2": "00000" }, "tempo": { "0": "30000", "1": "00000", "2": "00000" } }
 ```
 
-`d` difficulty 0–2, `p` tile 0–4 (4 = Alle), star digit strings with five
-slots per difficulty (Alle last). `box` is keyed by language, so an English
-set adds a second string without migration. Maxed ≈ 220 bytes raw — the
-budget test in tests/lesen.test.js holds the whole cookie under §9.2's 3500
-even with every game maxed.
+`d` difficulty 0–2, `p` tile 0–4 (4 = Alle), star and tempo digit strings with
+five slots per difficulty (Alle last; `tempo` per §14.4, same layout as
+einmaleins' §9.2). `box` is keyed by language, so an English set adds a second
+string without migration. Maxed ≈ 270 bytes raw — the budget test in
+tests/lesen.test.js holds the whole cookie under §9.2's 3500 even with every
+game maxed.
 
 ### 14.6 English version & speech
 
