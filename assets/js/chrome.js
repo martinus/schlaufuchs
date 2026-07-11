@@ -13,7 +13,10 @@
 // carries its `data-i18n` attribute, so `setLang()` reaches the parts that stay.
 
 import { t, getLang, setLang, LANGUAGES } from "./i18n.js";
-import { getSettings, setSettings, resetAll, resetGame, hasGameData, loadState } from "./storage.js";
+import {
+  getSettings, setSettings, resetAll, resetGame, hasGameData, loadState,
+  exportState, parseBackup, replaceState,
+} from "./storage.js";
 import { foxInfo, TOTAL_TROPHIES, GAMES } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconHTML } from "./graphics.js";
@@ -114,6 +117,12 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
       <div class="setrow setrow-reset"><span class="cx-l-reset"></span></div>
       <div class="resetlist" id="cx-resetlist"></div>
       <hr class="cx-sep">
+      <div class="backuprow">
+        <button class="btn-menu" id="cx-export"></button>
+        <button class="btn-menu" id="cx-import" data-armable></button>
+        <input type="file" id="cx-import-file" accept=".json,application/json" hidden>
+      </div>
+      <p class="backupbad" id="cx-backup-bad" hidden></p>
       <a class="cx-parents btn-menu" href="${PARENTS_URL}"></a>
       <button class="primary" id="cx-close"></button>`,
     onOpen: renderRows,
@@ -133,6 +142,9 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
     renderLangPick();
     el.querySelector(".cx-l-reset").textContent = t("resetAll");
     renderResetList();
+    el.querySelector("#cx-export").textContent = t("backupSave");
+    el.querySelector("#cx-import").textContent = t("backupLoad");
+    el.querySelector("#cx-backup-bad").hidden = true;
     el.querySelector(".cx-parents").textContent = t("parentsLink");
     closeBtn.textContent = t("close");
   }
@@ -207,6 +219,59 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
     else resetGame(id);
     location.reload();
   });
+  // --- backup (§9.3): the cookie as a file, and the file back as the cookie ---
+  // Export is harmless and fires at once. Import REPLACES a child's whole
+  // progress, so its button arms first, exactly like the reset rows above.
+  el.querySelector("#cx-export").addEventListener("click", () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([exportState()], { type: "application/json" }));
+    a.download = "schlaufuchs-fortschritt.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    sfx.click();
+  });
+
+  const importBtn = el.querySelector("#cx-import");
+  const importFile = el.querySelector("#cx-import-file");
+  const backupBad = el.querySelector("#cx-backup-bad");
+  let importArmTimer = null;
+  importBtn.addEventListener("click", () => {
+    backupBad.hidden = true;
+    if (importBtn.dataset.armed !== "1") {
+      importBtn.dataset.armed = "1";
+      importBtn.classList.add("armed");
+      importBtn.textContent = t("resetConfirm");
+      sfx.click();
+      clearTimeout(importArmTimer);
+      importArmTimer = setTimeout(() => {
+        delete importBtn.dataset.armed;
+        importBtn.classList.remove("armed");
+        importBtn.textContent = t("backupLoad");
+      }, 4000);
+      return;
+    }
+    importFile.click();
+  });
+
+  async function importFrom(file) {
+    // Total-or-nothing (storage.js): junk never reaches the cookie, and a
+    // GOOD file replaces it whole — then the page must start over, because
+    // everything in memory (chips, boxes, the round) is now about the old one.
+    const state = file ? parseBackup(await file.text()) : null;
+    if (state === null) {
+      backupBad.hidden = false;
+      backupBad.textContent = t("backupBad");
+      return;
+    }
+    replaceState(state);
+    location.reload();
+  }
+  importFile.addEventListener("change", () => {
+    const file = importFile.files?.[0];
+    importFile.value = ""; // the same file, chosen twice, must fire twice
+    importFrom(file);
+  });
+
   closeBtn.addEventListener("click", overlay.close);
 
   return overlay;

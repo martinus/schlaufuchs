@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { encodeState, decodeState, overBudget, patchSection, BUDGET, withoutGame, hasGameData } from "../assets/js/storage.js";
+import { encodeState, decodeState, overBudget, patchSection, BUDGET, withoutGame, hasGameData, exportState, parseBackup } from "../assets/js/storage.js";
 import { read } from "./pages.js";
 
 test("state roundtrips through the cookie encoding (§9.2)", () => {
@@ -141,4 +141,51 @@ test("hasGameData: a game is resettable if it has a section or a trophy counter"
   assert.equal(hasGameData({ einmaleins: { d: 1 } }, "lesen"), false, "another game is not this one");
   assert.equal(hasGameData({}, "lesen"), false);
   assert.equal(hasGameData({ lesen: {} }, "lesen"), false, "an empty section is not progress");
+});
+
+// --- backup (§9.3) -------------------------------------------------------------
+// The whole site lives in one cookie on one device: a cleared cache or a new
+// phone deletes a year of stars, silently. The backup is that cookie as a
+// file, and the restore is total-or-nothing: junk, arrays, or an oversized
+// state must come back null — never half-written into the cookie.
+
+test("a backup roundtrips: what exportState writes, parseBackup accepts", () => {
+  const state = {
+    v: 1,
+    settings: { lang: "de", sound: false },
+    rewards: { at: "lesen", pr: { einmaleins: 42, lesen: 9 } },
+    einmaleins: { d: 1, t: 7, box: "4".repeat(100) },
+  };
+  const text = exportState(state);
+  assert.deepEqual(parseBackup(text), state);
+  // pretty-printed on purpose: a parent squinting at the file should see
+  // key/value lines, not one 2000-character wall
+  assert.match(text, /\n {2}"rewards"/);
+});
+
+test("exportState always stamps the version, parseBackup rejects what cannot be state", () => {
+  assert.equal(JSON.parse(exportState({})).v, 1);
+  for (const junk of ["", "not json", "[1,2]", '"a string"', "42", "null", "true"]) {
+    assert.equal(parseBackup(junk), null, `parseBackup(${JSON.stringify(junk)})`);
+  }
+  // an oversized backup would be refused by save() anyway — refuse it here,
+  // where the parent can still be told, not half-way through a reload
+  const fat = JSON.stringify({ v: 1, blob: "x".repeat(BUDGET) });
+  assert.equal(parseBackup(fat), null, "an over-budget backup must not pretend to load");
+});
+
+test("the gear offers the backup, adult-side, with the same two-step confirm", () => {
+  const src = read("assets/js/chrome.js");
+  // export: a real downloaded file, named so a parent finds it again
+  assert.match(src, /download = "schlaufuchs-fortschritt\.json"/);
+  assert.match(src, /exportState\(\)/);
+  // import: total-or-nothing through parseBackup, then a reload — the page's
+  // in-memory state is stale the moment the cookie is replaced
+  assert.match(src, /parseBackup\(/);
+  assert.match(src, /replaceState\(/);
+  const imp = src.slice(src.indexOf("function importFrom"), src.indexOf("closeBtn.addEventListener"));
+  assert.match(imp, /location\.reload\(\)/, "a restored cookie needs a fresh page");
+  // overwriting a child's progress is the destructive act here: the import
+  // button arms first, exactly like the reset rows
+  assert.match(src, /id="cx-import"[^>]*data-armable/, "the import must arm before it fires");
 });

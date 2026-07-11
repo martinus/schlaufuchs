@@ -1506,6 +1506,24 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   text-decoration: none;
 }
 
+/* The backup (§9.3) lives adult-side too, under the same rule as Für Eltern:
+   two quiet buttons side by side. The armed import turns red like a reset —
+   it is one: it replaces the whole cookie. */
+.backuprow { display: flex; gap: 8px; margin: 0 0 8px; }
+.backuprow .btn-menu {
+  flex: 1;
+  min-height: 44px;
+  border-radius: var(--radius);
+  background: var(--depth-soft);
+  color: var(--depth);
+  font-weight: 700;
+  font-size: 0.95rem;
+  border: 0;
+  cursor: pointer;
+}
+.backuprow .btn-menu.armed { background: var(--err); color: #fff; }
+.backupbad { color: var(--err); font-weight: 700; font-size: 0.85rem; margin: 0 0 8px; }
+
 /* ---- Parents' view (§14) ---- */
 /* A grown-up screen: it may scroll, and it uses --depth for knowledge because
    blue is what you HAVE. Orange stays with the fox and with actions. */

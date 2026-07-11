@@ -115,3 +115,35 @@ export function hasGameData(state, name) {
 export function resetGame(name) {
   return save(withoutGame(loadState(), name));
 }
+
+// --- backup (§9.3) -------------------------------------------------------------
+// The whole site lives in this one cookie on this one device: a cleared cache
+// or a new phone deletes a year of stars, silently. The backup is the cookie
+// as a downloadable file, and the restore replaces the cookie whole.
+
+// The state as pretty-printed JSON — a parent squinting at the file should see
+// key/value lines, not one 2000-character wall. Always stamped v: 1, like save().
+export function exportState(state = loadState()) {
+  return JSON.stringify({ ...state, v: 1 }, null, 2);
+}
+
+// Total-or-nothing: the file's text back as a state, or null. Junk, arrays and
+// scalars are not state; an over-budget file is refused HERE, where the parent
+// can still be told, not half-way through save()'s console warning.
+export function parseBackup(text) {
+  let obj;
+  try {
+    obj = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) return null;
+  if (overBudget(obj)) return null;
+  return obj;
+}
+
+// Replace the cookie with a parsed backup. Nothing merges: the file IS the
+// state, exactly as resetAll + a year of play would have written it.
+export function replaceState(state) {
+  return save(state);
+}

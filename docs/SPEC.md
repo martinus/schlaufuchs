@@ -898,7 +898,20 @@ getSettings() / setSettings()
 resetAll()                     // delete the cookie (settings gear "Alles" row — §3.4)
 resetGame(name): boolean       // drop one game's section + its pr counter (settings gear — §3.4)
 withoutGame(state, name)       // the pure core of resetGame, unit-tested
+exportState(state?): string    // the whole state as pretty JSON — the backup file
+parseBackup(text): object|null // total-or-nothing: junk/arrays/over-budget → null
+replaceState(state): boolean   // a parsed backup becomes the cookie, whole
 ```
+
+**Backup (the gear, adult-side, §3.4):** the whole site lives in one cookie on
+one device, so a cleared cache or a new phone silently deletes every star. The
+gear's „Fortschritt sichern" downloads `exportState()` as
+`schlaufuchs-fortschritt.json`; „Fortschritt laden" reads a file back through
+`parseBackup` (total-or-nothing — a bad file changes NOTHING and says so) and
+replaces the cookie, then reloads. Importing overwrites a child's progress, so
+the button arms first, exactly like the reset rows. The file is a
+user-initiated download that never leaves the device by itself — the privacy
+page stays true.
 
 > **Trade-off note**: `localStorage` would allow more space; the cookie is a
 > deliberate product decision. The budget works with the compact encodings
