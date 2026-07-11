@@ -61,6 +61,33 @@ test("the fox lands before it arrives, and takes off after it leaves", () => {
   assert.equal(walkPoint(A, B, 1)[1], B[1]);
 });
 
+test("a straight up-and-down walk hops sideways, so the hop is seen", () => {
+  // In the level picker the tiles are one column, so a walk is purely vertical
+  // and the up-down bounce hides along the line of travel — the fox reads as
+  // sliding (§10.2). It leans sideways instead. The lean must be off the column.
+  const from = [100, 100];
+  const to = [100, 320];
+  const off = [0.15, 0.3, 0.45, 0.6, 0.85]
+    .map((p) => Math.abs(walkPoint(from, to, p)[0] - 100));
+  assert.ok(Math.max(...off) > 3, `a vertical walk that never leaves its column is a slide (max lean ${Math.max(...off)})`);
+  // …and it still lands dead on the tile it was sent to, both ends on the ground
+  assert.deepEqual(walkPoint(from, to, 0), from);
+  assert.deepEqual(walkPoint(from, to, 1), to);
+});
+
+test("a straight-across walk does not sway sideways off its own line", () => {
+  // A horizontal walk's bounce is already visible, so the sideways lean is off:
+  // its x is the plain eased interpolation with nothing added. (Guards the
+  // verticality scaling — a constant sway would wobble every walk.)
+  const from = [200, 200];
+  const to = [360, 200];
+  for (const p of [0.2, 0.5, 0.8]) {
+    const e = p < 0.5 ? 2 * p * p : 1 - ((-2 * p + 2) ** 2) / 2;
+    assert.ok(Math.abs(walkPoint(from, to, p)[0] - (200 + 160 * e)) < 1e-9,
+      `x swayed on a horizontal walk at p=${p}`);
+  }
+});
+
 test("progress outside 0..1 cannot throw the fox off the path", () => {
   // rAF can hand out a timestamp past the end on a janky frame
   assert.deepEqual(walkPoint(A, B, 1.4), B);

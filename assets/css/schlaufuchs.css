@@ -44,6 +44,38 @@
   --shadow: 0 2px 8px rgba(74, 44, 23, 0.18);
   --radius: 14px;
 
+  /* ---- Button system (§15) ----
+     ONE shape for every button: the same corner (--radius), the same raised
+     shadow (--shadow), the same press dip, the same display face. What varies is
+     the FILL, and the fill obeys the site's colour law (orange = what you DO,
+     --depth = what you HAVE):
+       • ACTION  — solid --orange, white text (.primary). One per screen.
+       • CHOICE  — white --panel, ink text (.mc/.keypad/.verdict/.tilegrid/
+                   .langbtn/.iconbtn). The default tappable tile.
+       • INFO    — --depth-soft fill, --depth text (.btn-menu: For parents,
+                   Save/Load). Leads to what-you-have / the grown-up's side.
+       • SELECTED (a toggle that is on) flips to solid --orange (.langbtn,
+                   the sound switch).
+       • DESTRUCTIVE arms from a quiet CHOICE tile to solid --err (.resetbtn).
+     The one deliberate exception is .ghost — a text-only "no, don't" that must
+     not look like a tile, so the real action beside it wins the eye (§10.7).
+     A new button picks a role above; it does not invent a sixth look. */
+  --btn-press: scale(0.96);      /* the dip every rectangular button shares */
+  --btn-press-lg: scale(0.98);   /* full-width buttons dip less, or they jump */
+
+  /* ---- Reward & currency type scale (§3.2, §15) ----
+     ⭐ is the site's only currency, so the two little labels that carry it read
+     the same everywhere a child meets them, at a size she can actually read on
+     the 360px phone this site is built for. Colour follows the site's law:
+       • --fs-trophy-name — a trophy's name under its cup, on the shelf and in
+         the summary. In --depth (a thing you HAVE) when owned, muted when not.
+       • --fs-star-note — every "+N ⭐ until the next thing" readout: the locked
+         shelf slots and the summary's goal line. In --depth when it is the very
+         next thing to chase (the one number worth reading), muted otherwise.
+     These grew from 0.62–0.85rem, which a beginning reader could not hold. */
+  --fs-trophy-name: 0.74rem;
+  --fs-star-note: 0.95rem;
+
   /* Joy on top, clarity underneath: a rounded display face for numbers and
      names, a legibility-first face for everything you read. */
   --font-display: "Grandstander", system-ui, sans-serif;
@@ -83,6 +115,8 @@ html, body {
    on every page was checked against `getComputedStyle`. */
 h1, h2, .question, .region-label, .foxchip .lbl, .chip,
 .mc button, .keypad button, .tilegrid button, .primary,
+/* the whole button family speaks in one voice: the display face (§15) */
+.langbtn, .btn-menu, .resetbtn,
 .summary .sline, .feedback-aid,
 /* the summary's one button */
 .summary button,
@@ -517,19 +551,24 @@ footer p { margin: 0; }
    a TRANSITION, never a keyframe — under reduced motion both are killed and
    the bolt is simply there for a beat and then removed, not hanging mid-air
    (the same contract as the journey's stars, §10.5). */
+/* Centred in the empty band above the question, not down in the answer slot
+   where it used to sit — there, right after the "=", the bolt read as part of
+   the equation. It bursts big and shoots straight up out of the top as it fades,
+   a clear "that was fast!" flourish clear of everything a child is reading. Same
+   spot in both games (§10.6, §14.4). */
 .stage .blitz {
   position: absolute;
-  right: 12%;
-  bottom: 14%;
-  font-size: 2.2rem;
+  left: 50%;
+  top: 7%;
+  font-size: 2.8rem;
   pointer-events: none;
   opacity: 1;
-  transform: none;
+  transform: translateX(-50%) scale(1);
   transition: transform 0.6s ease-out, opacity 0.6s ease-out;
 }
 .stage .blitz.gone {
   opacity: 0;
-  transform: translateY(-56px) scale(1.5);
+  transform: translate(-50%, -46px) scale(1.7);
 }
 
 /* The aid is the tallest thing the stage ever holds: equation, dot grid and a
@@ -1076,6 +1115,9 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 
 .langbtn .flag { font-size: 20px; line-height: 1; }
+.langbtn:active { transform: var(--btn-press); }
+/* SELECTED: the language you are reading flips to the solid-orange toggle look,
+   the same on/off signal the sound switch uses (§15). */
 .langbtn[aria-pressed="true"] { background: var(--orange); color: #fff; }
 
 .primary {
@@ -1090,6 +1132,10 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   box-shadow: var(--shadow);
   margin-top: 14px;
 }
+
+/* the ACTION role's press dip — gentler than the small tiles, so a full-width
+   button does not appear to jump (§15) */
+.primary:active { transform: var(--btn-press-lg); }
 
 /* The second answer to a question the child did not ask (§10.7). It has to be
    reachable and unmistakable, and it must not compete with the orange one:
@@ -1138,8 +1184,10 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 
 .summary .bigstars { font-size: 2.6rem; letter-spacing: 4px; }
 .summary .sline { margin: 6px 0; font-weight: 700; }
-/* the next star's price: present, but never louder than the score */
-.summary .sline.goal { font-weight: 400; font-size: .82rem; color: var(--ink-soft); }
+/* the next star's price: present, but never louder than the score. Same star
+   note as the shelf's locked slots (§15), so the "+N ⭐" a child chases reads
+   the same size in the summary as it does in the Pokalraum. */
+.summary .sline.goal { font-weight: 400; font-size: var(--fs-star-note); color: var(--ink-soft); }
 /* the tempo ladder's verdict (§10.6): a symbol and its name, never seconds */
 .summary .sline.tempo { font-size: .95rem; }
 .summary .sline.tempo .gicon { vertical-align: -4px; }
@@ -1277,7 +1325,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 
 .tcard .sname,
 .trophies .slot .sname {
-  font-size: 0.62rem;
+  font-size: var(--fs-trophy-name);
   font-weight: 700;
   color: var(--ink-soft);
   text-align: center;
@@ -1306,7 +1354,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    tooltip, which no child on a phone will ever see — and then in 0.62rem,
    which on the 360px phone this site is designed for she could not read. */
 .trophies .slot.locked .sfoot {
-  font-size: 0.78rem;
+  font-size: var(--fs-star-note);
   font-weight: 800;
   color: var(--ink-soft);
   white-space: nowrap;
@@ -1331,7 +1379,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    in the ownership colour and not in the muted grey the others wear. */
 .trophies .slot.locked .sfoot.snext {
   color: var(--depth);
-  font-size: 0.85rem;
+  font-size: var(--fs-star-note);
   margin-top: 2px;
 }
 
@@ -1375,6 +1423,10 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 /* As big as the screen allows: `--sc-card` is measured in album.js against the
    viewport, because the cup is an emoji sized in px and CSS cannot pick a font
    size from the width of the box it has to fit into. */
+/* The plaque is the ONE thing above the rain (z 5): the storm falls in front of
+   the whole panel, and only the cup is lifted clear of it, so the confetti
+   frames and highlights it instead of burying it (§3.2). */
+.sc-card { position: relative; z-index: 6; }
 .sc-card .tcard {
   width: var(--sc-card, 210px);
   gap: 8px;
@@ -1385,6 +1437,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .sc-sparks {
   position: absolute;
   inset: 0;
+  z-index: 1;
   pointer-events: none;
 }
 .sc-sparks i {
@@ -1413,6 +1466,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   position: absolute;
   right: -8px;
   bottom: -10px;
+  z-index: 3;
   line-height: 0;
   animation: sc-hop 0.72s ease-in-out infinite;
 }
@@ -1437,6 +1491,41 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
     transform: translateY(105vh) rotate(calc(var(--spin) * 720deg));
   }
 }
+
+/* The showcase's endless rain (§3.2): a layer that fills the panel and falls in
+   FRONT of everything in it — the cream, the fox, the sparks, the Close button —
+   so the storm is loud and impressive. Only the trophy plaque is lifted above it
+   (.sc-card, below), so the rain frames and highlights the cup instead of hiding
+   it. Each piece fades to nothing the further it falls (a mask over the layer's
+   height, so the lower panel and the button under it stay clear), and `--rain-h`
+   — the panel's measured height, from confettiRain() — is how far a piece falls,
+   so it crosses the visible panel on a sheet of any height. */
+.confetti-rain {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 0, #000 62%, transparent 97%);
+  mask-image: linear-gradient(180deg, #000 0, #000 62%, transparent 97%);
+}
+.confetti-rain i {
+  position: absolute;
+  top: 0;
+  display: block;
+  border-radius: 2px;
+  animation: confetti-rain-fall linear infinite;
+}
+@keyframes confetti-rain-fall {
+  0% { transform: translateY(-8%) translateX(0) rotate(0); opacity: 0; }
+  7% { opacity: 1; }
+  100% {
+    transform: translateY(var(--rain-h, 100vh)) translateX(var(--drift)) rotate(calc(var(--spin) * 540deg));
+    opacity: 0;
+  }
+}
+/* The panel is the rain's frame — it must be positioned so the layer fills it. */
+.showcase .sheet { position: relative; }
 
 /* ---- coming soon stubs ---- */
 .stub {
@@ -1483,6 +1572,20 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .textpage .linklist span { display: block; font-size: 0.85rem; color: var(--ink-soft); }
 .textpage .mail { color: var(--depth); font-weight: 700; }
 
+/* The INFO role of the button system (§15): a raised --depth-soft tile that
+   leads to the grown-up's side of the app — For parents, and the backup pair
+   below. It carries the SAME shadow and press dip as every other button, so it
+   sits in the one plane with them; the blue fill is what says "this goes to what
+   you have / the adults", not a flatter, shadowless look. */
+.btn-menu {
+  border-radius: var(--radius);
+  background: var(--depth-soft);
+  color: var(--depth);
+  box-shadow: var(--shadow);
+  font-weight: 800;
+}
+.btn-menu:active { transform: var(--btn-press-lg); }
+
 /* A line, then the one link out of the sheet: the parents' view, as a button.
    Privacy and About left the gear (they live on the footers); Für Eltern stays,
    set apart from the settings above it by the rule and styled as a real button,
@@ -1498,10 +1601,6 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   justify-content: center;
   width: 100%;
   min-height: 52px;
-  border-radius: var(--radius);
-  background: var(--depth-soft);
-  color: var(--depth);
-  font-weight: 800;
   font-size: 1.1rem;
   text-decoration: none;
 }
@@ -1512,11 +1611,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .backuprow { display: flex; gap: 8px; margin: 0 0 8px; }
 .backuprow .btn-menu {
   flex: 1;
-  min-height: 44px;
-  border-radius: var(--radius);
-  background: var(--depth-soft);
-  color: var(--depth);
-  font-weight: 700;
+  min-height: 48px;
   font-size: 0.95rem;
   border: 0;
   cursor: pointer;
@@ -1557,19 +1652,28 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    on the right. The armed state turns red, the two-step confirm shown in place
    on the row instead of on one shared icon. */
 .setrow-reset { min-height: 0; border-bottom: 0; padding-top: 6px; }
-.resetlist { display: flex; flex-direction: column; max-width: 24rem; margin: 0 0 8px; }
+/* The per-game rows are sub-items of the "Delete progress" heading above them,
+   so the list is indented under it while the Reset buttons stay flush with the
+   sheet's right edge — the heading owns the left margin, its children step in. */
+.resetlist { display: flex; flex-direction: column; margin: 0 0 8px; padding-left: 16px; }
 .resetrow {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  padding: 8px 2px; border-top: 1px solid var(--orange-soft);
+  padding: 8px 0; border-top: 1px solid var(--orange-soft);
 }
 .resetrow:first-child { border-top: 0; }
 .resetrow span { color: var(--ink); font-weight: 700; font-size: 0.95rem; }
+/* DESTRUCTIVE, at rest a quiet CHOICE tile (§15): the same raised white tile,
+   radius and press as the other buttons, only smaller and in muted ink so it
+   never reads as the thing to press — until it arms, when it becomes the loud
+   solid-red confirm. It used to be a lone brown-outlined pill, the one shape on
+   the settings sheet that belonged to no family. */
 .resetbtn {
-  flex: 0 0 auto; padding: 6px 14px; border-radius: 999px;
-  border: 2px solid var(--ink-soft); background: var(--panel);
-  color: var(--ink-soft); font-weight: 700; font-size: 0.82rem; cursor: pointer;
+  flex: 0 0 auto; padding: 8px 16px; border-radius: var(--radius);
+  border: 0; background: var(--panel); box-shadow: var(--shadow);
+  color: var(--ink-soft); font-weight: 800; font-size: 0.85rem; cursor: pointer;
 }
-.resetbtn.armed { border-color: var(--err); background: var(--err); color: #fff; }
+.resetbtn:active { transform: var(--btn-press); }
+.resetbtn.armed { background: var(--err); color: #fff; }
 
 .ptable { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
 .ptable th, .ptable td { padding: 6px 4px; text-align: right; }
