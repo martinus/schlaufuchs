@@ -7,12 +7,12 @@ import { loadState, getRewards, setRewards } from "./storage.js";
 // Playable games lead: the album shelves and the gear's reset rows iterate
 // this order, and a child looks for Lesewiese right under Einmaleins — not
 // below three shelves of games that do not exist yet.
-export const GAMES = ["einmaleins", "lesen", "tippen", "rechnungen", "vokabeln"];
+export const GAMES = ["einmaleins", "lesen", "rechnungen", "tippen", "vokabeln"];
 
 // Which of them a child can actually play. The other three are stubs, and the
 // map must not promise what the site cannot deliver: their regions are drawn
 // under fog (§3.1). Move a name here the moment its game exists.
-export const PLAYABLE = ["einmaleins", "lesen"];
+export const PLAYABLE = ["einmaleins", "lesen", "rechnungen"];
 export const isPlayable = (game) => PLAYABLE.includes(game);
 
 // Every game holds twelve trophies (§8.3).
@@ -48,6 +48,16 @@ const EINMALEINS_LADDER = [2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112];
 // tests/rewards.test.js pins it verbatim and guards the one-round property.
 const LESEN_LADDER = [3, 7, 12, 17, 23, 29, 35, 41, 47, 52, 57, 62];
 
+// rechnungen shares lesen's exact 90-point economy (§12.2), so it inherits the
+// same hand-tuned shape rather than the generated einmaleins curve — which over
+// 90 points starts at 1, 3, 6 and would drop three trophies from a single
+// perfect Schwer round (9 points), flooding the Pokalraum on day one, the very
+// bug LESEN_LADDER was written to avoid. A first Schwer round now buys two, not
+// three, and the twelfth trophy sits at 62 of 90 (≈ 69 %), so filling the shelf
+// needs play across the modes — Schwer alone caps at 45. tests/rewards.test.js
+// pins it verbatim and guards the one-round property.
+const RECHNUNGEN_LADDER = [3, 7, 12, 17, 23, 29, 35, 41, 47, 52, 57, 62];
+
 // What a game is worth in stars if a child masters every tile it offers (§8.3).
 // It is the denominator of everything the map says about a region, so it must
 // be right.
@@ -62,11 +72,17 @@ const LESEN_LADDER = [3, 7, 12, 17, 23, 29, 35, 41, 47, 52, 57, 62];
 // computes it from the real tiles, and tests/rewards.test.js holds the two
 // together.
 //
-// **The other three are guesses.** Those games do not exist, and neither does
-// their tile structure; these numbers were once "achievable stars × 2", from a
-// star count that no longer exists. RECOMPUTE a game's maximum from its real
-// tiles the day it ships, exactly as einmaleins' 180 was computed — until then
-// its badge tiers and region states are scaled against a number nobody checked.
+// rechnungen is exact as of shipping: five mode tiles (＋ − × ÷ Mix) per
+// difficulty, so 5 × 3 + 5 × 6 + 5 × 9 = 90 (§12.2) — `maxPoints()` in
+// games/rechnungen/logic.js computes it, and tests/rewards.test.js holds the two
+// together. It happens to equal its old guess, but it is a computed number now.
+//
+// **The other two (tippen, vokabeln) are still guesses.** Those games do not
+// exist, and neither does their tile structure; these numbers were once
+// "achievable stars × 2", from a star count that no longer exists. RECOMPUTE a
+// game's maximum from its real tiles the day it ships, exactly as einmaleins'
+// 180 was computed — until then its badge tiers and region states are scaled
+// against a number nobody checked.
 export const MAX_POINTS = {
   einmaleins: 162,
   rechnungen: 90,
@@ -96,7 +112,7 @@ export function ladderFor(maxPoints) {
 
 export const THRESHOLDS = {
   einmaleins: EINMALEINS_LADDER,
-  rechnungen: ladderFor(MAX_POINTS.rechnungen),
+  rechnungen: RECHNUNGEN_LADDER,
   tippen: ladderFor(MAX_POINTS.tippen),
   vokabeln: ladderFor(MAX_POINTS.vokabeln),
   lesen: LESEN_LADDER,
