@@ -14,7 +14,7 @@
 // 40), Escape closes it, and the focus goes back to the trophy she pressed.
 
 import { createOverlay } from "./overlay.js";
-import { confetti } from "./confetti.js";
+import { confettiRain } from "./confetti.js";
 import { foxSVG } from "./fox.js";
 import { sfx } from "./audio.js";
 import { trophyCardHTML } from "./trophycard.js";
@@ -42,6 +42,9 @@ export function showcaseSizes(w, h) {
 // Built on the first open, not at import: a round that wins nothing never puts
 // an overlay in the page.
 let ui = null;
+// The rain runs while the sheet is open and is torn down when it closes, so the
+// looping pieces do not keep animating behind a dismissed overlay.
+let stopRain = null;
 
 function build() {
   const overlay = createOverlay({
@@ -53,11 +56,13 @@ function build() {
       </div>
       <button class="primary" id="sc-close"></button>`,
     initialFocus: "#sc-close",
+    onClose: () => { stopRain?.(); stopRain = null; },
   });
   const card = overlay.el.querySelector("#sc-card");
   const close = overlay.el.querySelector("#sc-close");
+  const sheet = overlay.el.querySelector(".sheet");
   close.addEventListener("click", overlay.close);
-  return { overlay, card, close };
+  return { overlay, card, close, sheet };
 }
 
 export function openShowcase(trophy) {
@@ -68,5 +73,11 @@ export function openShowcase(trophy) {
   ui.close.textContent = t("close");
   ui.overlay.open();
   sfx.trophy();
-  confetti(140);
+  // The whole view fills with confetti that never stops, in front of everything
+  // but the cup — the trophy is being shown off, so the storm keeps going until
+  // she puts it down, and only the plaque is lifted clear of it so it is framed,
+  // not buried (§3.2). Started after open(), so the overlay has a measured
+  // height for the fall distance.
+  stopRain?.();
+  stopRain = confettiRain(ui.overlay.el);
 }

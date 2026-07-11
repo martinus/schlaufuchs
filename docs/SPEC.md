@@ -191,7 +191,12 @@ Map requirements:
   does the page open (`travelTo()` in `map.js`). So the child sees herself
   cross the island, and finds the fox standing in front of the place she was in
   when she comes back. The walk is three damped hops over an eased line
-  (`walkPoint`), 420–1100 ms by distance (`walkMs`), both pure and tested.
+  (`walkPoint`), 420–1100 ms by distance (`walkMs`), both pure and tested. Each
+  hop lifts the fox off the line **and leans it sideways**, the lean scaled by
+  how vertical the walk is: a straight up-and-down walk — the level picker's
+  single column of tiles (§10.2) — hops along its own line, so without the lean
+  the bounce is invisible and the fox reads as sliding. Both are damped to zero
+  at each end, so it still lands with both feet on the tile it was sent to.
   Under `prefers-reduced-motion` there is no walk: `at` is written and the page
   opens at once, so the fox is still there on the way back (§15). A fogged
   region is not walked to — it wiggles (below). These are SVG anchors, so the
@@ -293,7 +298,13 @@ map via the **Pokalraum** region (§3.1).
 **Tapping a trophy she owns holds it up** (`openShowcase()` in `showcase.js`):
 the cup fills the screen — the card is sized against the viewport in JS, because
 the cup is an emoji and no CSS length can be derived from the box it has to fit
-into — confetti falls, the fox jumps at its corner and stars blink around it.
+into — confetti rains, the fox jumps at its corner and stars blink around it.
+The confetti does not stop: `confettiRain()` fills a full-view layer **behind**
+the sheet and each piece fades to nothing the further down it falls (a mask on
+the layer plus a per-piece opacity ramp), so the blue-bordered plaque stays the
+one crisp, solid thing while the celebration keeps going until she puts it down.
+It is looping CSS, so `prefers-reduced-motion` stills it — and it is not even
+built in that case — and the showcase tears the layer down when it closes.
 
 **The round summary opens the same showcase**, from the trophy it just handed
 over (§10.1). That card used to be a *link to this room*, which celebrated by
@@ -1554,6 +1565,30 @@ need first.
 - Micro-animations: flash, gentle shake, confetti, journey steps — all
   respecting `prefers-reduced-motion` (reduced: instant state changes, no
   confetti).
+- **Buttons — one shape, three roles.** Every button is the same raised tile:
+  one corner (`--radius`), one shadow (`--shadow`), one press dip (`--btn-press`
+  / `--btn-press-lg` for full-width), the display face. Only the FILL varies,
+  and it obeys the palette law above:
+  - **Action** — solid `--orange`, white text (`.primary`). One per screen.
+  - **Choice** — white `--panel`, ink text (`.mc`/`.keypad`/`.verdict`/
+    `.tilegrid`/`.langbtn`/`.iconbtn`). The default tappable tile.
+  - **Info** — `--depth-soft` fill, `--depth` text (`.btn-menu`: For parents,
+    Save/Load) — it goes to what-you-have / the grown-up's side.
+  - **Selected** (a toggle that is on) flips to solid `--orange` (the language
+    chip, the sound switch).
+  - **Destructive** arms from a quiet Choice tile to solid `--err` (`.resetbtn`).
+
+  The one deliberate exception is `.ghost` (§10.7): a text-only "no, don't" that
+  must not look like a tile. A new button picks a role above — it does not invent
+  a sixth look. The full token block and rationale live at the top of
+  `assets/css/schlaufuchs.css`.
+- **Reward & currency type scale.** ⭐ is the only currency, so the two labels
+  that carry it are single `:root` tokens, one legible size each on the 360px
+  baseline: `--fs-trophy-name` (a trophy's name under its cup, shelf and summary)
+  and `--fs-star-note` (every "+N ⭐ until the next thing" — locked shelf slots
+  and the summary's goal line). Colour follows the law: `--depth` when it is the
+  very next thing to chase or a thing owned, muted otherwise. New reward text
+  reuses a token; it does not pick a fresh px size.
 
 ---
 

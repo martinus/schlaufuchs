@@ -33,9 +33,14 @@ export const STAR_TILES = 5;
 // Schwer has no row: sentences are never flashed (§14.1). The skill trained
 // there is comprehension, and a timed 50/50 verdict rewards guessing — the one
 // thing the Quatsch stage must never pay.
+// Retuned harder after "the reading is too easy" (§14): the reveal is ~20–25%
+// shorter across the curve, so even a fresh word is a real glance and a settled
+// one is a genuine blitz. Floor is 500ms (a word must stay readable), Mittel
+// stays above Leicht per box (its words are physically longer), and each box is
+// strictly faster than the last — all pinned by tests/lesen.test.js.
 export const FLASH_MS = [
-  [2400, 1700, 1200, 850, 550], // Leicht, box 0..4
-  [3000, 2200, 1600, 1100, 700], // Mittel, box 0..4
+  [1900, 1350, 1000, 720, 500], // Leicht, box 0..4
+  [2400, 1750, 1300, 950, 620], // Mittel, box 0..4
 ];
 
 // The flash duration for one word, or null when this difficulty does not

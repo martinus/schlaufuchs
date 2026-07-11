@@ -24,7 +24,13 @@ export const ANCHORS = {
 // A walk is hops, not a slide. Three of them, damped to nothing at both ends so
 // the fox is never caught mid-air at the moment it arrives or departs.
 const HOPS = 3;
-const HOP_HEIGHT = 9; // map units
+const HOP_HEIGHT = 11; // map units — higher than it was (9), so the bounce reads
+// How far each hop leans sideways. A straight up-and-down walk hops *along* its
+// own line, so the up-down bounce is invisible — it reads as the fox speeding up
+// and slowing down. The lean shows the hop; it is scaled by how vertical the
+// walk is, so it is strongest in the level picker's single column of tiles and
+// nothing at all on a straight-across walk, whose bounce is already plain.
+const SWAY = 6; // map units at a fully vertical walk
 const MS_PER_UNIT = 3.2;
 const MIN_MS = 420;
 const MAX_MS = 1100;
@@ -42,6 +48,17 @@ export function walkPoint(from, to, p) {
   const ease = c < 0.5 ? 2 * c * c : 1 - ((-2 * c + 2) ** 2) / 2;
   const x = from[0] + (to[0] - from[0]) * ease;
   const y = from[1] + (to[1] - from[1]) * ease;
-  const hop = Math.abs(Math.sin(c * Math.PI * HOPS)) * Math.sin(c * Math.PI) * HOP_HEIGHT;
-  return [x, y - hop];
+  // A half-sine over the whole walk (`envelope`) damps every hop to nothing at
+  // both ends, so the fox has both feet on the ground the moment it arrives or
+  // departs. `beat` is the per-hop oscillation, which the lift takes the size of
+  // (always up, hence `abs`) and the sideways lean takes the sign of (so the fox
+  // leans left, then right, then left).
+  const envelope = Math.sin(c * Math.PI);
+  const beat = Math.sin(c * Math.PI * HOPS);
+  const hop = Math.abs(beat) * envelope * HOP_HEIGHT;
+  const dx = to[0] - from[0];
+  const dy = to[1] - from[1];
+  const vertical = Math.abs(dy) / (Math.hypot(dx, dy) || 1);
+  const sway = beat * envelope * SWAY * vertical;
+  return [x + sway, y - hop];
 }

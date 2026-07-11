@@ -48,16 +48,21 @@ test("a locked slot says how far it still is, where a child can see it", () => {
 });
 
 // Mara could not read the foot at all: 0.62rem is ~10px on the phone the site
-// is designed for. The number is the whole reason the slot exists.
-test("the foot a child must read is set in a readable size", () => {
-  const size = (sel) => {
+// is designed for. The number is the whole reason the slot exists. It is now
+// one shared token, the "star note" of the reward type scale (§15), so the same
+// legible size carries every "+N ⭐" a child chases — here and in the summary.
+test("the foot a child must read is set in the shared, readable star-note size", () => {
+  const token = css.match(/--fs-star-note:\s*([\d.]+)rem/);
+  assert.ok(token, "the star-note size must be a documented :root token");
+  assert.ok(parseFloat(token[1]) >= 0.8, `the star note is barely legible at ${token[1]}rem`);
+  // both feet — the plain locked slot and the leading "next" one — read at that
+  // one size, so nothing on the shelf reintroduces a tiny, unreadable price
+  const usesToken = (sel) => {
     const block = css.slice(css.indexOf(`${sel} {`), css.indexOf("}", css.indexOf(`${sel} {`)));
-    const m = block.match(/font-size: ([\d.]+)rem/);
-    assert.ok(m, `${sel} has no rem font-size`);
-    return parseFloat(m[1]);
+    return /font-size: var\(--fs-star-note\)/.test(block);
   };
-  assert.ok(size(".trophies .slot.locked .sfoot") >= 0.75, "the distance is barely legible");
-  assert.ok(size(".trophies .slot.locked .sfoot.snext") >= 0.8, "the next slot leads, so it reads first");
+  assert.ok(usesToken(".trophies .slot.locked .sfoot"), "the locked foot must use the star-note token");
+  assert.ok(usesToken(".trophies .slot.locked .sfoot.snext"), "the next slot's foot too, so they match");
 });
 
 // "Noch 2 ⭐ bis zum nächsten Pokal" sat above the shelf, and the trophy it was
@@ -122,7 +127,10 @@ test("tapping a trophy she owns holds it up, loudly", () => {
 // taking the child out of her finished round and dropping her among empty slots.
 test("the shelf and the round summary hold a trophy up the same way", () => {
   const sc = read("assets/js/showcase.js");
-  assert.match(sc, /confetti\(/, "confetti");
+  // The showcase rains confetti continuously behind the plaque, and stops it
+  // when the sheet closes so the loop does not run behind a dismissed overlay.
+  assert.match(sc, /confettiRain\(/, "a confetti rain, not a one-shot burst");
+  assert.match(sc, /onClose: \(\) => \{ stopRain/, "the rain is torn down on close");
   assert.match(sc, /foxSVG\(\{ pose: "cheer"/, "a fox that cheers");
   assert.match(sc, /sfx\.trophy\(\)/, "and a sound");
   assert.match(sc, /createOverlay\(/, "the overlay contract, not a hand-rolled .hidden toggle (§3.3)");
