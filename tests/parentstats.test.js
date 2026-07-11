@@ -101,13 +101,13 @@ test("sightTally counts lesen's words and sentences separately, over one box str
   assert.equal(wordIds.length + sentIds.length, count, "every item is a word or a sentence");
 
   const fresh = boxesFromString(undefined, count);
-  assert.deepEqual(sightTally(fresh, wordIds), { weak: 0, open: 80, solid: 0, fast: 0 });
+  assert.deepEqual(sightTally(fresh, wordIds), { weak: 0, open: 160, solid: 0, fast: 0 });
 
   // one word at a glance, one slipping, one sentence solid — each lands in its
   // own set's tally and nowhere else
   const boxes = { ...fresh, [wordIds[0]]: 4, [wordIds[1]]: 0, [sentIds[0]]: 3 };
-  assert.deepEqual(sightTally(boxes, wordIds), { weak: 1, open: 78, solid: 0, fast: 1 });
-  assert.deepEqual(sightTally(boxes, sentIds), { weak: 0, open: 47, solid: 1, fast: 0 });
+  assert.deepEqual(sightTally(boxes, wordIds), { weak: 1, open: 158, solid: 0, fast: 1 });
+  assert.deepEqual(sightTally(boxes, sentIds), { weak: 0, open: 95, solid: 1, fast: 0 });
 });
 
 test("practiceSummary survives an empty, absent or corrupted cookie", () => {

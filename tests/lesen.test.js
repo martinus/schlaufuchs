@@ -31,7 +31,7 @@ const seeded = (seed = 1) => () => {
 // --- item addressing ---------------------------------------------------------
 
 test("canonical ids roundtrip over the whole content (§14.3)", () => {
-  assert.equal(itemCount("de"), 128, "the box string's length — append-only");
+  assert.equal(itemCount("de"), 256, "the box string's length — append-only");
   let id = 0;
   for (const pack of DE.packs) {
     for (const item of pack.items) {
@@ -47,28 +47,30 @@ test("canonical ids roundtrip over the whole content (§14.3)", () => {
   }
 });
 
-test("pools: every tile outgrows the round, packs never overlap (§7.3)", () => {
-  const packSize = [10, 10, 12];
+test("pools: every tile outgrows the round, tiles never overlap (§7.3)", () => {
+  // Each tile is a primary pack plus its one extension, so its pool is twice the
+  // difficulty's per-pack size; "Alle" unions all four tiles (§14.3).
+  const tilePool = [20, 20, 24];
   for (let d = 0; d < 3; d++) {
-    const packs = packsFor(d, DE);
-    assert.equal(packs.length, 4, `difficulty ${d} offers four packs`);
+    const tiles = packsFor(d, DE);
+    assert.equal(tiles.length, 4, `difficulty ${d} offers four tiles`);
     const seen = new Set();
-    packs.forEach((_, p) => {
+    tiles.forEach((_, p) => {
       const pool = poolFor(d, p, DE);
-      assert.equal(pool.length, packSize[d], `diff ${d} pack ${p}`);
+      assert.equal(pool.length, tilePool[d], `diff ${d} tile ${p}`);
       assert.ok(pool.length > ROUND_SIZE, "a pool must outgrow the round");
       for (const id of pool) {
-        assert.ok(!seen.has(id), `id ${id} sits in two packs`);
+        assert.ok(!seen.has(id), `id ${id} sits in two tiles`);
         seen.add(id);
       }
     });
     const mixed = poolFor(d, MIXED, DE);
-    assert.equal(mixed.length, packSize[d] * 4, `diff ${d} "Alle" is the union`);
+    assert.equal(mixed.length, tilePool[d] * 4, `diff ${d} "Alle" is the union`);
     assert.deepEqual([...seen].sort((a, b) => a - b), mixed.sort((a, b) => a - b));
   }
   // a corrupt tile index reads as "Alle", never as an empty round
   for (const junk of [-1, 7, 1.5, NaN, undefined]) {
-    assert.equal(poolFor(0, junk, DE).length, 40, `pack=${String(junk)}`);
+    assert.equal(poolFor(0, junk, DE).length, 80, `pack=${String(junk)}`);
   }
 });
 
@@ -347,8 +349,12 @@ test("a maxed lesen section stays a small fraction of the cookie budget", () => 
     stars: fullStars,
     tempo: fullStars, // same digit-string layout (§14.5)
   };
+  // The box string is one digit per item, so it grew with the deeper tiles
+  // (256 items, §14.3); the whole maxed section is still a small fraction of the
+  // budget, and the whole-purse check below proves the doubled content — plus a
+  // future English box of the same length — still fits with room to spare.
   const bytes = JSON.stringify({ lesen: maxed }).length;
-  assert.ok(bytes < 350, `lesen section is ${bytes} bytes`);
+  assert.ok(bytes < 420, `lesen section is ${bytes} bytes`);
 
   // …and the whole purse still fits: a maxed lesen beside a maxed einmaleins,
   // rewards and settings, with room for a future English box string (§14.6).

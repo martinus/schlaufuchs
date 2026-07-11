@@ -1418,13 +1418,13 @@ and everything is playable without reading any UI text.
 | | Stage | Exercise |
 |---|---|---|
 | Leicht | **Blitzwörter** | a word flashes on a card, then hides; pick its emoji from 4. Short frequent words, 1–2 syllables |
-| Mittel | **Stimmt/Quatsch** | a whole sentence shown **statically, never flashed**; read it and judge it — tap **Stimmt!** or **Quatsch!**. Two verdicts, but guessing does not pay (below) |
+| Mittel | **Stimmt/Blödsinn** | a whole sentence shown **statically, never flashed**; read it and judge it — tap **Stimmt!** or **Blödsinn!**. Two verdicts, but guessing does not pay (below) |
 | Schwer | **Leseverständnis** | a short passage (~3 lines) shown **statically, never flashed**; read it, then answer a question about it by picking one of **4 answers**. Comprehension, not a coin-flip verdict |
 
 The three stages climb the fluency ladder: a single word grasped whole (Leicht),
 a whole sentence read and judged (Mittel), a passage read and understood
 (Schwer). Only Leicht flashes — Mittel and Schwer put the text on screen to be
-read, and neither shows a clock. The two-choice Stimmt/Quatsch is the *easier*
+read, and neither shows a clock. The two-choice Stimmt/Blödsinn is the *easier*
 reading step, not a coin-flip pay-out: stars count first-try only (all 8 by
 coin-flip ≈ 0.4 %), a wrong verdict forces the aid and re-queues the item
 (guessing is slower than reading), the tempo ladder's ⭐⭐ gate makes a fast
@@ -1465,16 +1465,18 @@ plain named numbers to be retuned after watching a real child, like
   through in red, the word shown again **persistently** — no blitz — over the
   SAME four options; the way out is tapping the right one. On Mittel the sentence
   is shown again with the verdict it should have got (😊 „Das stimmt wirklich!"
-  or 😜 „Das ist Quatsch!"); the way out is the right verdict on the same two
+  or 😜 „Das ist Blödsinn!"); the way out is the right verdict on the same two
   buttons. On Schwer the question is shown again with the answer she should have
   chosen in green („Richtig: …"); the way out is that answer on the same four
   buttons. No timer, no "Verstanden" button.
-- **Schwer's question is set in the SAME body font, size and weight as the
-  passage** — not the bold display face. A question that stood out let a child
-  skim straight to it and answer without reading the passage; set identically,
-  she has to read down the text to find it. The round's scene (sky + basket,
-  §10.5) also stays on screen for a reading question, so she always sees how far
-  she is; it steps aside only while the wrong-answer aid is up (as for every kind).
+- **Schwer's question runs on as the passage's last sentence** — same body font,
+  size and weight, in one flowing block, not a line of its own. A question that
+  stood out (its own line, or the bold display face) let a child skim straight to
+  it and answer without reading the passage; run inline she has to read down the
+  text to find it. The round's scene (sky + basket, §10.5) also stays on screen
+  for a reading question — drawn large, since a reading screen has no keypad to
+  leave room for — so she always sees how far she is; it steps aside only while
+  the wrong-answer aid is up (as for every kind).
 
 ### 14.3 Content (`content.js`), tiles and the adaptive engine
 
@@ -1482,14 +1484,22 @@ Data-driven and **append-only**: the canonical item order (packs in file
 order, items in theirs) is the box digit string's index, so reordering
 shifts every child's boxes. German first; content is keyed by language.
 
-- **12 packs**: per difficulty four themed packs — Leicht 4×10 short words
-  `{ w, e }`, Mittel 4×10 Stimmt/Quatsch pairs `{ ok, no }`, Schwer 4×12 reading
-  passages `{ text, q, a }` (the correct answer authored first, shuffled by
-  `optionsFor`) — 128 items. Both non-word difficulties were rewritten **in
-  place** — Schwer from the old Quatsch pairs to passages, Mittel from the old
-  long-word packs to Stimmt/Quatsch pairs (their pack keys kept, so their i18n
-  names stayed too): same item positions, so no child's Leitner box shifted (the
-  append-only invariant is about order, which was preserved).
+- **12 tiles**: per difficulty four themed tiles — Leicht short words `{ w, e }`,
+  Mittel Stimmt/Blödsinn pairs `{ ok, no }`, Schwer reading passages `{ text, q, a }`
+  (the correct answer authored first, shuffled by `optionsFor`). Both non-word
+  difficulties were rewritten **in place** — Schwer from the old Quatsch pairs to
+  passages, Mittel from the old long-word packs to pairs (their pack keys kept, so
+  their i18n names stayed too): same item positions, so no child's Leitner box
+  shifted (the append-only invariant is about order, which was preserved).
+- **Deeper tiles (append, never grow-in-place):** a themed tile's pool is grown
+  by adding a new pack at the **end of the file** with an `extends: "<primaryKey>"`
+  field — same theme, same difficulty, drawn in the same round, but never a tile
+  of its own. Appending there keeps every existing id (so no box shifts), and the
+  **tile count is unchanged**, so `maxPoints` and the trophy ladder never move
+  under the deeper pool. Today each tile is doubled (Leicht 20 words, Mittel 20
+  pairs, Schwer 24 passages), so a round of eight samples a large well and rarely
+  repeats between runs — 256 items in all. `packsFor` lists only tiles; `poolFor`
+  unions a tile with its extensions (`isTile`/`extends`, logic.js).
 - A Leicht word carries ONE unambiguous mainstream emoji, unique inside its
   pack, no near-twins. **Distractors are the item's own pack-mates**
   (`optionsFor`): same theme ⇒ plausible, pack-unique emoji ⇒ clearly

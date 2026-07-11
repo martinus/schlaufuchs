@@ -72,8 +72,10 @@
        • --fs-star-note — every "+N ⭐ until the next thing" readout: the locked
          shelf slots and the summary's goal line. In --depth when it is the very
          next thing to chase (the one number worth reading), muted otherwise.
-     These grew from 0.62–0.85rem, which a beginning reader could not hold. */
-  --fs-trophy-name: 0.74rem;
+     These grew from 0.62–0.85rem, which a beginning reader could not hold. A
+     trophy's name is now set at the same size as the "+N ⭐" it costs — the two
+     labels that share a shelf slot read at one size, not two. */
+  --fs-trophy-name: 0.95rem;
   --fs-star-note: 0.95rem;
 
   /* Joy on top, clarity underneath: a rounded display face for numbers and
@@ -852,23 +854,23 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   text-align: center;
 }
 
-/* Schwer's reading card (§14.2): a passage to read with the question below it,
-   both left-aligned and wrapping. No cover, no flip, no blitz — the passage
-   stays put the whole time while she reads and answers it. */
+/* Schwer's reading card (§14.2): a passage to read with the question as its last
+   sentence, left-aligned and wrapping. No cover, no flip, no blitz — the passage
+   stays put the whole time while she reads and answers it. A plain block, not a
+   flex column, so the passage and question flow together as one paragraph. */
 .wordcard.read {
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: 8px;
+  display: block;
   padding: 12px 14px;
 }
-/* The passage and its question read as ONE block, in the SAME body font at the
-   same size and weight (§14.2): the question used to be set in the bold display
-   face, so it stood out and a child could skim straight to it and answer without
-   reading the passage. Set identically, she has to read down the text to find
-   it. (The base .question is the display face — this overrides it for read.) */
+/* The passage and its question read as ONE flowing paragraph, in the SAME body
+   font at the same size and weight (§14.2): the question used to sit on its own
+   line in the bold display face, so a child could skim straight to it and answer
+   without reading the passage. Run inline as the text's last sentence, she has
+   to read down to find it. (The base .question is the display face — this
+   overrides it for read.) */
 .wordcard .passage,
 .wordcard.read .question {
+  display: inline;
   font-family: var(--font-body);
   font-size: 1.02rem;
   line-height: 1.4;
@@ -900,7 +902,12 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    the top padding is reclaimed and the scene is drawn large. It steps aside only
    while the wrong-answer aid is up, which every kind shares (below). */
 .stage:has(#wordcard.read) { padding-top: 8px; }
-.stage:has(#wordcard.read) .journey { max-width: 62%; margin-inline: auto; }
+/* The scene is drawn large for a reading question (no keypad wants the room),
+   but its height is capped to the viewport so a long passage and its four
+   answers never get pushed off a short screen: tall on a big phone, smaller on
+   a 640px one. `meet` keeps the aspect ratio, so whichever bound binds first
+   wins. Sized against the longest passages fitting the 360×640 baseline. */
+.stage:has(#wordcard.read) .journey { max-width: 86%; max-height: 18vh; margin-inline: auto; }
 
 /* the aid's "Correct:" label, before the answer she should have chosen (§14.2) */
 .feedback-aid .fb-lbl { color: var(--ink-soft); font-weight: 700; font-size: 0.9rem; }
@@ -1071,13 +1078,14 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .tilegrid .tstars .tdone { font-size: 44px; color: #1e6b2c; opacity: 0.9; }
 
 /* The tempo badge (§10.6): the pace this tile has been *known* at, worn as a
-   small medal in its top corner. A bare emoji with a white outline was a smudge
-   on the busy bands; a white disc makes it a thing she earned and won — and
-   sets it apart from the stars, which are the thing still on offer. There is no
-   tier-0 medal: an empty corner is the lowest state, never a snail. */
+   small medal in its bottom corner. A bare emoji with a white outline was a
+   smudge on the busy bands; a white disc makes it a thing she earned and won —
+   and sets it apart from the stars, which are the thing still on offer. It sits
+   bottom-right, clear of the tile's name at the top which it used to overlap.
+   There is no tier-0 medal: an empty corner is the lowest state, never a snail. */
 .tilegrid .ttempo {
   position: absolute;
-  top: 6px;
+  bottom: 6px;
   right: 6px;
   width: 30px;
   height: 30px;
