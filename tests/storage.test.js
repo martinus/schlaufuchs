@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { encodeState, decodeState, overBudget, patchSection, BUDGET } from "../assets/js/storage.js";
+import { encodeState, decodeState, overBudget, patchSection, BUDGET, withoutGame, hasGameData } from "../assets/js/storage.js";
 import { read } from "./pages.js";
 
 test("state roundtrips through the cookie encoding (§9.2)", () => {
@@ -95,4 +95,50 @@ test("the cookie is read under the same name it is written", () => {
   assert.equal(literals.length, 1, "the cookie's name is written once, as NAME");
   assert.match(src, /const NAME = "schlaufuchs"/);
   assert.ok(!/document\.cookie\.match\(\/[^/]*schlaufuchs/.test(src), "the reader hard-codes the name");
+});
+
+// Per-game reset (§20): remove one game's whole footprint and nothing else.
+test("withoutGame drops a game's section and its trophy counter, keeps the rest", () => {
+  const state = {
+    v: 1,
+    settings: { sound: false, lang: "de" },
+    einmaleins: { d: 1, t: 7, box: "333" },
+    lesen: { d: 2, p: 4, box: { de: "2222" } },
+    rewards: { at: "lesen", pr: { einmaleins: 30, lesen: 9 } },
+  };
+  const next = withoutGame(state, "lesen");
+
+  assert.ok(!("lesen" in next), "the reading section is gone");
+  assert.ok(!("lesen" in next.rewards.pr), "the reading trophy counter is gone");
+  assert.deepEqual(next.einmaleins, { d: 1, t: 7, box: "333" }, "einmaleins is untouched");
+  assert.equal(next.rewards.pr.einmaleins, 30, "einmaleins stars are untouched");
+  assert.deepEqual(next.settings, { sound: false, lang: "de" }, "settings survive");
+
+  // the fox was standing on the game we cleared, so its saved spot is scrubbed —
+  // and undefined drops out of the cookie entirely, not written as null
+  assert.equal(next.rewards.at, undefined);
+  assert.ok(!encodeState(next).includes("%22at%22"), "at is absent from the cookie, not blanked");
+
+  // pure: the caller's state is not mutated
+  assert.ok("lesen" in state, "the input state is left intact");
+  assert.equal(state.rewards.pr.lesen, 9);
+});
+
+test("withoutGame keeps the fox's spot when it sat on another game", () => {
+  const state = { rewards: { at: "einmaleins", pr: { einmaleins: 30, lesen: 9 } } };
+  assert.equal(withoutGame(state, "lesen").rewards.at, "einmaleins");
+});
+
+test("withoutGame survives a cookie with no rewards section", () => {
+  assert.deepEqual(withoutGame({ lesen: { d: 2 } }, "lesen"), {});
+  assert.deepEqual(withoutGame({}, "lesen"), {});
+});
+
+test("hasGameData: a game is resettable if it has a section or a trophy counter", () => {
+  assert.equal(hasGameData({ lesen: { d: 2, box: {} } }, "lesen"), true, "a stored section counts");
+  assert.equal(hasGameData({ rewards: { pr: { lesen: 9 } } }, "lesen"), true, "a trophy counter counts");
+  assert.equal(hasGameData({ rewards: { pr: { lesen: 0 } } }, "lesen"), false, "zero stars is nothing to clear");
+  assert.equal(hasGameData({ einmaleins: { d: 1 } }, "lesen"), false, "another game is not this one");
+  assert.equal(hasGameData({}, "lesen"), false);
+  assert.equal(hasGameData({ lesen: {} }, "lesen"), false, "an empty section is not progress");
 });

@@ -122,15 +122,20 @@ test("every gear on this site opens the same settings sheet", () => {
   assert.match(chrome, /<div class="setrow"><span class="cx-l-reset">/);
   assert.ok(!/\$\{resetKind \?/.test(chrome));
   assert.match(chrome, /resetBtn\.addEventListener\("click"/, "…and it is always wired");
-  assert.match(chrome, /resetAll\(\);\s*\n\s*location\.reload\(\);/, "…to the one reset there is");
+  assert.match(chrome, /resetAll\(\);\s*\n\s*location\.reload\(\);/, "…to the whole-site reset");
 
-  // …and no caller may ask for a different one
+  // …and no gear page may ask for a different one. The per-game reset exists —
+  // but only on the parents' view (§20), a title-bar page with no gear at all.
+  // A page that DOES carry a gear must never offer it, or the sheet stops being
+  // uniform.
   for (const page of PAGES) {
     const src = sourcesOf(page).replace(/^\s*\/\/.*$/gm, "");
     assert.ok(!src.includes("resetKind"), `${page} asks its gear for a special reset`);
-    assert.ok(!src.includes("resetGame"), `${page} still knows about a per-game reset`);
+    if (hasFoxBar(page)) {
+      assert.ok(!src.includes("resetGame"), `${page} carries a gear, so it must not offer a per-game reset`);
+    }
   }
-  assert.ok(!codeOf("assets/js/storage.js").includes("resetGame"), "storage.js keeps a reset nobody calls");
+  assert.ok(codeOf("assets/js/storage.js").includes("resetGame"), "storage.js provides the per-game reset the parents' view calls");
 });
 
 // A reader's page has no gear at all, so it must never build the sheet: it has
