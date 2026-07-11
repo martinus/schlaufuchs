@@ -119,6 +119,29 @@ Die Änderungen sind super, hier noch ein paar Wünsche:
 * In der Levelauswahl: mach einen weissen Rand um die Sterne, man sieht sie trotzdem sonst sehr schlecht
 * Statt in der Himmelansicht bei den Sternen ein x2 oder x3 anzuzeigen, zeichne einfach kleine Gruppen mit 2 oder 3 Sterne (halt etwas kleiner), die dann alle in den Korb fliegen
 * Im Fehlerfall soll die Eingabe genauso wie im Spiel funktionieren, also z.b. bei Schwer oder Mittel Zahl eingeben und auch wirklich auf OK drucken muessen
+* zeig den Pokal auf den man klickt noch groesser, er soll den Schirm ziemlich ausfuellen.
+* Der Pokal: das Symbol soll wirklich noch hoeher ueber dem Pokal sein, das macht den ganzen Pokal mit Symbol groesser, verschiebe ihn dazu etwas nach unten. In etwa wie in dem Bild, aber besser zentriert und text lesbar darunter.
 
+-----
+
+* Das Symbol beim Pokal kann ruhig noch leicht hoeher oben sein.
+* Divisionssymbol ist zu hoch, Siehe screenshot @~/Downloads/Screen Shot 2026-07-10 at 09.33.43 division.png
+* Entferne den Button "Zur Karte" am Ende des Pokalraums, man hat eh oben das Symbol.
+* Bei "Fuer Eltern" , das flammensymbol gibt es nicht mehr. 
+* Statt im Pokalraum "Noch 2 Sternebis zum naechsten Pokal" zu schreiben, schreib +2 in den naechsten Pokal den man bekommen kann, unter der Progressbar
+* Der Pokal in der Spielende Ansicht ist etwas klein geraten, siehe Screenshot @~/Downloads/Screen Shot 2026-07-10 at 09.43.08 zu klein.png
+* Im pokalraum im Einstellungsmenue gibt es kein Zuruecksetzen? Der dialog soll ueberall gleich sein, und den selben Code verwenden! vermeide Duplizierung!!
 ------
+
+Design: Bei der Großansicht des Pokals soll es staendig Konfetti regnen, die Konfetti sollen aber verschwinden je weiter sie fallen (durchsichtig werden bis sie weg sind). Die blau umrandete Pokalplakette ist vor dem Konfetti und immer gut sichtbar.
+
+Die buttons sind sehr inkonsistent: Es gibt rote buttons, hellbraune buttons mit Schatten, buttons ohne schatten, blaue Buttons, kleine Buttons mit dunkler runder Umrandung (z.B. Zuruecksetzen in den Einstellungen), Buttons mit Icons...
+Erstelle ein einheitliches Konzept fuer mehr Koonsistenz. Diese Designentscheidungen sollen auf allen Seiten beruecksichtigt werden.
+
+Die Bewegung des Fuchses zwischen den Levels ist nur linear, auf der Karte macht der Fuchs wirklich kleine Huepfer. Das soll konsistent sein.
+
+
+
+-----
+
 TODO: Offline play through a service worker. The site is already fully static, has no network calls after load, and stores everything in one cookie — it is perhaps twenty lines from working on a train, in a waiting room, or on a school tablet with no Wi-Fi, which is exactly where a child practises times tables. It is listed in SPEC as M7 "Polish", which undersells it: for a kids' learning site, "works with no internet" is a feature parents choose on, and almost none of the commercial competitors have it because their business model needs the network.

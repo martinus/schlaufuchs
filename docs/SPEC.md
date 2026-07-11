@@ -1214,6 +1214,22 @@ with „Weiterspielen". That safe answer is the orange button and it takes the
 focus: a child who presses Enter on a question she did not ask keeps her round.
 „Zur Karte" is the quiet second button — never the reflex, always reachable.
 
+**Resume, not just guard.** The guard covers the exits a page can see; an
+incoming call, a tab evicted under memory pressure, or a gesture that slips
+past it still cost the round. So after every recorded answer the round is
+mirrored into `sessionStorage` (`roundstore.js`: the queue snapshot from
+`session.snapshot()`, the level, the tempo raw material), and on load the game
+rehydrates it — same tile, same question queue, the fox standing where she
+stood — with no picker and no dialog: the best interruption is one a child
+never has to think about. The mirror lives in sessionStorage on purpose (a
+round resurrected a week later over long-moved boxes would be a lie), is only
+trusted after `validResume` (a foreign or truncated snapshot falls back to the
+picker), and is dropped at the three moments it stops being true: a finished
+round (`endRound` wrote the cookie), a fresh start from the picker (a chosen
+tile outranks an interrupted round), and a **confirmed** „Zur Karte" on the
+guard's sheet — leaving on purpose means it. The guard stays underneath as the
+answer for exactly that deliberate exit.
+
 ---
 
 ## 11. Game 2: Tippen — region **Tippsee**

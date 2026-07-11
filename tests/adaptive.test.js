@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  createSession, clampBox, boxesFromString, boxesToString, WEIGHTS, hasProgress,
+  createSession, clampBox, boxesFromString, boxesToString, WEIGHTS, hasProgress, validResume,
 } from "../assets/js/adaptive.js";
 
 const seeded = (seed = 42) => () => {
@@ -145,5 +145,53 @@ test("hasProgress: a round is only worth guarding once an answer was given", () 
 
   for (const junk of [undefined, null, {}]) {
     assert.equal(hasProgress(junk), false, `junk in (${String(junk)}), no dialog out`);
+  }
+});
+
+// --- resuming an interrupted round (§10.7) ------------------------------------
+// The round mirror (roundstore.js) can only be as honest as this: a snapshot
+// must restore the queue, the boxes and the sets exactly, and a snapshot that
+// does not fit the pool — another level's, or plain junk — must be ignored.
+
+test("a snapshot restores the round exactly where it stood", () => {
+  const s = createSession(pool10, {}, { roundSize: 10, rng: seeded(21) });
+  s.answer(s.next(), false); // a miss, re-queued 2-4 later
+  s.answer(s.next(), true);
+  const snap = s.snapshot();
+
+  const r = createSession(pool10, {}, { roundSize: 10, rng: seeded(99), resume: snap });
+  assert.equal(r.next(), s.next(), "the same question must be up");
+  assert.deepEqual(r.progress(), s.progress());
+  assert.deepEqual(r.boxes(), s.boxes());
+  assert.deepEqual(r.items(), s.items());
+
+  // and the resumed round still plays out: everything gets solved, including
+  // the re-queued miss
+  let id;
+  while ((id = r.next()) !== null) r.answer(id, true);
+  assert.equal(r.progress().solved, 10);
+});
+
+test("a snapshot that does not fit the pool is ignored, never obeyed", () => {
+  const s = createSession(pool10, {}, { roundSize: 10, rng: seeded(3) });
+  s.answer(s.next(), true);
+  const snap = s.snapshot();
+  assert.equal(validResume(snap, pool10), true);
+
+  // another level's pool: the snapshot must not leak across
+  assert.equal(validResume(snap, [100, 101, 102]), false);
+  const other = createSession([100, 101, 102], {}, { roundSize: 3, rng: seeded(3), resume: snap });
+  assert.equal(other.progress().solved, 0, "a foreign snapshot must draw fresh");
+  assert.equal(other.items().length, 3);
+
+  for (const junk of [
+    null, 7, "x", {}, [],
+    { pending: [0], cursor: 99, roundItems: [0], solved: [], missed: [] }, // cursor out of range
+    { pending: [0], cursor: 0, roundItems: [], solved: [], missed: [] }, // an empty round is no round
+  ]) {
+    assert.equal(validResume(junk, pool10), false, `validResume(${JSON.stringify(junk)})`);
+    const f = createSession(pool10, {}, { roundSize: 10, rng: seeded(3), resume: junk });
+    assert.equal(f.progress().solved, 0, `junk resume ${JSON.stringify(junk)}`);
+    assert.equal(f.items().length, 10);
   }
 });
