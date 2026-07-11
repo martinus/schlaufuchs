@@ -776,6 +776,31 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 
 .wordcard.wc-hidden .wordback { opacity: 1; }
 
+/* The "ready" cover (§14.2): the card's whole face until the child taps it, so
+   the blitz never starts before she has looked. A soft depth tint and a 👀 say
+   "tap me" without a word to read; it is a real <button>, so it is keyboard-
+   reachable. Only shown while .covered — otherwise the word (or ❓) is the face. */
+.wordcard .wc-cover {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--depth-soft);
+  color: var(--depth);
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+.wordcard.covered .wc-cover { display: flex; }
+.wordcard.covered .question { visibility: hidden; }
+.wc-cover-eye { font-size: 2.2rem; line-height: 1; }
+.wc-cover-txt { font-size: 1.05rem; }
+
 /* A sentence is read, not blitzed (§14.1): it wraps, at a size a second-grader
    can hold onto, and the card never turns. */
 .wordcard.sent .question {
@@ -789,6 +814,15 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .mc-emoji button {
   font-size: 2.4rem;
   min-height: clamp(64px, 9.5vh, 96px);
+}
+
+/* While a word waits behind the cover (§14.2) the answers are disabled — the
+   child can see the four choices, so she knows what is coming, but tapping one
+   would be a guess at a word not yet revealed. Dim them so "not yet" is legible,
+   not a dead button that merely ignores the finger. */
+.answers button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* Stimmt / Quatsch (§14.1): two verdicts, each wearing its symbol in colour —

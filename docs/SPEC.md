@@ -1380,6 +1380,14 @@ is the mechanic that makes fluency *felt*: the same word flashes shorter and
 shorter, and she keeps catching it. The bounds are plain named numbers to be
 retuned after watching a real child, like `TEMPO_TIERS` (§10.6).
 
+- **The child starts the blitz, not the clock.** A word waits behind a
+  tap-to-reveal cover (👀 „Bereit? Tippen"); the flash is armed only when she
+  taps it, so it never runs before she has looked or even knows a word is
+  coming. Until the reveal the four answer emoji are shown but **disabled** —
+  she can see what is coming without being able to guess at a word she has not
+  seen. A sentence never covers (it does not flash — nothing is taken away), so
+  its verdicts are live at once. The cover is a real `<button>` (keyboard-
+  reachable); `armFlash()` lives in `reveal()`, never in `askNext()`.
 - Answering **during** the flash is allowed — that is the fluent path.
 - The hide is **decided by a JS timer and decorated by a CSS transition**,
   never a keyframe animation: `prefers-reduced-motion` kills transitions

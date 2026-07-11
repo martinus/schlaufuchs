@@ -69,8 +69,9 @@ same options plus `stopInAid: true` (stop with the aid card still open, for
 screenshots) and `waitHidden: true` (answer a word only after the blitz hid
 it — the reduced-motion proof). Seed the cookie with difficulty `d` and pack
 tile `p` (0–3 = themed packs, 4 = Alle); `readLesenScene()` reports the card
-as `faceUp | hidden | away`. Its resolver is unit-tested the same way
-(`tests/play-lesen.test.js`).
+as `ready | faceUp | hidden | away` (`ready` = a word waits behind the
+tap-to-reveal cover, §14.2 — `playLesen` taps it before answering). Its
+resolver is unit-tested the same way (`tests/play-lesen.test.js`).
 
 The hooks refuse a commit that fails `node --test` or that deletes tests
 without saying so, and a push that would delete a file from `main`. Wave one
