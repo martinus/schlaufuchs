@@ -7,6 +7,11 @@
 // page loads therefore carries that page's version, propagated to nested
 // imports by an import map.
 //
+// The map is no longer written out as one versioned URL per line; each page
+// carries a plain module list and one version, and an inline script builds the
+// versioned map from them at load time. These tests reconstruct that map the
+// same way the browser will, so they still see exactly what gets imported.
+//
 // These tests fail if someone adds a module, or a page, and forgets to
 // regenerate the maps: `node tools/version-assets.js <n>`.
 
@@ -27,10 +32,24 @@ const PAGES = [
   ...readdirSync(abs("games")).map((g) => `games/${g}/index.html`),
 ];
 
+// The map the page's inline builder will produce: its module list, each key
+// stamped with its one version — the same {spec: spec?v=N} the browser ends up
+// with. Reconstructing it here keeps every assertion below unchanged.
+function builderOf(page) {
+  const m = read(page).match(
+    /<!-- cache coherence[\s\S]*?<script>([\s\S]*?)<\/script>/,
+  );
+  assert.ok(m, `${page}: no import-map builder — nested imports would go unversioned`);
+  const body = m[1];
+  const v = body.match(/var v = "([^"]+)"/)?.[1];
+  const mods = JSON.parse(body.match(/var mods = (\[[\s\S]*?\]);/)[1]);
+  return { v, mods };
+}
+
 function importMapOf(page) {
-  const m = read(page).match(/<script type="importmap">([\s\S]*?)<\/script>/);
-  assert.ok(m, `${page}: no import map — nested imports would go unversioned`);
-  return JSON.parse(m[1]).imports;
+  const { v, mods } = builderOf(page);
+  assert.ok(v, `${page}: the import-map builder carries no version`);
+  return Object.fromEntries(mods.map((s) => [s, `${s}?v=${v}`]));
 }
 
 // Resolve a specifier the way the browser does, against the importing file,
@@ -63,6 +82,33 @@ function reachableFrom(page) {
 
 test("every page carries an import map", () => {
   for (const page of PAGES) assert.ok(Object.keys(importMapOf(page)).length > 0, page);
+});
+
+// The builder is only correct if the map it injects is in place before the
+// first module loads. It runs inline in <head>; the one thing that can break
+// that is a module script parsed before it — its imports would resolve against
+// no map and be fetched unversioned, the exact incoherence this whole file
+// guards. So: the builder must come first, and it must inject a real importmap.
+test("the import map is injected before any module the page loads", () => {
+  for (const page of PAGES) {
+    const html = read(page);
+    const builder = html.indexOf("<!-- cache coherence");
+    assert.notEqual(builder, -1, `${page}: no import-map builder`);
+
+    const firstModule = html.indexOf('<script type="module"');
+    if (firstModule !== -1) {
+      assert.ok(
+        builder < firstModule,
+        `${page}: a module script is parsed before the import map is built`,
+      );
+    }
+
+    // and what it injects is an import map, put in place synchronously (before
+    // the parser reaches that module), not appended after the fact
+    const body = html.slice(builder, html.indexOf("</script>", builder));
+    assert.match(body, /s\.type = "importmap"/, `${page}: the builder injects no importmap`);
+    assert.match(body, /currentScript\.after\(/, `${page}: the map is not inserted before the entry`);
+  }
 });
 
 test("every module a page can reach is versioned by its import map", () => {
