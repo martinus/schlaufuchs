@@ -204,6 +204,23 @@ test("a hit rect covers its region's own label, and never a neighbour's", () => 
   }
 });
 
+// SVG paints in document order, so where two hit rects overlap the later
+// region silently wins the whole shared strip. Lesewiese's rect once reached
+// 40px into the einmaleins village: a tap on the village's left house opened
+// the reading game or the times tables depending on nothing a child can see.
+test("no two hit rects overlap", () => {
+  const rects = Object.entries(hitRects());
+  for (let i = 0; i < rects.length; i++) {
+    for (let j = i + 1; j < rects.length; j++) {
+      const [aId, a] = rects[i];
+      const [bId, b] = rects[j];
+      const overlaps = a.x < b.x + b.w && b.x < a.x + a.w
+        && a.y < b.y + b.h && b.y < a.y + a.h;
+      assert.ok(!overlaps, `${aId} and ${bId} share tappable ground`);
+    }
+  }
+});
+
 test("no hit shape exists outside a region", () => {
   const inRegions = regionBlocks().join("").match(/class="hit"/g)?.length ?? 0;
   const inPage = html.match(/class="hit"/g)?.length ?? 0;
