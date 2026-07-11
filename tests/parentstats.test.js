@@ -6,10 +6,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   heatOf, weakFacts, practiceSummary, minutesOf, secondsPerRound,
-  recallDigit, cellState, cellCounts,
+  recallDigit, cellState, cellCounts, sightState, sightTally,
 } from "../assets/js/parentstats.js";
 import { boxesFromString, clampBox } from "../assets/js/adaptive.js";
 import { pairOf, POOL_COUNT } from "../games/einmaleins/logic.js";
+import { poolFor as lesenPoolFor, MIXED as LESEN_MIXED } from "../games/lesen/logic.js";
+import { CONTENT as LESEN_CONTENT, itemCount as lesenItemCount } from "../games/lesen/content.js";
 
 test("a fresh child has no weak facts, because nothing has been asked yet", () => {
   // clampBox defaults an unknown fact to box 2 — not 0. Reporting a beginner's
@@ -76,6 +78,36 @@ test("weakFacts lists the hardest first, and names real questions", () => {
   const tally = cellCounts(boxes, undefined, POOL_COUNT);
   assert.deepEqual(tally, { weak: 2, open: 97, solid: 1, fast: 0 });
   assert.equal(tally.weak + tally.open + tally.solid + tally.fast, POOL_COUNT, "every fact is counted once");
+});
+
+// The lesen split (§14.2, §20): the blitz shortens the flash as the box
+// climbs, so box 4 is only ever reached and held by reading the word at the
+// shortest flash — the box itself carries the speed story, and no rc-style
+// second tracker exists or is needed.
+test("sightState: box 4 IS 'at a glance', and a fresh word is open, not weak", () => {
+  assert.equal(sightState(0), "weak");
+  assert.equal(sightState(1), "weak");
+  assert.equal(sightState(2), "open");
+  assert.equal(sightState(3), "solid");
+  assert.equal(sightState(4), "fast");
+  for (const junk of [undefined, null, -1, 5, "x", NaN]) assert.equal(sightState(junk), "open");
+});
+
+test("sightTally counts lesen's words and sentences separately, over one box string", () => {
+  const de = LESEN_CONTENT.de;
+  const count = lesenItemCount("de");
+  const wordIds = [...lesenPoolFor(0, LESEN_MIXED, de), ...lesenPoolFor(1, LESEN_MIXED, de)];
+  const sentIds = lesenPoolFor(2, LESEN_MIXED, de);
+  assert.equal(wordIds.length + sentIds.length, count, "every item is a word or a sentence");
+
+  const fresh = boxesFromString(undefined, count);
+  assert.deepEqual(sightTally(fresh, wordIds), { weak: 0, open: 80, solid: 0, fast: 0 });
+
+  // one word at a glance, one slipping, one sentence solid — each lands in its
+  // own set's tally and nowhere else
+  const boxes = { ...fresh, [wordIds[0]]: 4, [wordIds[1]]: 0, [sentIds[0]]: 3 };
+  assert.deepEqual(sightTally(boxes, wordIds), { weak: 1, open: 78, solid: 0, fast: 1 });
+  assert.deepEqual(sightTally(boxes, sentIds), { weak: 0, open: 47, solid: 1, fast: 0 });
 });
 
 test("practiceSummary survives an empty, absent or corrupted cookie", () => {

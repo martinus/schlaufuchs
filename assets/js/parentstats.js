@@ -50,6 +50,26 @@ export function weakFacts(boxes, count) {
   return out.sort((a, b) => a.box - b.box || a.id - b.id);
 }
 
+// --- lesen (§14, §20) --------------------------------------------------------
+// For a word, the Leitner box already contains the speed story: the blitz
+// (§14.2) shortens the flash as the box climbs, so a word only reaches and
+// holds box 4 by being read correctly at the shortest flash. Box 4 therefore
+// IS "recognized at a glance" — no second tracker needed, unlike einmaleins,
+// where the answer time lives outside the box and the `rc` string fills the
+// gap. Junk reads as open, like everywhere else.
+export function sightState(box) {
+  return box === 4 ? "fast" : heatOf(box);
+}
+
+// How one set of items (the words, or the sentences) is spread across the four
+// states a parent can act on. Takes ids, not a count: lesen's words and
+// sentences interleave in one box string and are reported separately.
+export function sightTally(boxes, ids) {
+  const tally = { weak: 0, open: 0, solid: 0, fast: 0 };
+  for (const id of ids) tally[sightState(boxes[id])]++;
+  return tally;
+}
+
 // Practice time per difficulty, plus totals. Reads whatever the cookie holds,
 // including nothing at all: a parent opening this page before the child has
 // played must see zeroes, not a crash. `practiceTriple` is the same sanitizer

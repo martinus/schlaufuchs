@@ -35,11 +35,12 @@ if (!version) {
 
 // Every module that any page may pull in, directly or transitively. A game's
 // `logic.js` is pure and belongs here too: the parents' view reads the times
-// tables through it rather than copying `pairOf` and letting the two drift.
+// tables through it rather than copying `pairOf` and letting the two drift —
+// and its `content.js` with it, because the parents' view names lesen's words.
 const shared = [
   ...readdirSync(join(ROOT, "assets/js")).map((f) => `assets/js/${f}`),
   ...readdirSync(join(ROOT, "assets/i18n")).map((f) => `assets/i18n/${f}`),
-  ...readdirSync(join(ROOT, "games")).map((g) => `games/${g}/logic.js`),
+  ...readdirSync(join(ROOT, "games")).flatMap((g) => [`games/${g}/logic.js`, `games/${g}/content.js`]),
 ].filter((p) => p.endsWith(".js") && existsSync(join(ROOT, p)));
 
 // Every root-level page, discovered — a page added to a hard-coded list only
