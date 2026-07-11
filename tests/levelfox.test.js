@@ -86,8 +86,11 @@ test("a chosen level starts before the picker closes over it", () => {
 
 test("the game opens on its levels, and every round ends back on them", () => {
   const src = read("games/einmaleins/einmaleins.js");
-  // The last statement of the module used to be `startRound()`.
-  assert.match(src, /^picker\.open\(\);$/m, "the game must open in the level picker");
+  // The module used to end in a bare `picker.open()`. With the round mirror
+  // (§10.7) the picker is the fallback: an interrupted round resumes instead,
+  // and everything else still lands in the picker.
+  assert.match(src, /picker\.open\(\);/, "the game must open in the level picker when nothing resumes");
+  assert.match(src, /loadRound\("einmaleins"\)/, "…after asking for an interrupted round first");
   assert.match(src, /\$\("sum-ok"\)\.addEventListener\("click", picker\.open\)/);
   assert.ok(
     !/addEventListener\("click", startRound\)/.test(src),

@@ -45,31 +45,59 @@ function weightedSample(pool, weightOf, k, rng) {
   return out;
 }
 
+// Whether a snapshot (from `session.snapshot()`) can stand in for a fresh
+// draw over this pool (§10.7). Total on purpose: a snapshot from another
+// level, a truncated one, or plain junk must be *ignored*, never obeyed — the
+// failure mode of trusting it is a round full of questions the pool does not
+// hold.
+export function validResume(s, pool) {
+  if (!s || typeof s !== "object" || Array.isArray(s)) return false;
+  if (![s.pending, s.roundItems, s.solved, s.missed].every(Array.isArray)) return false;
+  if (s.roundItems.length === 0) return false;
+  if (!Number.isInteger(s.cursor) || s.cursor < 0 || s.cursor > s.pending.length) return false;
+  const inPool = new Set(pool);
+  return [...s.pending, ...s.roundItems, ...s.solved, ...s.missed].every((id) => inPool.has(id));
+}
+
 // createSession(pool, boxes, opts) per §7.5.
 //  - pool: array of item ids
 //  - boxes: {id: 0..4}
 //  - opts: {roundSize=10, requeueMin=2, requeueMax=4, rng=Math.random,
-//           boost: (id) => 1}
+//           boost: (id) => 1, resume: snapshot}
 // `boost` multiplies into the Leitner weight when the round is drawn (§7.2):
 // a game can make intrinsically hard items come up more often without touching
 // the box mechanics. It never affects re-queueing or box movement.
+// `resume` restores a round from `snapshot()` instead of drawing one — used
+// by the round mirror (§10.7); anything that fails `validResume` draws fresh.
 // The round ends only when every drawn item has been answered correctly
 // (§7.3), so next() returns null only after full success.
 export function createSession(pool, boxes, opts = {}) {
   const rng = opts.rng ?? Math.random;
-  const roundSize = Math.min(opts.roundSize ?? 10, pool.length);
   const reqMin = opts.requeueMin ?? 2;
   const reqMax = opts.requeueMax ?? 4;
   const boost = opts.boost ?? (() => 1);
+  const res = validResume(opts.resume, pool) ? opts.resume : null;
 
   const box = {};
   for (const id of pool) box[id] = clampBox(boxes[id]);
+  if (res) {
+    // the snapshot's boxes carry this round's moves (a miss already dropped
+    // its item to 0); clamp each digit as if it had come from the cookie
+    for (const [k, v] of Object.entries(res.box ?? {})) {
+      if (k in box) box[k] = clampBox(v);
+    }
+  }
 
-  const pending = weightedSample(pool, (id) => WEIGHTS[box[id]] * boost(id), roundSize, rng);
-  const roundItems = [...pending];
-  let cursor = 0;
-  const solved = new Set();
-  const missed = new Set();
+  const pending = res
+    ? [...res.pending]
+    : weightedSample(pool, (id) => WEIGHTS[box[id]] * boost(id), Math.min(opts.roundSize ?? 10, pool.length), rng);
+  const roundItems = res ? [...res.roundItems] : [...pending];
+  // progress() measures against the items actually drawn — on a resume that
+  // is the interrupted round's size, whatever today's options say
+  const roundSize = roundItems.length;
+  let cursor = res ? res.cursor : 0;
+  const solved = new Set(res?.solved);
+  const missed = new Set(res?.missed);
 
   return {
     next() {
@@ -104,6 +132,18 @@ export function createSession(pool, boxes, opts = {}) {
     },
     items() {
       return [...roundItems];
+    },
+    // Everything a later createSession needs to stand the round back up
+    // (§10.7). Plain JSON-safe values — the mirror stringifies it.
+    snapshot() {
+      return {
+        pending: [...pending],
+        cursor,
+        box: { ...box },
+        solved: [...solved],
+        missed: [...missed],
+        roundItems: [...roundItems],
+      };
     },
   };
 }

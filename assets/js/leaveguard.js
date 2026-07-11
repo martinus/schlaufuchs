@@ -42,7 +42,10 @@ export function leaveAction({ inRound, confirmOpen }) {
 
 // `inRound()` is asked afresh on every attempt — the round starts and ends long
 // after this guard is built. `mapUrl` is where an unanswered gesture goes.
-export function createLeaveGuard({ inRound, mapUrl }) {
+// `onGo` fires when the child *confirms* the leave: the one moment the round
+// mirror (§10.7, roundstore.js) must be dropped, because "Zur Karte" on the
+// sheet means it — every other way off the page is an accident to resume from.
+export function createLeaveGuard({ inRound, mapUrl, onGo }) {
   // Where the interrupted leave was headed. The back gesture aims at the map;
   // the top bar's button aims at its own href, which is the same place today
   // and need not stay that way.
@@ -66,6 +69,7 @@ export function createLeaveGuard({ inRound, mapUrl }) {
   // not ask keeps her round.
   sheet.el.querySelector("#lg-stay").addEventListener("click", sheet.close);
   sheet.el.querySelector("#lg-go").addEventListener("click", () => {
+    onGo?.();
     location.href = target;
   });
 
