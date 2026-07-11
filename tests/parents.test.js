@@ -46,7 +46,9 @@ test("the parents' view never writes state", () => {
 
 test("every page can reach the parents' view, and no round links to it", () => {
   const chrome = read("assets/js/chrome.js");
-  assert.match(chrome, /<a class="cx-parents" href="\$\{PARENTS_URL\}"><\/a>/);
+  // Für Eltern is a button now (an <a> styled as one), but still the same anchor
+  // the gear fills and points at the parents' view.
+  assert.match(chrome, /<a[^>]*\bcx-parents\b[^>]*href="\$\{PARENTS_URL\}"/);
   assert.match(chrome, /\.cx-parents"\)\.textContent = t\("parentsLink"\)/);
   assert.match(
     chrome,
