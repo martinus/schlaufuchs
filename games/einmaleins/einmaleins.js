@@ -319,6 +319,7 @@ function blitzFlash() {
   $("question").parentElement.appendChild(b);
   requestAnimationFrame(() => b.classList.add("gone"));
   setTimeout(() => b.remove(), 800);
+  sfx.blitz();
 }
 
 function submit(value, mcButton) {

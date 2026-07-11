@@ -26,7 +26,7 @@ import { createLevelPicker, packName } from "./picker.js";
 import {
   ROUND_SIZE, DIFF_KEYS, MIXED, flashMs, poolFor, questionFor, optionsFor,
   starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit,
-  fittedFontSize,
+  fittedFontSize, median, tempoTier, awardTempo, TEMPO_ICONS, TEMPO_KEYS,
 } from "./logic.js";
 
 initI18n(strings);
@@ -95,6 +95,13 @@ let wonTrophies = []; // what this round just handed over, for the showcase
 // fires — the token is what keeps a stale timer from hiding a fresh word.
 let qToken = 0;
 let flashTimer = 0;
+// The tempo ladder's raw material (§10.6, §14.4): when the child could first
+// see the current question — the reveal tap for a word, the show for a
+// sentence — and how long each first-try-correct answer took. The child only
+// ever meets these as a symbol, never as a number of time.
+let qShownAt = 0;
+let answerTimes = [];
+let missedIds = new Set();
 
 const card = document.getElementById("wordcard");
 
@@ -127,6 +134,8 @@ function startRound() {
     worth: starValue(diff), // a Schwer star says "×3" on its way to the basket
   });
   roundOver = false;
+  answerTimes = [];
+  missedIds = new Set();
   summary.close();
   askNext();
 }
@@ -157,6 +166,7 @@ function askNext() {
     phase = "answer";
     card.classList.remove("covered");
     setAnswersEnabled(true);
+    qShownAt = Date.now(); // a sentence shows at once, so its clock starts here (§14.4)
   }
 }
 
@@ -167,15 +177,17 @@ function setAnswersEnabled(on) {
   for (const b of $("answers").querySelectorAll("button")) b.disabled = !on;
 }
 
-// The child tapped the cover: show the word and start its blitz from this
-// moment (§14.2). Idempotent and word-only — a second tap, or a tap on a
-// sentence card, does nothing.
+// The child tapped the cover: show the word and start its blitz — and its
+// tempo clock (§14.4) — from this moment (§14.2). The time behind the cover is
+// hers for free: she starts the blitz and the clock, never the page. Idempotent
+// and word-only — a second tap, or a tap on a sentence card, does nothing.
 function reveal() {
   if (phase !== "ready") return;
   phase = "answer";
   card.classList.remove("covered");
   setAnswersEnabled(true);
   armFlash();
+  qShownAt = Date.now();
 }
 
 // The blitz (§14.2): the word hides after its Leitner box's flash time — the
@@ -269,12 +281,38 @@ function answerPress(value, btn) {
   }
 }
 
+// The ⚡ moment (§10.6): one answer at rocket speed, marked the instant it
+// lands. Appended to the stage, not the word card — the card flips and hides
+// (transforms and overflow that would clip or re-anchor the flight), while
+// `.stage .blitz` positions against the stage. Decorative only; a slow answer
+// sees nothing, because there is no negative moment. The flight is a
+// transition, so reduced motion degrades to "briefly there", never a keyframe
+// hanging mid-air (§10.5).
+function blitzFlash() {
+  const b = document.createElement("span");
+  b.className = "blitz";
+  b.setAttribute("aria-hidden", "true");
+  b.textContent = "⚡";
+  document.querySelector(".stage").appendChild(b);
+  requestAnimationFrame(() => b.classList.add("gone"));
+  setTimeout(() => b.remove(), 800);
+  sfx.blitz();
+}
+
 function submit(value, btn) {
   clearTimeout(flashTimer);
   const correct = value === question.answer;
   btn.classList.add(correct ? "flash-ok" : "flash-err");
   session.answer(currentId, correct);
   if (correct) {
+    // Only a first try feeds the tempo ladder (§10.6, §14.4): an item that was
+    // ever missed this round contributes nothing, so speed can never buy back
+    // what a wrong answer cost. One answer at rocket speed earns its ⚡ now.
+    if (!missedIds.has(currentId)) {
+      const took = Date.now() - qShownAt;
+      answerTimes.push(took);
+      if (tempoTier(took, diff) === 3) blitzFlash();
+    }
     phase = "correct-wait";
     // the word comes back for the short pause — the child sees what she just
     // read standing next to the emoji she chose
@@ -284,6 +322,7 @@ function submit(value, btn) {
     renderStatus(); // a banked star flies into the basket the moment it is won
     setTimeout(askNext, NEXT_MS);
   } else {
+    missedIds.add(currentId);
     phase = "wrong-wait";
     sfx.wrong();
     journey.stumble();
@@ -341,11 +380,22 @@ function endRound() {
   const improved = stars > old;
   if (improved) starsObj[diff] = withStarDigit(starsObj[diff], pack, stars);
 
+  // The tempo ladder (§10.6, §14.4): the round's median answer time as a tier,
+  // gated by two stars and stored only upward — the same digit strings the
+  // stars use, one per difficulty. Computed here, painted below as a symbol.
+  const tier = tempoTier(median(answerTimes), diff);
+  const tempoObj = { ...(saved.tempo ?? {}) };
+  const oldTempo = starDigit(tempoObj[diff], pack);
+  const newTempo = awardTempo({ stars, tier, best: oldTempo });
+  const tempoImproved = newTempo > oldTempo;
+  if (tempoImproved) tempoObj[diff] = withStarDigit(tempoObj[diff], pack, newTempo);
+
   setGame("lesen", {
     d: diff,
     p: pack,
     box: { ...(saved.box ?? {}), de: boxesToString(full, COUNT) },
     stars: starsObj,
+    tempo: tempoObj,
   });
 
   // points come from progress, never from repetition (§8.3)
@@ -362,6 +412,16 @@ function endRound() {
     if (goal) $("sum-goal").textContent = t(goal, { n: starGoalNeed(stars, total), total });
     $("sum-best").hidden = !improved;
     $("sum-best").textContent = t("newBest");
+    // The finish line's verdict, as a symbol and its name — never a number of
+    // time (§10.6). A round that awarded no tier shows nothing: below the
+    // hare there is no snail, only an empty line that never appears.
+    const paid = stars >= 2 && tier > 0;
+    $("sum-tempo").hidden = !paid;
+    if (paid) {
+      $("sum-tempo").innerHTML =
+        `${iconHTML(TEMPO_ICONS[tier], { size: 22 })} ${t(TEMPO_KEYS[tier])}`
+        + (tempoImproved ? ` · <b>${t("tempoBest")}</b>` : "");
+    }
     // One round can cross several thresholds at once (§8.3) — the summary
     // holds every trophy it paid, each one the same card the album shows.
     const st = $("sum-trophy");
@@ -381,7 +441,7 @@ function endRound() {
     $("sum-ok").textContent = t(SUM_OK_KEYS[Math.floor(Math.random() * SUM_OK_KEYS.length)]);
     bar.refresh(); // the top bar's counters just changed with the cookie
     summary.open();
-    if (improved || stars === 3 || res.newTrophies.length > 0) confetti();
+    if (improved || tempoImproved || stars === 3 || res.newTrophies.length > 0) confetti();
   }, 700);
 }
 

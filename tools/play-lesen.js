@@ -9,12 +9,16 @@
 //
 // playLesen() escapes the level picker the game opens on and runs until the
 // round's summary is up. Options: `wrongAt` (question number or list —
-// answered wrongly first), `delayMs` (think that long before every answer),
-// `stopAt` / `questions` (stop early, e.g. for a mid-round screenshot),
-// `stopInAid` (stop with the aid still open — for screenshotting it),
-// `waitHidden` (answer a word only after the blitz has hidden it — the
-// reduced-motion proof, §14.2). `readLesenScene()` and `readLesenSummary()`
-// are separate globals for `eval` steps.
+// answered wrongly first), `delayMs` (think that long before every answer —
+// the sleep sits AFTER the reveal tap, so it counts on the game's tempo clock
+// (§14.4): this is how the slow tempo tiers are reached in a driven round and
+// the knob for calibrating lesen's `TEMPO_TIERS`), `stopAt` / `questions`
+// (stop early, e.g. for a mid-round screenshot), `stopInAid` (stop with the
+// aid still open — for screenshotting it), `waitHidden` (answer a word only
+// after the blitz has hidden it — the reduced-motion proof, §14.2; the wait
+// counts on the tempo clock too, which is right: answering after the hide IS
+// slow). `readLesenScene()` and `readLesenSummary()` are separate globals for
+// `eval` steps.
 //
 // `resolveLesen` and `lesenMaps` are plain functions on `globalThis`: they are
 // the only part with real logic, and tests/play-lesen.test.js runs them in

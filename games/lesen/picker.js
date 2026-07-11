@@ -9,8 +9,11 @@ import { createLevelFox } from "../../assets/js/levelfox.js";
 import { t } from "../../assets/js/i18n.js";
 import { getGame } from "../../assets/js/storage.js";
 import { tilePointsLeft } from "../../assets/js/rewards.js";
+import { iconHTML } from "../../assets/js/graphics.js";
 import { CONTENT } from "./content.js";
-import { packsFor, starDigit, DIFF_KEYS, DIFF_SLUGS, MIXED } from "./logic.js";
+import {
+  packsFor, starDigit, DIFF_KEYS, DIFF_SLUGS, MIXED, TEMPO_ICONS, TEMPO_KEYS,
+} from "./logic.js";
 
 // A tile's short name, in the current language. The round title chip borrows
 // it too, so the name over the stage is the name on the tile that started it.
@@ -59,7 +62,9 @@ export function createLevelPicker(el, { current, onPick, onDismiss }) {
   function render() {
     list.innerHTML = "";
     // read the cookie as it is now, not as it was when the game loaded
-    const starsByDiff = getGame("lesen").stars ?? {};
+    const savedNow = getGame("lesen");
+    const starsByDiff = savedNow.stars ?? {};
+    const tempoByDiff = savedNow.tempo ?? {};
     const cur = current();
     let currentTile = null;
 
@@ -85,12 +90,19 @@ export function createLevelPicker(el, { current, onPick, onDismiss }) {
         // to a child who is here because she reads nothing fluently yet.
         const name = p === MIXED ? `🎲 ${packName(d, p)}` : packName(d, p);
         const art = left > 0 ? "<i>⭐</i>".repeat(left) : '<b class="tdone">✓</b>';
+        // The tempo symbol the tile has earned (§10.6, §14.4), a badge in the
+        // corner. Tier 0 draws nothing at all — an empty corner, never a snail.
+        const tempo = starDigit(tempoByDiff[d], p);
+        const badge = tempo > 0
+          ? `<span class="ttempo" aria-hidden="true">${iconHTML(TEMPO_ICONS[tempo], { size: 18 })}</span>`
+          : "";
         b.innerHTML = `<span class="tstars" aria-hidden="true">${art}</span>`
-          + `<span class="tname">${name}</span>`;
+          + badge + `<span class="tname">${name}</span>`;
         const here = b === currentTile ? ` · ${t("tileHere")}` : "";
+        const pace = tempo > 0 ? ` · ${t("tileTempo", { name: t(TEMPO_KEYS[tempo]) })}` : "";
         b.setAttribute(
           "aria-label",
-          `${t(key)} · ${packName(d, p)}${here} — ${left > 0 ? t("tileStarsLeft", { n: left }) : t("tileMastered")}`,
+          `${t(key)} · ${packName(d, p)}${here} — ${left > 0 ? t("tileStarsLeft", { n: left }) : t("tileMastered")}${pace}`,
         );
         b.addEventListener("click", () => chooseLevel(d, p, b));
         grid.appendChild(b);

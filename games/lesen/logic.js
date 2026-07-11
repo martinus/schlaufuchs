@@ -176,6 +176,63 @@ export function fittedFontSize(size, avail, width) {
   return Math.floor((size * avail) / width);
 }
 
+// --- the tempo ladder (§10.6, §14.4) -------------------------------------------
+// The same second, purely additive collectible einmaleins pays: 🐇 → 🚗 → 🚀,
+// only ever upward, worth nothing but itself. Duplicated from einmaleins'
+// logic.js like the star rules above — a shipped game is not a shared library
+// — and pinned against it by the parity test in tests/lesen.test.js. When a
+// third game wants the ladder, promote the shared parts to assets/js/tempo.js.
+export const TEMPO_SLOTS = 3;
+
+// Upper bounds (ms) on the round's median answer time, per difficulty:
+// [hare, car, rocket]. The clock starts when the child sees the word — the
+// reveal tap (§14.2) — so Leicht mirrors einmaleins' Leicht (a tap on one of
+// four choices). Mittel sits later because its words are physically longer,
+// like FLASH_MS does. Schwer is a whole sentence read plus a verdict: a second
+// grader at one or two words a second needs four to eight seconds to *read*
+// it, so its rocket rewards fluent reading, never lucky guessing (the ⭐⭐ gate
+// below is what keeps guessing unprofitable). Deliberately plain named
+// numbers — retune after watching a real child, nothing else has to move.
+export const TEMPO_TIERS = [
+  [8000, 5000, 3000], // Leicht
+  [9000, 6000, 3500], // Mittel
+  [15000, 10000, 6000], // Schwer
+];
+
+// The ladder's three faces, indexed by tier: the icon name (graphics.js) and
+// the i18n key. Index 0 is the point of both: below the hare there is nothing
+// to draw and nothing to say — never a snail.
+export const TEMPO_ICONS = [null, "tempo-hare", "tempo-car", "tempo-rocket"];
+export const TEMPO_KEYS = [null, "tempo1", "tempo2", "tempo3"];
+
+// The median, because one long think about a new word must not cost the round
+// its tempo — a sum or a mean would hand the slowest question a veto.
+export function median(values) {
+  const v = (values ?? []).filter(Number.isFinite).sort((a, b) => a - b);
+  if (v.length === 0) return null;
+  const m = v.length >> 1;
+  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
+}
+
+// Tier for a time (the round's median — or a single answer: tier 3 on one
+// answer is what triggers the in-round ⚡). Total: junk in, no tier out.
+export function tempoTier(ms, difficulty) {
+  const limits = TEMPO_TIERS[difficulty];
+  if (!limits || !Number.isFinite(ms) || ms < 0) return 0;
+  if (ms <= limits[2]) return 3;
+  if (ms <= limits[1]) return 2;
+  return ms <= limits[0] ? 1 : 0;
+}
+
+// What the tile stores after the round: fast-and-wrong must never pay, so a
+// round below two stars (§14.3) awards nothing — and like the star basket,
+// the stored tier only ever climbs.
+export function awardTempo({ stars = 0, tier = 0, best = 0 } = {}) {
+  const held = Number.isInteger(best) && best > 0 ? Math.min(best, TEMPO_SLOTS) : 0;
+  const won = Number.isInteger(tier) && tier > 0 ? Math.min(tier, TEMPO_SLOTS) : 0;
+  return stars >= 2 ? Math.max(held, won) : held;
+}
+
 // Everything the game can pay, computed from its real tiles (§8.3): each
 // difficulty offers its packs plus "Alle", each tile holds three stars, and a
 // star is worth difficulty + 1. This is what MAX_POINTS.lesen must equal —

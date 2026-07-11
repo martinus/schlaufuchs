@@ -51,4 +51,11 @@ export const sfx = {
     if (!enabled()) return;
     [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.14, i * 0.1));
   },
+  blitz() {
+    // The ⚡ moment (§10.6): a short bright zap over the correct() that plays
+    // in the same breath — two rising triangle blips, quieter than the trophy.
+    if (!enabled()) return;
+    tone(1320, 0.05, 0, "triangle", 0.07);
+    tone(1760, 0.09, 0.04, "triangle", 0.07);
+  },
 };

@@ -30,6 +30,12 @@ export default {
     // visible cue and its screen-reader label.
     lesenReady: "Bereit? Tippen",
     lesenTapReady: "Tippen, um das Wort zu sehen",
+    // The tempo ladder (§10.6, §14.4): a name per tier, never a time.
+    tempo1: "Hase",
+    tempo2: "Rennauto",
+    tempo3: "Rakete",
+    tempoBest: "Neuer Tempo-Rekord!",
+    tileTempo: "Tempo: {name}",
   },
   en: {
     lesenPickTitle: "Topic & difficulty",
@@ -53,5 +59,10 @@ export default {
     lesenCardHidden: "The word is hiding",
     lesenReady: "Ready? Tap",
     lesenTapReady: "Tap to see the word",
+    tempo1: "Hare",
+    tempo2: "Race car",
+    tempo3: "Rocket",
+    tempoBest: "New speed record!",
+    tileTempo: "Speed: {name}",
   },
 };

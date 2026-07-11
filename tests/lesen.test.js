@@ -8,13 +8,17 @@ import {
   packsFor, poolFor, itemAt, questionFor, optionsFor,
   STAR_SLOTS, starsFor, nextStarGoal, starGoalNeed, ownedStars,
   starDigit, withStarDigit, maxPoints,
+  TEMPO_SLOTS, TEMPO_TIERS, TEMPO_ICONS, TEMPO_KEYS, median, tempoTier, awardTempo,
 } from "../games/lesen/logic.js";
 import {
   starsFor as emStarsFor, nextStarGoal as emNextStarGoal,
   starGoalNeed as emStarGoalNeed, ownedStars as emOwnedStars,
+  TEMPO_ICONS as emTempoIcons, TEMPO_KEYS as emTempoKeys,
+  median as emMedian, awardTempo as emAwardTempo,
 } from "../games/einmaleins/logic.js";
 import { CONTENT, itemCount } from "../games/lesen/content.js";
 import { BUDGET } from "../assets/js/storage.js";
+import strings from "../games/lesen/i18n.js";
 import { read } from "./pages.js";
 
 const DE = CONTENT.de;
@@ -169,6 +173,120 @@ test("the star rules are the einmaleins rules — parity, so they cannot drift (
   }
 });
 
+// --- the tempo ladder (§10.6, §14.4) -------------------------------------------
+
+test("tempoTier: the bounds per difficulty, and on the bound still counts", () => {
+  assert.equal(TEMPO_SLOTS, 3);
+  for (let d = 0; d < TEMPO_TIERS.length; d++) {
+    const [hare, car, rocket] = TEMPO_TIERS[d];
+    assert.ok(hare > car && car > rocket, `d=${d}: the ladder must climb downward in ms`);
+    assert.equal(tempoTier(rocket, d), 3, `d=${d}: on the rocket bound`);
+    assert.equal(tempoTier(car, d), 2, `d=${d}: on the car bound`);
+    assert.equal(tempoTier(hare, d), 1, `d=${d}: on the hare bound`);
+    assert.equal(tempoTier(hare + 1, d), 0, `d=${d}: past the hare`);
+  }
+  // Schwer reads a whole sentence: its bounds must sit later than the word rows'
+  assert.ok(TEMPO_TIERS[2][2] > TEMPO_TIERS[0][2], "a sentence rocket cannot be a word rocket");
+  for (const junk of [NaN, -1, undefined, null, "3000"]) {
+    assert.equal(tempoTier(junk, 0), 0, `tempoTier(${String(junk)})`);
+  }
+  assert.equal(tempoTier(1000, 9), 0, "an unknown difficulty pays nothing");
+});
+
+test("awardTempo: fast-and-wrong never pays, and the badge only climbs", () => {
+  assert.equal(awardTempo({ stars: 1, tier: 3, best: 0 }), 0, "below ⭐⭐ nothing is paid");
+  assert.equal(awardTempo({ stars: 2, tier: 2, best: 0 }), 2);
+  assert.equal(awardTempo({ stars: 3, tier: 1, best: 3 }), 3, "a slower round keeps the badge");
+  assert.equal(awardTempo({ stars: 0, tier: 0, best: 2 }), 2, "a failed round keeps it too");
+  assert.equal(awardTempo(), 0);
+});
+
+test("median: outliers cannot veto the round, junk yields null", () => {
+  assert.equal(median([1000, 2000, 60000]), 2000, "one long think is not the verdict");
+  assert.equal(median([1000, 2000, 3000, 4000]), 2500);
+  assert.equal(median([NaN, 2000, undefined]), 2000);
+  assert.equal(median([]), null);
+  assert.equal(median(undefined), null);
+});
+
+// The ladder is einmaleins' ladder (§10.6) with lesen's own bounds: the shared
+// faces and mechanics must not drift apart — only TEMPO_TIERS differs, by
+// design (a sentence read is not a keypad answer).
+test("the tempo mechanics are the einmaleins mechanics — parity (D11)", () => {
+  assert.deepEqual(TEMPO_ICONS, emTempoIcons);
+  assert.deepEqual(TEMPO_KEYS, emTempoKeys);
+  const grids = [[], [500], [1000, 2000], [1, 2, 3, 4], [NaN, 800, -5]];
+  for (const g of grids) assert.equal(median(g), emMedian(g), JSON.stringify(g));
+  for (let stars = 0; stars <= 3; stars++) {
+    for (let tier = 0; tier <= 3; tier++) {
+      for (let best = 0; best <= 3; best++) {
+        assert.equal(
+          awardTempo({ stars, tier, best }),
+          emAwardTempo({ stars, tier, best }),
+          `stars=${stars} tier=${tier} best=${best}`,
+        );
+      }
+    }
+  }
+});
+
+// The wiring, pinned like einmaleins': measuring is easy to lose in a refactor
+// and its absence is silent — the ladder simply never pays again.
+test("the tempo ladder is wired: measured on first tries, saved, painted", () => {
+  const src = read("games/lesen/lesen.js");
+  assert.match(src, /answerTimes = \[\];[\s\S]*?missedIds = new Set\(\);/, "the round must reset the clock");
+  assert.match(src, /if \(!missedIds\.has\(currentId\)\) \{/, "only first tries feed the ladder");
+  assert.match(src, /answerTimes\.push\(took\)/);
+  assert.match(src, /if \(tempoTier\(took, diff\) === 3\) blitzFlash\(\)/, "the ⚡ moment");
+  assert.match(src, /tempoTier\(median\(answerTimes\), diff\)/, "the round's verdict is the median");
+  assert.match(src, /awardTempo\(\{ stars, tier, best: oldTempo \}\)/, "the ⭐⭐ gate");
+  assert.match(src, /tempo: tempoObj/, "…and it must reach the cookie");
+  // the bolt flies over the stage, not inside the flipping word card
+  assert.match(src, /document\.querySelector\("\.stage"\)\.appendChild\(b\)/);
+
+  const picker = read("games/lesen/picker.js");
+  assert.match(picker, /class="ttempo"/, "the picker tile wears the medal");
+  assert.match(picker, /TEMPO_ICONS\[tempo\]/);
+
+  assert.match(read("games/lesen/index.html"), /id="sum-tempo"/, "the summary needs its quiet line");
+});
+
+// The clock's start is the whole fairness of the ladder (§14.4): a word's time
+// begins at the reveal tap — the cover time is the child's for free — and a
+// sentence's when it appears. Wrongly starting a word's clock in askNext would
+// bill her for time she spent not yet looking.
+test("the tempo clock starts at the reveal for words, at the show for sentences", () => {
+  const src = read("games/lesen/lesen.js");
+  const revealFn = src.slice(src.indexOf("function reveal()"), src.indexOf("function armFlash()"));
+  assert.match(revealFn, /qShownAt = Date\.now\(\)/, "a word's clock starts when she taps");
+  const ask = src.slice(src.indexOf("function askNext()"), src.indexOf("function setAnswersEnabled"));
+  const sentenceBranch = ask.slice(ask.indexOf("} else {"));
+  assert.match(sentenceBranch, /qShownAt = Date\.now\(\)/, "a sentence's clock starts at the show");
+  const wordBranch = ask.slice(ask.indexOf("if (question.kind"), ask.indexOf("} else {"));
+  assert.ok(!/qShownAt/.test(wordBranch), "a covered word must not start the clock");
+});
+
+// The ⚡ deserves its own small sound (§10.6) — in both games, muted like all
+// the rest. A silent reward is one the child cannot brag about.
+test("a rocket answer zaps audibly, in both games", () => {
+  assert.match(read("assets/js/audio.js"), /blitz\(\)\s*\{/, "audio.js has no zap");
+  for (const f of ["games/lesen/lesen.js", "games/einmaleins/einmaleins.js"]) {
+    const fn = read(f);
+    const flash = fn.slice(fn.indexOf("function blitzFlash()"), fn.indexOf("function submit"));
+    assert.match(flash, /sfx\.blitz\(\)/, `${f}: the bolt must be heard`);
+  }
+});
+
+test("the tempo strings exist in both languages, and none names a time", () => {
+  for (const lang of ["de", "en"]) {
+    for (const key of ["tempo1", "tempo2", "tempo3", "tempoBest", "tileTempo"]) {
+      const s = strings[lang][key];
+      assert.ok(s, `${lang}.${key} is missing`);
+      assert.ok(!/\d\s*(s|ms|sek|sec)/i.test(s), `${lang}.${key} says "${s}" — never a time (§10.3)`);
+    }
+  }
+});
+
 test("ownedStars is total: junk in, a sane basket out", () => {
   for (const bad of [undefined, null, -1, 4, 99, 1.5, NaN, "2", {}]) {
     const n = ownedStars({ firstTrySolved: 5, total: 6 }, bad);
@@ -211,6 +329,7 @@ test("a maxed lesen section stays a small fraction of the cookie budget", () => 
     d: 2, p: MIXED,
     box: { de: "4".repeat(itemCount("de")) },
     stars: fullStars,
+    tempo: fullStars, // same digit-string layout (§14.5)
   };
   const bytes = JSON.stringify({ lesen: maxed }).length;
   assert.ok(bytes < 350, `lesen section is ${bytes} bytes`);
