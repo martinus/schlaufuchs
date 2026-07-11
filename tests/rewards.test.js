@@ -9,8 +9,17 @@ import {
   ladderFor, MAX_POINTS, TROPHIES_PER_GAME,
 } from "../assets/js/rewards.js";
 import { read } from "./pages.js";
+import { PLAYABLE } from "../assets/js/rewards.js";
 import { maxPoints as lesenMaxPoints } from "../games/lesen/logic.js";
 import { CONTENT } from "../games/lesen/content.js";
+
+// The album shelves and the gear's reset rows both iterate GAMES in order. A
+// child looks for Lesewiese right under Einmaleins — the games she can play —
+// not below three shelves of games that do not exist yet.
+test("the games a child can play shelve first", () => {
+  assert.deepEqual(GAMES.slice(0, PLAYABLE.length), PLAYABLE,
+    "the shelves and reset rows must lead with the playable games");
+});
 
 // einmaleins' ladder is the one a real child has been climbing, so it is spelled
 // out here rather than imported: if it ever changes, this file must say so.

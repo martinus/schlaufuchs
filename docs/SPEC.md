@@ -250,7 +250,9 @@ Map requirements:
 one place, one name (it reuses the `region_pokalraum` string). It is styled as
 a room: a warm wall, and a wooden shelf under each game's collection.
 
-One page, five sections (one per region, translated heading). Each section
+One page, five sections (one per region, translated heading), shelved in
+`GAMES` order — playable games first, so Lesewiese sits right under Einmaleins
+and not below three shelves of games that do not exist yet. Each section
 shows **12 trophy slots**, **three to a row** at every width — the same rhythm
 the level picker keeps (§10.2), and enough room for a cup that reads as a cup
 (the shelf used to be four across on a phone and six on a desktop, where the
@@ -269,13 +271,15 @@ have not won yet — you can see what is missing, which is the whole reason to
 keep collecting. The round summary draws the same card (§3.4), so a child
 recognises the trophy she just won when she meets it on the shelf.
 
-**A locked slot states its price where a child can see it**: `⭐ 62` under the
-silhouette. It used to live in a `title` tooltip, which no child on a phone will
-ever see. **The next slot to fall** shows a progress bar instead, and under the
-bar what is still owing — `+2 ⭐`, in the ownership colour, because it is the one
-number on this shelf worth chasing. That number used to be a sentence above the
-shelf ("Noch 2 ⭐ bis zum nächsten Pokal"), about a trophy three slots to the
-right; the screen reader still hears the sentence, on the slot itself.
+**A locked slot states its distance where a child can see it**: `+13 ⭐` under
+the silhouette — how many stars are still missing, not the total threshold. It
+used to live in a `title` tooltip, which no child on a phone will ever see, and
+then stated the total (`⭐ 62`), a price tag a child cannot relate to what she
+already owns. **The next slot to fall** additionally wears a progress bar, its
+`+2 ⭐` in the ownership colour, because it is the one number on this shelf
+worth chasing. That number used to be a sentence above the shelf ("Noch 2 ⭐
+bis zum nächsten Pokal"), about a trophy three slots to the right; the screen
+reader hears that sentence on every locked slot.
 
 **The room says what it is with its symbol**, not with a sentence: the heading
 is the same trophy that marks the room on the map, and it carries the room's
