@@ -19,13 +19,18 @@
 // the versioned URL too. That is why the import map must list EVERY module, not
 // just the entry point.
 //
-// The map is not written out as one versioned URL per line — that made a version
-// bump a wall of near-identical edits, which buries the one real change of a
-// deploy in noise. Instead each page carries a plain list of its modules and one
-// version string, and a tiny inline script builds the versioned map from them at
-// load time. A bump is then a single number. The script injects the map before
-// the module entry that follows it, which is the only correctness rule: an
-// import map must be in place before the first module loads.
+// The map is written out STATIC — `<script type="importmap">` with one
+// versioned URL per line — and must stay that way. It briefly was a plain
+// module list plus an inline script that built the map at load time (a bump
+// was then a single number), and that variant put Firefox 152 into a state
+// where the page never finishes loading: with a script-injected import map,
+// Gecko fetches every nested module twice (unversioned and ?v=N), and the
+// discarded loads race the document load group's bookkeeping — a favicon or
+// icon request stays registered forever, the load event never fires, and the
+// tab spinner never stops. Not cosmetic: anything that waits for `load`
+// (Firefox's own --screenshot does) hangs with it. A static map has neither
+// problem. The bump-noise this reintroduces is carried by this tool: a bump
+// is still one command, it just writes more lines.
 //
 // Usage: node tools/version-assets.js <version>
 // Run this before committing whenever any file under assets/ or games/ changed.
@@ -77,30 +82,24 @@ for (const page of pages) {
     .map((f) => (pageDir ? `${pageDir}/${f}` : f));
 
   // every module this page can reach, as the specifier it would import it by —
-  // the keys of the map the inline script builds. No version here: the version
-  // lives once, in `v` below, so a bump touches one line.
+  // the keys of the static map below. A nested import (map.js -> ./storage.js)
+  // resolves against these keys, so it is versioned too.
   const specs = [...shared, ...local].map((m) => rel(pageDir, m));
-  const modsLiteral =
-    "[\n" + specs.map((s) => `      ${JSON.stringify(s)}`).join(",\n") + "\n    ]";
+  const entries = specs
+    .map((s) => `      ${JSON.stringify(s)}: ${JSON.stringify(`${s}?v=${version}`)}`)
+    .join(",\n");
 
+  // A static <script type="importmap">, never a script that injects one:
+  // Firefox double-fetches every module and never fires `load` on the injected
+  // variant (see the header). tests/cache.test.js pins this shape.
   const block =
     `${MAP_START}\n` +
-    `  <script>\n` +
-    `  // Built here from one version and a plain list, not written out as a\n` +
-    `  // versioned URL per line, so a deploy bumps a single number. Injected\n` +
-    `  // before the module entry below — an import map must exist before the\n` +
-    `  // first module loads. A nested import (map.js -> ./storage.js) resolves\n` +
-    `  // against these keys, so it is versioned too. See tools/version-assets.js.\n` +
-    `  (function () {\n` +
-    `    var v = "${version}";\n` +
-    `    var mods = ${modsLiteral};\n` +
-    `    var imports = {};\n` +
-    `    for (var i = 0; i < mods.length; i++) imports[mods[i]] = mods[i] + "?v=" + v;\n` +
-    `    var s = document.createElement("script");\n` +
-    `    s.type = "importmap";\n` +
-    `    s.textContent = JSON.stringify({ imports: imports });\n` +
-    `    document.currentScript.after(s);\n` +
-    `  })();\n` +
+    `  <script type="importmap">\n` +
+    `  {\n` +
+    `    "imports": {\n` +
+    `${entries}\n` +
+    `    }\n` +
+    `  }\n` +
     `  </script>`;
 
   // replace an existing block, or insert one before the first module script.
