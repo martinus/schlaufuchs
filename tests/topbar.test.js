@@ -85,7 +85,10 @@ test("the stub pages carry no script of their own", () => {
     const html = read(page);
     assert.match(html, /<body class="stubpage" data-game="([a-z]+)">/, `${page}: no game named on the body`);
     assert.match(html, /src="\.\.\/\.\.\/assets\/js\/stub\.js/, `${page}: does not use the shared stub`);
-    assert.ok(!html.includes("import "), `${page}: still carries its own module`);
+    // The shared cache-coherence builder (every page has one) mentions "import"
+    // in a comment; strip it so this stays a question about the stub's own code.
+    const own = html.replace(/<!-- cache coherence[\s\S]*?<\/script>/, "");
+    assert.ok(!own.includes("import "), `${page}: still carries its own module`);
     const game = html.match(/data-game="([a-z]+)"/)[1];
     assert.ok(page.includes(`games/${game}/`), `${page}: says it is "${game}"`);
   }

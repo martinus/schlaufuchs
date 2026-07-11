@@ -19,6 +19,14 @@
 // the versioned URL too. That is why the import map must list EVERY module, not
 // just the entry point.
 //
+// The map is not written out as one versioned URL per line — that made a version
+// bump a wall of near-identical edits, which buries the one real change of a
+// deploy in noise. Instead each page carries a plain list of its modules and one
+// version string, and a tiny inline script builds the versioned map from them at
+// load time. A bump is then a single number. The script injects the map before
+// the module entry that follows it, which is the only correctness rule: an
+// import map must be in place before the first module loads.
+//
 // Usage: node tools/version-assets.js <version>
 // Run this before committing whenever any file under assets/ or games/ changed.
 
@@ -68,25 +76,39 @@ for (const page of pages) {
     .filter((f) => f.endsWith(".js"))
     .map((f) => (pageDir ? `${pageDir}/${f}` : f));
 
-  const imports = Object.fromEntries(
-    [...shared, ...local].map((m) => {
-      const spec = rel(pageDir, m);
-      return [spec, `${spec}?v=${version}`];
-    }),
-  );
+  // every module this page can reach, as the specifier it would import it by —
+  // the keys of the map the inline script builds. No version here: the version
+  // lives once, in `v` below, so a bump touches one line.
+  const specs = [...shared, ...local].map((m) => rel(pageDir, m));
+  const modsLiteral =
+    "[\n" + specs.map((s) => `      ${JSON.stringify(s)}`).join(",\n") + "\n    ]";
 
   const block =
     `${MAP_START}\n` +
-    `  <script type="importmap">\n` +
-    `${JSON.stringify({ imports }, null, 2)
-      .split("\n")
-      .map((l) => `  ${l}`)
-      .join("\n")}\n` +
+    `  <script>\n` +
+    `  // Built here from one version and a plain list, not written out as a\n` +
+    `  // versioned URL per line, so a deploy bumps a single number. Injected\n` +
+    `  // before the module entry below — an import map must exist before the\n` +
+    `  // first module loads. A nested import (map.js -> ./storage.js) resolves\n` +
+    `  // against these keys, so it is versioned too. See tools/version-assets.js.\n` +
+    `  (function () {\n` +
+    `    var v = "${version}";\n` +
+    `    var mods = ${modsLiteral};\n` +
+    `    var imports = {};\n` +
+    `    for (var i = 0; i < mods.length; i++) imports[mods[i]] = mods[i] + "?v=" + v;\n` +
+    `    var s = document.createElement("script");\n` +
+    `    s.type = "importmap";\n` +
+    `    s.textContent = JSON.stringify({ imports: imports });\n` +
+    `    document.currentScript.after(s);\n` +
+    `  })();\n` +
     `  </script>`;
 
-  // replace an existing block, or insert one before the first module script
+  // replace an existing block, or insert one before the first module script.
+  // Matches both shapes ever emitted here: the old static `<script
+  // type="importmap">` and the new builder `<script>` — so this migrates a page
+  // the first time it runs, and re-stamps it on every run after.
   const existing = new RegExp(
-    `${MAP_START.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\n\\s*<script type="importmap">[\\s\\S]*?</script>`,
+    `${MAP_START.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\n\\s*<script[^>]*>[\\s\\S]*?</script>`,
   );
   if (existing.test(html)) {
     html = html.replace(existing, block);
@@ -99,5 +121,5 @@ for (const page of pages) {
   html = html.replace(/(schlaufuchs\.css)(\?v=[^"]*)?"/g, `$1?v=${version}"`);
 
   writeFileSync(abs, html);
-  console.log(`versioned ${page} (${Object.keys(imports).length} modules)`);
+  console.log(`versioned ${page} (${specs.length} modules)`);
 }
