@@ -4,7 +4,10 @@
 
 import { loadState, getRewards, setRewards } from "./storage.js";
 
-export const GAMES = ["einmaleins", "tippen", "rechnungen", "vokabeln", "lesen"];
+// Playable games lead: the album shelves and the gear's reset rows iterate
+// this order, and a child looks for Lesewiese right under Einmaleins — not
+// below three shelves of games that do not exist yet.
+export const GAMES = ["einmaleins", "lesen", "tippen", "rechnungen", "vokabeln"];
 
 // Which of them a child can actually play. The other three are stubs, and the
 // map must not promise what the site cannot deliver: their regions are drawn

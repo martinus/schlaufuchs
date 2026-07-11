@@ -32,15 +32,32 @@ test("the room has exactly one door, and it follows the child", () => {
   assert.ok(!css.includes(".maplink"), "…and its rule must go with it");
 });
 
-test("a locked slot says what it costs, where a child can see it", () => {
+test("a locked slot says how far it still is, where a child can see it", () => {
   assert.ok(!js.includes('title="'), "a tooltip is invisible on a phone");
-  assert.match(js, /class="sfoot">⭐ \$\{need\}/, "the price, in the one currency there is");
+  // Every locked slot answers the same question — "how much further?" — in the
+  // one currency there is. The total threshold ("⭐ 62") read as a price tag,
+  // and a child who owns 50 stars was told a number that means nothing to her.
+  assert.match(js, /const owed = need - \(pr\[game\] \?\? 0\)/, "remaining, not the total");
+  assert.match(js, /class="sfoot">\+\$\{owed\} ⭐/, "the distance, not the price");
   assert.match(js, /class="sbar"/, "and the next slot shows how far along she is");
   // the bar belongs to the slot she is working on, not to every locked slot
   assert.match(js, /if \(i === earned && next\) \{/);
   for (const sel of [".trophies .slot.locked .sfoot", ".trophies .slot.locked .sbar"]) {
     assert.ok(css.includes(`${sel} {`), `${sel} is unstyled`);
   }
+});
+
+// Mara could not read the foot at all: 0.62rem is ~10px on the phone the site
+// is designed for. The number is the whole reason the slot exists.
+test("the foot a child must read is set in a readable size", () => {
+  const size = (sel) => {
+    const block = css.slice(css.indexOf(`${sel} {`), css.indexOf("}", css.indexOf(`${sel} {`)));
+    const m = block.match(/font-size: ([\d.]+)rem/);
+    assert.ok(m, `${sel} has no rem font-size`);
+    return parseFloat(m[1]);
+  };
+  assert.ok(size(".trophies .slot.locked .sfoot") >= 0.75, "the distance is barely legible");
+  assert.ok(size(".trophies .slot.locked .sfoot.snext") >= 0.8, "the next slot leads, so it reads first");
 });
 
 // "Noch 2 ⭐ bis zum nächsten Pokal" sat above the shelf, and the trophy it was

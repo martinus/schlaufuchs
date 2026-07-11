@@ -1290,11 +1290,11 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   opacity: 0.38;
 }
 
-/* What a locked slot costs, said out loud. It used to live in a `title`
-   tooltip, which no child on a phone will ever see. The next slot to fall shows
-   the distance instead of the price — that one is worth aiming at. */
+/* How far a locked slot still is, said out loud. It used to live in a `title`
+   tooltip, which no child on a phone will ever see — and then in 0.62rem,
+   which on the 360px phone this site is designed for she could not read. */
 .trophies .slot.locked .sfoot {
-  font-size: 0.62rem;
+  font-size: 0.78rem;
   font-weight: 800;
   color: var(--ink-soft);
   white-space: nowrap;
@@ -1316,10 +1316,10 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 /* What the next trophy still costs, written under its own bar and inside its
    own slot. It used to be a sentence above the shelf, about a trophy three
    slots to the right. It is the one number here worth chasing, so it is stated
-   in the ownership colour and not in the muted grey the prices wear. */
+   in the ownership colour and not in the muted grey the others wear. */
 .trophies .slot.locked .sfoot.snext {
   color: var(--depth);
-  font-size: 0.68rem;
+  font-size: 0.85rem;
   margin-top: 2px;
 }
 

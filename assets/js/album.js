@@ -61,17 +61,17 @@ function render() {
         //
         // What it costs used to hide in a `title` tooltip, which a child on a
         // phone can never see and Mara read as "20×", i.e. twenty of something.
-        // The next slot to fall shows how far along she is and what is still
-        // owing; the ones after it show their price. Both in the only currency
-        // this site has (§8.3).
+        // Every locked slot answers the same question — how much further? — in
+        // the only currency this site has (§8.3). The total threshold read as
+        // a price tag a child cannot relate to what she already owns. The next
+        // slot to fall additionally wears the progress bar.
         const need = THRESHOLDS[game][i];
-        let foot = `<span class="sfoot">⭐ ${need}</span>`;
-        let label = `${t("trophyLocked")} — ⭐ ${need}`;
+        const owed = need - (pr[game] ?? 0);
+        let foot = `<span class="sfoot">+${owed} ⭐</span>`;
+        let label = `${t("trophyLocked")} — ${owed === 1 ? t("trophyNextIn1") : t("trophyNextIn", { n: owed })}`;
         if (i === earned && next) {
-          const owed = next.remaining;
           foot = `<span class="sbar"><i style="width:${Math.min(100, (100 * (pr[game] ?? 0)) / need)}%"></i></span>`
             + `<span class="sfoot snext">+${owed} ⭐</span>`;
-          label = `${t("trophyLocked")} — ${owed === 1 ? t("trophyNextIn1") : t("trophyNextIn", { n: owed })}`;
         }
         return `<div class="slot locked" aria-label="${label}">
           <span class="silhouette" aria-hidden="true">${iconHTML(s.icon, { size: SHELF_CUP })}</span>${foot}</div>`;
