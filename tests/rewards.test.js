@@ -78,7 +78,7 @@ test("trophyCount maps a game's counter to its earned trophies", () => {
   assert.equal(trophyCount("einmaleins", 9999), 12, "there are only twelve");
 
   // the same points buy different trophies in different regions
-  assert.equal(trophyCount("lesen", 12), 4, "lesen is a smaller game; 12 points go further");
+  assert.equal(trophyCount("lesen", 12), 3, "lesen (small game) paces close to einmaleins early");
   assert.equal(trophyCount("tippen", 12), 2, "tippen is a big one; 12 points is barely a start");
 
   assert.equal(trophyCount("nosuchgame", 9999), 0, "an unknown game has no shelf");
@@ -176,7 +176,7 @@ test("nextTrophyInfo: progress toward the next trophy (§8.3)", () => {
   assert.equal(nextTrophyInfo("einmaleins", 112), null);
 
   // the same counter, a different promise, because the region is different
-  assert.equal(nextTrophyInfo("lesen", 12).threshold, 15);
+  assert.equal(nextTrophyInfo("lesen", 12).threshold, 17);
   assert.equal(nextTrophyInfo("tippen", 12).threshold, 16);
   assert.equal(nextTrophyInfo("lesen", MAX_POINTS.lesen), null, "a mastered game can finish");
   assert.equal(nextTrophyInfo("nosuchgame", 0), null);
@@ -202,13 +202,32 @@ test("region states at 0 / one third / 100 % (§3.1)", () => {
 
 // The lesen twin of the einmaleins balance above: its maximum is computed from
 // its real tiles — 5 per difficulty, four packs and an "Alle" (§14.3) — and a
-// first Leicht round must already pay the first trophy, so a beginner meets
-// the reward system on day one.
+// first sitting must already pay the first trophy, so a beginner meets the
+// reward system on day one.
 test("lesen's economy is computed from its real tiles (§14.3)", () => {
   assert.equal(lesenMaxPoints(CONTENT.de), MAX_POINTS.lesen, "rewards.js and logic.js disagree");
   assert.equal(5 * 3 * 1 + 5 * 3 * 2 + 5 * 3 * 3, MAX_POINTS.lesen);
   assert.equal(trophyCount("lesen", MAX_POINTS.lesen), TROPHIES_PER_GAME);
-  assert.equal(THRESHOLDS.lesen[0], 1, "one Leicht star buys the first trophy");
+  assert.ok(THRESHOLDS.lesen[0] <= 3, "a first sitting still reaches the first trophy");
+});
+
+// Regression: lesen is a small game (15 tiles for 12 trophies), and the
+// generated einmaleins-curve ladder started at 1, 3, 6 over its 90-point
+// economy. A single perfect Schwer round is worth 9, so it cleared all three at
+// once — three trophies from the very first round, and the whole shelf full
+// after roughly one play-through. That read as a bug in the Pokalraum. The
+// hand-tuned LESEN_LADDER de-clumps the front and lifts the top.
+test("lesen: one round no longer floods the Pokalraum (§8.3, §14.3)", () => {
+  assert.deepEqual(THRESHOLDS.lesen, [3, 7, 12, 17, 23, 29, 35, 41, 47, 52, 57, 62]);
+
+  // A first perfect Schwer round pays 3 × 3 = 9. It must buy at most two
+  // trophies, the einmaleins pace (its first Schwer round buys two: 2, 6).
+  assert.ok(trophyCount("lesen", 9) <= 2, "one Schwer round must not drop three trophies");
+  assert.equal(trophyCount("lesen", 9), 2);
+
+  // Filling the shelf needs play across difficulties: Schwer alone caps at
+  // 5 tiles × 9 = 45, short of the twelfth trophy at 62.
+  assert.ok(THRESHOLDS.lesen.at(-1) > 5 * 3 * 3, "Schwer alone must not fill the shelf");
 });
 
 // §8.3: points reward progress and difficulty. They must never reward
