@@ -154,19 +154,19 @@ function askNext() {
   if (id === null) return endRound();
   currentId = id;
   question = questionFor(id, CONTENT.de);
-  options = question.kind === "word" ? optionsFor(id, CONTENT.de) : null;
+  options = question.kind === "word" || question.kind === "read" ? optionsFor(id, CONTENT.de) : null;
   qToken++;
   $("feedback").hidden = true;
   card.hidden = false;
-  card.classList.toggle("sent", question.kind === "sent");
+  card.classList.toggle("read", question.kind === "read");
   card.classList.remove("wc-hidden");
   renderQuestion();
   renderAnswers();
   renderStatus();
   // A word waits behind a cover until the child taps it (§14.2): the blitz must
   // not start before she has looked, or a word she never saw counts as a miss.
-  // A sentence never flashes — nothing is taken away — so it shows at once, and
-  // its verdicts are live immediately.
+  // A reading passage never flashes — nothing is taken away — so it shows at
+  // once, its answers live immediately, and its clock starts here (§14.4).
   if (question.kind === "word") {
     phase = "ready";
     card.classList.add("covered");
@@ -175,7 +175,7 @@ function askNext() {
     phase = "answer";
     card.classList.remove("covered");
     setAnswersEnabled(true);
-    qShownAt = Date.now(); // a sentence shows at once, so its clock starts here (§14.4)
+    qShownAt = Date.now();
   }
 }
 
@@ -236,6 +236,10 @@ function fitQuestion() {
 
 function renderQuestion() {
   $("question").textContent = question.text;
+  // Schwer shows a passage above the question; the other kinds hide it (§14.2).
+  const passage = $("passage");
+  passage.hidden = question.kind !== "read";
+  passage.textContent = question.kind === "read" ? question.passage : "";
   // the driver watches this stamp to know a new question is up (play-lesen.js)
   $("question").dataset.q = String(qToken);
   fitQuestion();
@@ -246,34 +250,22 @@ function renderQuestion() {
 window.addEventListener("resize", () => question && fitQuestion());
 document.fonts?.ready.then(() => question && fitQuestion());
 
-// Answers: four big emoji for a word (§14.1), two verdicts for a sentence.
-// Built once per question and left alone — the aid re-uses the SAME buttons,
-// so nothing moves under the finger that is already going for one.
+// Answers: four big emoji for a word (§14.1), four wrapping text answers for a
+// reading passage (§14.2). Built once per question and left alone — the aid
+// re-uses the SAME buttons, so nothing moves under the finger already going for
+// one. Both kinds submit the chosen option itself, matched against the answer.
 function renderAnswers() {
   const box = $("answers");
   box.innerHTML = "";
-  if (question.kind === "word") {
-    const mc = document.createElement("div");
-    mc.className = "mc mc-emoji";
-    for (const opt of options) {
-      const b = document.createElement("button");
-      b.textContent = opt;
-      fastPress(b, () => answerPress(opt, b));
-      mc.appendChild(b);
-    }
-    box.appendChild(mc);
-  } else {
-    const v = document.createElement("div");
-    v.className = "verdict";
-    for (const [val, key, cls, sym] of [[true, "lesenTrue", "v-yes", "✓"], [false, "lesenFalse", "v-no", "✗"]]) {
-      const b = document.createElement("button");
-      b.className = cls;
-      b.innerHTML = `<span class="v-sym" aria-hidden="true">${sym}</span>${t(key)}`;
-      fastPress(b, () => answerPress(val, b));
-      v.appendChild(b);
-    }
-    box.appendChild(v);
+  const mc = document.createElement("div");
+  mc.className = question.kind === "word" ? "mc mc-emoji" : "mc mc-read";
+  for (const opt of options) {
+    const b = document.createElement("button");
+    b.textContent = opt;
+    fastPress(b, () => answerPress(opt, b));
+    mc.appendChild(b);
   }
+  box.appendChild(mc);
 }
 
 // One press handler for both kinds and both phases: a first answer submits,
@@ -346,21 +338,18 @@ function submit(value, btn) {
   });
 }
 
-// Wrong answer (§8.1, §14.2): what she tapped, retracted — and the word back,
-// persistently, no blitz. The way out is the right answer, given on the same
-// buttons: for a word the right emoji, for a sentence the right verdict. No
-// "Verstanden" button, no timer, exactly the einmaleins aid contract.
+// Wrong answer (§8.1, §14.2): what she tapped, retracted, and the right answer
+// given — the way out is choosing it on the same buttons. For a word: the right
+// emoji. For a reading passage: the question again and the answer she should
+// have picked. No "Verstanden" button, no timer — the einmaleins aid contract.
 function showFeedback(wrong) {
   const fb = $("feedback");
   if (question.kind === "word") {
     fb.innerHTML = `<span class="eq eq-wrong"><s>${wrong}</s></span>
       <span class="eq"><b class="ans">${question.text}</b></span>`;
   } else {
-    const verdict = question.answer
-      ? `😊 ${t("lesenIsTrue")}`
-      : `😜 ${t("lesenIsFalse")}`;
     fb.innerHTML = `<span class="fb-sent">${question.text}</span>
-      <span class="eq"><b class="ans">${verdict}</b></span>`;
+      <span class="eq"><span class="fb-lbl">${t("lesenAnswerIs")}</span> <b class="ans">${question.answer}</b></span>`;
   }
   card.hidden = true;
   fb.hidden = false;
@@ -491,10 +480,9 @@ const bar = initTopBar({
   onLeave: guard.guardLink,
   onChange() {
     updateChip();
-    // The verdict buttons speak the UI language; the words do not. Rebuilt
-    // only between answers — inside the aid the buttons hold the child's
-    // struck answer, and that state outranks a translation.
-    if (!roundOver && session && phase === "answer") renderAnswers();
+    // The answers are content (emoji, or the passage's own answers), not UI
+    // chrome, so a language switch does not change them — but the chip's
+    // difficulty·pack label is translated, and it has just been repainted above.
   },
   onClose() {
     if (roundOver) summary.open();

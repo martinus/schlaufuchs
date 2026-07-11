@@ -30,9 +30,9 @@ export const STAR_TILES = 5;
 // rows sit later because its words are physically longer. Deliberately plain
 // named numbers — retune after watching a real child, nothing else has to move.
 //
-// Schwer has no row: sentences are never flashed (§14.1). The skill trained
-// there is comprehension, and a timed 50/50 verdict rewards guessing — the one
-// thing the Quatsch stage must never pay.
+// Schwer has no row: reading passages are never flashed (§14.2). The skill
+// trained there is comprehension — the passage stays on screen the whole time,
+// and the child answers a question about it from four choices.
 // Retuned harder after "the reading is too easy" (§14): the reveal is ~20–25%
 // shorter across the curve, so even a fresh word is a real glance and a settled
 // one is a genuine blitz. Floor is 500ms (a word must stay readable), Mittel
@@ -93,17 +93,16 @@ export function itemAt(id, content) {
 }
 
 // --- questions ---------------------------------------------------------------
-// A word item asks for its emoji; a sentence item shows ONE of its pair, drawn
-// per encounter — so the truth of "the sentence about the moon" cannot be
-// memorized, only read (§14.3).
-export function questionFor(id, content, rng = Math.random) {
+// A word item asks for its emoji (§14.1). A Schwer item is a reading passage:
+// the child reads `text` and answers the question `q`, the correct answer being
+// the first option (§14.2). `text` is carried as `passage`, and `text` on the
+// question is the *question* — the same field the word card renders.
+export function questionFor(id, content) {
   const found = itemAt(id, content);
   if (!found) return null;
   const { item } = found;
   if (item.w !== undefined) return { kind: "word", text: item.w, answer: item.e };
-  return rng() < 0.5
-    ? { kind: "sent", text: item.ok, answer: true }
-    : { kind: "sent", text: item.no, answer: false };
+  return { kind: "read", passage: item.text, text: item.q, answer: item.a[0] };
 }
 
 function shuffle(arr, rng) {
@@ -114,16 +113,22 @@ function shuffle(arr, rng) {
   return arr;
 }
 
-// Four emoji for a word question: the answer plus three pack-mates, shuffled.
-// Same pack means plausible (same theme) yet clearly distinct (pack emoji are
-// unique, tested) — and on the "Alle" tile the item's home pack still supplies
-// them, so a mixed round never pairs a word with lookalikes from elsewhere.
-// Null for sentence items, which answer with a verdict, not a choice.
+// The answer choices, shuffled. For a WORD: four emoji — the answer plus three
+// pack-mates, so distractors are same-theme yet distinct (pack emoji are unique,
+// tested); on the "Alle" tile the word's home pack still supplies them. For a
+// READING passage: the item's own four answers (the correct one is authored
+// first, and shuffled in here so its position never gives it away). Null for
+// anything that is not a valid answerable item.
 export function optionsFor(id, content, rng = Math.random) {
   const found = itemAt(id, content);
-  if (!found || found.item.w === undefined) return null;
-  const others = shuffle(found.pack.items.filter((it) => it !== found.item).map((it) => it.e), rng);
-  return shuffle([found.item.e, ...others.slice(0, 3)], rng);
+  if (!found) return null;
+  const { item, pack } = found;
+  if (item.w !== undefined) {
+    const others = shuffle(pack.items.filter((it) => it !== item).map((it) => it.e), rng);
+    return shuffle([item.e, ...others.slice(0, 3)], rng);
+  }
+  if (item.text !== undefined) return shuffle([...item.a], rng);
+  return null;
 }
 
 // --- stars (§14.3) -------------------------------------------------------------
@@ -193,15 +198,16 @@ export const TEMPO_SLOTS = 3;
 // [hare, car, rocket]. The clock starts when the child sees the word — the
 // reveal tap (§14.2) — so Leicht mirrors einmaleins' Leicht (a tap on one of
 // four choices). Mittel sits later because its words are physically longer,
-// like FLASH_MS does. Schwer is a whole sentence read plus a verdict: a second
-// grader at one or two words a second needs four to eight seconds to *read*
-// it, so its rocket rewards fluent reading, never lucky guessing (the ⭐⭐ gate
-// below is what keeps guessing unprofitable). Deliberately plain named
+// like FLASH_MS does. Schwer is a whole PASSAGE read (~3 lines) plus a four-way
+// comprehension choice: a second grader reading one or two words a second needs
+// well over ten seconds to read and answer honestly, so the tiers are far more
+// generous here and the rocket still rewards fluent reading, never a guess (the
+// ⭐⭐ gate below keeps guessing unprofitable). Deliberately plain named
 // numbers — retune after watching a real child, nothing else has to move.
 export const TEMPO_TIERS = [
   [8000, 5000, 3000], // Leicht
   [9000, 6000, 3500], // Mittel
-  [15000, 10000, 6000], // Schwer
+  [25000, 16000, 10000], // Schwer — reading a passage takes real time
 ];
 
 // The ladder's three faces, indexed by tier: the icon name (graphics.js) and
