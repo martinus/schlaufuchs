@@ -237,10 +237,14 @@ function fitQuestion() {
 
 function renderQuestion() {
   $("question").textContent = question.text;
-  // Schwer shows a passage above the question; the other kinds hide it (§14.2).
+  // Schwer runs the passage and its question together as ONE flowing block, so
+  // the question is the last sentence of the text and not a line of its own
+  // (§14.2). The passage keeps a trailing space so the two inline elements read
+  // with a gap between them; the other kinds hide the passage. The question
+  // stays its own element (the driver's stamp and the answer key live on it).
   const passage = $("passage");
   passage.hidden = question.kind !== "read";
-  passage.textContent = question.kind === "read" ? question.passage : "";
+  passage.textContent = question.kind === "read" ? `${question.passage} ` : "";
   // the driver watches this stamp to know a new question is up (play-lesen.js)
   $("question").dataset.q = String(qToken);
   fitQuestion();

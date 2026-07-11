@@ -21,9 +21,9 @@ export default {
     lesenMixed: "Alle",
     // The Mittel verdict buttons (§14.1) and the aid's answer line (§8.1).
     lesenTrue: "Stimmt!",
-    lesenFalse: "Quatsch!",
+    lesenFalse: "Blödsinn!",
     lesenIsTrue: "Das stimmt wirklich!",
-    lesenIsFalse: "Das ist Quatsch!",
+    lesenIsFalse: "Das ist Blödsinn!",
     // The Schwer reading aid names the right answer after a wrong one (§14.2).
     lesenAnswerIs: "Richtig:",
     // What a screen reader hears once the blitz has hidden the word (§14.2).

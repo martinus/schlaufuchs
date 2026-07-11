@@ -52,7 +52,18 @@ export function flashMs(box, difficulty) {
 }
 
 // --- item addressing ---------------------------------------------------------
-// One difficulty's packs, each with the global id its first item carries.
+// A pack is a *tile* — its own entry in the picker, and one slot of the star
+// digit string — unless it *extends* another pack's theme. An `extends` pack is
+// simply more items poured into the primary pack's pool: it carries the SAME
+// theme (e.g. "tiereB" extends "tiere"), is drawn in the same round, and is
+// appended at the END of the content file so no existing item's id shifts
+// (§14.3, append-only). Tile count therefore stays fixed as content grows, so
+// the reward economy (maxPoints, the trophy ladder) never moves under a deeper
+// pool — only the variety within a tile does.
+const isTile = (pack) => pack.extends === undefined;
+
+// One difficulty's packs (tiles and their extensions), each with the global id
+// its first item carries.
 function diffPacks(difficulty, content) {
   const out = [];
   let offset = 0;
@@ -63,17 +74,26 @@ function diffPacks(difficulty, content) {
   return out;
 }
 
-// The packs a difficulty offers, in tile order — the picker's vocabulary.
+// The tiles a difficulty offers, in tile order — the picker's vocabulary. Only
+// primary packs are tiles; an `extends` pack rides inside its primary's pool and
+// is never shown or counted on its own.
 export function packsFor(difficulty, content) {
-  return diffPacks(difficulty, content).map((d) => d.pack);
+  return diffPacks(difficulty, content).map((d) => d.pack).filter(isTile);
 }
 
-// Item ids for one tile: a single pack's, or the difficulty's whole union for
-// the "Alle" tile. A tile index the difficulty does not offer reads as "Alle",
-// so a corrupt cookie can never open an empty round.
+// Item ids for one tile: a primary pack's items UNION every extension of its
+// theme, or the difficulty's whole union for the "Alle" tile. A tile index the
+// difficulty does not offer reads as "Alle", so a corrupt cookie can never open
+// an empty round.
 export function poolFor(difficulty, pack, content) {
   const dp = diffPacks(difficulty, content);
-  const chosen = Number.isInteger(pack) && pack >= 0 && pack < dp.length ? [dp[pack]] : dp;
+  const tiles = dp.filter((d) => isTile(d.pack));
+  const primary = Number.isInteger(pack) && pack >= 0 && pack < tiles.length
+    ? tiles[pack].pack
+    : null;
+  const chosen = primary
+    ? dp.filter((d) => d.pack === primary || d.pack.extends === primary.key)
+    : dp; // "Alle": the whole difficulty, every tile and its extensions
   const pool = [];
   for (const { pack: p, offset } of chosen) {
     for (let i = 0; i < p.items.length; i++) pool.push(offset + i);
