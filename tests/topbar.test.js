@@ -115,27 +115,25 @@ const codeOf = (p) => read(p).replace(/^\s*\/\/.*$/gm, "");
 
 test("every gear on this site opens the same settings sheet", () => {
   const chrome = codeOf("assets/js/chrome.js");
-  for (const gone of ["resetKind", "resetGame"]) {
-    assert.ok(!chrome.includes(gone), `chrome.js still branches on ${gone}`);
-  }
-  // the reset row is unconditional markup, not a ternary
-  assert.match(chrome, /<div class="setrow"><span class="cx-l-reset">/);
+  // no branching: the sheet is built once and is identical on every gear page
+  assert.ok(!chrome.includes("resetKind"), "chrome.js still branches on resetKind");
   assert.ok(!/\$\{resetKind \?/.test(chrome));
-  assert.match(chrome, /resetBtn\.addEventListener\("click"/, "…and it is always wired");
-  assert.match(chrome, /resetAll\(\);\s*\n\s*location\.reload\(\);/, "…to the whole-site reset");
 
-  // …and no gear page may ask for a different one. The per-game reset exists —
-  // but only on the parents' view (§20), a title-bar page with no gear at all.
-  // A page that DOES carry a gear must never offer it, or the sheet stops being
-  // uniform.
+  // reset is a per-game list in that one sheet (§3.4): a row per game the cookie
+  // holds progress for, plus an "everything" row, each a two-step confirm
+  assert.match(chrome, /<div class="resetlist" id="cx-resetlist">/, "the reset list is unconditional markup");
+  assert.match(chrome, /resetList\.addEventListener\("click"/, "…and it is always wired");
+  assert.match(chrome, /resetGame\(id\)/, "a game row resets that one game");
+  assert.match(chrome, /=== "__all__"[\s\S]*?resetAll\(\)/, "the everything row resets the whole site");
+  assert.match(chrome, /location\.reload\(\)/, "…and reloads onto the cleared state");
+
+  // …and no page asks its gear for a special per-page reset: the sheet is the
+  // same everywhere, so a page never customises it.
   for (const page of PAGES) {
     const src = sourcesOf(page).replace(/^\s*\/\/.*$/gm, "");
     assert.ok(!src.includes("resetKind"), `${page} asks its gear for a special reset`);
-    if (hasFoxBar(page)) {
-      assert.ok(!src.includes("resetGame"), `${page} carries a gear, so it must not offer a per-game reset`);
-    }
   }
-  assert.ok(codeOf("assets/js/storage.js").includes("resetGame"), "storage.js provides the per-game reset the parents' view calls");
+  assert.ok(codeOf("assets/js/storage.js").includes("resetGame"), "storage.js provides the per-game reset the gear calls");
 });
 
 // A reader's page has no gear at all, so it must never build the sheet: it has

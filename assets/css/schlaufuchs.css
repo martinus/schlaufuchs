@@ -1506,11 +1506,12 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 .wchip i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; }
 
-/* Per-game reset (§20): one row per game the cookie holds, the game named on the
-   left and its reset on the right. Adult surface, so a plain list, not the
-   child's big buttons. The armed state turns red — the two-step confirm the
-   whole-site reset uses (§3.4), shown here in place instead of on one icon. */
-.resetlist { display: flex; flex-direction: column; max-width: 24rem; margin: 8px 0; }
+/* Per-game reset in the settings gear (§3.4): one row per game the cookie holds
+   progress for, plus an "everything" row — the game named on the left, its reset
+   on the right. The armed state turns red, the two-step confirm shown in place
+   on the row instead of on one shared icon. */
+.setrow-reset { min-height: 0; border-bottom: 0; padding-top: 6px; }
+.resetlist { display: flex; flex-direction: column; max-width: 24rem; margin: 0 0 8px; }
 .resetrow {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   padding: 8px 2px; border-top: 1px solid var(--orange-soft);
