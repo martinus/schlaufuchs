@@ -3,7 +3,8 @@
 
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
-import { createSession, boxesFromString, boxesToString, hasProgress } from "../../assets/js/adaptive.js";
+import { createSession, boxesFromString, boxesToString, hasProgress, validResume } from "../../assets/js/adaptive.js";
+import { saveRound, loadRound, clearRound } from "../../assets/js/roundstore.js";
 import { recordRound, roundPoints, starValue, clampDifficulty, addPractice } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
@@ -119,17 +120,24 @@ function updateChip() {
     + `<span class="ph-txt">${t(DIFF_KEYS[diff])} · ${tableName(table)}</span>`;
 }
 
-function startRound() {
+// `resume` is a round mirror from roundstore.js (§10.7); without one the
+// start is fresh and any stale mirror is dropped — a chosen tile outranks an
+// interrupted round on another.
+function startRound(resume = null) {
   coerceTable();
   updateChip();
   bar.refresh();
   saved = getGame("einmaleins");
   const boxes = boxesFromString(saved.box, POOL_COUNT);
-  session = createSession(poolFor(table, diff), boxes, {
+  const pool = poolFor(table, diff);
+  const snap = resume && validResume(resume.s, pool) ? resume : null;
+  if (!snap) clearRound("einmaleins");
+  session = createSession(pool, boxes, {
     roundSize: ROUND_SIZE[diff],
     // hard facts (7×8) come up more often than trivial ones (2×2), on top of
     // what the Leitner boxes already say (§10.2)
     boost: (id) => hardnessBoost(id, diff),
+    resume: snap?.s,
   });
   // the basket opens with the stars this tile has already earned, so a mastered
   // tile shows a full basket and a grey sky (§10.5)
@@ -142,10 +150,12 @@ function startRound() {
   });
   buffer = "";
   roundOver = false;
-  t0 = Date.now();
-  answerTimes = [];
-  missedIds = new Set();
-  recallObs = {};
+  t0 = Date.now() - (snap?.elapsed ?? 0);
+  answerTimes = snap?.times ?? [];
+  missedIds = new Set(snap?.missed);
+  recallObs = snap?.rc ?? {};
+  // walk the fox back to where the interruption found her (§10.7)
+  for (let i = session.progress().solved; i > 0; i--) journey.advance();
   summary.close();
   buildKeypad();
   askNext();
@@ -356,6 +366,13 @@ function submit(value, mcButton) {
     // The aid needs the room; the whole scene hides while it is up.
     showFeedback(value);
   }
+  // Mirror the round after every recorded answer (§10.7): an interruption from
+  // here on resumes instead of costing the round.
+  saveRound("einmaleins", {
+    d: diff, t: table, s: session.snapshot(),
+    times: answerTimes, missed: [...missedIds], rc: recallObs,
+    elapsed: Date.now() - t0,
+  });
 }
 
 // Wrong answer (§8.1): the child's own answer, struck through in red; the true
@@ -435,6 +452,8 @@ function endRound() {
     d: diff, t: table, box: boxesToString(full, POOL_COUNT), stars: starsObj,
     tempo: tempoObj, rc: foldRecall(saved.rc, recallObs), ...practice,
   });
+  // the round is in the cookie now; its mirror has nothing left to protect
+  clearRound("einmaleins");
 
   // points come from progress, never from repetition (§8.3)
   const points = roundPoints({ oldStars: old, newStars: stars, difficulty: diff });
@@ -526,9 +545,12 @@ $("pickchip").addEventListener("click", picker.open);
 // dialog once an answer was given: the picker (no session), the summary (round
 // over, cookie written) and a round the child has merely looked at all have
 // nothing to lose, and are left without a question.
+// A CONFIRMED leave also drops the round's mirror — "Zur Karte" on the sheet
+// means it; every other way off the page is an accident to resume from.
 const guard = createLeaveGuard({
   mapUrl: new URL("../../", import.meta.url).href,
   inRound: () => session !== null && !roundOver && hasProgress(session.progress()),
+  onGo: () => clearRound("einmaleins"),
 });
 
 // --- the shared top bar (§3.3) ----------------------------------------------
@@ -552,6 +574,23 @@ const bar = initTopBar({
 // same tap from any other level, which is what the two taps used to buy. A
 // child who came here to play the ×7 row can see that she is about to play the
 // ×7 row before she is in it.
+//
+// Unless a round was interrupted mid-play (§10.7): then the game rehydrates it
+// — same level, same question queue, the fox where she stood — with no picker
+// and no dialog. The mirror is only trusted after `validResume` inside
+// startRound; a stale or foreign one falls back to the picker.
 coerceTable(); // an invalid saved tile has no `.current`, and the fox no ground
-updateChip();
-picker.open();
+const interrupted = loadRound("einmaleins");
+const canResume = interrupted
+  && [0, 1, 2].includes(interrupted.d)
+  && Number.isInteger(interrupted.t)
+  && validResume(interrupted.s, poolFor(interrupted.t, interrupted.d));
+if (canResume) {
+  diff = interrupted.d;
+  table = interrupted.t;
+  startRound(interrupted);
+} else {
+  clearRound("einmaleins"); // whatever it was, it cannot be resumed
+  updateChip();
+  picker.open();
+}

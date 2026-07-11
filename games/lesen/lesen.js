@@ -9,7 +9,8 @@
 
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
-import { createSession, boxesFromString, boxesToString, hasProgress } from "../../assets/js/adaptive.js";
+import { createSession, boxesFromString, boxesToString, hasProgress, validResume } from "../../assets/js/adaptive.js";
+import { saveRound, loadRound, clearRound } from "../../assets/js/roundstore.js";
 import { recordRound, roundPoints, starValue, clampDifficulty } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
@@ -118,14 +119,20 @@ function updateChip() {
     + `<span class="ph-txt">${t(DIFF_KEYS[diff])} · ${packName(diff, pack)}</span>`;
 }
 
-function startRound() {
+// `resume` is a round mirror from roundstore.js (§10.7); without one the
+// start is fresh and any stale mirror is dropped — a chosen tile outranks an
+// interrupted round on another.
+function startRound(resume = null) {
   updateChip();
   bar.refresh();
   saved = getGame("lesen");
   const boxes = boxesFromString((saved.box ?? {}).de, COUNT);
+  const pool = poolFor(diff, pack, CONTENT.de);
+  const snap = resume && validResume(resume.s, pool) ? resume : null;
+  if (!snap) clearRound("lesen");
   // No hardness boost: a young reader is meant to meet her whole pack, and the
   // Leitner boxes alone decide what returns (§14.3).
-  session = createSession(poolFor(diff, pack, CONTENT.de), boxes, { roundSize: ROUND_SIZE });
+  session = createSession(pool, boxes, { roundSize: ROUND_SIZE, resume: snap?.s });
   best = starDigit((saved.stars ?? {})[diff], pack);
   journey = createJourney($("journey"), {
     nodes: session.items().length,
@@ -134,8 +141,10 @@ function startRound() {
     worth: starValue(diff), // a Schwer star says "×3" on its way to the basket
   });
   roundOver = false;
-  answerTimes = [];
-  missedIds = new Set();
+  answerTimes = snap?.times ?? [];
+  missedIds = new Set(snap?.missed);
+  // walk the fox back to where the interruption found her (§10.7)
+  for (let i = session.progress().solved; i > 0; i--) journey.advance();
   summary.close();
   askNext();
 }
@@ -329,6 +338,12 @@ function submit(value, btn) {
     // The aid needs the room; the whole scene hides while it is up.
     showFeedback(value);
   }
+  // Mirror the round after every recorded answer (§10.7): an interruption from
+  // here on resumes instead of costing the round.
+  saveRound("lesen", {
+    d: diff, p: pack, s: session.snapshot(),
+    times: answerTimes, missed: [...missedIds],
+  });
 }
 
 // Wrong answer (§8.1, §14.2): what she tapped, retracted — and the word back,
@@ -397,6 +412,8 @@ function endRound() {
     stars: starsObj,
     tempo: tempoObj,
   });
+  // the round is in the cookie now; its mirror has nothing left to protect
+  clearRound("lesen");
 
   // points come from progress, never from repetition (§8.3)
   const points = roundPoints({ oldStars: old, newStars: stars, difficulty: diff });
@@ -460,9 +477,12 @@ $("pickchip").addEventListener("click", picker.open);
 
 // --- leaving a round that is not saved yet (§10.7) ---------------------------
 // Only a round with an answer in it is worth a dialog (see einmaleins.js).
+// A confirmed leave also drops the round's mirror — "Zur Karte" on the sheet
+// means it; every other way off the page is an accident to resume from.
 const guard = createLeaveGuard({
   mapUrl: new URL("../../", import.meta.url).href,
   inRound: () => session !== null && !roundOver && hasProgress(session.progress()),
+  onGo: () => clearRound("lesen"),
 });
 
 // --- the shared top bar (§3.3) ----------------------------------------------
@@ -482,6 +502,20 @@ const bar = initTopBar({
 });
 
 // The game opens on its map of levels, with the fox standing on the tile she
-// left (§3.4).
-updateChip();
-picker.open();
+// left (§3.4) — unless a round was interrupted mid-play (§10.7): then the game
+// rehydrates it, same tile, same queue, the fox where she stood, with no
+// picker and no dialog. A stale or foreign mirror falls back to the picker.
+const interrupted = loadRound("lesen");
+const canResume = interrupted
+  && [0, 1, 2].includes(interrupted.d)
+  && Number.isInteger(interrupted.p)
+  && validResume(interrupted.s, poolFor(interrupted.d, interrupted.p, CONTENT.de));
+if (canResume) {
+  diff = interrupted.d;
+  pack = interrupted.p;
+  startRound(interrupted);
+} else {
+  clearRound("lesen"); // whatever it was, it cannot be resumed
+  updateChip();
+  picker.open();
+}
