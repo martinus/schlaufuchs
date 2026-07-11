@@ -894,12 +894,13 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 
 /* The journey scene (sky + basket of stars) stays on screen for a reading
-   question too, so the child always sees how far she is (§10.5). A passage plus
-   its question needs the vertical room, so here the scene is drawn compact —
-   narrower, hence shorter (its aspect is fixed) — still large enough to read the
-   sky's stars and the filling basket. It only steps aside while the wrong-answer
-   aid is up, which every kind shares (below). */
-.stage:has(#wordcard.read) .journey { max-width: 42%; margin-inline: auto; }
+   question too, so the child always sees how far she is (§10.5). The word/keypad
+   layout pushes its content low with a big top padding (toward the thumb); a
+   reading screen has no keypad and wants that room up top for the scene, so here
+   the top padding is reclaimed and the scene is drawn large. It steps aside only
+   while the wrong-answer aid is up, which every kind shares (below). */
+.stage:has(#wordcard.read) { padding-top: 8px; }
+.stage:has(#wordcard.read) .journey { max-width: 62%; margin-inline: auto; }
 
 /* the aid's "Correct:" label, before the answer she should have chosen (§14.2) */
 .feedback-aid .fb-lbl { color: var(--ink-soft); font-weight: 700; font-size: 0.9rem; }
