@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  createSession, clampBox, boxesFromString, boxesToString, WEIGHTS,
+  createSession, clampBox, boxesFromString, boxesToString, WEIGHTS, hasProgress,
 } from "../assets/js/adaptive.js";
 
 const seeded = (seed = 42) => () => {
@@ -124,4 +124,26 @@ test("roundSize larger than pool shrinks to pool size", () => {
   const s = createSession([1, 2, 3], {}, { roundSize: 10, rng: seeded() });
   assert.equal(s.items().length, 3);
   assert.equal(s.progress().total, 3);
+});
+
+// The leave guard (§10.7) asks "would leaving cost anything?" — and a round
+// nobody has answered yet costs nothing. `hasProgress` is the shared answer,
+// so both games mean the same thing by "an answer was given": a solve grows
+// `solved`, and a first wrong answer drops `firstTryOk` below `total` without
+// growing `solved` (the miss is re-queued, not solved).
+test("hasProgress: a round is only worth guarding once an answer was given", () => {
+  const s = createSession(pool10, {}, { roundSize: 10, rng: seeded() });
+  assert.equal(hasProgress(s.progress()), false, "nothing answered, nothing to lose");
+
+  const wrong = createSession(pool10, {}, { roundSize: 10, rng: seeded() });
+  wrong.answer(wrong.next(), false);
+  assert.equal(hasProgress(wrong.progress()), true, "a miss is progress spent");
+
+  const right = createSession(pool10, {}, { roundSize: 10, rng: seeded() });
+  right.answer(right.next(), true);
+  assert.equal(hasProgress(right.progress()), true, "a solve is progress banked");
+
+  for (const junk of [undefined, null, {}]) {
+    assert.equal(hasProgress(junk), false, `junk in (${String(junk)}), no dialog out`);
+  }
 });

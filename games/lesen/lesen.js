@@ -9,7 +9,7 @@
 
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
-import { createSession, boxesFromString, boxesToString } from "../../assets/js/adaptive.js";
+import { createSession, boxesFromString, boxesToString, hasProgress } from "../../assets/js/adaptive.js";
 import { recordRound, roundPoints, starValue, clampDifficulty } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
@@ -399,9 +399,10 @@ $("sum-trophy").addEventListener("click", (e) => {
 $("pickchip").addEventListener("click", picker.open);
 
 // --- leaving a round that is not saved yet (§10.7) ---------------------------
+// Only a round with an answer in it is worth a dialog (see einmaleins.js).
 const guard = createLeaveGuard({
   mapUrl: new URL("../../", import.meta.url).href,
-  inRound: () => session !== null && !roundOver,
+  inRound: () => session !== null && !roundOver && hasProgress(session.progress()),
 });
 
 // --- the shared top bar (§3.3) ----------------------------------------------

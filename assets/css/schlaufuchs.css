@@ -593,10 +593,12 @@ footer p { margin: 0; }
      that only measured the label. A control does not give up its size. */
   flex: 0 0 auto;
   border: 2px solid var(--orange);
-  /* like the top bar: the level picker stays reachable while the summary is up.
-     Mara tried to press the chip *through* the summary sheet. */
+  /* Above the summary (40), so the chip stays a way out of it — Mara tried to
+     press it *through* the summary sheet. Below the picker (44): a lit chip
+     over the picker's backdrop reads as a button, and pressing it there is a
+     dead spot on the sheet. */
   position: relative;
-  z-index: 45;
+  z-index: 41;
 }
 
 /* The caret is drawn, not typed. `content: "▾"` is U+25BE, and on a phone that
@@ -1121,8 +1123,18 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 
 /* The summary is the one overlay a child meets without having asked for it, and
    the only one with nothing to dismiss it. It therefore stays UNDER the top bar
-   and the chip (z-index 45), which are the ways out of it. */
+   (45) and the chip (41), which are the ways out of it. */
 #sum-overlay { z-index: 40; }
+
+/* The level picker sits UNDER the top bar (45) too: the map button is the
+   one-tap way out of a game, and in the picker nothing is at stake, so the tap
+   must go straight through (§3.3, §10.7). But it stays ABOVE the summary (40)
+   — "sum-ok" opens the picker while the summary stays open underneath, and the
+   picker precedes the summary in the DOM, so at equal z the summary would
+   paint over the picker it just opened — and above the chip (41), whose lit
+   pill would otherwise sit on the picker's sheet as a dead spot. The truly
+   modal sheets (.overlay, 50) still cover all of it. */
+#pick-overlay { z-index: 44; }
 
 .summary .bigstars { font-size: 2.6rem; letter-spacing: 4px; }
 .summary .sline { margin: 6px 0; font-weight: 700; }

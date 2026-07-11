@@ -78,7 +78,15 @@ test("the top bar offers the map button to a page that has something to lose", (
   assert.match(chrome, /onLeave\?\.\(bar\.querySelector\("a\.iconbtn"\)\)/);
   assert.match(chrome, /back !== null/, "the map's own flat button is not a link");
 
-  const game = read("games/einmaleins/einmaleins.js");
-  assert.match(game, /onLeave:\s*guard\.guardLink/, "einmaleins does not guard its map button");
-  assert.match(game, /inRound:\s*\(\)\s*=>\s*session !== null && !roundOver/);
+  for (const f of ["games/einmaleins/einmaleins.js", "games/lesen/lesen.js"]) {
+    const game = read(f);
+    assert.match(game, /onLeave:\s*guard\.guardLink/, `${f} does not guard its map button`);
+    // A round with no answer yet has nothing to lose: the dialog must wait for
+    // the first answer, or it questions a child who is merely looking around.
+    assert.match(
+      game,
+      /inRound:\s*\(\)\s*=>\s*session !== null && !roundOver && hasProgress\(session\.progress\(\)\)/,
+      `${f} asks before anything is at stake`,
+    );
+  }
 });

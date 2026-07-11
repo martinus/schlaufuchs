@@ -396,10 +396,14 @@ open, it owns the keyboard: the game behind it must not receive a keystroke.
   (§3.2), and it links to the album — a trophy that does nothing when tapped
   is a picture, not a prize.
 - The summary must never be a dead end, and its one button is not the way out:
-  **the top bar and the level chip stay above it** (`z-index` 45 vs the
-  summary's 40) and remain tappable, so the map and the picker are always one
-  press away. Every other overlay is genuinely modal (`z-index` 50) and covers
-  them. Consequently the summary's focus goes to its button, not to the trophy
+  **the top bar stays above it and above the level picker** — in the picker
+  nothing is at stake, so the map button must be one straight tap (§10.7). The
+  layers, top down: modal sheets 50 > top bar 45 > picker 44 > level chip 41 >
+  summary 40. The picker sits above the summary because „sum-ok" opens the
+  picker while the summary stays open underneath, and above the chip so the
+  chip's lit pill cannot sit on the picker's sheet as a dead spot. Only the
+  genuinely modal sheets (settings, aid, leave — `z-index` 50) cover the bar.
+  Consequently the summary's focus goes to its button, not to the trophy
   link above it, or Enter would leave the game.
 
 ### 3.5 The privacy page (`privacy.html`)
@@ -1194,8 +1198,13 @@ All three arrive at one decision (`leaveAction`, pure and tested):
 | on screen | what a leave attempt does |
 | --- | --- |
 | the question is already up | **stay** — this gesture answers it with „Weiterspielen", like Escape |
-| a round is running | **ask** — „Runde verlassen? Die Sterne aus dieser Runde sind dann weg." |
-| the picker, or the summary | **leave** — nothing is at stake; no dialog nobody needs |
+| a round is running and an answer was given | **ask** — „Runde verlassen? Die Sterne aus dieser Runde sind dann weg." |
+| a round with nothing answered yet, the picker, or the summary | **leave** — nothing is at stake; no dialog nobody needs |
+
+Whether "an answer was given" is `hasProgress(session.progress())`
+(`adaptive.js`, pure and tested): a solve grows `solved`, and a first miss
+drops `firstTryOk` below `total`. A round the child has merely looked at costs
+nothing to leave, so leaving it deserves no question.
 
 The question is a normal overlay (§3.4), so Escape and the backdrop answer it
 with „Weiterspielen". That safe answer is the orange button and it takes the
