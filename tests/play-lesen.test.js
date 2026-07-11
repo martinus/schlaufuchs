@@ -18,11 +18,6 @@ const sandbox = { document: undefined, window: undefined };
 new Function("globalThis", `with (this) { ${src} }`).call(sandbox, sandbox);
 const { resolveLesen, lesenMaps } = sandbox;
 
-const seeded = (seed = 1) => () => {
-  seed = (seed * 1664525 + 1013904223) % 4294967296;
-  return seed / 4294967296;
-};
-
 test("play-lesen.js loads without a DOM and exposes its resolver", () => {
   assert.equal(typeof resolveLesen, "function");
   assert.equal(typeof lesenMaps, "function");
@@ -32,15 +27,14 @@ test("play-lesen.js loads without a DOM and exposes its resolver", () => {
 
 test("the driver resolves every question the game can ask", () => {
   const maps = lesenMaps(CONTENT.de);
-  const rng = seeded(7);
-  // many passes, so every sentence item shows both of its faces
-  for (let pass = 0; pass < 12; pass++) {
-    for (let id = 0; id < itemCount("de"); id++) {
-      const q = questionFor(id, CONTENT.de, rng);
-      const res = resolveLesen(q.text, maps);
-      assert.equal(res.kind, q.kind, `id ${id}: "${q.text}"`);
-      assert.equal(res.answer, q.answer, `id ${id}: "${q.text}"`);
-    }
+  // A word answers with its emoji; a reading passage's question answers with the
+  // correct choice. resolveLesen must agree with questionFor on both, for every
+  // item — a driver that answers the wrong thing proves nothing.
+  for (let id = 0; id < itemCount("de"); id++) {
+    const q = questionFor(id, CONTENT.de);
+    const res = resolveLesen(q.text, maps);
+    assert.equal(res.kind, q.kind, `id ${id}: "${q.text}"`);
+    assert.equal(res.answer, q.answer, `id ${id}: "${q.text}"`);
   }
 });
 

@@ -107,39 +107,35 @@ test("word items ask for their own emoji", () => {
   assert.equal(questionFor(-1, DE), null);
 });
 
-test("sentence items show both faces of their pair, matched to the verdict (§14.3)", () => {
-  const rng = seeded(7);
+test("reading items ask their question, with the correct answer first (§14.2)", () => {
   for (let id = 0; id < itemCount("de"); id++) {
     const { item } = itemAt(id, DE);
-    if (item.w !== undefined) continue;
-    const faces = new Set();
-    for (let i = 0; i < 40 && faces.size < 2; i++) {
-      const q = questionFor(id, DE, rng);
-      assert.equal(q.kind, "sent");
-      if (q.answer === true) assert.equal(q.text, item.ok);
-      else if (q.answer === false) assert.equal(q.text, item.no);
-      else assert.fail(`answer must be a boolean, got ${String(q.answer)}`);
-      faces.add(q.answer);
-    }
-    // truth cannot be memorized per item: both variants must actually come up
-    assert.equal(faces.size, 2, `item ${id} only ever showed one face`);
+    if (item.text === undefined) continue;
+    const q = questionFor(id, DE);
+    assert.equal(q.kind, "read");
+    assert.equal(q.passage, item.text, `id ${id}: the passage is carried`);
+    assert.equal(q.text, item.q, `id ${id}: the question is what she answers`);
+    assert.equal(q.answer, item.a[0], `id ${id}: the correct answer is authored first`);
   }
 });
 
-test("optionsFor: four unique emoji, the answer exactly once, all from home (§14.3)", () => {
+test("optionsFor: four unique choices with the answer among them (§14.2, §14.3)", () => {
   const rng = seeded(11);
   for (let id = 0; id < itemCount("de"); id++) {
     const found = itemAt(id, DE);
-    if (found.item.w === undefined) {
-      assert.equal(optionsFor(id, DE, rng), null, "sentences answer with a verdict");
-      continue;
-    }
     const opts = optionsFor(id, DE, rng);
-    assert.equal(opts.length, 4);
+    assert.equal(opts.length, 4, `id ${id}: four choices`);
     assert.equal(new Set(opts).size, 4, `id ${id}: duplicate option`);
-    assert.equal(opts.filter((e) => e === found.item.e).length, 1, "the answer, exactly once");
-    const home = new Set(found.pack.items.map((it) => it.e));
-    for (const e of opts) assert.ok(home.has(e), `id ${id}: ${e} is not a pack-mate`);
+    if (found.item.w !== undefined) {
+      // a word: four emoji, the answer exactly once, all from the same pack
+      assert.equal(opts.filter((e) => e === found.item.e).length, 1, "the answer, exactly once");
+      const home = new Set(found.pack.items.map((it) => it.e));
+      for (const e of opts) assert.ok(home.has(e), `id ${id}: ${e} is not a pack-mate`);
+    } else {
+      // a reading passage: exactly its own four answers, the correct one present
+      assert.deepEqual([...opts].sort(), [...found.item.a].sort(), `id ${id}: not the item's answers`);
+      assert.ok(opts.includes(found.item.a[0]), `id ${id}: the correct answer must be an option`);
+    }
   }
   // deterministic under a seeded rng — the driver and the tests can replay it
   assert.deepEqual(optionsFor(0, DE, seeded(5)), optionsFor(0, DE, seeded(5)));
