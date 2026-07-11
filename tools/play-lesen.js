@@ -28,28 +28,26 @@
 (() => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  // The answer key, straight from the content: a word answers with its emoji,
-  // a sentence with the verdict of the face it is showing.
+  // The answer key, straight from the content: a word answers with its emoji, a
+  // Schwer reading passage with the question's correct answer (the first of its
+  // four, before optionsFor shuffles them).
   function lesenMaps(content) {
     const words = {};
-    const sents = {};
+    const reads = {};
     for (const pack of content.packs) {
       for (const it of pack.items) {
         if (it.w !== undefined) words[it.w] = it.e;
-        else {
-          sents[it.ok] = true;
-          sents[it.no] = false;
-        }
+        else if (it.text !== undefined) reads[it.q] = it.a[0];
       }
     }
-    return { words, sents };
+    return { words, reads };
   }
   globalThis.lesenMaps = lesenMaps;
 
   function resolveLesen(text, maps) {
     const q = String(text).trim();
     if (q in maps.words) return { kind: "word", answer: maps.words[q] };
-    if (q in maps.sents) return { kind: "sent", answer: maps.sents[q] };
+    if (q in maps.reads) return { kind: "read", answer: maps.reads[q] };
     throw new Error(`not in the content: "${q}"`);
   }
   globalThis.resolveLesen = resolveLesen;
@@ -73,7 +71,7 @@
     // ready = a word waits behind the "ready" cover, not yet revealed (§14.2);
     // away = the aid owns the stage; hidden = the blitz took the word
     card: card().hidden ? "away" : covered() ? "ready" : hidden() ? "hidden" : "faceUp",
-    kind: card().classList.contains("sent") ? "sent" : "word",
+    kind: card().classList.contains("read") ? "read" : "word",
     stars: document.querySelectorAll(".j-star.landed").length,
     aria: $("journey")?.getAttribute("aria-label") ?? null,
     foxAtNode: [...document.querySelectorAll(".j-node.done")].length,
@@ -104,16 +102,12 @@
   const buttons = () => [...document.querySelectorAll("#answers button")];
 
   function buttonFor(want) {
-    if (typeof want === "boolean") {
-      return document.querySelector(want ? "#answers .v-yes" : "#answers .v-no");
-    }
     return buttons().find((b) => b.textContent.trim() === want);
   }
 
-  // Something that is never the answer: the opposite verdict, or any other of
-  // the four emoji on the screen.
+  // Something that is never the answer: any other of the four choices on screen
+  // (an emoji for a word, an answer sentence for a reading passage).
   function wrongChoiceFor(res) {
-    if (res.kind === "sent") return !res.answer;
     const b = buttons().find((btn) => btn.textContent.trim() !== res.answer);
     if (!b) throw new Error("four options and no wrong one?");
     return b.textContent.trim();
@@ -156,7 +150,7 @@
 
       // A word now waits behind the "ready" cover (§14.2): tap to reveal it —
       // and to make the answer buttons live — before the blitz, exactly as the
-      // child does. A sentence never covers.
+      // child does. A reading passage never covers.
       if (res.kind === "word" && covered()) {
         $("wc-cover").click();
         for (let i = 0; i < 50 && covered(); i++) await sleep(20);

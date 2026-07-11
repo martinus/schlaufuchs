@@ -50,8 +50,8 @@
      the FILL, and the fill obeys the site's colour law (orange = what you DO,
      --depth = what you HAVE):
        • ACTION  — solid --orange, white text (.primary). One per screen.
-       • CHOICE  — white --panel, ink text (.mc/.keypad/.verdict/.tilegrid/
-                   .langbtn/.iconbtn). The default tappable tile.
+       • CHOICE  — white --panel, ink text (.mc/.keypad/.tilegrid/.langbtn/
+                   .iconbtn). The default tappable tile.
        • INFO    — --depth-soft fill, --depth text (.btn-menu: For parents,
                    Save/Load). Leads to what-you-have / the grown-up's side.
        • SELECTED (a toggle that is on) flips to solid --orange (.langbtn,
@@ -842,14 +842,49 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .wc-cover-eye { font-size: 2.2rem; line-height: 1; }
 .wc-cover-txt { font-size: 1.05rem; }
 
-/* A sentence is read, not blitzed (§14.1): it wraps, at a size a second-grader
-   can hold onto, and the card never turns. */
-.wordcard.sent .question {
-  white-space: normal;
-  font-size: 1.45rem;
-  line-height: 1.4;
-  font-weight: 700;
+/* Schwer's reading card (§14.2): a passage to read with the question below it,
+   both left-aligned and wrapping. No cover, no flip, no blitz — the passage
+   stays put the whole time while she reads and answers it. */
+.wordcard.read {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
 }
+.wordcard .passage {
+  font-size: 1.02rem;
+  line-height: 1.4;
+  text-align: left;
+  color: var(--ink);
+}
+.wordcard.read .question {
+  white-space: normal;
+  font-size: 1.15rem;
+  line-height: 1.3;
+  font-weight: 800;
+  text-align: left;
+}
+
+/* Four reading answers (§14.2): a single column of Choice tiles whose text
+   wraps, so a whole answer sentence fits and reads left-to-right like a list. */
+.mc-read { grid-template-columns: 1fr; }
+.mc-read button {
+  min-height: 48px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+  white-space: normal;
+  padding: 8px 14px;
+}
+
+/* Reading needs the room, so the round's scene steps aside during a passage
+   question (the progress is still tracked; it simply is not drawn here). */
+.stage:has(#wordcard.read) .journey-wrap { display: none; }
+
+/* the aid's "Correct:" label, before the answer she should have chosen (§14.2) */
+.feedback-aid .fb-lbl { color: var(--ink-soft); font-weight: 700; font-size: 0.9rem; }
 
 /* Four emoji to choose from: the emoji is the label, so it has to be big. */
 .mc-emoji button {
@@ -866,33 +901,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   cursor: default;
 }
 
-/* Stimmt / Quatsch (§14.1): two verdicts, each wearing its symbol in colour —
-   a child who reads nothing fluently yet still sees which side is "yes". */
-.verdict {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.verdict button {
-  min-height: clamp(64px, 10vh, 96px);
-  font-size: 1.35rem;
-  font-weight: 800;
-  border-radius: var(--radius);
-  background: var(--panel);
-  box-shadow: var(--shadow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.verdict button:active { transform: scale(0.96); }
-.verdict .v-sym { font-size: 1.7rem; }
-.verdict .v-yes .v-sym { color: var(--ok); }
-.verdict .v-no .v-sym { color: var(--err); }
-
-/* the aid's sentence, above the verdict it should have got (§14.2) */
+/* the aid's question (§14.2), above the answer she should have chosen */
 .feedback-aid .fb-sent {
   display: block;
   font-size: 1.2rem;

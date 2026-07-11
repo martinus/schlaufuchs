@@ -1418,13 +1418,15 @@ without reading any UI text.
 |---|---|---|
 | Leicht | **Blitzwörter kurz** | a word flashes on a card, then hides; pick its emoji from 4. Short frequent words, 1–2 syllables |
 | Mittel | **Blitzwörter lang** | same, with long words — compounds and consonant clusters („Schmetterling") |
-| Schwer | **Stimmt / Quatsch** | a sentence is shown **statically, never flashed**; tap ✓ Stimmt or ✗ Quatsch. Silly sentences are the motor: to find the joke you must read |
+| Schwer | **Leseverständnis** | a short passage (~3 lines) shown **statically, never flashed**; read it, then answer a question about it by picking one of **4 answers**. Comprehension, not a coin-flip verdict |
 
-Schwer is never flashed on purpose, and the child never sees a clock: the
-skill trained there is comprehension of a whole sentence, and a flash would
-punish exactly the child this stage trains. The tempo ladder (§14.4) observes
-silently, with bounds sized to a real sentence read and the ⭐⭐ gate keeping a
-timed 50/50 guess unprofitable.
+Schwer is never flashed on purpose, and the child never sees a clock: the skill
+trained there is comprehension of a whole passage, and a flash would punish
+exactly the child this stage trains. It replaced the old Stimmt/Quatsch verdict
+(a two-choice question is half a guess); four answers over a passage she must
+actually read do not pay a guesser. The tempo ladder (§14.4) observes silently,
+with bounds sized to a real passage read (far more generous than the word
+stages) and the ⭐⭐ gate keeping a lucky guess unprofitable.
 
 ### 14.2 The blitz (`flashMs`, the adaptive hook)
 
@@ -1441,9 +1443,9 @@ retuned after watching a real child, like `TEMPO_TIERS` (§10.6).
   taps it, so it never runs before she has looked or even knows a word is
   coming. Until the reveal the four answer emoji are shown but **disabled** —
   she can see what is coming without being able to guess at a word she has not
-  seen. A sentence never covers (it does not flash — nothing is taken away), so
-  its verdicts are live at once. The cover is a real `<button>` (keyboard-
-  reachable); `armFlash()` lives in `reveal()`, never in `askNext()`.
+  seen. A reading passage never covers (it does not flash — nothing is taken
+  away), so its four answers are live at once. The cover is a real `<button>`
+  (keyboard-reachable); `armFlash()` lives in `reveal()`, never in `askNext()`.
 - Answering **during** the flash is allowed — that is the fluent path.
 - The hide is **decided by a JS timer and decorated by a CSS transition**,
   never a keyframe animation: `prefers-reduced-motion` kills transitions
@@ -1455,9 +1457,10 @@ retuned after watching a real child, like `TEMPO_TIERS` (§10.6).
   (`fittedFontSize`, the §10.1 contract).
 - **Wrong answer** (§8.1 aid contract): the tapped emoji struck through in
   red, the word shown again **persistently** — no blitz — over the SAME four
-  options; the way out is tapping the right one. On Schwer the sentence stays
-  and the true verdict is shown in green („😜 Das ist Quatsch!"); the way out
-  is tapping that verdict. No timer, no "Verstanden" button.
+  options; the way out is tapping the right one. On Schwer the question is shown
+  again with the answer she should have chosen in green („Richtig: …"); the way
+  out is tapping that answer on the same four buttons. No timer, no "Verstanden"
+  button.
 
 ### 14.3 Content (`content.js`), tiles and the adaptive engine
 
@@ -1466,7 +1469,11 @@ order, items in theirs) is the box digit string's index, so reordering
 shifts every child's boxes. German first; content is keyed by language.
 
 - **12 packs**: per difficulty four themed packs — Leicht 4×10 short words,
-  Mittel 4×10 long words, Schwer 4×12 sentence *pairs* — 128 items.
+  Mittel 4×10 long words, Schwer 4×12 reading passages `{ text, q, a }` (the
+  correct answer authored first, shuffled by `optionsFor`) — 128 items. The
+  Schwer packs were rewritten **in place** from the old Quatsch pairs: same item
+  positions, so no child's Leitner box shifted (the append-only invariant is
+  about order, which was preserved).
 - Every word carries ONE unambiguous mainstream emoji, unique inside its
   pack, no near-twins. **Distractors are the item's own pack-mates**
   (`optionsFor`): same theme ⇒ plausible, pack-unique emoji ⇒ clearly
@@ -1714,8 +1721,8 @@ speech on tap; cookie stays under budget with all packs played.
 
 **M6 — Lesen.** Per §14, German content, no speech (§14.6).
 *Accept:* every exercise fully playable without reading UI text; rounds of
-6; the blitz survives `prefers-reduced-motion`; guessing on Stimmt/Quatsch
-never pays.
+6; the blitz survives `prefers-reduced-motion`; Schwer is four-answer reading
+comprehension over a passage, where a guess never pays.
 
 **M7 — Polish.** Refined map/fox art, service worker for offline play,
 `prefers-reduced-motion` audit.
