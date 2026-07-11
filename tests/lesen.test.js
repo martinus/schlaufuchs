@@ -75,23 +75,23 @@ test("pools: every tile outgrows the round, packs never overlap (§7.3)", () => 
 // --- the blitz clock (§14.2) ---------------------------------------------------
 
 test("flashMs falls strictly with the box, never below half a second", () => {
-  for (const d of [0, 1]) {
-    for (let box = 0; box <= 4; box++) {
-      const ms = flashMs(box, d);
-      assert.equal(ms, FLASH_MS[d][box]);
-      assert.ok(ms >= 500, `diff ${d} box ${box}: ${ms}ms is unreadably short`);
-      if (box > 0) assert.ok(ms < flashMs(box - 1, d), "the child must feel getting faster");
-    }
-    // Mittel's words are physically longer, so its clock is more generous
-    if (d === 1) for (let b = 0; b <= 4; b++) assert.ok(flashMs(b, 1) > flashMs(b, 0));
+  // Only Leicht flashes: it is the one difficulty that shows a single word.
+  for (let box = 0; box <= 4; box++) {
+    const ms = flashMs(box, 0);
+    assert.equal(ms, FLASH_MS[0][box]);
+    assert.ok(ms >= 500, `box ${box}: ${ms}ms is unreadably short`);
+    if (box > 0) assert.ok(ms < flashMs(box - 1, 0), "the child must feel getting faster");
   }
   // junk boxes read as box 2, like the session itself (§7.1)
   for (const junk of [undefined, null, -1, 9, "x", NaN]) {
     assert.equal(flashMs(junk, 0), FLASH_MS[0][2], `box=${String(junk)}`);
   }
-  // sentences are never flashed (§14.1)
-  assert.equal(flashMs(0, 2), null);
-  assert.equal(flashMs(4, 2), null);
+  // Mittel sentences and Schwer passages are never flashed (§14.1, §14.2)
+  assert.equal(FLASH_MS.length, 1, "only Leicht has a flash row");
+  for (const box of [0, 4]) {
+    assert.equal(flashMs(box, 1), null, "Mittel is read, not blitzed");
+    assert.equal(flashMs(box, 2), null, "Schwer is read, not blitzed");
+  }
 });
 
 // --- questions -----------------------------------------------------------------
@@ -105,6 +105,20 @@ test("word items ask for their own emoji", () => {
     assert.deepEqual(q, { kind: "word", text: item.w, answer: item.e });
   }
   assert.equal(questionFor(-1, DE), null);
+});
+
+test("sentence items show one face per encounter, keyed to its verdict (§14.1)", () => {
+  for (let id = 0; id < itemCount("de"); id++) {
+    const { item } = itemAt(id, DE);
+    if (item.ok === undefined) continue;
+    // rng < 0.5 shows the true face, otherwise the nonsense one
+    const yes = questionFor(id, DE, () => 0);
+    assert.deepEqual(yes, { kind: "sent", text: item.ok, answer: true }, `id ${id}: the true face`);
+    const no = questionFor(id, DE, () => 0.9);
+    assert.deepEqual(no, { kind: "sent", text: item.no, answer: false }, `id ${id}: the nonsense face`);
+    // a sentence has no options to choose from — it answers with a verdict
+    assert.equal(optionsFor(id, DE), null, `id ${id}: sentences have no options`);
+  }
 });
 
 test("reading items ask their question, with the correct answer first (§14.2)", () => {
@@ -123,6 +137,7 @@ test("optionsFor: four unique choices with the answer among them (§14.2, §14.3
   const rng = seeded(11);
   for (let id = 0; id < itemCount("de"); id++) {
     const found = itemAt(id, DE);
+    if (found.item.ok !== undefined) continue; // a sentence answers with a verdict, no options
     const opts = optionsFor(id, DE, rng);
     assert.equal(opts.length, 4, `id ${id}: four choices`);
     assert.equal(new Set(opts).size, 4, `id ${id}: duplicate option`);
@@ -143,11 +158,12 @@ test("optionsFor: four unique choices with the answer among them (§14.2, §14.3
 
 // --- stars (§14.3) ---------------------------------------------------------------
 
-test("stars on a round of six: 4 → ⭐, 5 → ⭐⭐, 6 → ⭐⭐⭐", () => {
-  assert.equal(ROUND_SIZE, 6);
+test("stars on a round of eight: 5 → ⭐, 7 → ⭐⭐, 8 → ⭐⭐⭐", () => {
+  assert.equal(ROUND_SIZE, 8);
   assert.equal(STAR_SLOTS, 3);
-  const want = [0, 0, 0, 0, 1, 2, 3];
-  for (let ok = 0; ok <= 6; ok++) assert.equal(starsFor(ok, 6), want[ok], `${ok}/6`);
+  // ratios 0.6 / 0.8 / 1.0: ⭐ at 5/8, ⭐⭐ at 7/8, ⭐⭐⭐ only at 8/8
+  const want = [0, 0, 0, 0, 0, 1, 1, 2, 3];
+  for (let ok = 0; ok <= ROUND_SIZE; ok++) assert.equal(starsFor(ok, ROUND_SIZE), want[ok], `${ok}/8`);
 });
 
 test("the star rules are the einmaleins rules — parity, so they cannot drift (D11)", () => {
@@ -181,8 +197,12 @@ test("tempoTier: the bounds per difficulty, and on the bound still counts", () =
     assert.equal(tempoTier(hare, d), 1, `d=${d}: on the hare bound`);
     assert.equal(tempoTier(hare + 1, d), 0, `d=${d}: past the hare`);
   }
-  // Schwer reads a whole sentence: its bounds must sit later than the word rows'
-  assert.ok(TEMPO_TIERS[2][2] > TEMPO_TIERS[0][2], "a sentence rocket cannot be a word rocket");
+  // Mittel reads a sentence, Schwer a whole passage: both sit later than Leicht,
+  // whose answer is a single word and a tap, and Schwer sits later than Mittel.
+  for (let tier = 0; tier < 3; tier++) {
+    assert.ok(TEMPO_TIERS[1][tier] > TEMPO_TIERS[0][tier], "a sentence read is slower than a word");
+    assert.ok(TEMPO_TIERS[2][tier] > TEMPO_TIERS[1][tier], "a passage read is slower than a sentence");
+  }
   for (const junk of [NaN, -1, undefined, null, "3000"]) {
     assert.equal(tempoTier(junk, 0), 0, `tempoTier(${String(junk)})`);
   }

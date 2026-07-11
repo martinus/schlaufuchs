@@ -28,25 +28,30 @@
 (() => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  // The answer key, straight from the content: a word answers with its emoji, a
-  // Schwer reading passage with the question's correct answer (the first of its
-  // four, before optionsFor shuffles them).
+  // The answer key, straight from the content: a Leicht word answers with its
+  // emoji; a Mittel Stimmt/Quatsch sentence with its verdict (true for the `ok`
+  // face, false for the `no` face — either can be shown per encounter); a Schwer
+  // passage's question with the correct answer (the first of its four, before
+  // optionsFor shuffles them).
   function lesenMaps(content) {
     const words = {};
+    const sents = {};
     const reads = {};
     for (const pack of content.packs) {
       for (const it of pack.items) {
         if (it.w !== undefined) words[it.w] = it.e;
+        else if (it.ok !== undefined) { sents[it.ok] = true; sents[it.no] = false; }
         else if (it.text !== undefined) reads[it.q] = it.a[0];
       }
     }
-    return { words, reads };
+    return { words, sents, reads };
   }
   globalThis.lesenMaps = lesenMaps;
 
   function resolveLesen(text, maps) {
     const q = String(text).trim();
     if (q in maps.words) return { kind: "word", answer: maps.words[q] };
+    if (q in maps.sents) return { kind: "sent", answer: maps.sents[q] };
     if (q in maps.reads) return { kind: "read", answer: maps.reads[q] };
     throw new Error(`not in the content: "${q}"`);
   }
@@ -71,7 +76,8 @@
     // ready = a word waits behind the "ready" cover, not yet revealed (§14.2);
     // away = the aid owns the stage; hidden = the blitz took the word
     card: card().hidden ? "away" : covered() ? "ready" : hidden() ? "hidden" : "faceUp",
-    kind: card().classList.contains("read") ? "read" : "word",
+    kind: card().classList.contains("read") ? "read"
+      : card().classList.contains("sent") ? "sent" : "word",
     stars: document.querySelectorAll(".j-star.landed").length,
     aria: $("journey")?.getAttribute("aria-label") ?? null,
     foxAtNode: [...document.querySelectorAll(".j-node.done")].length,
@@ -105,9 +111,16 @@
     return buttons().find((b) => b.textContent.trim() === want);
   }
 
-  // Something that is never the answer: any other of the four choices on screen
-  // (an emoji for a word, an answer sentence for a reading passage).
-  function wrongChoiceFor(res) {
+  // A Stimmt/Quatsch verdict is a boolean, not a label: the true verdict is the
+  // .v-yes button, the false one .v-no (§14.1). The button to click for a given
+  // verdict, and for any kind: a word/passage clicks the option by its text.
+  const verdictButton = (val) => document.querySelector(val ? ".verdict .v-yes" : ".verdict .v-no");
+  const answerButton = (res, val) => (res.kind === "sent" ? verdictButton(val) : buttonFor(val));
+
+  // Something that is never the answer. For a word or a passage: any other of the
+  // four choices on screen. For a sentence: the opposite verdict.
+  function wrongFor(res) {
+    if (res.kind === "sent") return !res.answer;
     const b = buttons().find((btn) => btn.textContent.trim() !== res.answer);
     if (!b) throw new Error("four options and no wrong one?");
     return b.textContent.trim();
@@ -165,8 +178,8 @@
       if (pause) await sleep(pause);
 
       const wrongNow = wrong.has(n);
-      const give = wrongNow ? wrongChoiceFor(res) : res.answer;
-      const btn = buttonFor(give);
+      const give = wrongNow ? wrongFor(res) : res.answer;
+      const btn = answerButton(res, give);
       if (!btn) throw new Error(`no button for ${String(give)}`);
       btn.click();
       await sleep(SETTLE);
@@ -175,7 +188,7 @@
         trace.push({ q: n, text: q.text, kind: res.kind, gave: give, aid: true, ...readLesenScene() });
         if (stopInAid && stopAt !== null && n >= stopAt) break;
         // The way out of the aid is the right answer, on the same buttons.
-        buttonFor(res.answer).click();
+        answerButton(res, res.answer).click();
         await sleep(SETTLE);
       } else {
         trace.push({ q: n, text: q.text, kind: res.kind, gave: give, ...readLesenScene() });

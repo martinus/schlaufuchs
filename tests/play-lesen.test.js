@@ -27,11 +27,15 @@ test("play-lesen.js loads without a DOM and exposes its resolver", () => {
 
 test("the driver resolves every question the game can ask", () => {
   const maps = lesenMaps(CONTENT.de);
-  // A word answers with its emoji; a reading passage's question answers with the
-  // correct choice. resolveLesen must agree with questionFor on both, for every
-  // item — a driver that answers the wrong thing proves nothing.
+  // A word answers with its emoji; a Stimmt/Quatsch sentence with its verdict
+  // (either face can come up); a passage's question with the correct choice.
+  // resolveLesen must agree with questionFor on all three, for every item — a
+  // driver that answers the wrong thing proves nothing. A seeded rng makes the
+  // sentence face deterministic so a failure names the same item every run.
+  const seeded = (seed = 1) => () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+  const rng = seeded(7);
   for (let id = 0; id < itemCount("de"); id++) {
-    const q = questionFor(id, CONTENT.de);
+    const q = questionFor(id, CONTENT.de, rng);
     const res = resolveLesen(q.text, maps);
     assert.equal(res.kind, q.kind, `id ${id}: "${q.text}"`);
     assert.equal(res.answer, q.answer, `id ${id}: "${q.text}"`);
