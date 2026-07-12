@@ -48,15 +48,17 @@ const EINMALEINS_LADDER = [2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112];
 // tests/rewards.test.js pins it verbatim and guards the one-round property.
 const LESEN_LADDER = [3, 7, 12, 17, 23, 29, 35, 41, 47, 52, 57, 62];
 
-// rechnungen shares lesen's exact 90-point economy (§12.2), so it inherits the
-// same hand-tuned shape rather than the generated einmaleins curve — which over
-// 90 points starts at 1, 3, 6 and would drop three trophies from a single
-// perfect Schwer round (9 points), flooding the Pokalraum on day one, the very
-// bug LESEN_LADDER was written to avoid. A first Schwer round now buys two, not
-// three, and the twelfth trophy sits at 62 of 90 (≈ 69 %), so filling the shelf
-// needs play across the modes — Schwer alone caps at 45. tests/rewards.test.js
-// pins it verbatim and guards the one-round property.
-const RECHNUNGEN_LADDER = [3, 7, 12, 17, 23, 29, 35, 41, 47, 52, 57, 62];
+// rechnungen (108 points, §12.2) borrows lesen's hand-tuned shape scaled up by
+// 108/90 rather than the generated einmaleins curve — which over 108 points
+// starts at 1, 4, 7 and would drop three trophies from a single perfect Schwer
+// round (9 points), flooding the Pokalraum on day one, the very bug
+// LESEN_LADDER was written to avoid. The first rung stays at 3, so a child's
+// very first perfect Leicht round (3 points) is still a trophy; a first perfect
+// Schwer round buys two, not three, and the twelfth trophy sits at 74 of 108
+// (≈ 69 %), so filling the shelf needs play across the modes — Schwer alone
+// caps at 54. tests/rewards.test.js pins it verbatim and guards the one-round
+// property.
+const RECHNUNGEN_LADDER = [3, 8, 14, 20, 28, 35, 42, 49, 56, 62, 68, 74];
 
 // What a game is worth in stars if a child masters every tile it offers (§8.3).
 // It is the denominator of everything the map says about a region, so it must
@@ -72,10 +74,10 @@ const RECHNUNGEN_LADDER = [3, 7, 12, 17, 23, 29, 35, 41, 47, 52, 57, 62];
 // computes it from the real tiles, and tests/rewards.test.js holds the two
 // together.
 //
-// rechnungen is exact as of shipping: five mode tiles (＋ − × ÷ Mix) per
-// difficulty, so 5 × 3 + 5 × 6 + 5 × 9 = 90 (§12.2) — `maxPoints()` in
-// games/rechnungen/logic.js computes it, and tests/rewards.test.js holds the two
-// together. It happens to equal its old guess, but it is a computed number now.
+// rechnungen is exact as of shipping: six mode tiles (＋ − ×÷ 🧱 ⊞ 🎲) per
+// difficulty, so 6 × 3 + 6 × 6 + 6 × 9 = 108 (§12.2) — `maxPoints()` in
+// games/rechnungen/logic.js computes it, and tests/rewards.test.js holds the
+// two together.
 //
 // **The other two (tippen, vokabeln) are still guesses.** Those games do not
 // exist, and neither does their tile structure; these numbers were once
@@ -85,7 +87,7 @@ const RECHNUNGEN_LADDER = [3, 7, 12, 17, 23, 29, 35, 41, 47, 52, 57, 62];
 // against a number nobody checked.
 export const MAX_POINTS = {
   einmaleins: 162,
-  rechnungen: 90,
+  rechnungen: 108,
   tippen: 240,
   vokabeln: 108,
   lesen: 90,

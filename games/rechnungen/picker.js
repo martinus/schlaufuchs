@@ -1,5 +1,5 @@
 // The Rechnungen level picker (§12.1, §3.3): one scrollable list of every tile
-// the game has — five mode chips (＋ − × ÷ 🎲) per difficulty — with the fox
+// the game has — six mode chips (＋ − ×÷ 🧱 ⊞ 🎲) per difficulty — with the fox
 // standing on the one being played. Same contract as the einmaleins picker: a
 // tile opens only once the fox has arrived on it, and how many stars a tile
 // still has to give IS the difficulty display.
@@ -18,21 +18,25 @@ import {
   MODES, starDigit, DIFF_KEYS, DIFF_SLUGS, TEMPO_ICONS, TEMPO_KEYS,
 } from "./logic.js";
 
-// The tile's face: the operator as the child's schoolbook writes it (division
-// follows the UI language, §12.1). "🎲" for Mix, the only tile that is not one
-// operation. The round-title chip borrows this, so the symbol over the stage is
-// the symbol on the tile that started it.
+// The tile's face: the operators as the child's schoolbook writes them
+// (division follows the UI language, §12.1); 🧱 for the number walls, ⊞ for
+// the grids, 🎲 for Mix. The round-title chip borrows this, so the symbol over
+// the stage is the symbol on the tile that started it.
 export function modeSymbol(mode) {
   if (mode === "+") return "＋";
   if (mode === "-") return "−";
-  if (mode === "x") return "×";
-  if (mode === ":") return t("divSign");
+  if (mode === "x:") return `×${t("divSign")}`;
+  if (mode === "mauer") return "🧱";
+  if (mode === "quad") return "⊞";
   return "🎲";
 }
 
 // The spoken name of a mode, for a screen reader and the aria-label.
 function modeName(mode) {
-  return t({ "+": "modePlus", "-": "modeMinus", x: "modeTimes", ":": "modeDivide", mix: "modeMix" }[mode]);
+  return t({
+    "+": "modePlus", "-": "modeMinus", "x:": "modeTimesDiv",
+    mauer: "modeMauer", quad: "modeQuad", mix: "modeMix",
+  }[mode]);
 }
 
 // Wrap the picker overlay that sits in the page markup. Same contract as the
