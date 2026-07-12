@@ -84,14 +84,17 @@ same options as play.js (`wrongAt`, `delayMs`, `stopAt`/`questions`, plus
 on screen, the way to screenshot one kind out of a mixed pool). Keypad input on
 every difficulty, so it types digits and OK like play.js. Seed the cookie with
 difficulty `d` and mode `m` (`"+" "-" "x:" "mauer" "quad" "mix"`). A task can
-hold several cells (a number wall is three answers, §12.1); the driver answers
-them in order — `wrongAt` misses the task's FIRST cell, `delayMs` sleeps before
-every cell (the per-cell tempo clock). A new task is announced on `#question`'s
+hold several cells (a number wall is three answers, a Zerlegen scaffold seven,
+§12.1); in a wall/grid the child picks each blank herself, so the driver CLICKS
+an open "?" first (the game waits with `dataset.cell` = -1), then types.
+`wrongAt` misses the task's first ANSWERED cell, `delayMs` sleeps before every
+cell (the per-cell tempo clock). A new task is announced on `#question`'s
 `dataset.q` stamp, a new cell on `dataset.cell`, because a re-queued skill asks
 a fresh task that may read the same. `resolveRechnung(text)` reads a printed
-one-line task — plain binary, a ± chain, a gap, the ×→+ link, `? R ?` — and
-`resolveMauer`/`resolveQuad` complete a wall/grid from what is visible; all
-three are unit-tested against every `questionFor` shape, cell by cell
+one-line task — plain binary, a ± chain, a gap, the ×→+ link, `? R ?` —
+`resolveZerlege(head)` reconstructs the scaffold's seven cells from its head,
+and `resolveMauer`/`resolveQuad` complete a wall/grid from what is visible; all
+four are unit-tested against every `questionFor` shape, cell by cell
 (`tests/play-rechnungen.test.js`).
 
 The hooks refuse a commit that fails `node --test` or that deletes tests
