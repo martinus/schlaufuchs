@@ -4,10 +4,15 @@
 // purpose, so the CSS and the driving conventions transfer. Keypad input on
 // every difficulty (§12); no multiple choice.
 //
-// The one structural difference from einmaleins: the Leitner box persists per
-// SKILL BUCKET, not per question. `startRound` seeds each variant item-id's box
-// from its bucket, so the shared engine weights by mastery; `endRound` folds
-// the round's per-bucket outcome back with `foldBoxes` (§12.2).
+// Two structural differences from einmaleins. First, the Leitner box persists
+// per SKILL BUCKET, not per question: `startRound` seeds each variant item-id's
+// box from its bucket, so the shared engine weights by mastery; `endRound`
+// folds the round's per-bucket outcome back with `foldBoxes` (§12.2). Second,
+// a task can hold several CELLS (§12.1) — a number wall is three answers, a
+// decomposition two — typed one after another on the one keypad. One task is
+// one journey node and one engine item: the fox advances when the LAST cell
+// lands, stumbles on any wrong one, and the engine hears about the task once —
+// `answer(id, false)` at the first miss, `answer(id, true)` on a clean finish.
 
 import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
@@ -26,8 +31,8 @@ import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
 import strings from "./i18n.js";
 import { createLevelPicker, modeSymbol } from "./picker.js";
 import {
-  MODES, BUCKET_COUNT, ROUND_SIZE, DIFF_KEYS, TEMPO_ICONS, TEMPO_KEYS,
-  poolFor, bucketOf, questionFor, foldBoxes,
+  MODES, BUCKET_COUNT, DIFF_KEYS, TEMPO_ICONS, TEMPO_KEYS,
+  roundSizeFor, poolFor, bucketOf, questionFor, foldBoxes,
   starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit,
   fittedFontSize, retryStep, median, tempoTier, awardTempo,
 } from "./logic.js";
@@ -58,6 +63,12 @@ const summary = overlayFrom(document.getElementById("sum-overlay"), {
 const SUM_OK_KEYS = ["sumOk1", "sumOk2", "sumOk3", "sumOk4", "sumOk5", "sumOk6"];
 const NEXT_MS = 250;
 
+// The operator faces, for markup this module builds itself (the strategy rows,
+// the wall bricks' relations, the grid's corner). logic.js prints the same
+// faces into the task texts; division is the i18n divSign, as everywhere.
+const OPFACE = { "+": "+", "-": "−", x: "×" };
+const opFace = (op) => (op === ":" ? t("divSign") : OPFACE[op]);
+
 // React on pointerdown for instant response on touch devices; the later
 // synthetic click is suppressed. Keyboard activation still works via click.
 function fastPress(btn, fn) {
@@ -83,7 +94,9 @@ let mode = MODES.includes(saved.m) ? saved.m : "+";
 // --- round state -----------------------------------------------------------
 let session = null;
 let journey = null;
-let question = null; // the concrete question realised from the current bucket
+let task = null; // the concrete task realised from the current bucket
+let cellIndex = 0; // which of the task's cells the child is answering
+let taskMissed = false; // a wrong cell already told the engine about this task
 let currentId = null;
 let input = "";
 let buffer = ""; // digits typed during the short post-correct transition
@@ -92,9 +105,9 @@ let phase = "answer"; // answer | correct-wait | wrong-wait
 let best = 0; // stars already won on this tile, before the round
 let roundOver = false;
 let wonTrophies = [];
-let qCounter = 0; // the stamp the driver watches for a new question
-// The tempo ladder's raw material (§10.6): when the current question appeared,
-// and how long each first-try-correct answer took.
+let qCounter = 0; // the stamp the driver watches for a new task
+// The tempo ladder's raw material (§10.6): when the current cell appeared, and
+// how long each first-try-correct answer took — the clock runs per CELL.
 let qShownAt = 0;
 let answerTimes = [];
 let missedIds = new Set(); // item ids missed this round — they cannot feed tempo
@@ -113,7 +126,8 @@ function updateChip() {
 
 // `resume` is a round mirror from roundstore.js (§10.7); without one the start
 // is fresh and any stale mirror is dropped — a chosen tile outranks an
-// interrupted round on another.
+// interrupted round on another. The mirror is written at task boundaries, so a
+// resumed round re-asks the interrupted task with fresh numbers — same skill.
 function startRound(resume = null) {
   updateChip();
   bar.refresh();
@@ -122,12 +136,12 @@ function startRound(resume = null) {
   const pool = poolFor(mode, diff);
   // Seed every variant's box from its bucket, so the engine weights weak skills
   // up exactly as the Leitner boxes say — the variants only exist to give a
-  // round of ten more items than a two-bucket cell could otherwise offer.
+  // round more items than a small cell could otherwise offer.
   const seeded = {};
   for (const id of pool) seeded[id] = bucketBoxes[bucketOf(id)];
   const snap = resume && validResume(resume.s, pool) ? resume : null;
   if (!snap) clearRound("rechnungen");
-  session = createSession(pool, seeded, { roundSize: ROUND_SIZE, resume: snap?.s });
+  session = createSession(pool, seeded, { roundSize: roundSizeFor(mode), resume: snap?.s });
   best = starDigit((saved.stars ?? {})[mode], diff);
   journey = createJourney($("journey"), {
     nodes: session.items().length,
@@ -151,19 +165,33 @@ function askNext() {
   const id = session.next();
   if (id === null) return endRound();
   currentId = id;
-  // A fresh concrete question for this bucket. A re-queued miss therefore
-  // returns as the SAME skill with NEW numbers (§12.2) — which is the point.
-  question = questionFor(id, Math.random, t("divSign"));
+  // A fresh concrete task for this bucket. A re-queued miss therefore returns
+  // as the SAME skill with NEW numbers (§12.2) — which is the point.
+  task = questionFor(id, Math.random, t("divSign"));
+  cellIndex = 0;
+  taskMissed = false;
+  qCounter++;
+  startCell();
+}
+
+// One cell of the task: the child's next number. The tempo clock (§10.6) and
+// the driver's cell stamp restart here — a wall brick and a plain sum are each
+// one timed step.
+function startCell() {
   input = buffer.slice(0, 4);
   buffer = "";
   retry = "";
   phase = "answer";
-  qCounter++;
   $("feedback").hidden = true;
   $("question").hidden = false;
   renderQuestion();
   renderStatus();
-  qShownAt = Date.now(); // the tempo clock starts when the question is up (§10.6)
+  qShownAt = Date.now();
+}
+
+function nextCell() {
+  cellIndex++;
+  startCell();
 }
 
 function renderStatus() {
@@ -175,6 +203,7 @@ function renderStatus() {
 function fitQuestion() {
   const el = $("question");
   el.style.fontSize = "";
+  if (!el.classList.contains("qline")) return; // multi-line kinds size via CSS
   const size = parseFloat(getComputedStyle(el).fontSize);
   const fitted = fittedFontSize(size, el.clientWidth, el.scrollWidth);
   if (fitted !== size) el.style.fontSize = `${fitted}px`;
@@ -187,19 +216,104 @@ function eqHTML(text) {
   return text.replaceAll(":", '<span class="divsign">:</span>');
 }
 
+// --- rendering a task ---------------------------------------------------------
+// Every fillable slot is a `.cell` span with its index in `data-cell`; the one
+// being answered wears `.active` and echoes the typed digits. Cells before it
+// keep their answers; cells after it wait as "?". The driver reads exactly
+// this (tools/play-rechnungen.js).
+
+// How many cells already show their answer. During the short post-correct
+// transition the just-landed cell counts, so the child sees it filled.
+const solvedCells = () => cellIndex + (phase === "correct-wait" ? 1 : 0);
+
+function cellFace(i) {
+  if (i < solvedCells()) return String(task.cells[i].answer);
+  if (i === cellIndex && phase === "answer" && input !== "") return input;
+  return "?";
+}
+
+function cellSpan(i, cls = "gap") {
+  const active = i === cellIndex && phase === "answer";
+  const done = i < solvedCells();
+  return `<span class="${cls} cell${active ? " active" : ""}${done ? " done" : ""}" data-cell="${i}">${cellFace(i)}</span>`;
+}
+
+// The one-line kinds (op, gap, chain, mulplus, rest): the task's text carries
+// one "?" per cell, in cell order — interleave.
+function lineHTML() {
+  const parts = task.text.split("?");
+  let html = eqHTML(parts[0]);
+  task.cells.forEach((_, i) => {
+    html += cellSpan(i) + eqHTML(parts[i + 1]);
+  });
+  return html;
+}
+
+// The decomposition scaffold (§12.1): the head sum, then the two strategy rows.
+// The second row's first operand IS the first cell's answer, so it hides until
+// that cell lands — and the head's "?" fills only when the whole task is done.
+function zerlegeHTML() {
+  const [c0, c1] = task.cells;
+  const sg = opFace(task.op);
+  const done = solvedCells() === task.cells.length;
+  const s1 = solvedCells() >= 1 ? c1.aid.a : "?";
+  return `<div class="zerlege">
+    <div class="zhead">${task.a} ${sg} ${task.b} = <span class="zauto">${done ? task.answer : "?"}</span></div>
+    <div class="zrow" data-eqrow>${c0.aid.a} ${sg} ${c0.aid.b} = ${cellSpan(0)}</div>
+    <div class="zrow" data-eqrow><span class="zauto">${s1}</span> ${sg} ${c1.aid.b} = ${cellSpan(1)}</div>
+  </div>`;
+}
+
+// The number wall (§12.1): three rows of bricks, top = the sum of the two
+// below. Given bricks are plain; the blanks are cells in solvable order.
+function mauerHTML() {
+  const cellAt = {};
+  task.cells.forEach((c, i) => { cellAt[c.pos] = i; });
+  const brick = (pos) => (task.given[pos]
+    ? `<span class="mcell" data-pos="${pos}">${task.vals[pos]}</span>`
+    : cellSpan(cellAt[pos], "mcell").replace('data-cell', `data-pos="${pos}" data-cell`));
+  return `<div class="mauer">
+    <div class="mrow">${brick(0)}</div>
+    <div class="mrow">${brick(1)}${brick(2)}</div>
+    <div class="mrow">${brick(3)}${brick(4)}${brick(5)}</div>
+  </div>`;
+}
+
+// The operation grid (§12.1): headers on the top row and left column, the op in
+// the corner; cell (r,c) = row ∘ col. A hidden column header (Schwer) is itself
+// a cell — it solves as a gap off the one interior value shown in its column.
+function quadHTML() {
+  const cellAt = {}; // "r,c" or "h<idx>" → cell index
+  task.cells.forEach((c, i) => {
+    cellAt[c.pos.hdr !== undefined ? `h${c.pos.hdr}` : `${c.pos.r},${c.pos.c}`] = i;
+  });
+  const head = (idx) => (cellAt[`h${idx}`] !== undefined
+    ? cellSpan(cellAt[`h${idx}`], "qhead").replace('data-cell', `data-hdr="${idx}" data-cell`)
+    : `<span class="qhead" data-hdr="${idx}">${task.cols[idx]}</span>`);
+  const body = (r, c) => (cellAt[`${r},${c}`] !== undefined
+    ? cellSpan(cellAt[`${r},${c}`], "qcell").replace('data-cell', `data-rc="${r},${c}" data-cell`)
+    : `<span class="qcell qgiven" data-rc="${r},${c}">${task.grid[r][c]}</span>`);
+  return `<div class="rquad">
+    <span class="qcorner">${opFace(task.op)}</span>${head(0)}${head(1)}
+    <span class="qhead qrowh" data-row="0">${task.rows[0]}</span>${body(0, 0)}${body(0, 1)}
+    <span class="qhead qrowh" data-row="1">${task.rows[1]}</span>${body(1, 0)}${body(1, 1)}
+  </div>`;
+}
+
 function renderQuestion() {
-  const shown = input === "" ? "?" : input;
-  $("question").innerHTML = eqHTML(question.text).replace(
-    "?",
-    `<span class="gap">${shown}</span>`,
-  );
-  // the driver watches this stamp to know a new question is up (play-rechnungen.js)
-  $("question").dataset.q = String(qCounter);
+  const q = $("question");
+  const multi = { zerlege: zerlegeHTML, mauer: mauerHTML, quad: quadHTML }[task.kind];
+  q.className = multi ? `question qmulti q-${task.kind}` : "question qline";
+  q.innerHTML = multi ? multi() : lineHTML();
+  // the driver watches these stamps to know a new task / cell is up
+  q.dataset.q = String(qCounter);
+  q.dataset.kind = task.kind;
+  q.dataset.cell = String(cellIndex);
   fitQuestion();
 }
 
-window.addEventListener("resize", () => question && fitQuestion());
-document.fonts?.ready.then(() => question && fitQuestion());
+window.addEventListener("resize", () => task && fitQuestion());
+document.fonts?.ready.then(() => task && fitQuestion());
 
 // Keypad (every difficulty): built ONCE per round and kept in the DOM, so no
 // tap can land on a node that is being replaced mid-press.
@@ -222,7 +336,7 @@ function buildKeypad() {
 function keyPress(k) {
   if (roundOver) return;
   if (phase === "wrong-wait") {
-    const step = retryStep(retry, k, question.answer);
+    const step = retryStep(retry, k, task.cells[cellIndex].answer);
     if (step.state === "reject") return rejectRetry();
     retry = step.input;
     renderRetry();
@@ -270,38 +384,9 @@ function blitzFlash() {
   sfx.blitz();
 }
 
-function submit(value) {
-  const correct = value === question.answer;
-  const bkt = bucketOf(currentId);
-  session.answer(currentId, correct);
-  touchedBuckets.add(bkt);
-  if (correct) {
-    // Only a first try feeds the tempo ladder (§10.6): an item ever missed this
-    // round contributes nothing. One answer at rocket speed earns its ⚡ now.
-    if (!missedIds.has(currentId)) {
-      const took = Date.now() - qShownAt;
-      answerTimes.push(took);
-      if (tempoTier(took, diff) === 3) blitzFlash();
-    }
-    phase = "correct-wait";
-    sfx.correct();
-    journey.advance();
-    renderStatus();
-    if (input !== "") {
-      input = String(value);
-      renderQuestion();
-    }
-    setTimeout(askNext, NEXT_MS);
-  } else {
-    missedIds.add(currentId);
-    missedBuckets.add(bkt);
-    phase = "wrong-wait";
-    retry = "";
-    sfx.wrong();
-    journey.stumble();
-    showFeedback(value);
-  }
-  // Mirror the round after every recorded answer (§10.7).
+// Mirror the round after every answer the ENGINE heard about (§10.7) — task
+// boundaries, so a resumed round re-asks the interrupted task afresh.
+function mirrorRound() {
   saveRound("rechnungen", {
     d: diff, m: mode, s: session.snapshot(),
     times: answerTimes, missed: [...missedIds],
@@ -309,10 +394,59 @@ function submit(value) {
   });
 }
 
-// The dot grid (§12.1: „dot grid for ×"): the product as rows of the divisor's
-// or the multiplicand's width, so the child sees the groups. Skipped when the
-// count would be a wall — a three-digit dividend is a number line's job, not a
-// grid's.
+function submit(value) {
+  const cell = task.cells[cellIndex];
+  const correct = value === cell.answer;
+  const bkt = bucketOf(currentId);
+  const last = cellIndex === task.cells.length - 1;
+  touchedBuckets.add(bkt);
+  if (correct) {
+    // Only a first try feeds the tempo ladder (§10.6): a task ever missed this
+    // round contributes nothing. One cell at rocket speed earns its ⚡ now.
+    if (!taskMissed && !missedIds.has(currentId)) {
+      const took = Date.now() - qShownAt;
+      answerTimes.push(took);
+      if (tempoTier(took, diff) === 3) blitzFlash();
+    }
+    phase = "correct-wait";
+    sfx.correct();
+    if (input !== "") {
+      input = String(value);
+      renderQuestion();
+    }
+    if (!last) {
+      setTimeout(nextCell, NEXT_MS);
+      return;
+    }
+    // the task is done: the engine hears about it once — now, if no cell missed
+    if (!taskMissed) {
+      session.answer(currentId, true);
+      journey.advance();
+      renderStatus();
+      mirrorRound();
+    }
+    setTimeout(askNext, NEXT_MS);
+  } else {
+    // The engine hears only the FIRST miss (the task is already re-queued);
+    // the child still finishes the remaining cells, aid in hand.
+    if (!taskMissed) {
+      taskMissed = true;
+      missedIds.add(currentId);
+      missedBuckets.add(bkt);
+      session.answer(currentId, false);
+      mirrorRound();
+    }
+    phase = "wrong-wait";
+    retry = "";
+    sfx.wrong();
+    journey.stumble();
+    showFeedback(value);
+  }
+}
+
+// The dot grid (§12.1: „dot grid for ×/÷"): the count as rows of the divisor's
+// or the multiplicand's width, so the child sees the groups — and a remainder
+// as the short last row. Skipped when the count would be a wall.
 function dotGridHTML(q) {
   const cols = q.b;
   const count = q.op === ":" ? q.a : q.a * q.b; // ÷: the dividend, in divisor columns
@@ -338,14 +472,30 @@ function numberLineHTML(q) {
   </div>`;
 }
 
+// The workbook's own teaching device, lent to the aid (§12.1): a plain ± miss
+// against a two-digit second operand also shows the tens-first decomposition —
+// the same two rows the Zerlegen tasks train. Only for a plain sum (a gap or a
+// chain decomposes differently, and the Zerlegen tasks ARE the rows already).
+function zerlegeHintHTML(q) {
+  if (q.kind !== "op" || (q.op !== "+" && q.op !== "-") || q.b < 10 || q.b % 10 === 0) return "";
+  const bt = Math.floor(q.b / 10) * 10;
+  const s1 = q.op === "+" ? q.a + bt : q.a - bt;
+  const sg = opFace(q.op);
+  return `<div class="zhint">${q.a} ${sg} ${bt} = ${s1}<br>${s1} ${sg} ${q.b % 10} = ${q.answer}</div>`;
+}
+
 // Wrong answer (§8.1): the child's own answer, struck through in red; the true
-// equation under it in green; a one-line visual aid (number line for ±, dot grid
-// for ×/÷). It stays until she enters the right answer herself — no timer, no
-// "Verstanden".
+// equation under it in green; a one-line visual aid (number line for ±, dot
+// grid for ×/÷). The equation is the CELL's — a wall brick shows the +/− step
+// of its neighbours, a grid cell its row ∘ col. It stays until she enters the
+// right answer herself — no timer, no "Verstanden".
 function showFeedback(wrong) {
-  const wrongEq = eqHTML(question.text).replace("?", wrong);
-  const rightEq = eqHTML(question.text).replace("?", `<b class="ans">${question.answer}</b>`);
-  const visual = question.op === "x" || question.op === ":" ? dotGridHTML(question) : numberLineHTML(question);
+  const aid = task.cells[cellIndex].aid;
+  const wrongEq = eqHTML(aid.text).replace("?", wrong);
+  const rightEq = eqHTML(aid.text).replace("?", `<b class="ans">${aid.answer}</b>`);
+  const visual = aid.op === "x" || aid.op === ":"
+    ? dotGridHTML(aid)
+    : numberLineHTML(aid) + (diff > 0 ? zerlegeHintHTML(aid) : "");
   const fb = $("feedback");
   fb.innerHTML = `<span class="eq eq-wrong"><s>${wrongEq}</s></span>
     <span class="eq">${rightEq}</span>
@@ -371,12 +521,14 @@ function rejectRetry() {
   shake.classList.add("stumbling");
 }
 
-// The only way out of the aid: the right answer, entered.
+// The only way out of the aid: the right answer, entered. The task carries on
+// with its next cell — a wall is always finished, even after a stumble.
 function continueRound() {
   if (phase !== "wrong-wait") return;
   phase = "correct-wait";
   sfx.correct();
-  setTimeout(askNext, NEXT_MS);
+  const last = cellIndex === task.cells.length - 1;
+  setTimeout(last ? askNext : nextCell, NEXT_MS);
 }
 
 function endRound() {
@@ -391,7 +543,7 @@ function endRound() {
   const improved = stars > old;
   if (improved) starsObj[mode] = withStarDigit(starsObj[mode], diff, stars);
 
-  // The tempo ladder (§10.6): the round's median answer time as a tier, gated by
+  // The tempo ladder (§10.6): the round's median cell time as a tier, gated by
   // two stars and stored only upward — the same digit strings the stars use,
   // per mode. Computed here, painted below only as a symbol.
   const tier = tempoTier(median(answerTimes), diff);
@@ -475,7 +627,7 @@ const bar = initTopBar({
   onLeave: guard.guardLink,
   onChange() {
     updateChip();
-    if (!roundOver && question) renderQuestion();
+    if (!roundOver && task) renderQuestion();
   },
   onClose() {
     if (roundOver) summary.open();

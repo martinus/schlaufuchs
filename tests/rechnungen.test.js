@@ -1,11 +1,12 @@
 // Rechnungen pure logic (§12): the skill buckets and their generators, the
-// variant-expansion the shared engine draws over, the per-bucket box fold, the
-// star/tempo digit strings, and the einmaleins rules this game duplicates.
+// task/cell model (walls, grids, scaffolds, remainders), the variant-expansion
+// the shared engine draws over, the per-bucket box fold, the star/tempo digit
+// strings, and the einmaleins rules this game duplicates.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  MODES, DIFF_KEYS, DIFF_SLUGS, ROUND_SIZE, STAR_SLOTS, DIFF_SLOTS, VARIANTS,
+  MODES, DIFF_KEYS, DIFF_SLUGS, STAR_SLOTS, DIFF_SLOTS, VARIANTS, roundSizeFor,
   BUCKETS, BUCKET_COUNT, bucketOf, bucketsFor, poolFor, questionFor, foldBoxes,
   starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit,
   fittedFontSize, retryStep, maxPoints,
@@ -28,11 +29,14 @@ const seeded = (seed = 1) => () => {
   return seed / 4294967296;
 };
 
-// Evaluate the printed equation the way the child (and the driver) reads it,
-// so a bucket whose text and answer disagree is caught. Chains run left to
+// Evaluate a printed one-gap equation the way the child (and the driver) reads
+// it, so an aid whose text and answer disagree is caught. Chains run left to
 // right; a gap solves for the "?". Division uses ":" here (the sign we pass).
 function evaluate(text) {
-  const [lhs, rhs] = text.split("=").map((s) => s.trim());
+  // the ×→+ link prints two "=" ("3 × 6 = 6 + 6 + 6 = ?"): first and last count
+  const parts = text.split("=").map((s) => s.trim());
+  const lhs = parts[0];
+  const rhs = parts[parts.length - 1];
   const tok = lhs.split(/\s+/);
   const num = (t) => Number(t);
   const apply = (x, op, y) => ({ "+": x + y, "−": x - y, "×": x * y, ":": x / y }[op]);
@@ -48,19 +52,37 @@ function evaluate(text) {
   return { "+": c - num(a), "−": num(a) - c, "×": c / num(a), ":": num(a) / c }[op];
 }
 
+// Draw many fresh tasks from one bucket, by key.
+const drawKey = (key, n = 2000) => {
+  const i = BUCKETS.findIndex((b) => b.key === key);
+  assert.ok(i >= 0, `no bucket ${key}`);
+  const rng = seeded(i * 31 + 5);
+  return Array.from({ length: n }, () => questionFor(i, rng, ":"));
+};
+
 test("the modes and difficulties are the ones §12 names", () => {
-  assert.deepEqual(MODES, ["+", "-", "x", ":", "mix"]);
+  assert.deepEqual(MODES, ["+", "-", "x:", "mauer", "quad", "mix"]);
   assert.equal(DIFF_KEYS.length, 3);
   assert.equal(DIFF_SLUGS.length, 3);
-  assert.equal(ROUND_SIZE, 10, "rounds of ten (§12.2)");
   assert.equal(STAR_SLOTS, 3);
   assert.equal(DIFF_SLOTS, 3);
 });
 
-test("every bucket is placed in a real cell, and the list is append-only", () => {
-  const ops = ["+", "-", "x", ":"]; // never "mix" — mix has no buckets of its own
+// Round sizes per mode (§12.2): a wall is three answers and a grid up to four,
+// so their rounds hold fewer tasks — every round is a comparable effort.
+test("roundSizeFor: equations 10, mix 8, walls 4, grids 3", () => {
+  assert.equal(roundSizeFor("+"), 10);
+  assert.equal(roundSizeFor("-"), 10);
+  assert.equal(roundSizeFor("x:"), 10);
+  assert.equal(roundSizeFor("mix"), 8);
+  assert.equal(roundSizeFor("mauer"), 4);
+  assert.equal(roundSizeFor("quad"), 3);
+});
+
+test("every bucket is placed in a real cell, and the keys are unique", () => {
+  const modes = ["+", "-", "x:", "mauer", "quad"]; // never "mix" — mix has no buckets of its own
   for (const b of BUCKETS) {
-    assert.ok(ops.includes(b.mode), `${b.key}: bogus mode ${b.mode}`);
+    assert.ok(modes.includes(b.mode), `${b.key}: bogus mode ${b.mode}`);
     assert.ok([0, 1, 2].includes(b.diff), `${b.key}: bogus difficulty ${b.diff}`);
     assert.equal(typeof b.gen, "function", `${b.key}: no generator`);
   }
@@ -70,73 +92,228 @@ test("every bucket is placed in a real cell, and the list is append-only", () =>
   assert.equal(BUCKET_COUNT, BUCKETS.length);
 });
 
-// The one correctness test that matters: whatever numbers a bucket rolls, the
-// equation it prints must actually equal the answer it reports. A driver that
-// answers `q.answer` to `q.text` proves nothing if the two disagree.
-test("every generated equation evaluates to its own answer, at every difficulty", () => {
+// The one correctness test that matters: whatever numbers a bucket rolls, every
+// CELL's aid equation must actually equal the cell's answer, and every number
+// the task prints stays within the workbook's range of 100 (§12.1). A child
+// never meets a negative, and never a number she cannot picture yet.
+test("every cell's aid evaluates to its own answer, within 100, at every difficulty", () => {
   for (let i = 0; i < BUCKET_COUNT; i++) {
     const rng = seeded(i * 97 + 1);
-    for (let k = 0; k < 2000; k++) {
-      const q = questionFor(i, rng, ":");
-      assert.ok(Number.isInteger(q.answer), `${BUCKETS[i].key}: non-integer answer ${q.answer}`);
-      assert.equal(evaluate(q.text), q.answer, `${BUCKETS[i].key}: "${q.text}" ≠ ${q.answer}`);
-      assert.ok(q.text.includes("?"), `${BUCKETS[i].key}: no gap in "${q.text}"`);
+    for (let k = 0; k < 1500; k++) {
+      const task = questionFor(i, rng, ":");
+      assert.ok(Array.isArray(task.cells) && task.cells.length >= 1, `${BUCKETS[i].key}: no cells`);
+      for (const cell of task.cells) {
+        assert.ok(Number.isInteger(cell.answer), `${BUCKETS[i].key}: non-integer answer ${cell.answer}`);
+        assert.ok(cell.answer >= 0 && cell.answer <= 100, `${BUCKETS[i].key}: answer ${cell.answer} out of 0–100`);
+        const aid = cell.aid;
+        assert.ok(aid && typeof aid.text === "string", `${BUCKETS[i].key}: cell without aid`);
+        assert.equal(aid.answer, cell.answer, `${BUCKETS[i].key}: aid disagrees with its cell`);
+        assert.equal((aid.text.match(/\?/g) ?? []).length, 1, `${BUCKETS[i].key}: aid "${aid.text}"`);
+        // the remainder aids carry an "R"; evaluate() only reads plain one-gap forms
+        if (!/\sR\s/.test(aid.text)) {
+          assert.equal(evaluate(aid.text), aid.answer, `${BUCKETS[i].key}: "${aid.text}" ≠ ${aid.answer}`);
+        }
+      }
+      // every number printed anywhere (task text, head, wall, grid) is ≤ 100
+      const printed = [task.text, task.head, ...(task.vals ?? []), ...(task.rows ?? []),
+        ...(task.cols ?? []), ...(task.grid ?? []).flat(), ...task.cells.map((c) => c.aid.text)]
+        .filter((x) => x !== undefined)
+        .flatMap((x) => String(x).match(/\d+/g) ?? [])
+        .map(Number);
+      for (const v of printed) assert.ok(v <= 100, `${BUCKETS[i].key}: prints ${v} > 100`);
+    }
+  }
+});
+
+// The one-line kinds: the task's text carries exactly one "?" per cell, in cell
+// order — that is the contract the renderer interleaves on.
+test("one-line tasks carry one '?' per cell in their text", () => {
+  for (const b of BUCKETS) {
+    if (["zerlege", "mauer", "quad"].some((k) => b.key.includes(k))) continue;
+    for (const task of drawKey(b.key, 500)) {
+      assert.ok(typeof task.text === "string", `${b.key}: no text`);
+      assert.equal((task.text.match(/\?/g) ?? []).length, task.cells.length,
+        `${b.key}: "${task.text}" vs ${task.cells.length} cells`);
+    }
+  }
+});
+
+// The workbook's decomposition scaffold (§12.1): tens first, then the ones; the
+// second row starts where the first ended, and its answer IS the head's.
+test("zerlege: the strategy rows compose back to the head sum", () => {
+  for (const key of ["add-s-zerlege", "sub-s-zerlege"]) {
+    for (const task of drawKey(key)) {
+      assert.equal(task.kind, "zerlege");
+      assert.equal(task.cells.length, 2);
+      const [c0, c1] = task.cells;
+      const bt = task.b - (task.b % 10);
+      assert.ok(bt >= 10 && task.b % 10 >= 1, `${key}: ${task.b} has no tens or no ones — nothing to decompose`);
+      assert.equal(c0.aid.a, task.a);
+      assert.equal(c0.aid.b, bt, `${key}: first row must take the tens`);
+      assert.equal(c1.aid.a, c0.answer, `${key}: second row must start where the first ended`);
+      assert.equal(c1.aid.b, task.b % 10, `${key}: second row must take the ones`);
+      assert.equal(c1.answer, task.answer, `${key}: the last cell IS the head's answer`);
+      assert.equal(evaluate(`${task.a} ${task.head.split(" ")[1]} ${task.b} = ?`), task.answer);
+    }
+  }
+});
+
+// Division with remainder (§12.1 Schwer): two cells on one line — quotient,
+// then remainder — and the remainder is a real one, never zero.
+test("rest: dividend = divisor · quotient + remainder, 0 < remainder < divisor", () => {
+  for (const task of drawKey("div-s-rest")) {
+    assert.equal(task.kind, "rest");
+    assert.equal(task.cells.length, 2);
+    const [q, r] = task.cells.map((c) => c.answer);
+    assert.equal(task.b * q + r, task.a, `${task.a} : ${task.b} ≠ ${q} R ${r}`);
+    assert.ok(r >= 1 && r < task.b, `remainder ${r} out of 1–${task.b - 1}`);
+    assert.equal(Math.floor(task.a / task.b), q, "the quotient is not the floor");
+    assert.equal((task.text.match(/\?/g) ?? []).length, 2);
+    assert.ok(/\sR\s/.test(task.text), `no R in "${task.text}"`);
+  }
+});
+
+// The ×→+ link (§12.1 Leicht): the plus form is printed with the times form,
+// one addend per multiplier — reading it IS the lesson.
+test("mulplus: the plus form spells out the times form", () => {
+  for (const task of drawKey("mul-l-plus")) {
+    assert.equal(task.kind, "mulplus");
+    const m = task.text.match(/^(\d+) × (\d+) = (.+) = \?$/);
+    assert.ok(m, `mulplus text "${task.text}"`);
+    const addends = m[3].split(" + ").map(Number);
+    assert.equal(addends.length, Number(m[1]), "one addend per multiplier");
+    assert.ok(addends.every((v) => v === Number(m[2])), "every addend is the factor");
+    assert.equal(task.cells[0].answer, Number(m[1]) * Number(m[2]));
+  }
+});
+
+// The number walls (§12.1): every wall the game shows is internally true, and
+// its blanks are solvable strictly in cell order — each cell's aid uses only
+// values visible at that moment (given bricks, or cells already filled).
+test("mauer: walls are true, and every blank solves from what is visible", () => {
+  for (const key of ["mauer-l", "mauer-m", "mauer-s"]) {
+    for (const task of drawKey(key)) {
+      assert.equal(task.kind, "mauer");
+      const v = task.vals;
+      assert.equal(v[0], v[1] + v[2], `${key}: top row broken`);
+      assert.equal(v[1], v[3] + v[4], `${key}: left brick broken`);
+      assert.equal(v[2], v[4] + v[5], `${key}: right brick broken`);
+      assert.equal(task.cells.length, 3, `${key}: a wall asks three bricks`);
+      assert.equal(task.given.filter(Boolean).length, 3, `${key}: a wall shows three bricks`);
+      const visible = new Set(v.filter((_, i) => task.given[i]));
+      for (const cell of task.cells) {
+        assert.ok(!task.given[cell.pos], `${key}: cell on a given brick`);
+        assert.equal(cell.answer, v[cell.pos], `${key}: cell disagrees with the wall`);
+        assert.ok(visible.has(cell.aid.a) && visible.has(cell.aid.b),
+          `${key}: aid "${cell.aid.text}" uses a brick not yet visible`);
+        assert.equal(evaluate(cell.aid.text), cell.answer);
+        visible.add(cell.answer);
+      }
+    }
+  }
+});
+
+// The operation grids (§12.1): cell (r,c) = rows[r] op cols[c]; the blanks and
+// the given anchors partition the four cells; a hidden column header (Schwer)
+// solves first, as a gap off the one visible cell in its column.
+test("quad: the grid is true, anchors and blanks partition it, headers solve first", () => {
+  const OP = { "+": (x, y) => x + y, "-": (x, y) => x - y, x: (x, y) => x * y };
+  for (const key of ["quad-l", "quad-m", "quad-s"]) {
+    for (const task of drawKey(key)) {
+      assert.equal(task.kind, "quad");
+      const f = OP[task.op];
+      assert.ok(f, `${key}: bogus op ${task.op}`);
+      for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) {
+        assert.equal(task.grid[r][c], f(task.rows[r], task.cols[c]), `${key}: grid broken at ${r},${c}`);
+      }
+      const interiorCells = task.cells.filter((c) => c.pos.hdr === undefined);
+      assert.equal(interiorCells.length + task.given.length, 4, `${key}: cells+given must cover the grid`);
+      const seen = new Set();
+      for (const p of [...interiorCells.map((c) => c.pos), ...task.given]) {
+        const k = `${p.r},${p.c}`;
+        assert.ok(!seen.has(k), `${key}: ${k} is both cell and given`);
+        seen.add(k);
+      }
+      const hdrCell = task.cells.find((c) => c.pos.hdr !== undefined);
+      if (task.hdr !== null) {
+        assert.ok(hdrCell, `${key}: hidden header without a header cell`);
+        assert.equal(task.cells[0], hdrCell, `${key}: the header must solve first`);
+        assert.equal(hdrCell.answer, task.cols[task.hdr]);
+        assert.equal(task.given.length, 1, `${key}: the header needs exactly one anchor`);
+        assert.equal(task.given[0].c, task.hdr, `${key}: the anchor must sit in the hidden column`);
+      } else {
+        assert.equal(hdrCell, undefined);
+      }
+      for (const cell of interiorCells) {
+        assert.equal(cell.answer, task.grid[cell.pos.r][cell.pos.c]);
+        assert.equal(evaluate(cell.aid.text), cell.answer);
+      }
     }
   }
 });
 
 // The difficulty parameters §12.1 promises, as behaviour over many draws.
-test("difficulty bands hold: no negatives, exact division, ranges per §12.1", () => {
-  const draw = (key, n = 3000) => {
-    const i = BUCKETS.findIndex((b) => b.key === key);
-    const rng = seeded(i * 31 + 5);
-    return Array.from({ length: n }, () => questionFor(i, rng, ":"));
-  };
-  // no result is ever negative — a child never meets "3 − 8"
-  for (const b of BUCKETS) for (const q of draw(b.key)) {
-    assert.ok(q.answer >= 0, `${b.key}: negative answer in "${q.text}"`);
+test("difficulty bands hold: carrying, borrowing, exact division, Leicht ranges", () => {
+  // Leicht ＋ stays small: within 20, or two-digit plus whole tens
+  for (const q of drawKey("add-l-small")) {
+    assert.ok(q.a <= 9 && q.b <= 9 && q.answer <= 18, `add-l-small out of range: "${q.text}"`);
   }
-  // Leicht ± stays within ten, single digit
-  for (const q of [...draw("add-l-small"), ...draw("add-l-ten")]) {
-    assert.ok(q.a + q.b <= 10 && q.a <= 9 && q.b <= 9, `add-Leicht past ten: "${q.text}"`);
+  for (const q of drawKey("add-l-tens")) {
+    assert.equal(q.b % 10, 0, `add-l-tens: "${q.text}" is not plus whole tens`);
+    assert.ok(q.answer <= 99, `add-l-tens past 100: "${q.text}"`);
   }
-  for (const q of [...draw("sub-l-a"), ...draw("sub-l-b")]) {
-    assert.ok(q.a <= 10 && q.b <= 10 && q.answer >= 0, `sub-Leicht past ten: "${q.text}"`);
+  for (const q of drawKey("sub-l-tens")) {
+    assert.equal(q.b % 10, 0, `sub-l-tens: "${q.text}" is not minus whole tens`);
+    assert.ok(q.answer >= 0, `sub-l-tens negative: "${q.text}"`);
   }
-  // Mittel ± stays within a hundred and actually carries / borrows
-  for (const q of [...draw("add-m-1d"), ...draw("add-m-2d")]) {
-    assert.ok(q.a + q.b <= 100, `add-Mittel past 100: "${q.text}"`);
-    assert.ok((q.a % 10) + (q.b % 10) >= 10, `add-Mittel without a carry: "${q.text}"`);
+  for (const q of drawKey("sub-l-small")) {
+    assert.ok(q.a <= 18 && q.b <= 9 && q.answer >= 1, `sub-l-small out of range: "${q.text}"`);
   }
-  for (const q of [...draw("sub-m-1d"), ...draw("sub-m-2d")]) {
-    assert.ok(q.a <= 99 && q.answer >= 0, `sub-Mittel out of range: "${q.text}"`);
-    assert.ok((q.a % 10) < (q.b % 10), `sub-Mittel without a borrow: "${q.text}"`);
+  // Mittel actually carries / borrows where it says it does — and not where not
+  for (const q of [...drawKey("add-m-1d"), ...drawKey("add-m-carry")]) {
+    assert.ok((q.a % 10) + (q.b % 10) >= 10, `no carry in "${q.text}"`);
+    assert.ok(q.answer <= 99, `past 100: "${q.text}"`);
   }
-  // Schwer sums and differences stay within a thousand
-  for (const q of [...draw("add-s-big"), ...draw("sub-s-big")]) {
-    assert.ok(q.answer >= 0 && q.answer < 1000 && q.a < 1000 && q.b < 1000, `Schwer out of 0–1000: "${q.text}"`);
+  for (const q of drawKey("add-m-2d")) {
+    assert.ok((q.a % 10) + (q.b % 10) < 10, `add-m-2d must not carry: "${q.text}"`);
+    assert.ok(q.b >= 10, `add-m-2d wants two digits: "${q.text}"`);
   }
-  // division is always exact — the dividend is a real multiple of the divisor
-  for (const key of ["div-l", "div-m", "div-s"]) for (const q of draw(key)) {
+  for (const q of [...drawKey("sub-m-1d"), ...drawKey("sub-m-borrow")]) {
+    assert.ok((q.a % 10) < (q.b % 10), `no borrow in "${q.text}"`);
+    assert.ok(q.answer >= 0, `negative: "${q.text}"`);
+  }
+  for (const q of drawKey("sub-m-2d")) {
+    assert.ok((q.a % 10) >= (q.b % 10), `sub-m-2d must not borrow: "${q.text}"`);
+    assert.ok(q.b >= 10, `sub-m-2d wants two digits: "${q.text}"`);
+  }
+  // the decomposition rows genuinely cross the ten — that is what they train
+  for (const t of drawKey("add-s-zerlege")) {
+    assert.ok((t.a % 10) + (t.b % 10) >= 10, `zerlege without a carry: ${t.a}+${t.b}`);
+  }
+  for (const t of drawKey("sub-s-zerlege")) {
+    assert.ok((t.a % 10) < (t.b % 10), `zerlege without a borrow: ${t.a}−${t.b}`);
+  }
+  // division without remainder is always exact
+  for (const key of ["div-l", "div-m"]) for (const q of drawKey(key)) {
     assert.equal(q.a % q.b, 0, `${key}: "${q.text}" has a remainder`);
     assert.equal(q.answer, q.a / q.b);
   }
-  // × Leicht keeps a factor in the 1–5 tables; Schwer goes beyond ten
-  for (const q of draw("mul-l")) assert.ok(q.a <= 5, `mul-Leicht past the 5-tables: "${q.text}"`);
-  for (const q of draw("mul-s")) assert.ok(q.a > 10, `mul-Schwer stayed in the tables: "${q.text}"`);
-  // gaps hide exactly one operand; chains carry three terms
-  for (const q of [...draw("add-s-gap"), ...draw("sub-s-gap")]) {
+  // gaps hide exactly one operand; chains carry three terms and stay in range
+  for (const q of [...drawKey("add-s-gap"), ...drawKey("sub-s-gap"), ...drawKey("muldiv-s-gap")]) {
     assert.equal(q.kind, "gap");
     assert.equal((q.text.match(/\?/g) ?? []).length, 1, `gap has ${q.text}`);
   }
-  for (const q of [...draw("add-s-chain"), ...draw("sub-s-chain")]) {
+  for (const q of [...drawKey("add-s-chain"), ...drawKey("sub-s-chain")]) {
     assert.equal(q.kind, "chain");
     assert.ok([q.a, q.b, q.c].every(Number.isInteger), `chain missing a term: "${q.text}"`);
+    const first = q.text.startsWith(`${q.a} + `) ? q.a + q.b : q.a - q.b;
+    assert.ok(first >= 0 && first <= 100, `chain intermediate out of range: "${q.text}"`);
   }
 });
 
 // The division sign is injected, so the module stays i18n-free (§12.1). A ÷
-// round in German must print ":" and never "÷".
+// round in German must print ":" and never "÷" — in the plain divisions and in
+// the remainder line alike.
 test("the division sign is the caller's, defaulting to ÷", () => {
   const i = BUCKETS.findIndex((b) => b.key === "div-m");
   const colon = questionFor(i, seeded(9), ":");
@@ -144,6 +321,9 @@ test("the division sign is the caller's, defaulting to ÷", () => {
   assert.ok(colon.text.includes(" : ") && !colon.text.includes("÷"));
   assert.equal(colon.text.replace(" : ", " ÷ "), obelus.text);
   assert.equal(questionFor(i, seeded(9)).text, obelus.text, "the default is ÷");
+  const ri = BUCKETS.findIndex((b) => b.key === "div-s-rest");
+  const rest = questionFor(ri, seeded(9), ":");
+  assert.ok(rest.text.includes(" : ") && !rest.text.includes("÷"), `rest line "${rest.text}"`);
 });
 
 // --- the variant expansion the shared engine draws over -----------------------
@@ -158,16 +338,19 @@ test("bucketOf folds every variant back to its bucket, total on junk", () => {
   }
 });
 
-test("bucketsFor: a mode is its own buckets, Mix is the four operations", () => {
+test("bucketsFor: a mode is its own buckets, Mix pools the equation modes", () => {
   for (let d = 0; d < 3; d++) {
-    const single = ["+", "-", "x", ":"].flatMap((m) => bucketsFor(m, d));
+    const single = ["+", "-", "x:"].flatMap((m) => bucketsFor(m, d));
     const mix = bucketsFor("mix", d);
     assert.deepEqual([...mix].sort((a, b) => a - b), [...single].sort((a, b) => a - b),
-      `diff ${d}: Mix must be exactly the four operations pooled`);
-    assert.ok(mix.length >= 4, `diff ${d}: Mix must pool at least the four ops`);
+      `diff ${d}: Mix must be exactly the equation modes pooled`);
+    assert.ok(mix.length >= 4, `diff ${d}: Mix must pool at least four buckets`);
+    // walls and grids stay on their own tiles — their multi-cell tasks would
+    // balloon a mixed round (§12.2)
+    for (const b of mix) assert.ok(!["mauer", "quad"].includes(BUCKETS[b].mode), `diff ${d}: mix drew ${BUCKETS[b].key}`);
     // an unknown mode reads as Mix, never an empty cell
     assert.deepEqual(bucketsFor("nonsense", d), mix);
-    for (const m of ["+", "-", "x", ":"]) {
+    for (const m of ["+", "-", "x:", "mauer", "quad"]) {
       for (const b of bucketsFor(m, d)) assert.equal(BUCKETS[b].mode, m);
       for (const b of bucketsFor(m, d)) assert.equal(BUCKETS[b].diff, d);
     }
@@ -178,7 +361,7 @@ test("every cell's pool outgrows the round the engine draws from it (§7.3)", ()
   for (const m of MODES) {
     for (let d = 0; d < 3; d++) {
       const pool = poolFor(m, d);
-      assert.ok(pool.length >= ROUND_SIZE, `${m}/${d}: pool ${pool.length} < round ${ROUND_SIZE}`);
+      assert.ok(pool.length >= roundSizeFor(m), `${m}/${d}: pool ${pool.length} < round ${roundSizeFor(m)}`);
       assert.equal(new Set(pool).size, pool.length, `${m}/${d}: a variant id appears twice`);
       // every variant resolves to a bucket that belongs to this cell
       const cell = new Set(bucketsFor(m, d));
@@ -241,14 +424,23 @@ test("stars on a round of ten: 6 → ⭐, 8 → ⭐⭐, 10 → ⭐⭐⭐", () =>
   for (let ok = 0; ok <= 10; ok++) assert.equal(starsFor(ok, 10), want[ok], `${ok}/10`);
 });
 
+// The short rounds the walls and grids play (§12.2): the ratios still hold.
+test("stars on the short rounds: a wall round of 4, a grid round of 3", () => {
+  assert.equal(starsFor(4, 4), 3);
+  assert.equal(starsFor(3, 4), 1, "3 of 4 is 75 % — one star, not two");
+  assert.equal(starsFor(2, 4), 0);
+  assert.equal(starsFor(3, 3), 3);
+  assert.equal(starsFor(2, 3), 1);
+  assert.equal(starsFor(1, 3), 0);
+});
+
 test("retryStep and fittedFontSize are einmaleins' verbatim — parity", () => {
   for (let answer = 1; answer <= 300; answer++) {
     for (const key of ["1", "9", "0", "⌫", "OK", "x"]) {
       assert.deepEqual(retryStep("12", key, answer), emRetry("12", key, answer), `${answer} ${key}`);
     }
   }
-  // a four-digit answer (999 + 9-term Schwer sums stay ≤ 3 digits, but the aid
-  // must never strand a longer one) types in without being truncated at three
+  // the aid must never strand a four-digit entry mid-typing
   assert.deepEqual(retryStep("123", "4", 1234), { input: "1234", state: "typing" });
   for (const [a, w] of [[76, 388], [76, 292], [30, 100]]) {
     assert.equal(fittedFontSize(a, w, 500), emFitted(a, w, 500));
@@ -279,7 +471,7 @@ test("the tempo ladder: einmaleins' faces and mechanics, rechnungen's bounds", (
     assert.equal(tempoTier(hare, d), 1);
     assert.equal(tempoTier(hare + 1, d), 0);
     if (d > 0) for (let t = 0; t < 3; t++) {
-      assert.ok(TEMPO_TIERS[d][t] > TEMPO_TIERS[d - 1][t], `d=${d}: a harder sum takes longer`);
+      assert.ok(TEMPO_TIERS[d][t] > TEMPO_TIERS[d - 1][t], `d=${d}: a harder step takes longer`);
     }
   }
   for (const junk of [NaN, -1, "3000", undefined]) assert.equal(tempoTier(junk, 0), 0);
@@ -301,8 +493,8 @@ test("star digit strings: three slots, indexed by difficulty, junk-safe", () => 
 
 // --- the game's worth (§8.3, §12.2) -------------------------------------------
 
-test("maxPoints is computed from the real tiles: 5·(3·1+3·2+3·3) = 90", () => {
-  assert.equal(maxPoints(), 90);
+test("maxPoints is computed from the real tiles: 6·(3·1+3·2+3·3) = 108", () => {
+  assert.equal(maxPoints(), 108);
   assert.equal(maxPoints(), MODES.length * (STAR_SLOTS * 1 + STAR_SLOTS * 2 + STAR_SLOTS * 3));
   assert.equal(maxPoints(), MAX_POINTS.rechnungen, "rewards.js and logic.js must agree");
   assert.equal(trophyCount("rechnungen", MAX_POINTS.rechnungen), TROPHIES_PER_GAME,
@@ -321,7 +513,7 @@ test("a maxed rechnungen section stays a small fraction of the cookie budget", (
     tempo: modeStars,
   };
   const bytes = JSON.stringify({ rechnungen: maxed }).length;
-  assert.ok(bytes < 220, `rechnungen section is ${bytes} bytes`);
+  assert.ok(bytes < 300, `rechnungen section is ${bytes} bytes`);
   assert.ok(bytes < BUDGET / 6, "…and a small fraction of the whole budget");
 });
 
@@ -331,7 +523,7 @@ test("a maxed rechnungen section stays a small fraction of the cookie budget", (
 // named here, both directions, the way lesen names its runtime pack keys.
 test("every mode has a spoken name in both languages, and the picker uses them", () => {
   const src = read("games/rechnungen/picker.js");
-  for (const key of ["modePlus", "modeMinus", "modeTimes", "modeDivide", "modeMix"]) {
+  for (const key of ["modePlus", "modeMinus", "modeTimesDiv", "modeMauer", "modeQuad", "modeMix"]) {
     assert.ok(strings.de[key], `de.js is missing ${key}`);
     assert.ok(strings.en[key], `en.js is missing ${key}`);
     assert.ok(src.includes(`"${key}"`), `picker.js never looks up ${key}`);
