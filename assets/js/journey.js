@@ -73,7 +73,13 @@ const SKY = [[0.28, 52], [0.47, 32], [0.68, 48]];
 // narrower scene, not a stretched one, because the fox's stride is fixed.
 export function sceneGeometry(nodes, theme = "village") {
   const n = Math.max(1, Math.floor(nodes) || 1);
-  const xOf = (i) => PATH_X0 + i * STEP_;
+  // A short round keeps the TEN-node scene's width: the fox takes wider
+  // strides, the sky stays a wide strip. (It used to keep the step and shrink
+  // the width instead — a four-node scene was nearly square, and at CSS width
+  // 100 % it blew up to fill half the phone.) A round longer than ten still
+  // grows to the right, step by step.
+  const step = n > 1 ? Math.max(STEP_, (STEP_ * 9) / (n - 1)) : STEP_;
+  const xOf = (i) => PATH_X0 + Math.round(i * step);
   // the mountain path climbs; every other theme is flat
   const yOf = (i) =>
     theme === "mountain" ? PATH_Y - 4 - Math.round((i * 22) / Math.max(n - 1, 1)) : PATH_Y;

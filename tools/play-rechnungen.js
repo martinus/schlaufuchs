@@ -82,6 +82,23 @@
   }
   globalThis.resolveRechnung = resolveRechnung;
 
+  // The scaffold, reconstructed from its printed HEAD ("13 + 69 = ?"): the
+  // seven numbers the child enters, in reading order — a, the tens of b, the
+  // first row's result, that result again, the ones of b, the final result,
+  // and the final result once more up in the head.
+  function resolveZerlege(headText) {
+    const m = String(headText).replace(/\s+/g, "").match(/^(\d+)([+−-])(\d+)=/);
+    if (!m) throw new Error(`not a zerlege head: "${headText}"`);
+    const a = Number(m[1]);
+    const b = Number(m[3]);
+    const plus = m[2] === "+";
+    const bt = b - (b % 10);
+    const s1 = plus ? a + bt : a - bt;
+    const ans = plus ? a + b : a - b;
+    return [a, bt, s1, s1, b % 10, ans, ans];
+  }
+  globalThis.resolveZerlege = resolveZerlege;
+
   // Complete a number wall from what is visible. `vals` is
   // [top, m0, m1, b0, b1, b2] with null where a brick still shows "?"; the
   // three sum relations propagate until nothing more fills in. The game only
@@ -176,15 +193,21 @@
       const [r, c] = active.dataset.rc.split(",").map(Number);
       return full.grid[r][c];
     }
-    // one-line kinds — and the scaffold, whose active ROW is one equation
-    const row = active.closest("[data-eqrow]");
-    return resolveRechnung((row ?? q).textContent.trim());
+    if (kind === "zerlege") {
+      // the head names the whole scheme; the active cell picks its slot
+      const head = q.querySelector(".zhead").textContent;
+      return resolveZerlege(head)[Number(active.dataset.cell)];
+    }
+    // one-line kinds: the equation as printed
+    return resolveRechnung(q.textContent.trim());
   }
 
   // A new cell announces itself on the stamps the game writes for exactly this
   // purpose (rechnungen.js: renderQuestion) — `data-q` counts tasks, `data-cell`
   // the cell within one. Text alone cannot be trusted, because a re-queued
-  // skill asks a fresh task that may read the same.
+  // skill asks a fresh task that may read the same. A wall/grid waits with NO
+  // active cell (`data-cell` −1) until a blank is picked — the driver picks the
+  // first open "?" the way a child taps one.
   async function nextCell(lastQ, lastCell) {
     for (let i = 0; i < 150; i++) {
       if (summaryUp()) return null;
@@ -193,6 +216,10 @@
       if (active && (q.dataset.q !== lastQ || q.dataset.cell !== lastCell)
         && active.textContent.trim() === "?") {
         return { stamp: q.dataset.q, cell: q.dataset.cell, kind: q.dataset.kind, text: q.textContent.trim() };
+      }
+      if (!active && !q.hidden && !aidUp() && q.dataset.cell === "-1") {
+        const open = [...q.querySelectorAll(".cell")].find((c) => c.textContent.trim() === "?");
+        if (open) open.click();
       }
       await sleep(40);
     }
@@ -227,6 +254,7 @@
     let n = 0;
     let stamp = "";
     let cellNo = "";
+    let firstOfTask = false; // `wrongAt` misses a task's FIRST answered cell
 
     // The game opens on the level picker; dismissing it starts a round on the
     // tile the fox stands on — the cookie's own level.
@@ -247,16 +275,18 @@
         if (n + 1 > questions) break;
         n += 1;
         stamp = st.stamp;
+        firstOfTask = true;
       }
       cellNo = st.cell;
       // `stopKind: "zerlege"` stops with that task freshly on screen, unanswered
       // — the way to screenshot one kind out of a mixed pool.
-      if (stopKind && st.kind === stopKind && st.cell === "0") break;
+      if (stopKind && st.kind === stopKind && firstOfTask) break;
       const want = solveActive();
       if (!Number.isInteger(want) || want < 0) throw new Error(`cannot solve cell ${cellNo} of "${st.text}" → ${want}`);
 
       if (pause) await sleep(pause); // "think" — counted by the per-cell tempo clock
-      const wrongNow = wrong.has(n) && cellNo === "0";
+      const wrongNow = wrong.has(n) && firstOfTask;
+      firstOfTask = false;
       await answer(wrongNow ? want + 1 : want);
       await sleep(SETTLE);
 
