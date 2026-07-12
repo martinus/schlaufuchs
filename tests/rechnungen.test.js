@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import {
   MODES, DIFF_KEYS, DIFF_SLUGS, STAR_SLOTS, DIFF_SLOTS, VARIANTS, roundSizeFor,
   BUCKETS, BUCKET_COUNT, bucketOf, bucketsFor, poolFor, questionFor, foldBoxes,
+  mauerAidFor, quadAidFor,
   starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit,
   fittedFontSize, retryStep, maxPoints,
   TEMPO_SLOTS, TEMPO_TIERS, TEMPO_ICONS, TEMPO_KEYS, median, tempoTier, awardTempo,
@@ -68,15 +69,23 @@ test("the modes and difficulties are the ones §12 names", () => {
   assert.equal(DIFF_SLOTS, 3);
 });
 
-// Round sizes per mode (§12.2): a wall is three answers and a grid up to four,
-// so their rounds hold fewer tasks — every round is a comparable effort.
-test("roundSizeFor: equations 10, mix 8, walls 4, grids 3", () => {
-  assert.equal(roundSizeFor("+"), 10);
-  assert.equal(roundSizeFor("-"), 10);
-  assert.equal(roundSizeFor("x:"), 10);
-  assert.equal(roundSizeFor("mix"), 8);
-  assert.equal(roundSizeFor("mauer"), 4);
-  assert.equal(roundSizeFor("quad"), 3);
+// Round sizes per mode and difficulty (§12.2): a wall is three answers, a grid
+// up to four, and Schwer ± rounds carry seven-cell scaffolds — those rounds
+// hold fewer tasks, so every round is a comparable effort.
+test("roundSizeFor: equations 10 (Schwer ± 8), mix 8/7, walls 4, grids 3", () => {
+  for (const d of [0, 1]) {
+    assert.equal(roundSizeFor("+", d), 10);
+    assert.equal(roundSizeFor("-", d), 10);
+    assert.equal(roundSizeFor("mix", d), 8);
+  }
+  assert.equal(roundSizeFor("+", 2), 8, "Schwer ± carries scaffolds — shorter round");
+  assert.equal(roundSizeFor("-", 2), 8);
+  assert.equal(roundSizeFor("x:", 2), 10);
+  assert.equal(roundSizeFor("mix", 2), 7);
+  for (const d of [0, 1, 2]) {
+    assert.equal(roundSizeFor("mauer", d), 4);
+    assert.equal(roundSizeFor("quad", d), 3);
+  }
 });
 
 test("every bucket is placed in a real cell, and the keys are unique", () => {
@@ -95,17 +104,23 @@ test("every bucket is placed in a real cell, and the keys are unique", () => {
 // The one correctness test that matters: whatever numbers a bucket rolls, every
 // CELL's aid equation must actually equal the cell's answer, and every number
 // the task prints stays within the workbook's range of 100 (§12.1). A child
-// never meets a negative, and never a number she cannot picture yet.
+// never meets a negative, and never a number she cannot picture yet. Walls and
+// grids compute their aid at miss time (the child picks her own order), so
+// their helpers are asked here with everything visible.
 test("every cell's aid evaluates to its own answer, within 100, at every difficulty", () => {
   for (let i = 0; i < BUCKET_COUNT; i++) {
     const rng = seeded(i * 97 + 1);
     for (let k = 0; k < 1500; k++) {
       const task = questionFor(i, rng, ":");
       assert.ok(Array.isArray(task.cells) && task.cells.length >= 1, `${BUCKETS[i].key}: no cells`);
+      const aids = [];
       for (const cell of task.cells) {
         assert.ok(Number.isInteger(cell.answer), `${BUCKETS[i].key}: non-integer answer ${cell.answer}`);
         assert.ok(cell.answer >= 0 && cell.answer <= 100, `${BUCKETS[i].key}: answer ${cell.answer} out of 0–100`);
-        const aid = cell.aid;
+        const aid = task.kind === "mauer" ? mauerAidFor(task.vals, task.vals.map(() => true), cell.pos)
+          : task.kind === "quad" ? quadAidFor(task, cell.pos)
+          : cell.aid;
+        aids.push(aid);
         assert.ok(aid && typeof aid.text === "string", `${BUCKETS[i].key}: cell without aid`);
         assert.equal(aid.answer, cell.answer, `${BUCKETS[i].key}: aid disagrees with its cell`);
         assert.equal((aid.text.match(/\?/g) ?? []).length, 1, `${BUCKETS[i].key}: aid "${aid.text}"`);
@@ -114,9 +129,9 @@ test("every cell's aid evaluates to its own answer, within 100, at every difficu
           assert.equal(evaluate(aid.text), aid.answer, `${BUCKETS[i].key}: "${aid.text}" ≠ ${aid.answer}`);
         }
       }
-      // every number printed anywhere (task text, head, wall, grid) is ≤ 100
+      // every number printed anywhere (task text, head, wall, grid, aids) is ≤ 100
       const printed = [task.text, task.head, ...(task.vals ?? []), ...(task.rows ?? []),
-        ...(task.cols ?? []), ...(task.grid ?? []).flat(), ...task.cells.map((c) => c.aid.text)]
+        ...(task.cols ?? []), ...(task.grid ?? []).flat(), ...aids.map((a) => a.text)]
         .filter((x) => x !== undefined)
         .flatMap((x) => String(x).match(/\d+/g) ?? [])
         .map(Number);
@@ -138,39 +153,48 @@ test("one-line tasks carry one '?' per cell in their text", () => {
   }
 });
 
-// The workbook's decomposition scaffold (§12.1): tens first, then the ones; the
-// second row starts where the first ended, and its answer IS the head's.
-test("zerlege: the strategy rows compose back to the head sum", () => {
+// The workbook's decomposition scaffold (§12.1): the child constructs the
+// whole scheme herself — a, the tens of b, the first result; that result
+// again, the ones of b, the final result; and the head's answer last. Seven
+// cells, in that reading order.
+test("zerlege: the child builds the whole tens-first scheme, seven cells", () => {
   for (const key of ["add-s-zerlege", "sub-s-zerlege"]) {
     for (const task of drawKey(key)) {
       assert.equal(task.kind, "zerlege");
-      assert.equal(task.cells.length, 2);
-      const [c0, c1] = task.cells;
       const bt = task.b - (task.b % 10);
-      assert.ok(bt >= 10 && task.b % 10 >= 1, `${key}: ${task.b} has no tens or no ones — nothing to decompose`);
-      assert.equal(c0.aid.a, task.a);
-      assert.equal(c0.aid.b, bt, `${key}: first row must take the tens`);
-      assert.equal(c1.aid.a, c0.answer, `${key}: second row must start where the first ended`);
-      assert.equal(c1.aid.b, task.b % 10, `${key}: second row must take the ones`);
-      assert.equal(c1.answer, task.answer, `${key}: the last cell IS the head's answer`);
+      const bu = task.b % 10;
+      assert.ok(bt >= 10 && bu >= 1, `${key}: ${task.b} has no tens or no ones — nothing to decompose`);
+      const s1 = task.head.includes("+") ? task.a + bt : task.a - bt;
+      assert.deepEqual(task.cells.map((c) => c.answer), [task.a, bt, s1, s1, bu, task.answer, task.answer],
+        `${key}: the seven cells are the scheme in reading order`);
       assert.equal(evaluate(`${task.a} ${task.head.split(" ")[1]} ${task.b} = ?`), task.answer);
+      // every cell's aid names its relation without contradicting it
+      for (const cell of task.cells) assert.equal(evaluate(cell.aid.text), cell.answer, `${key}: "${cell.aid.text}"`);
     }
   }
 });
 
 // Division with remainder (§12.1 Schwer): two cells on one line — quotient,
-// then remainder — and the remainder is a real one, never zero.
-test("rest: dividend = divisor · quotient + remainder, 0 < remainder < divisor", () => {
+// then remainder. The remainder slot is ALWAYS asked, and it is sometimes
+// genuinely zero: "no remainder" is an answer the child gives (R 0), not a
+// case the format hides.
+test("rest: dividend = divisor · quotient + remainder, 0 ≤ remainder < divisor", () => {
+  let zeros = 0;
+  let nonzeros = 0;
   for (const task of drawKey("div-s-rest")) {
     assert.equal(task.kind, "rest");
     assert.equal(task.cells.length, 2);
     const [q, r] = task.cells.map((c) => c.answer);
     assert.equal(task.b * q + r, task.a, `${task.a} : ${task.b} ≠ ${q} R ${r}`);
-    assert.ok(r >= 1 && r < task.b, `remainder ${r} out of 1–${task.b - 1}`);
+    assert.ok(r >= 0 && r < task.b, `remainder ${r} out of 0–${task.b - 1}`);
     assert.equal(Math.floor(task.a / task.b), q, "the quotient is not the floor");
     assert.equal((task.text.match(/\?/g) ?? []).length, 2);
     assert.ok(/\sR\s/.test(task.text), `no R in "${task.text}"`);
+    if (r === 0) zeros++;
+    else nonzeros++;
   }
+  assert.ok(zeros > 0, "a zero remainder must occur — the child answers R 0 herself");
+  assert.ok(nonzeros > zeros, "…but real remainders must dominate");
 });
 
 // The ×→+ link (§12.1 Leicht): the plus form is printed with the times form,
@@ -187,10 +211,12 @@ test("mulplus: the plus form spells out the times form", () => {
   }
 });
 
-// The number walls (§12.1): every wall the game shows is internally true, and
-// its blanks are solvable strictly in cell order — each cell's aid uses only
-// values visible at that moment (given bricks, or cells already filled).
-test("mauer: walls are true, and every blank solves from what is visible", () => {
+// The number walls (§12.1): every wall the game shows is internally true, all
+// six values are pairwise distinct (two 9s read as a trick), and following the
+// canonical cell order, each brick's aid uses only values visible at that
+// moment (given bricks, or cells already filled) — so the obvious path never
+// needs a leap.
+test("mauer: walls are true and distinct, and every blank solves from what is visible", () => {
   for (const key of ["mauer-l", "mauer-m", "mauer-s"]) {
     for (const task of drawKey(key)) {
       assert.equal(task.kind, "mauer");
@@ -198,16 +224,24 @@ test("mauer: walls are true, and every blank solves from what is visible", () =>
       assert.equal(v[0], v[1] + v[2], `${key}: top row broken`);
       assert.equal(v[1], v[3] + v[4], `${key}: left brick broken`);
       assert.equal(v[2], v[4] + v[5], `${key}: right brick broken`);
+      assert.equal(new Set(v).size, 6, `${key}: a wall never repeats a number [${v}]`);
       assert.equal(task.cells.length, 3, `${key}: a wall asks three bricks`);
       assert.equal(task.given.filter(Boolean).length, 3, `${key}: a wall shows three bricks`);
-      const visible = new Set(v.filter((_, i) => task.given[i]));
+      const known = task.given.slice();
       for (const cell of task.cells) {
         assert.ok(!task.given[cell.pos], `${key}: cell on a given brick`);
         assert.equal(cell.answer, v[cell.pos], `${key}: cell disagrees with the wall`);
-        assert.ok(visible.has(cell.aid.a) && visible.has(cell.aid.b),
-          `${key}: aid "${cell.aid.text}" uses a brick not yet visible`);
-        assert.equal(evaluate(cell.aid.text), cell.answer);
-        visible.add(cell.answer);
+        const aid = mauerAidFor(v, known, cell.pos);
+        const visible = new Set(v.filter((_, i) => known[i]));
+        assert.ok(visible.has(aid.a) && visible.has(aid.b),
+          `${key}: aid "${aid.text}" uses a brick not yet visible`);
+        assert.equal(evaluate(aid.text), cell.answer);
+        known[cell.pos] = true;
+      }
+      // …and even out of order, the aid still names a true relation
+      for (const cell of task.cells) {
+        const aid = mauerAidFor(v, task.given, cell.pos);
+        assert.equal(evaluate(aid.text), cell.answer, `${key}: out-of-order aid "${aid.text}"`);
       }
     }
   }
@@ -241,12 +275,17 @@ test("quad: the grid is true, anchors and blanks partition it, headers solve fir
         assert.equal(hdrCell.answer, task.cols[task.hdr]);
         assert.equal(task.given.length, 1, `${key}: the header needs exactly one anchor`);
         assert.equal(task.given[0].c, task.hdr, `${key}: the anchor must sit in the hidden column`);
+        assert.equal(evaluate(quadAidFor(task, hdrCell.pos).text), hdrCell.answer, `${key}: header aid`);
       } else {
         assert.equal(hdrCell, undefined);
       }
+      // headers pairwise distinct, and so are the four interior values — a grid
+      // with two identical 9-rows reads as a trick (user, first play-test)
+      assert.equal(new Set([...task.rows, ...task.cols]).size, 4, `${key}: headers repeat [${task.rows} | ${task.cols}]`);
+      assert.equal(new Set(task.grid.flat()).size, 4, `${key}: interior values repeat [${task.grid.flat()}]`);
       for (const cell of interiorCells) {
         assert.equal(cell.answer, task.grid[cell.pos.r][cell.pos.c]);
-        assert.equal(evaluate(cell.aid.text), cell.answer);
+        assert.equal(evaluate(quadAidFor(task, cell.pos).text), cell.answer);
       }
     }
   }
@@ -361,7 +400,7 @@ test("every cell's pool outgrows the round the engine draws from it (§7.3)", ()
   for (const m of MODES) {
     for (let d = 0; d < 3; d++) {
       const pool = poolFor(m, d);
-      assert.ok(pool.length >= roundSizeFor(m), `${m}/${d}: pool ${pool.length} < round ${roundSizeFor(m)}`);
+      assert.ok(pool.length >= roundSizeFor(m, d), `${m}/${d}: pool ${pool.length} < round ${roundSizeFor(m, d)}`);
       assert.equal(new Set(pool).size, pool.length, `${m}/${d}: a variant id appears twice`);
       // every variant resolves to a bucket that belongs to this cell
       const cell = new Set(bucketsFor(m, d));

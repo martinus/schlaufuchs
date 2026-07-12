@@ -32,7 +32,7 @@ import strings from "./i18n.js";
 import { createLevelPicker, modeSymbol } from "./picker.js";
 import {
   MODES, BUCKET_COUNT, DIFF_KEYS, TEMPO_ICONS, TEMPO_KEYS,
-  roundSizeFor, poolFor, bucketOf, questionFor, foldBoxes,
+  roundSizeFor, poolFor, bucketOf, questionFor, foldBoxes, mauerAidFor, quadAidFor,
   starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit,
   fittedFontSize, retryStep, median, tempoTier, awardTempo,
 } from "./logic.js";
@@ -91,11 +91,17 @@ let saved = getGame("rechnungen");
 let diff = clampDifficulty(saved.d);
 let mode = MODES.includes(saved.m) ? saved.m : "+";
 
+// In a wall or a grid the child picks WHICH blank to fill herself (§12.1) —
+// tapping a "?" activates it, only then does the keypad apply. The line kinds
+// and the scaffold read in one order, so their cells activate themselves.
+const CHOICE_KINDS = new Set(["mauer", "quad"]);
+
 // --- round state -----------------------------------------------------------
 let session = null;
 let journey = null;
 let task = null; // the concrete task realised from the current bucket
-let cellIndex = 0; // which of the task's cells the child is answering
+let cellIndex = -1; // the active cell, or -1 while a choice kind waits for a tap
+let cellDone = []; // per cell: answered (the child's own numbers stay marked)
 let taskMissed = false; // a wrong cell already told the engine about this task
 let currentId = null;
 let input = "";
@@ -141,7 +147,7 @@ function startRound(resume = null) {
   for (const id of pool) seeded[id] = bucketBoxes[bucketOf(id)];
   const snap = resume && validResume(resume.s, pool) ? resume : null;
   if (!snap) clearRound("rechnungen");
-  session = createSession(pool, seeded, { roundSize: roundSizeFor(mode), resume: snap?.s });
+  session = createSession(pool, seeded, { roundSize: roundSizeFor(mode, diff), resume: snap?.s });
   best = starDigit((saved.stars ?? {})[mode], diff);
   journey = createJourney($("journey"), {
     nodes: session.items().length,
@@ -168,17 +174,19 @@ function askNext() {
   // A fresh concrete task for this bucket. A re-queued miss therefore returns
   // as the SAME skill with NEW numbers (§12.2) — which is the point.
   task = questionFor(id, Math.random, t("divSign"));
-  cellIndex = 0;
+  cellDone = task.cells.map(() => false);
   taskMissed = false;
   qCounter++;
-  startCell();
+  startCell(CHOICE_KINDS.has(task.kind) ? -1 : 0);
 }
 
-// One cell of the task: the child's next number. The tempo clock (§10.6) and
-// the driver's cell stamp restart here — a wall brick and a plain sum are each
-// one timed step.
-function startCell() {
-  input = buffer.slice(0, 4);
+// One cell of the task: the child's next number — or, in a wall/grid, the
+// waiting state (-1) where she must first tap the blank she wants. The tempo
+// clock (§10.6) and the driver's cell stamp restart here; choosing counts as
+// thinking, so tapping a different blank does NOT reset the clock.
+function startCell(idx) {
+  cellIndex = idx;
+  input = idx >= 0 ? buffer.slice(0, 4) : "";
   buffer = "";
   retry = "";
   phase = "answer";
@@ -189,9 +197,10 @@ function startCell() {
   qShownAt = Date.now();
 }
 
+// After a fill: the next undone cell in reading order — or, in a wall/grid,
+// back to "pick one" so every brick starts with the child's own choice.
 function nextCell() {
-  cellIndex++;
-  startCell();
+  startCell(CHOICE_KINDS.has(task.kind) ? -1 : cellDone.findIndex((d) => !d));
 }
 
 function renderStatus() {
@@ -222,20 +231,17 @@ function eqHTML(text) {
 // keep their answers; cells after it wait as "?". The driver reads exactly
 // this (tools/play-rechnungen.js).
 
-// How many cells already show their answer. During the short post-correct
-// transition the just-landed cell counts, so the child sees it filled.
-const solvedCells = () => cellIndex + (phase === "correct-wait" ? 1 : 0);
-
 function cellFace(i) {
-  if (i < solvedCells()) return String(task.cells[i].answer);
+  if (cellDone[i]) return String(task.cells[i].answer);
   if (i === cellIndex && phase === "answer" && input !== "") return input;
   return "?";
 }
 
+// `.done` marks the numbers the child entered HERSELF — they stay visibly hers
+// (blue, the colour of what you have) next to the printed givens.
 function cellSpan(i, cls = "gap") {
   const active = i === cellIndex && phase === "answer";
-  const done = i < solvedCells();
-  return `<span class="${cls} cell${active ? " active" : ""}${done ? " done" : ""}" data-cell="${i}">${cellFace(i)}</span>`;
+  return `<span class="${cls} cell${active ? " active" : ""}${cellDone[i] ? " done" : ""}" data-cell="${i}">${cellFace(i)}</span>`;
 }
 
 // The one-line kinds (op, gap, chain, mulplus, rest): the task's text carries
@@ -249,18 +255,21 @@ function lineHTML() {
   return html;
 }
 
-// The decomposition scaffold (§12.1): the head sum, then the two strategy rows.
-// The second row's first operand IS the first cell's answer, so it hides until
-// that cell lands — and the head's "?" fills only when the whole task is done.
+// The decomposition scaffold (§12.1): the head sum over TWO EMPTY strategy
+// rows the child constructs herself, cell by cell — `13 + 69` becomes
+// `13 + 60 = 73`, `73 + 9 = 82`, and 82 goes into the head last. Laid out as
+// one shared grid (every row `display: contents`), so the numbers stand in
+// columns like the workbook's, with a solid rule under the head.
 function zerlegeHTML() {
-  const [c0, c1] = task.cells;
   const sg = opFace(task.op);
-  const done = solvedCells() === task.cells.length;
-  const s1 = solvedCells() >= 1 ? c1.aid.a : "?";
+  const c = (inner) => `<span class="zc">${inner}</span>`;
+  const o = (ch) => `<span class="zop">${ch}</span>`;
+  const row = (i) => `<div class="zrow" data-eqrow>${c(cellSpan(i))}${o(sg)}${c(cellSpan(i + 1))}${o("=")}${c(cellSpan(i + 2))}</div>`;
   return `<div class="zerlege">
-    <div class="zhead">${task.a} ${sg} ${task.b} = <span class="zauto">${done ? task.answer : "?"}</span></div>
-    <div class="zrow" data-eqrow>${c0.aid.a} ${sg} ${c0.aid.b} = ${cellSpan(0)}</div>
-    <div class="zrow" data-eqrow><span class="zauto">${s1}</span> ${sg} ${c1.aid.b} = ${cellSpan(1)}</div>
+    <div class="zrow zhead" data-eqrow>${c(task.a)}${o(sg)}${c(task.b)}${o("=")}${c(cellSpan(6))}</div>
+    <div class="zline" aria-hidden="true"></div>
+    ${row(0)}
+    ${row(3)}
   </div>`;
 }
 
@@ -348,6 +357,9 @@ function keyPress(k) {
     if (/^[0-9]$/.test(k)) buffer = (buffer + k).slice(0, 4);
     return;
   }
+  // a wall/grid waits for the child to tap a blank first — until then the
+  // keypad has nothing to write into
+  if (cellIndex < 0) return;
   sfx.click();
   if (k === "⌫") input = input.slice(0, -1);
   else if (k === "OK") {
@@ -356,6 +368,22 @@ function keyPress(k) {
   } else if (input.length < 4) input += k;
   renderQuestion();
 }
+
+// Picking a brick (§12.1): in a wall or grid, tapping an unfilled "?" makes it
+// the active cell — the choosing itself is part of the task. Switching to
+// another blank is allowed until something is submitted; it clears the typed
+// digits but not the tempo clock (choosing counts as thinking).
+$("question").addEventListener("click", (e) => {
+  if (roundOver || phase !== "answer" || !task || !CHOICE_KINDS.has(task.kind)) return;
+  const el = e.target.closest(".cell");
+  if (!el) return;
+  const i = Number(el.dataset.cell);
+  if (!Number.isInteger(i) || cellDone[i] || i === cellIndex) return;
+  cellIndex = i;
+  input = "";
+  sfx.click();
+  renderQuestion();
+});
 
 // Tapping a keypad button focuses it. Enter would then also fire the browser's
 // default click on the focused button, re-entering that digit — so this owns
@@ -398,7 +426,6 @@ function submit(value) {
   const cell = task.cells[cellIndex];
   const correct = value === cell.answer;
   const bkt = bucketOf(currentId);
-  const last = cellIndex === task.cells.length - 1;
   touchedBuckets.add(bkt);
   if (correct) {
     // Only a first try feeds the tempo ladder (§10.6): a task ever missed this
@@ -408,13 +435,11 @@ function submit(value) {
       answerTimes.push(took);
       if (tempoTier(took, diff) === 3) blitzFlash();
     }
+    cellDone[cellIndex] = true;
     phase = "correct-wait";
     sfx.correct();
-    if (input !== "") {
-      input = String(value);
-      renderQuestion();
-    }
-    if (!last) {
+    renderQuestion();
+    if (cellDone.includes(false)) {
       setTimeout(nextCell, NEXT_MS);
       return;
     }
@@ -484,13 +509,27 @@ function zerlegeHintHTML(q) {
   return `<div class="zhint">${q.a} ${sg} ${bt} = ${s1}<br>${s1} ${sg} ${q.b % 10} = ${q.answer}</div>`;
 }
 
+// The cell's aid equation. The line kinds and the scaffold carry theirs from
+// the generator; a wall brick's is chosen at miss time from what is visible
+// right now (the child picks her own order), a grid slot's is its row ∘ col.
+function aidForCell(i) {
+  const cell = task.cells[i];
+  if (task.kind === "mauer") {
+    const known = task.vals.map((_, pos) => task.given[pos]
+      || task.cells.some((c, j) => c.pos === pos && cellDone[j]));
+    return mauerAidFor(task.vals, known, cell.pos);
+  }
+  if (task.kind === "quad") return quadAidFor(task, cell.pos);
+  return cell.aid;
+}
+
 // Wrong answer (§8.1): the child's own answer, struck through in red; the true
 // equation under it in green; a one-line visual aid (number line for ±, dot
 // grid for ×/÷). The equation is the CELL's — a wall brick shows the +/− step
 // of its neighbours, a grid cell its row ∘ col. It stays until she enters the
 // right answer herself — no timer, no "Verstanden".
 function showFeedback(wrong) {
-  const aid = task.cells[cellIndex].aid;
+  const aid = aidForCell(cellIndex);
   const wrongEq = eqHTML(aid.text).replace("?", wrong);
   const rightEq = eqHTML(aid.text).replace("?", `<b class="ans">${aid.answer}</b>`);
   const visual = aid.op === "x" || aid.op === ":"
@@ -525,10 +564,10 @@ function rejectRetry() {
 // with its next cell — a wall is always finished, even after a stumble.
 function continueRound() {
   if (phase !== "wrong-wait") return;
+  cellDone[cellIndex] = true;
   phase = "correct-wait";
   sfx.correct();
-  const last = cellIndex === task.cells.length - 1;
-  setTimeout(last ? askNext : nextCell, NEXT_MS);
+  setTimeout(cellDone.includes(false) ? nextCell : askNext, NEXT_MS);
 }
 
 function endRound() {

@@ -59,13 +59,15 @@ const MIX_MODES = ["+", "-", "x:"];
 export const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
 export const DIFF_SLUGS = ["easy", "medium", "hard"];
 
-// Tasks per round, per mode (§12.2). A wall is three answers and a grid up to
-// four, so their rounds hold fewer tasks — every round lands at roughly ten to
-// fourteen keypad entries, the same effort per star across the modes.
-export function roundSizeFor(mode) {
+// Tasks per round, per mode and difficulty (§12.2). A wall is three answers, a
+// grid up to four, and a Schwer ± round carries seven-cell decomposition
+// scaffolds — so those rounds hold fewer tasks. Every round lands at roughly
+// ten to twenty keypad entries, a comparable effort per star across the modes.
+export function roundSizeFor(mode, diff = 0) {
   if (mode === "mauer") return 4;
   if (mode === "quad") return 3;
-  return mode === "mix" ? 8 : 10;
+  if (mode === "mix") return diff === 2 ? 7 : 8;
+  return diff === 2 && (mode === "+" || mode === "-") ? 8 : 10;
 }
 
 // The three stars a tile can hold, and the three difficulty slots a mode's
@@ -150,8 +152,11 @@ function mulPlus(n, f) {
 
 // Division with remainder (§12.1 Schwer): two cells on one line, quotient then
 // remainder — the second answer slot the old one-number contract could not
-// carry. Each cell's aid shows the line with the OTHER slot already true, and
-// the ÷ dot grid draws `quotient` full rows plus the leftover.
+// carry. The remainder slot is ALWAYS asked, and it is sometimes genuinely
+// zero — "no remainder" is an answer the child gives, not a case the format
+// hides (user request from the first play-test). Each cell's aid shows the
+// line with the OTHER slot already true, and the ÷ dot grid draws `quotient`
+// full rows plus the leftover.
 function restTask(divisor, quotient, rest, divSign) {
   const a = divisor * quotient + rest;
   const head = `${a} ${sign(":", divSign)} ${divisor} = `;
@@ -165,34 +170,50 @@ function restTask(divisor, quotient, rest, divSign) {
   };
 }
 
-// The workbook's „rechne schriftlich": the tens-first decomposition, pre-printed
-// as two strategy rows the child fills in order — `49 + 32` shows `49 + 30 = ?`
-// then `79 + 2 = ?`; the second row's answer IS the head's. (A free-choice
-// split is not validatable with a keypad; the fixed scaffold is the strategy
-// being taught, §12.1.)
+// The workbook's „rechne schriftlich": the head sum is printed, the two
+// strategy rows underneath are EMPTY, and the child constructs the whole
+// tens-first decomposition herself — exactly the workbook's blank scaffold
+// („  +   =   "). For `13 + 69` she enters, in order: 13, 60, 73 (first row),
+// 73, 9, 82 (second row), and 82 into the head. Seven cells; the copies (13,
+// 73) teach the scheme's shape, the split (60/9) is the actual decision, and
+// the last cell IS the head's answer. Each cell's aid is the one-gap equation
+// that names its relation.
 function zerlege(op, a, b) {
   const bt = Math.floor(b / 10) * 10;
   const bu = b % 10;
   const s1 = op === "+" ? a + bt : a - bt;
   const answer = op === "+" ? a + b : a - b;
-  const row = (x, y, ans) => ({ kind: "op", op, a: x, b: y, answer: ans, text: `${x} ${SIGN[op]} ${y} = ?` });
-  const r0 = row(a, bt, s1);
-  const r1 = row(s1, bu, answer);
+  const sg = SIGN[op];
+  const s1Aid = { kind: "op", op, a, b: bt, answer: s1, text: `${a} ${sg} ${bt} = ?` };
+  const ansAid = { kind: "op", op, a: s1, b: bu, answer, text: `${s1} ${sg} ${bu} = ?` };
   return {
-    kind: "zerlege", op, a, b, answer,
-    head: `${a} ${SIGN[op]} ${b} = ?`,
-    cells: [{ answer: s1, aid: r0 }, { answer, aid: r1 }],
+    kind: "zerlege", op, a, b, bt, bu, s1, answer,
+    head: `${a} ${sg} ${b} = ?`,
+    cells: [
+      // first row: a, the tens of b, their result
+      { answer: a, aid: { kind: "gap", op, a, b, answer: a, text: `? ${sg} ${b} = ${answer}` } },
+      { answer: bt, aid: { kind: "gap", op: "+", a: bt, b: bu, answer: bt, text: `? + ${bu} = ${b}` } },
+      { answer: s1, aid: s1Aid },
+      // second row: carry the result down, the ones of b, the final result
+      { answer: s1, aid: s1Aid },
+      { answer: bu, aid: { kind: "gap", op: "+", a: bt, b: bu, answer: bu, text: `${bt} + ? = ${b}` } },
+      { answer, aid: ansAid },
+      // …and the head's own gap fills last
+      { answer, aid: ansAid },
+    ],
   };
 }
 
 // --- Rechenmauern (§12.1) -------------------------------------------------------
 // A three-row number wall: positions [top, m0, m1, b0, b1, b2], where
 // m0 = b0 + b1, m1 = b1 + b2, top = m0 + m1. The generator builds the FULL wall
-// from a random base, then blanks cells per difficulty pattern; the blanks are
-// listed in an order where each next cell is one +/− step from values already
-// visible — that step is the cell's aid. (The workbook's hardest variant —
-// assemble a wall from loose numbers — is consciously skipped: it is not a
-// keypad answer. §12.1.)
+// from a random base, then blanks cells per difficulty pattern. The child picks
+// which blank to fill herself (§12.1) — the blanks are still listed in an order
+// where each next cell is one +/− step from the given bricks, so the driver and
+// a child who follows the obvious path agree. All six values are pairwise
+// DISTINCT (a wall with two 9s reads as a trick). (The workbook's hardest
+// variant — assemble a wall from loose numbers — is consciously skipped: it is
+// not a keypad answer. §12.1.)
 const MAUER_REL = {
   // pos → [how to compute it once these two positions are known]: a first.
   1: [{ op: "+", of: [3, 4] }, { op: "-", of: [0, 2] }],
@@ -203,45 +224,87 @@ const MAUER_REL = {
   5: [{ op: "-", of: [2, 4] }],
 };
 
+const mauerVals = ([b0, b1, b2]) => [b0 + 2 * b1 + b2, b0 + b1, b1 + b2, b0, b1, b2];
+
+// Roll a base whose full wall holds six pairwise-distinct values.
+function mauerBase(rng, lo, hi, midHi) {
+  for (;;) {
+    const base = [ri(rng, lo, hi), ri(rng, lo, midHi), ri(rng, lo, hi)];
+    if (new Set(mauerVals(base)).size === 6) return base;
+  }
+}
+
+// The aid for ONE brick, from what is visible right now (`known` is a boolean
+// per position: given bricks plus the cells already filled). The child picks
+// her own order, so the relation is chosen at miss time — preferring one whose
+// operands she can see; when she jumped ahead of the path, the true values
+// stand in (the aid names the right answer anyway).
+export function mauerAidFor(vals, known, pos) {
+  const rels = MAUER_REL[pos] ?? [];
+  const rel = rels.find((r) => r.of.every((p) => known[p])) ?? rels[0];
+  const [x, y] = rel.of.map((p) => vals[p]);
+  return { kind: "op", op: rel.op, a: x, b: y, answer: vals[pos], text: `${x} ${SIGN[rel.op]} ${y} = ?` };
+}
+
 function mauerTask(rng, base, blanks) {
-  const [b0, b1, b2] = base;
-  const vals = [b0 + 2 * b1 + b2, b0 + b1, b1 + b2, b0, b1, b2];
-  const known = vals.map((_, i) => !blanks.includes(i));
-  const cells = blanks.map((pos) => {
-    const rel = MAUER_REL[pos].find((r) => r.of.every((p) => known[p]));
-    known[pos] = true; // solved cells feed the next one
-    const [x, y] = rel.of.map((p) => vals[p]);
-    const aid = { kind: "op", op: rel.op, a: x, b: y, answer: vals[pos], text: `${x} ${SIGN[rel.op]} ${y} = ?` };
-    return { pos, answer: vals[pos], aid };
-  });
-  return { kind: "mauer", vals, given: vals.map((_, i) => !blanks.includes(i)), cells };
+  const vals = mauerVals(base);
+  const given = vals.map((_, i) => !blanks.includes(i));
+  const cells = blanks.map((pos) => ({ pos, answer: vals[pos] }));
+  return { kind: "mauer", vals, given, cells };
 }
 
 // --- Rechenquadrate (§12.1) -----------------------------------------------------
 // A 2×2 operation grid with row and column headers: cell (r,c) = rows[r] op
 // cols[c]. The workbook's 6×4 monster does not fit 360px next to a keypad —
 // two by two keeps every number readable. `given` marks pre-filled anchor
-// cells; `hdr`, when set, is a hidden COLUMN header (Schwer): its cell solves a
-// gap ("62 + ? = 73") before the remaining grid fills.
+// cells; `hdr`, when set, is a hidden COLUMN header (Schwer): it solves as a
+// gap ("62 + ? = 73") off the anchor in its column. The four headers are
+// pairwise distinct and so are the four interior values (two 9-rows read as a
+// trick) — `quadNums` rolls until they are.
+const quadVal = (op, x, y) => (op === "+" ? x + y : op === "-" ? x - y : x * y);
+
+// Roll two rows and two cols (via `draw`) until headers and interiors are
+// each pairwise distinct.
+function quadNums(op, drawRow, drawCol) {
+  for (;;) {
+    const rows = [drawRow(), drawRow()];
+    const cols = [drawCol(), drawCol()];
+    const inner = [0, 1].flatMap((r) => [0, 1].map((c) => quadVal(op, rows[r], cols[c])));
+    if (new Set([...rows, ...cols]).size === 4 && new Set(inner).size === 4) return { rows, cols };
+  }
+}
+
+// The aid for one grid slot. An interior cell is its row ∘ column — printed
+// with the true header even while that header is still hidden (the child
+// jumped ahead; the aid names the right answer anyway). The hidden header
+// itself solves as a gap off the anchor cell in its column.
+export function quadAidFor(task, pos) {
+  const { op, rows, cols, grid } = task;
+  if (pos.hdr !== undefined) {
+    const from = task.given.find((g) => g.c === pos.hdr) ?? { r: 0 };
+    return {
+      kind: "gap", op, a: rows[from.r], b: cols[pos.hdr], answer: cols[pos.hdr],
+      text: `${rows[from.r]} ${SIGN[op]} ? = ${grid[from.r][pos.hdr]}`,
+    };
+  }
+  return {
+    kind: "op", op, a: rows[pos.r], b: cols[pos.c], answer: grid[pos.r][pos.c],
+    text: `${rows[pos.r]} ${SIGN[op]} ${cols[pos.c]} = ?`,
+  };
+}
+
 function quadTask(op, rows, cols, { given = [], hdr = null } = {}) {
-  const val = (r, c) => (op === "+" ? rows[r] + cols[c] : op === "-" ? rows[r] - cols[c] : rows[r] * cols[c]);
-  const grid = [[val(0, 0), val(0, 1)], [val(1, 0), val(1, 1)]];
+  const grid = [[quadVal(op, rows[0], cols[0]), quadVal(op, rows[0], cols[1])],
+    [quadVal(op, rows[1], cols[0]), quadVal(op, rows[1], cols[1])]];
   const cells = [];
   if (hdr) {
-    const { idx, from } = hdr; // `from`: the given interior cell that reveals it
-    cells.push({
-      pos: { hdr: idx }, answer: cols[idx],
-      aid: { kind: "gap", op, a: rows[from], b: cols[idx], answer: cols[idx], text: `${rows[from]} ${SIGN[op]} ? = ${grid[from][idx]}` },
-    });
-    given = [...given, { r: from, c: idx }];
+    cells.push({ pos: { hdr: hdr.idx }, answer: cols[hdr.idx] });
+    given = [...given, { r: hdr.from, c: hdr.idx }];
   }
   for (let r = 0; r < 2; r++) {
     for (let c = 0; c < 2; c++) {
       if (given.some((g) => g.r === r && g.c === c)) continue;
-      cells.push({
-        pos: { r, c }, answer: grid[r][c],
-        aid: { kind: "op", op, a: rows[r], b: cols[c], answer: grid[r][c], text: `${rows[r]} ${SIGN[op]} ${cols[c]} = ?` },
-      });
+      cells.push({ pos: { r, c }, answer: grid[r][c] });
     }
   }
   return { kind: "quad", op, rows, cols, grid, given, hdr: hdr ? hdr.idx : null, cells };
@@ -286,34 +349,35 @@ export const BUCKETS = [
   // ×÷ Mittel: the full tables, applied
   { key: "mul-m", mode: "x:", diff: 1, gen: (r) => emMul(ri(r, 2, 10), ri(r, 2, 10)) },
   { key: "div-m", mode: "x:", diff: 1, gen: (r, d) => evenDiv(ri(r, 2, 10), ri(r, 2, 10), d) },
-  // ×÷ Schwer: division with remainder, and gaps in the tables
-  { key: "div-s-rest", mode: "x:", diff: 2, gen: (r, d) => { const b = ri(r, 3, 9), q = ri(r, 4, 10), rest = ri(r, 1, b - 1); return restTask(b, q, rest, d); } },
+  // ×÷ Schwer: division with remainder (sometimes genuinely 0 — the child
+  // answers "R 0" herself), and gaps in the tables
+  { key: "div-s-rest", mode: "x:", diff: 2, gen: (r, d) => { const b = ri(r, 3, 9), q = ri(r, 4, 10), rest = ri(r, 0, b - 1); return restTask(b, q, rest, d); } },
   { key: "muldiv-s-gap", mode: "x:", diff: 2, gen: (r, d) => { const a = ri(r, 3, 9), b = ri(r, 3, 9); return r() < 0.5 ? gap("x", a, b, a * b, r() < 0.5, d) : gap(":", a * b, a, b, r() < 0.5, d); } },
 
   // 🧱 Mauern: Leicht climbs (base given, pure +); Mittel descends a flank
   // (top + one side given, pure −); Schwer mixes both directions.
-  { key: "mauer-l", mode: "mauer", diff: 0, gen: (r) => mauerTask(r, [ri(r, 1, 9), ri(r, 1, 9), ri(r, 1, 9)], [1, 2, 0]) },
-  { key: "mauer-m", mode: "mauer", diff: 1, gen: (r) => {
-    const base = [ri(r, 5, 20), ri(r, 5, 25), ri(r, 5, 20)];
-    return mauerTask(r, base, pick(r, [[4, 2, 5], [4, 1, 3]])); // given: top + left or right flank
-  } },
-  { key: "mauer-s", mode: "mauer", diff: 2, gen: (r) => {
-    const base = [ri(r, 8, 24), ri(r, 8, 25), ri(r, 8, 24)];
-    return mauerTask(r, base, pick(r, [[1, 2, 5], [2, 1, 3], [0, 3, 5]])); // mixed +/− directions
-  } },
+  { key: "mauer-l", mode: "mauer", diff: 0, gen: (r) => mauerTask(r, mauerBase(r, 1, 9, 9), [1, 2, 0]) },
+  { key: "mauer-m", mode: "mauer", diff: 1, gen: (r) =>
+    mauerTask(r, mauerBase(r, 5, 20, 25), pick(r, [[4, 2, 5], [4, 1, 3]])) }, // given: top + left or right flank
+  { key: "mauer-s", mode: "mauer", diff: 2, gen: (r) =>
+    mauerTask(r, mauerBase(r, 8, 24, 25), pick(r, [[1, 2, 5], [2, 1, 3], [0, 3, 5]])) }, // mixed +/− directions
 
   // ⊞ Quadrate: Leicht a small + grid (all four); Mittel a − grid with one
   // anchor shown; Schwer a × grid, or a + grid whose column header is hidden.
-  { key: "quad-l", mode: "quad", diff: 0, gen: (r) => quadTask("+", [ri(r, 2, 10), ri(r, 2, 10)], [ri(r, 2, 10), ri(r, 2, 10)]) },
+  { key: "quad-l", mode: "quad", diff: 0, gen: (r) => {
+    const { rows, cols } = quadNums("+", () => ri(r, 2, 10), () => ri(r, 2, 10));
+    return quadTask("+", rows, cols);
+  } },
   { key: "quad-m", mode: "quad", diff: 1, gen: (r) => {
-    const rows = [ri(r, 40, 95), ri(r, 40, 95)];
-    const cols = [ri(r, 11, 35), ri(r, 11, 35)];
+    const { rows, cols } = quadNums("-", () => ri(r, 40, 95), () => ri(r, 11, 35));
     return quadTask("-", rows, cols, { given: [{ r: ri(r, 0, 1), c: ri(r, 0, 1) }] });
   } },
   { key: "quad-s", mode: "quad", diff: 2, gen: (r) => {
-    if (r() < 0.5) return quadTask("x", [ri(r, 2, 9), ri(r, 2, 9)], [ri(r, 2, 9), ri(r, 2, 9)]);
-    const rows = [ri(r, 20, 60), ri(r, 20, 60)];
-    const cols = [ri(r, 10, 39), ri(r, 10, 39)];
+    if (r() < 0.5) {
+      const { rows, cols } = quadNums("x", () => ri(r, 2, 9), () => ri(r, 2, 9));
+      return quadTask("x", rows, cols);
+    }
+    const { rows, cols } = quadNums("+", () => ri(r, 20, 60), () => ri(r, 10, 39));
     return quadTask("+", rows, cols, { hdr: { idx: ri(r, 0, 1), from: ri(r, 0, 1) } });
   } },
 ];
@@ -442,14 +506,16 @@ export function retryStep(input, key, answer) {
 export const TEMPO_SLOTS = 3;
 
 // Upper bounds (ms) on the round's median cell time, per difficulty:
-// [hare, car, rocket]. Leicht mirrors einmaleins' keypad Leicht; Mittel adds
+// [hare, car, rocket]. Leicht sits above einmaleins' keypad Leicht; Mittel adds
 // carrying/borrowing; Schwer's single step is a decomposition row or a
-// remainder, so it sits later still. Deliberately plain named numbers — retune
+// remainder, so it sits later still. Loosened after the first play-test: the
+// original rocket bounds (3/5/7 s including the typing) made the ⚡ nearly
+// unreachable even for an adult. Deliberately plain named numbers — retune
 // after a real child.
 export const TEMPO_TIERS = [
-  [8000, 5000, 3000], // Leicht
-  [12000, 8000, 5000], // Mittel
-  [16000, 11000, 7000], // Schwer
+  [9000, 6500, 4500], // Leicht
+  [13000, 9000, 6500], // Mittel
+  [17000, 12500, 9000], // Schwer
 ];
 
 export const TEMPO_ICONS = [null, "tempo-hare", "tempo-car", "tempo-rocket"];
