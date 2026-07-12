@@ -29,6 +29,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
       - name: Assemble site (site files only, no dev files)
@@ -47,3 +49,35 @@ jobs:
           path: _site
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Load every page of the just-published site in BOTH Chrome and Firefox and
+  # fail if any does not load clean. This is the alarm the injected-import-map
+  # hang never had: Firefox 152 stopped firing `load` on every page, live, for a
+  # day, and no unit test could see it (nothing functional waits on `load`).
+  # ubuntu-latest ships Google Chrome, Firefox and python3, so there is nothing
+  # to install — shoot.mjs drives Chrome over CDP and ff-probe.sh drives Firefox
+  # over Marionette, both dependency-free.
+  smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for the deploy to be reachable
+        env:
+          URL: ${{ needs.deploy.outputs.url }}
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS -o /dev/null "$URL"; then echo "up: $URL"; exit 0; fi
+            echo "not yet ($i/30): $URL"; sleep 5
+          done
+          echo "site never became reachable: $URL" >&2; exit 1
+      - name: Cross-engine smoke (Chrome + Firefox)
+        env:
+          URL: ${{ needs.deploy.outputs.url }}
+          # The hang is a race; probe each page a few times so a probabilistic
+          # regression cannot slip through on a lucky single pass.
+          REPEAT: "3"
+        run: sh tools/smoke.sh "$URL"
