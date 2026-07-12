@@ -21,6 +21,8 @@ node --check <file.js>          # syntax-check a module
 node tools/version-assets.js N  # bump asset version — REQUIRED before deploying a change
 node tools/shoot.mjs <url> …    # drive a real Chrome: screenshot + measure (--help)
 sh tools/firefox-shot.sh <url> out.png [WxH]   # the same page in Gecko
+sh tools/ff-probe.sh <url> …                   # Firefox: did the `load` event fire?
+sh tools/smoke.sh [base-url]    # both engines × every page — the CI post-deploy check
 sh tools/baseline.sh <ref> <path> [shoot opts] # the same page at another commit
 sh tools/mutate.sh <file> <perl-expr> [tests]  # prove a test can fail
 sh tools/install-hooks.sh       # pre-commit/pre-push guards (run once per clone)
@@ -138,6 +140,20 @@ workflow runs it before publishing.
   squeezed a flex-item button to 16px where Blink gave it 37, and the level
   picker shipped with its bottom border cutting through its own label. It only
   looks: no cookies, no script, no probes.
+
+  **`firefox-shot.sh` only looks — and its `--screenshot` waits on `load`, so it
+  hangs silently on the one Firefox bug that mattered** (an injected import map
+  made Gecko never fire `load`; every page spun forever, live, for a day, and no
+  test saw it because nothing functional waits on `load`). `sh tools/ff-probe.sh
+  <url> …` is the assertion firefox-shot can't make: it drives Firefox over
+  Marionette and *fails* when a page's `load` never fires (readyState never
+  reaches `complete`). `sh tools/smoke.sh [base-url]` is both engines over every
+  page at once — Chrome (shoot.mjs: loaded, no JS errors, no sideways scroll)
+  plus Firefox (ff-probe: `load` fired). With no base it serves the checkout;
+  give it `https://schlaufuchs.ankerl.com` to check the live site. It is the
+  post-deploy CI job (`.github/workflows/deploy.yml`, `REPEAT=3` because the hang
+  is a race), so the next cross-engine regression is a red run, not a child
+  staring at a spinner.
 
   `--full` captures a whole scrolling page (privacy, parents). `--reduced-motion`
   emulates `prefers-reduced-motion: reduce` — this repo treats that setting as
