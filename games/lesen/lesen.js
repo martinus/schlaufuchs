@@ -28,6 +28,7 @@ import {
   ROUND_SIZE, DIFF_KEYS, MIXED, flashMs, poolFor, questionFor, optionsFor,
   starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit,
   fittedFontSize, median, tempoTier, awardTempo, TEMPO_ICONS, TEMPO_KEYS,
+  isBounce,
 } from "./logic.js";
 
 initI18n(strings);
@@ -88,6 +89,10 @@ let question = null;
 let options = null; // word questions: this question's four emoji, kept for the aid
 let currentId = null;
 let phase = "answer"; // answer | correct-wait | wrong-wait
+// When the last accepted answer press landed (§14.2): a second press within
+// GUARD_MS of it is the bounce of a double-click and is ignored, so it cannot
+// answer the next question — or skip the aid — before the child has read it.
+let guardArmedAt = 0;
 let best = 0; // stars already won on this tile, before the round
 let roundOver = false;
 let wonTrophies = []; // what this round just handed over, for the showcase
@@ -291,6 +296,13 @@ function renderAnswers() {
 // a press inside the aid is the retry — only the right one lets the round on.
 function answerPress(value, btn) {
   if (roundOver) return;
+  // Swallow the second tap of a double-click (§14.2): too soon after the last
+  // press to be a read, so it is a bounce, not a choice. Measured against the
+  // previous press — never the question's age — so a deliberate fast answer
+  // still lands the instant she is ready.
+  const now = Date.now();
+  if (isBounce(now, guardArmedAt)) return;
+  guardArmedAt = now;
   if (phase === "answer") return submit(value, btn);
   if (phase !== "wrong-wait") return;
   if (value === question.answer) {

@@ -9,6 +9,7 @@ import {
   STAR_SLOTS, starsFor, nextStarGoal, starGoalNeed, ownedStars,
   starDigit, withStarDigit, maxPoints,
   TEMPO_SLOTS, TEMPO_TIERS, TEMPO_ICONS, TEMPO_KEYS, median, tempoTier, awardTempo,
+  GUARD_MS, isBounce,
 } from "../games/lesen/logic.js";
 import {
   starsFor as emStarsFor, nextStarGoal as emNextStarGoal,
@@ -225,6 +226,50 @@ test("median: outliers cannot veto the round, junk yields null", () => {
   assert.equal(median([NaN, 2000, undefined]), 2000);
   assert.equal(median([]), null);
   assert.equal(median(undefined), null);
+});
+
+// The double-tap guard (§14.2): a young reader double-clicked a Schwer passage
+// and the bounce picked a wrong answer to a question she had not read. A press
+// within GUARD_MS of the last one is that bounce.
+test("isBounce swallows a press inside the guard window, keeps the rest", () => {
+  // inside the window → a bounce; at or past the edge → a real press
+  assert.equal(isBounce(1000, 1000), true, "the same instant is a bounce");
+  assert.equal(isBounce(1000 + GUARD_MS - 1, 1000), true, "just inside is a bounce");
+  assert.equal(isBounce(1000 + GUARD_MS, 1000), false, "exactly the window is a real press");
+  assert.equal(isBounce(1000 + GUARD_MS + 1, 1000), false, "past it is a real press");
+  assert.equal(isBounce(5000, 1000), false, "a considered answer is never a bounce");
+  // nothing pressed yet, or a fresh round: the first answer must always land
+  assert.equal(isBounce(1000, 0), false, "the very first press is not a bounce");
+  assert.equal(isBounce(1000, -Infinity), false);
+  assert.equal(isBounce(1000, NaN), false, "an unset guard never blocks");
+  assert.equal(isBounce(NaN, 1000), false);
+  // a caller may narrow or widen the window
+  assert.equal(isBounce(1100, 1000, 50), false);
+  assert.equal(isBounce(1100, 1000, 500), true);
+});
+
+// The window must sit above NEXT_MS (250ms): the next question shows that soon
+// after the last press, so a shorter guard would leave the reported bounce —
+// second tap onto the fresh question — unprotected. It must also stay under the
+// driver's SETTLE (350ms) so real, spaced play is never mistaken for a bounce.
+test("the guard window brackets the NEXT_MS→SETTLE gap", () => {
+  assert.ok(GUARD_MS > 250, "must outlast NEXT_MS or the bounce reaches the next question");
+  assert.ok(GUARD_MS < 350, "must clear a genuinely spaced answer");
+});
+
+// The wiring, pinned like the tempo ladder's: the guard is a silent no-op if
+// answerPress stops consulting it, and its absence is exactly the bug.
+test("the double-tap guard is wired into every answer press", () => {
+  const src = read("games/lesen/lesen.js");
+  assert.match(src, /if \(isBounce\(now, guardArmedAt\)\) return;/, "the bounce is swallowed");
+  assert.match(src, /guardArmedAt = now;/, "…and each accepted press re-arms the window");
+  // it must guard the whole handler — the retry that skips the aid, too — not
+  // only the first-answer branch, so it sits before the phase dispatch
+  const press = src.slice(src.indexOf("function answerPress"));
+  assert.ok(
+    press.indexOf("isBounce(now, guardArmedAt)") < press.indexOf('phase === "answer"'),
+    "the guard runs before the phase dispatch",
+  );
 });
 
 // The ladder is einmaleins' ladder (§10.6) with lesen's own bounds: the shared
