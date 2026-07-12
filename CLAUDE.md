@@ -80,12 +80,18 @@ resolver is unit-tested the same way (`tests/play-lesen.test.js`).
 
 `tools/play-rechnungen.js` drives rechnungen: `playRechnung({...})` with the
 same options as play.js (`wrongAt`, `delayMs`, `stopAt`/`questions`, plus
-`stopInAid`). Keypad input on every difficulty, so it types digits and OK like
-play.js. Seed the cookie with difficulty `d` and mode `m` (`"+" "-" "x" ":"
-"mix"`). A new question is announced on `#question`'s `dataset.q` stamp (like
-lesen), because a re-queued skill asks a fresh question that may read the same.
-`resolveRechnung(text)` reads the printed equation — plain binary, a ± chain, or
-a gap — and is unit-tested against every `questionFor` shape
+`stopInAid` and `stopKind: "zerlege"` — stop with a task of that kind freshly
+on screen, the way to screenshot one kind out of a mixed pool). Keypad input on
+every difficulty, so it types digits and OK like play.js. Seed the cookie with
+difficulty `d` and mode `m` (`"+" "-" "x:" "mauer" "quad" "mix"`). A task can
+hold several cells (a number wall is three answers, §12.1); the driver answers
+them in order — `wrongAt` misses the task's FIRST cell, `delayMs` sleeps before
+every cell (the per-cell tempo clock). A new task is announced on `#question`'s
+`dataset.q` stamp, a new cell on `dataset.cell`, because a re-queued skill asks
+a fresh task that may read the same. `resolveRechnung(text)` reads a printed
+one-line task — plain binary, a ± chain, a gap, the ×→+ link, `? R ?` — and
+`resolveMauer`/`resolveQuad` complete a wall/grid from what is visible; all
+three are unit-tested against every `questionFor` shape, cell by cell
 (`tests/play-rechnungen.test.js`).
 
 The hooks refuse a commit that fails `node --test` or that deletes tests
@@ -246,9 +252,11 @@ Pages (each an entry point):
 - `games/<name>/index.html` + `<name>.js` — one folder per game. Three are
   fully implemented: `einmaleins`, `lesen` (Blitzwörter + Quatsch-Sätze, §14 —
   content in `games/lesen/content.js`, which is **append-only**: item order is
-  the box string's index) and `rechnungen` (mental arithmetic ＋ − × ÷ Mix,
-  §12 — skill buckets in `games/rechnungen/logic.js`, also **append-only**: a
-  bucket's index is its box-string slot). `tippen`, `vokabeln` are stubs and
+  the box string's index) and `rechnungen` (workbook arithmetic within 100:
+  ＋ − ×÷, Rechenmauern 🧱, Rechenquadrate ⊞, Mix — multi-cell tasks on one
+  keypad, §12 — skill buckets in `games/rechnungen/logic.js`, also
+  **append-only**: a bucket's index is its box-string slot). `tippen`,
+  `vokabeln` are stubs and
   share one module: their page is a `<body data-game>` and `assets/js/stub.js`
   is the rest.
 
@@ -340,8 +348,8 @@ Shared modules in `assets/js/`:
 - `docs/SPEC.md` — full product specification (authoritative).
 - `docs/NEW_GAME.md` — **the checklist for shipping a game**: every cross-file
   fact the PLAYABLE flip pins (test pins, i18n gameDicts, importmaps, parents'
-  view, drivers). Work through it before building `rechnungen`/`tippen`/
-  `vokabeln` — each item on it failed once while `lesen` shipped.
+  view, drivers). Work through it before building `tippen`/`vokabeln` — each
+  item on it failed once while `lesen` shipped.
 - `docs/PLAN_*.md` — past plans, all fully implemented and archived. Kept for
   their reasoning (the colour/type tokens live in the UI design one); SPEC wins
   wherever they disagree. There is no open plan.

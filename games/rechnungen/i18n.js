@@ -1,15 +1,16 @@
 // Rechnungen strings (§6.1): one object per language in the same file so a
-// missing translation is visible in review. UI chrome only — the questions the
+// missing translation is visible in review. UI chrome only — the tasks the
 // child answers are generated (games/rechnungen/logic.js), not translated.
 export default {
   de: {
     rechnenPickTitle: "Rechenart & Schwierigkeit",
-    // The five mode tiles (§12.1). The symbol is on the tile; these are the
+    // The six mode tiles (§12.1). The symbol is on the tile; these are the
     // spoken names a screen reader reads, and the round-title chip's text.
     modePlus: "Plus",
     modeMinus: "Minus",
-    modeTimes: "Mal",
-    modeDivide: "Geteilt",
+    modeTimesDiv: "Mal & Geteilt",
+    modeMauer: "Rechenmauern",
+    modeQuad: "Rechenquadrate",
     modeMix: "Gemischt",
     // German schools write division as ":" — a child has never seen "÷".
     divSign: ":",
@@ -24,8 +25,9 @@ export default {
     rechnenPickTitle: "Operation & difficulty",
     modePlus: "Plus",
     modeMinus: "Minus",
-    modeTimes: "Times",
-    modeDivide: "Divide",
+    modeTimesDiv: "Times & divide",
+    modeMauer: "Number walls",
+    modeQuad: "Number grids",
     modeMix: "Mixed",
     divSign: "÷",
     tempo1: "Hare",
