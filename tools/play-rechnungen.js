@@ -122,25 +122,34 @@
   }
   globalThis.resolveMauer = resolveMauer;
 
-  // Complete an operation grid from what is visible: rows are always given;
-  // a null column header is recovered from any visible cell in its column
-  // (the inverse operation), then every null cell is rowHeader ∘ colHeader.
+  // Complete an operation grid from what is visible. A null header — a column
+  // OR a row (Schwer hides one of each) — is recovered from an anchor cell
+  // whose other header is known (the inverse operation); then every null cell
+  // is rowHeader ∘ colHeader. Two passes: recovering one header can be what
+  // unlocks the next.
   function resolveQuad({ op, rows, cols, grid }) {
-    const fwd = (a, b) => resolveRechnung(`${a} ${op} ${b} = ?`);
+    const rw = [...rows];
     const c = [...cols];
     const g = grid.map((r) => [...r]);
-    for (let j = 0; j < c.length; j++) {
-      if (c[j] !== null) continue;
-      const i = g.findIndex((row) => row[j] !== null);
-      if (i < 0) throw new Error(`column ${j} has no anchor`);
-      c[j] = resolveRechnung(`${rows[i]} ${op} ? = ${g[i][j]}`);
-    }
-    for (let i = 0; i < g.length; i++) {
+    for (let pass = 0; pass < 2; pass++) {
       for (let j = 0; j < c.length; j++) {
-        if (g[i][j] === null) g[i][j] = fwd(rows[i], c[j]);
+        if (c[j] !== null) continue;
+        const i = g.findIndex((row, ii) => row[j] !== null && rw[ii] !== null);
+        if (i >= 0) c[j] = resolveRechnung(`${rw[i]} ${op} ? = ${g[i][j]}`);
+      }
+      for (let i = 0; i < rw.length; i++) {
+        if (rw[i] !== null) continue;
+        const j = g[i].findIndex((v, jj) => v !== null && c[jj] !== null);
+        if (j >= 0) rw[i] = resolveRechnung(`? ${op} ${c[j]} = ${g[i][j]}`);
       }
     }
-    return { cols: c, grid: g };
+    if (c.includes(null) || rw.includes(null)) throw new Error("a header has no anchor");
+    for (let i = 0; i < g.length; i++) {
+      for (let j = 0; j < c.length; j++) {
+        if (g[i][j] === null) g[i][j] = resolveRechnung(`${rw[i]} ${op} ${c[j]} = ?`);
+      }
+    }
+    return { rows: rw, cols: c, grid: g };
   }
   globalThis.resolveQuad = resolveQuad;
 
@@ -196,6 +205,7 @@
       }
       const full = resolveQuad({ op, rows, cols, grid });
       if (active.dataset.hdr !== undefined) return full.cols[Number(active.dataset.hdr)];
+      if (active.dataset.row !== undefined) return full.rows[Number(active.dataset.row)];
       const [r, c] = active.dataset.rc.split(",").map(Number);
       return full.grid[r][c];
     }
