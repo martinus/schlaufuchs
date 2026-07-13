@@ -291,23 +291,30 @@ function mauerHTML() {
 }
 
 // The operation grid (§12.1): headers on the top row and left column, the op in
-// the corner; cell (r,c) = row ∘ col. A hidden column header (Schwer) is itself
-// a cell — it solves as a gap off the one interior value shown in its column.
+// the corner; cell (r,c) = row ∘ col. A hidden header (a column on Mittel, a
+// row AND a column on Schwer) is itself a cell — it solves as a gap off the
+// anchor value shown in its column or row.
 function quadHTML() {
-  const cellAt = {}; // "r,c" or "h<idx>" → cell index
+  const cellAt = {}; // "r,c", "h<idx>" or "v<idx>" → cell index
   task.cells.forEach((c, i) => {
-    cellAt[c.pos.hdr !== undefined ? `h${c.pos.hdr}` : `${c.pos.r},${c.pos.c}`] = i;
+    const key = c.pos.hdr !== undefined ? `h${c.pos.hdr}`
+      : c.pos.hdrRow !== undefined ? `v${c.pos.hdrRow}`
+      : `${c.pos.r},${c.pos.c}`;
+    cellAt[key] = i;
   });
   const head = (idx) => (cellAt[`h${idx}`] !== undefined
     ? cellSpan(cellAt[`h${idx}`], "qhead").replace('data-cell', `data-hdr="${idx}" data-cell`)
     : `<span class="qhead" data-hdr="${idx}">${task.cols[idx]}</span>`);
+  const rowh = (idx) => (cellAt[`v${idx}`] !== undefined
+    ? cellSpan(cellAt[`v${idx}`], "qhead qrowh").replace('data-cell', `data-row="${idx}" data-cell`)
+    : `<span class="qhead qrowh" data-row="${idx}">${task.rows[idx]}</span>`);
   const body = (r, c) => (cellAt[`${r},${c}`] !== undefined
     ? cellSpan(cellAt[`${r},${c}`], "qcell").replace('data-cell', `data-rc="${r},${c}" data-cell`)
     : `<span class="qcell qgiven" data-rc="${r},${c}">${task.grid[r][c]}</span>`);
   return `<div class="rquad">
     <span class="qcorner">${opFace(task.op)}</span>${head(0)}${head(1)}
-    <span class="qhead qrowh" data-row="0">${task.rows[0]}</span>${body(0, 0)}${body(0, 1)}
-    <span class="qhead qrowh" data-row="1">${task.rows[1]}</span>${body(1, 0)}${body(1, 1)}
+    ${rowh(0)}${body(0, 0)}${body(0, 1)}
+    ${rowh(1)}${body(1, 0)}${body(1, 1)}
   </div>`;
 }
 
