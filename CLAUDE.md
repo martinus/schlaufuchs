@@ -25,6 +25,7 @@ sh tools/ff-probe.sh <url> …                   # Firefox: did the `load` event
 sh tools/smoke.sh [base-url]    # both engines × every page — the CI post-deploy check
 sh tools/baseline.sh <ref> <path> [shoot opts] # the same page at another commit
 sh tools/mutate.sh <file> <perl-expr> [tests]  # prove a test can fail
+sh tools/pr.sh [--no-merge]     # the whole PR loop: push → PR → CI → squash → deploy
 sh tools/install-hooks.sh       # pre-commit/pre-push guards (run once per clone)
 ```
 
