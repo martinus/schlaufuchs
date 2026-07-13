@@ -60,6 +60,25 @@ export function starCluster(worth) {
   return CLUSTERS[w].map(([dx, dy, size]) => ({ dx, dy, size }));
 }
 
+// The summary's star display (§10.1): the same three GROUPS the round's sky
+// holds. A slot is `worth` stars and is only ever won whole, so the summary
+// shows slots, not a count — `owned` of them gold (the tile's state after the
+// round), the last `fresh` of those just arrived and pop in, the rest grey
+// ghosts of what is still to win. The display IS the arithmetic; the numbers
+// ("8/8 +6 ⭐") it replaces read as homework.
+export function starSlotsHTML(owned, worth, fresh = 0) {
+  const own = Math.max(0, Math.min(SLOTS, Math.round(owned) || 0));
+  const neu = Math.max(0, Math.min(own, Math.round(fresh) || 0));
+  const cluster = starCluster(worth);
+  const stars = cluster
+    .map(({ dx, dy, size }) => iconSVG("ui-star", { x: 32 + dx * 1.6, y: 38 + dy * 1.6, size: size * 1.6 }))
+    .join("");
+  return Array.from({ length: SLOTS }, (_, i) => {
+    const state = i >= own ? "j-ghost" : i >= own - neu ? "owned fresh" : "owned";
+    return `<span class="sslot ${state}"><svg viewBox="4 6 56 50" aria-hidden="true">${stars}</svg></span>`;
+  }).join("");
+}
+
 // The three stars hang as a small constellation, not as a row of three. Given
 // as fractions of the scene's width and absolute text baselines, so the shape
 // survives a round with a different number of questions.

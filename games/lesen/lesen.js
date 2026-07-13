@@ -12,7 +12,7 @@ import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString, hasProgress, validResume } from "../../assets/js/adaptive.js";
 import { saveRound, loadRound, clearRound } from "../../assets/js/roundstore.js";
 import { recordRound, roundPoints, starValue, clampDifficulty } from "../../assets/js/rewards.js";
-import { createJourney } from "../../assets/js/journey.js";
+import { createJourney, starSlotsHTML } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
 import { trophyCardHTML } from "../../assets/js/trophycard.js";
@@ -492,12 +492,17 @@ function endRound() {
 
   journey.finish();
   setTimeout(() => {
-    $("sum-stars").textContent = stars > 0 ? "⭐".repeat(stars) : "🦊";
-    $("sum-score").innerHTML = t("roundStat", { ok: firstTryOk, total })
-      + (points > 0 ? ` <span class="gain">+${points} ⭐</span>` : "");
-    const goal = nextStarGoal(stars);
+    // The stars as the GROUPS they are won in (§10.1): the tile's state after
+    // the round — gold slots you own (a fresh one pops in), ghosts still to
+    // win. The old "8/8 +6 ⭐" line said this in numbers and read as homework;
+    // the slots ARE the score, and the goal line names the one number that
+    // helps.
+    const ownedNow = Math.max(old, stars);
+    $("sum-stars").innerHTML = starSlotsHTML(ownedNow, starValue(diff), improved ? stars - old : 0);
+    // the next UNOWNED group's price — keyed on the tile, like the slots above
+    const goal = nextStarGoal(ownedNow);
     $("sum-goal").hidden = goal === null;
-    if (goal) $("sum-goal").textContent = t(goal, { n: starGoalNeed(stars, total), total });
+    if (goal) $("sum-goal").textContent = t(goal, { n: starGoalNeed(ownedNow, total), total });
     $("sum-best").hidden = !improved;
     $("sum-best").textContent = t("newBest");
     // The finish line's verdict, as a symbol and its name — never a number of

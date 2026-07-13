@@ -88,7 +88,6 @@ export default {
   sumOk4: "Brilliant!",
   sumOk5: "Strong!",
   sumOk6: "You've got this!",
-  roundStat: "{ok}/{total}",
   newBest: "New best!",
   starGoal1: "⭐ for {n} out of {total} right",
   starGoal2: "⭐⭐ for {n} out of {total} right",

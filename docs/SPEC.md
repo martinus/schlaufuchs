@@ -954,14 +954,19 @@ walks the village lane; goal node: ringing the school bell.
    to read it, and a "Verstanden" button was pressed without being read. The
    card can hold ten rows of dots, so the dots scale with the viewport and the
    scene yields its row.
-4. Summary overlay, kept deliberately quiet: stars, one muted line of numbers
-   (`{ok}/{total}` and `+6 ⭐`), the price of the next star (§10.3), the tempo
-   symbol when the round awarded one (§10.6 — a symbol and its name, never a
-   time), the trophy if one was earned, and **one** button carrying a random
-   congratulation, which opens the level picker (§3.4). A child who has just
-   won reads almost nothing — the stars say how it went and the trophy is the
-   prize, so neither gets a sentence of its own. The map and the level picker
-   stay reachable above the sheet, in the bar and on the chip.
+4. Summary overlay, kept deliberately quiet: **the tile's three star GROUPS**
+   (the same slots the round's sky holds — a slot is `worth` stars and is only
+   ever won whole; gold = owned, a freshly won group pops in, grey ghost =
+   still to win: `starSlotsHTML` in journey.js), the price of the next
+   *unowned* group (§10.3), the tempo symbol when the round awarded one
+   (§10.6 — a symbol and its name, never a time), the trophy if one was
+   earned, and **one** button carrying a random congratulation, which opens
+   the level picker (§3.4). There is deliberately **no numeric score line** —
+   the earlier `{ok}/{total} +6 ⭐` read as homework and said in numbers what
+   the slots say at a glance. A child who has just won reads almost nothing —
+   the slots say how the tile stands and the trophy is the prize, so neither
+   gets a sentence of its own. The map and the level picker stay reachable
+   above the sheet, in the bar and on the chip.
 5. **The level picker** is where the game starts and where every round ends. It
    also opens from the chip (which wears a border and a caret, because it read
    as a caption and was never pressed). The chip carries the **village's own

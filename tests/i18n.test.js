@@ -32,7 +32,7 @@ test("game dictionaries: every key exists in every language (§6.3)", () => {
 });
 
 test("t(): placeholder substitution and fallback to key", () => {
-  assert.equal(t("roundStat", { ok: 9, total: 10 }), "9/10");
+  assert.equal(t("starGoal3", { n: 10, total: 10 }), de.starGoal3.replace("{n}", "10").replace("{total}", "10"));
   assert.equal(t("nonexistent-key"), "nonexistent-key");
 });
 
