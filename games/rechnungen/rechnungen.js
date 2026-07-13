@@ -9,7 +9,7 @@
 // box from its bucket, so the shared engine weights by mastery; `endRound`
 // folds the round's per-bucket outcome back with `foldBoxes` (§12.2). Second,
 // a task can hold several CELLS (§12.1) — a number wall is three answers, a
-// decomposition two — typed one after another on the one keypad. One task is
+// ÷R task two — typed one after another on the one keypad. One task is
 // one journey node and one engine item: the fox advances when the LAST cell
 // lands, stumbles on any wrong one, and the engine hears about the task once —
 // `answer(id, false)` at the first miss, `answer(id, true)` on a clean finish.
@@ -93,7 +93,7 @@ let mode = MODES.includes(saved.m) ? saved.m : "+";
 
 // In a wall or a grid the child picks WHICH blank to fill herself (§12.1) —
 // tapping a "?" activates it, only then does the keypad apply. The line kinds
-// and the scaffold read in one order, so their cells activate themselves.
+// read in one order, so their cells activate themselves.
 const CHOICE_KINDS = new Set(["mauer", "quad"]);
 
 // --- round state -----------------------------------------------------------
@@ -148,7 +148,7 @@ function startRound(resume = null) {
   for (const id of pool) seeded[id] = bucketBoxes[bucketOf(id)];
   const snap = resume && validResume(resume.s, pool) ? resume : null;
   if (!snap) clearRound("rechnungen");
-  session = createSession(pool, seeded, { roundSize: roundSizeFor(mode, diff), resume: snap?.s });
+  session = createSession(pool, seeded, { roundSize: roundSizeFor(mode), resume: snap?.s });
   best = starDigit((saved.stars ?? {})[mode], diff);
   journey = createJourney($("journey"), {
     nodes: session.items().length,
@@ -257,24 +257,6 @@ function lineHTML() {
   return html;
 }
 
-// The decomposition scaffold (§12.1): the head sum over TWO EMPTY strategy
-// rows the child constructs herself, cell by cell — `13 + 69` becomes
-// `13 + 60 = 73`, `73 + 9 = 82`, and 82 goes into the head last. Laid out as
-// one shared grid (every row `display: contents`), so the numbers stand in
-// columns like the workbook's, with a solid rule under the head.
-function zerlegeHTML() {
-  const sg = opFace(task.op);
-  const c = (inner) => `<span class="zc">${inner}</span>`;
-  const o = (ch) => `<span class="zop">${ch}</span>`;
-  const row = (i) => `<div class="zrow" data-eqrow>${c(cellSpan(i))}${o(sg)}${c(cellSpan(i + 1))}${o("=")}${c(cellSpan(i + 2))}</div>`;
-  return `<div class="zerlege">
-    <div class="zrow zhead" data-eqrow>${c(task.a)}${o(sg)}${c(task.b)}${o("=")}${c(cellSpan(6))}</div>
-    <div class="zline" aria-hidden="true"></div>
-    ${row(0)}
-    ${row(3)}
-  </div>`;
-}
-
 // The number wall (§12.1): three rows of bricks, top = the sum of the two
 // below. Given bricks are plain; the blanks are cells in solvable order.
 function mauerHTML() {
@@ -320,7 +302,7 @@ function quadHTML() {
 
 function renderQuestion() {
   const q = $("question");
-  const multi = { zerlege: zerlegeHTML, mauer: mauerHTML, quad: quadHTML }[task.kind];
+  const multi = { mauer: mauerHTML, quad: quadHTML }[task.kind];
   q.className = multi ? `question qmulti q-${task.kind}` : "question qline";
   q.innerHTML = multi ? multi() : lineHTML();
   // the driver watches these stamps to know a new task / cell is up
