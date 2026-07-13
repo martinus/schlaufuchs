@@ -767,11 +767,17 @@ and an 8-year-old understood neither.
   six on Mittel, nine on Schwer, emptying as they are won. Nobody has to be told
   that hard work pays three times as much — the tile is three times as full. No
   tile carries a „×2" or „×3" anywhere; that claim used to sit on a difficulty
-  button a child had never pressed, promising stars she could not see. Two tile
-  states, two looks: **open** (the stars it owes you) and **mastered**
-  (green-ringed, a tick, may be replayed for nothing). The round summary shows
-  the stars just earned next to the score („+6 ⭐"); that is the only place a
-  number appears.
+  button a child had never pressed, promising stars she could not see. They are
+  drawn in the **groups a round pays** — a lone star on Leicht, a leaning pair on
+  Mittel, a mini-pyramid of three on Schwer — the very constellation the round
+  scene hangs in its sky (`starCluster`, §10.1), and the three groups arc across
+  the tile with the middle one lifted, a little map of the Wegbild to come. A
+  round is only ever won whole, so a fresh tile is always **three groups**, three
+  rounds to master, whatever the difficulty. Two tile states, two looks, and the
+  pull is on the one that still pays: **open** wears a warm invite ring and its
+  star groups; **mastered** is faded and quiet under a small tick, and may be
+  replayed for nothing. The round summary shows the stars just earned next to the
+  score („+6 ⭐"); that is the only place a number appears.
 - Each region keeps a lifetime **star** counter (`rewards.pr`, §9.2). The
   field keeps its short name for the cookie budget (§9.2).
 - Each region has **12 fixed trophies** (emoji + translated name, defined in

@@ -1203,73 +1203,113 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .tilegrid.lvl-medium button { background: #f4dba4; }
 .tilegrid.lvl-hard button { background: #f0c2bf; }
 
-/* **The stars a tile still has to give**, behind its name: three on a fresh
-   Leicht tile, six on Mittel, nine on Schwer (`tilePointsLeft`). That a harder
-   level pays three times as much is not written anywhere — the tile is three
-   times as full. As stars are won the picture empties (§8.3, §10.2). */
+/* The whole point of the picker is to pull a child toward the levels that still
+   have stars to give. So the invitation lives on the UNFINISHED tile, not the
+   finished one: a warm gold ring (the colour of the stars = the reward) and a
+   little extra lift. The mastered tile is the quiet one below — done, faded,
+   put away. (Before, the finished tiles wore the loud green frame and the big
+   green tick, and the tiles that mattered receded into the band; the child was
+   drawn to the work she had already done. User note, 2026-07-13.)
+   `.current` and `.mastered` set their own box-shadow further down and both
+   sit later in the file at equal specificity, so each overrides this ring. */
+.tilegrid button:not(.mastered) {
+  box-shadow: inset 0 0 0 2.5px #e6a417, 0 3px 10px rgba(74, 44, 23, 0.22);
+}
+
+/* **The stars a tile still has to give**, behind its name — but clustered into
+   the ROUNDS that pay them, not spilled loose. A round wins a whole group at
+   once: one star on Leicht, a pair on Mittel, a triple on Schwer (§10.2, §10.4).
+   So a fresh tile is three groups, always — three rounds to master it — and it
+   is the group, not the count, that grows with difficulty. As rounds are won the
+   picture empties one whole group at a time (§8.3, §10.2). The groups sit in a
+   row; each `.sgroup` stacks its own stars in a tight little column. */
 .tilegrid .tstars {
   position: absolute;
   /* below the name, never behind it: a lone star sat exactly under the digits
      and vanished, so a tile with one star left looked like a tile with none */
-  inset: 36px 7px 8px;
-  display: flex;
-  flex-wrap: wrap;
-  align-content: center;
-  /* A SINGLE row (a fresh Leicht tile: three stars) is one flex line, and
-     `align-content` has no effect on a single line — the line filled the box
-     and the stars sat pinned to its TOP, tucked under the name that paints over
-     them, so their crowns were clipped (play-test 2026-07-13, Mara). `align-items`
-     centres the row within the box whether it is one line or three. */
-  align-items: center;
-  justify-content: center;
-  row-gap: 2px;
+  inset: 30px 6px 6px;
   pointer-events: none;
   line-height: 1;
+  /* the scale from the Wegbild's cluster units (a single star is 28 there) down
+     to the tile — one knob for the whole constellation */
+  --s: 0.8;
 }
-/* A gold star on a warm band is gold on gold, at any opacity. What separates it
-   is not more colour but an edge: a white outline, drawn as four hard
-   drop-shadows because `-webkit-text-stroke` does not touch a colour emoji.
-   Three to a row (the 33.333% width), so nine read as a filled 3×3 card and six
-   as two even rows — the fullness is the message (§8.3, §10.2). */
-.tilegrid .tstars i {
-  font-style: normal;
-  font-size: 22px;
-  width: 33.333%;
-  text-align: center;
-  opacity: 0.95;
+/* One group hangs at its anchor (`left`/`top` set inline, from GROUP_ANCHORS);
+   it is a zero-size point, and its stars are placed around it. The white edge is
+   drawn HERE, on the whole group, not on each star: a filter on the group outlines
+   the union of its stars, so a cluster reads as one sticker with a single clean
+   halo — where a per-star outline sliced white seams through the overlaps. A hair
+   of warm-dark under it keeps the halo from vanishing on the pale-green easy band. */
+.tilegrid .sgroup {
+  position: absolute;
+  width: 0;
+  height: 0;
   filter:
     drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff)
-    drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff);
+    drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)
+    drop-shadow(0 1px 1px rgba(120, 80, 20, 0.35));
 }
-/* nothing left to give */
-.tilegrid .tstars .tdone { font-size: 44px; color: #1e6b2c; opacity: 0.9; }
+/* Each star sits at its cluster offset from the group's anchor, so a group is the
+   exact little constellation the round scene draws — a mini-pyramid on Schwer, a
+   leaning pair on Mittel, a lone star on Leicht (`starCluster`, journey.js). */
+.tilegrid .tstars i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-style: normal;
+  font-size: calc(var(--sz) * var(--s) * 1px);
+  transform: translate(-50%, -50%)
+    translate(calc(var(--dx) * var(--s) * 1px), calc(var(--dy) * var(--s) * 1px));
+}
+/* Nothing left to give — the quiet "done" mark, centred in the star box. It used
+   to be a 44px green tick that filled the tile and shouted louder than any tile
+   still worth playing; now it is a small, muted stamp that lets the finished tile
+   recede (see the invite ring above and `.mastered` below). */
+.tilegrid .tstars .tdone {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 30px;
+  color: #3f7a49;
+  opacity: 0.75;
+}
 
 /* The tempo badge (§10.6): the pace this tile has been *known* at, worn as a
-   small medal in its bottom corner. A bare emoji with a white outline was a
-   smudge on the busy bands; a white disc makes it a thing she earned and won —
-   and sets it apart from the stars, which are the thing still on offer. It sits
-   bottom-right, clear of the tile's name at the top which it used to overlap.
+   little medal in its bottom corner. No white disc around it — the same white
+   outline the star groups wear lifts the bare emoji off the busy band, so the
+   medal is bigger and plainer, the vehicle itself rather than a plate with a
+   vehicle on it. It sits bottom-right, clear of the tile's name at the top.
    There is no tier-0 medal: an empty corner is the lowest state, never a snail. */
 .tilegrid .ttempo {
   position: absolute;
-  bottom: 6px;
-  right: 6px;
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.94);
-  border-radius: 50%;
-  box-shadow: 0 1px 3px rgba(74, 44, 23, 0.28);
+  bottom: 3px;
+  right: 4px;
   pointer-events: none;
   line-height: 1;
+  filter:
+    drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff)
+    drop-shadow(0 1px 0 #fff) drop-shadow(0 -1px 0 #fff)
+    drop-shadow(0 1px 2px rgba(74, 44, 23, 0.32));
 }
+/* A mastered tile is already faded (`filter: saturate() opacity()` below), and a
+   drop-shadow filter nested inside that outer filter speckles the emoji in Chrome.
+   The medal needs no white edge on a tile that is meant to recede anyway, so drop
+   it there — the fade carries the "done" reading on its own. */
+.tilegrid button.mastered .ttempo { filter: none; }
 
 .tilegrid .tname { position: relative; color: var(--ink); }
 
 /* Two states, two looks: mastered pays nothing more, and the level she is
-   playing right now is where the list opens. */
-.tilegrid button.mastered { box-shadow: inset 0 0 0 2px var(--ok), var(--shadow); }
+   playing right now is where the list opens. A mastered tile has no invite ring
+   and no lift — it is drained of colour and flattened so it sinks behind the
+   tiles that still have stars on offer. The green frame it used to wear is gone;
+   the small `.tdone` tick above is all that says "done". */
+.tilegrid button.mastered {
+  box-shadow: none;
+  filter: saturate(0.45) brightness(1.04);
+  opacity: 0.7;
+}
 /* One orange ring, not two. The current tile is also the one the picker focuses
    on open, so an inset orange box-shadow sat *inside* the orange `:focus-visible`
    outline — two concentric red rings on the one tile a child looks at first. An
