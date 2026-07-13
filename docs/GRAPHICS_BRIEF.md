@@ -40,7 +40,7 @@ exactly (they are the registry keys). Target directory: `assets/img/icons/`.
 
 ## Asset list
 
-### UI (7)
+### UI (5)
 
 | Filename | Emoji | Description |
 |---|---|---|
@@ -49,7 +49,6 @@ exactly (they are the registry keys). Target directory: `assets/img/icons/`.
 | ui-sound-on.svg | 🔊 | speaker with sound waves |
 | ui-sound-off.svg | 🔇 | muted speaker |
 | ui-star.svg | ⭐ | single gold star (score unit) |
-| ui-trash.svg | 🗑️ | trash can (delete progress) |
 
 ### Region symbols (6)
 

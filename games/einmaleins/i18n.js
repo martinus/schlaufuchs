@@ -1,33 +1,15 @@
 // Einmaleins strings (§6.1): one object per language in the same file so a
-// missing translation is visible in review.
+// missing translation is visible in review. The tempo ladder's names and the
+// division sign live in the shared dictionaries — every game uses them.
 export default {
   de: {
-    emTitle: "Einmaleins",
-    emTable: "{t}er-Reihe",
     emTableShort: "{t}er",
     emMixed: "Alle",
     emPickTitle: "Reihe & Schwierigkeit",
-    // The tempo ladder (§10.6). Never a number with a unit of time — the
-    // child sees an animal or a vehicle, never seconds.
-    tempo1: "Hase",
-    tempo2: "Rennauto",
-    tempo3: "Rakete",
-    tempoBest: "Neuer Tempo-Rekord!",
-    tileTempo: "Tempo: {name}",
-    // German schools write division as ":" — Mara did not recognise "÷".
-    divSign: ":",
   },
   en: {
-    emTitle: "Times tables",
-    emTable: "{t} times table",
     emTableShort: "×{t}",
     emMixed: "All",
     emPickTitle: "Table & difficulty",
-    tempo1: "Hare",
-    tempo2: "Race car",
-    tempo3: "Rocket",
-    tempoBest: "New speed record!",
-    tileTempo: "Speed: {name}",
-    divSign: "÷",
   },
 };

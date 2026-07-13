@@ -18,8 +18,6 @@ export const GRAPHICS = {
   "ui-sound-off": { emoji: "🔇" },
   "ui-star": { emoji: "⭐" },
   "ui-basket": { emoji: "🧺" },
-  "ui-trash": { emoji: "🗑️" },
-  "ui-lock": { emoji: "🔒" },
 
   // Language flags — one per entry in LANGUAGES (i18n.js). Windows renders no
   // flag emoji, so these are the first candidates for real SVGs.
@@ -70,12 +68,12 @@ export const GRAPHICS = {
   "j-bee": { emoji: "🐝" },
 };
 
-// Trophy icon names are generated from the TROPHIES table (60 entries), so
-// there is no duplication. rewards.js also stamps s.icon on each trophy.
+// Trophy icon names come from the TROPHIES table (60 entries): rewards.js
+// stamps `s.icon` on each trophy before this module runs, so the name format
+// lives in exactly one place — a second template here would drift silently
+// (a mismatched name renders as "", the classic silent no-op).
 for (const g of GAMES) {
-  TROPHIES[g].forEach((s, i) => {
-    GRAPHICS[`trophy-${g}-${i + 1}`] = { emoji: s.e };
-  });
+  for (const s of TROPHIES[g]) GRAPHICS[s.icon] = { emoji: s.e };
 }
 
 // Names that have a real SVG file in assets/img/icons/<name>.svg. Add names
@@ -91,7 +89,6 @@ export const AVAILABLE = new Set([
   "ui-map",
   "ui-sound-off",
   "ui-sound-on",
-  "ui-trash",
 ]);
 
 // Resolve an icon file URL relative to THIS module, so it works from any page

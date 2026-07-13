@@ -329,6 +329,15 @@ export function regionState(pr, game) {
   return "base";
 }
 
+// The Trophy Room is a region too (§3.1): the same base → thriving (≥ 1/3) →
+// mastered (100 %) rule, over trophies out of TOTAL_TROPHIES instead of stars
+// out of MAX_POINTS.
+export function pokalraumState(trophies) {
+  if (trophies >= TOTAL_TROPHIES) return "mastered";
+  if (trophies >= TOTAL_TROPHIES / 3) return "thriving";
+  return "base";
+}
+
 // Badge tier for the map star badges: 0 = none, 1 = some stars,
 // 2 = >= 1/3 of what the game can pay (gold), 3 = 100 % (glowing).
 export function starBadgeTier(pr, game) {

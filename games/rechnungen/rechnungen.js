@@ -21,6 +21,8 @@ import { saveRound, loadRound, clearRound } from "../../assets/js/roundstore.js"
 import { recordRound, roundPoints, starValue, clampDifficulty } from "../../assets/js/rewards.js";
 import { createJourney, starSlotsHTML } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
+import { fastPress } from "../../assets/js/fastpress.js";
+import { blitzFlash } from "../../assets/js/blitz.js";
 import { confetti } from "../../assets/js/confetti.js";
 import { trophyCardHTML } from "../../assets/js/trophycard.js";
 import { openShowcase } from "../../assets/js/showcase.js";
@@ -31,7 +33,7 @@ import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
 import strings from "./i18n.js";
 import { createLevelPicker, modeSymbol } from "./picker.js";
 import {
-  MODES, BUCKET_COUNT, DIFF_KEYS, TEMPO_ICONS, TEMPO_KEYS,
+  MODES, BUCKET_COUNT, DIFF_KEYS, TEMPO_ICONS, TEMPO_KEYS, sign,
   roundSizeFor, poolFor, bucketOf, questionFor, foldBoxes, mauerAidFor, quadAidFor,
   starsFor, ownedStars, starDigit, withStarDigit,
   fittedFontSize, retryStep, median, tempoTier, awardTempo,
@@ -63,28 +65,10 @@ const summary = overlayFrom(document.getElementById("sum-overlay"), {
 const SUM_OK_KEYS = ["sumOk1", "sumOk2", "sumOk3", "sumOk4", "sumOk5", "sumOk6"];
 const NEXT_MS = 250;
 
-// The operator faces, for markup this module builds itself (the strategy rows,
-// the wall bricks' relations, the grid's corner). logic.js prints the same
-// faces into the task texts; division is the i18n divSign, as everywhere.
-const OPFACE = { "+": "+", "-": "−", x: "×" };
-const opFace = (op) => (op === ":" ? t("divSign") : OPFACE[op]);
-
-// React on pointerdown for instant response on touch devices; the later
-// synthetic click is suppressed. Keyboard activation still works via click.
-function fastPress(btn, fn) {
-  let usedPointer = false;
-  btn.addEventListener("pointerdown", () => {
-    usedPointer = true;
-    fn();
-  });
-  btn.addEventListener("click", () => {
-    if (usedPointer) {
-      usedPointer = false;
-      return;
-    }
-    fn();
-  });
-}
+// The operator faces, for markup this module builds itself (the wall bricks'
+// relations, the grid's corner) — logic.js's own `sign`, so the faces cannot
+// drift from the task texts; division is the i18n divSign, as everywhere.
+const opFace = (op) => sign(op, t("divSign"));
 
 // --- persistent state ------------------------------------------------------
 let saved = getGame("rechnungen");
@@ -413,20 +397,8 @@ function shakeActiveCell() {
   el.classList.add("stumbling");
 }
 
-// The ⚡ moment (§10.6): one answer at rocket speed, marked the instant it
-// lands. Appended to the stage, not the question — renderQuestion rewrites the
-// question's innerHTML in this same tick and would eat it. The flight is a
-// transition, so reduced motion degrades to "briefly there" (§10.5).
-function blitzFlash() {
-  const b = document.createElement("span");
-  b.className = "blitz";
-  b.setAttribute("aria-hidden", "true");
-  b.textContent = "⚡";
-  $("question").parentElement.appendChild(b);
-  requestAnimationFrame(() => b.classList.add("gone"));
-  setTimeout(() => b.remove(), 800);
-  sfx.blitz();
-}
+// The ⚡ (blitz.js) is appended to the stage, not the question — renderQuestion
+// rewrites the question's innerHTML in this same tick and would eat it.
 
 // Mirror the round after every answer the ENGINE heard about (§10.7) — task
 // boundaries, so a resumed round re-asks the interrupted task afresh.
@@ -449,7 +421,7 @@ function submit(value) {
     if (!taskMissed && !missedIds.has(currentId)) {
       const took = Date.now() - qShownAt;
       answerTimes.push(took);
-      if (tempoTier(took, diff) === 3) blitzFlash();
+      if (tempoTier(took, diff) === 3) blitzFlash($("question").parentElement);
     }
     cellDone[cellIndex] = true;
     phase = "correct-wait";

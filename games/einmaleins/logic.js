@@ -1,6 +1,22 @@
 // Einmaleins pure logic (§10): canonical pair pool, question generation per
 // difficulty, star criteria. No DOM, no storage — unit-tested in tests/.
 
+import {
+  tempoTier as tierFor,
+  starDigit as digitAt,
+  withStarDigit as withDigitAt,
+} from "../../assets/js/roundrules.js";
+
+// The round rules every game shares — star criteria, tempo mechanics and
+// faces, the aid's retry, the one-line fitter — live in roundrules.js; see
+// there for the reasoning. This module keeps only einmaleins' own data and
+// indexing.
+export {
+  DIFF_KEYS, DIFF_SLUGS, STAR_SLOTS, starNeeds, starsFor, ownedStars,
+  TEMPO_SLOTS, TEMPO_ICONS, TEMPO_KEYS, median, awardTempo,
+  retryStep, fittedFontSize,
+} from "../../assets/js/roundrules.js";
+
 // Canonical item order for the box digit string: 100 pairs,
 // id = (t-1)*10 + (f-1) for table t ∈ 1..10, factor f ∈ 1..10.
 export const POOL_COUNT = 100;
@@ -12,12 +28,6 @@ export const HARD_TABLES = [2, 3, 4, 5, 6, 7, 8, 9];
 
 // Questions per round, by difficulty (§7.3): Schwer rounds run longer.
 export const ROUND_SIZE = [10, 10, 12];
-
-// How the three difficulty indices are *named*: the i18n key the child reads
-// and the CSS slug that colours a picker section. Data, not DOM — they sit
-// beside ROUND_SIZE because everything indexed by difficulty starts here.
-export const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
-export const DIFF_SLUGS = ["easy", "medium", "hard"];
 
 // Which tables a difficulty offers (§10.2): Leicht teaches four tables, Mittel
 // all ten, Schwer the eight with something hard in them. Each ends with 0,
@@ -138,43 +148,7 @@ export function choicesFor(q, rng = Math.random) {
   return opts;
 }
 
-// Stars per round (§10.3): ≥60 % → ⭐, ≥80 % → ⭐⭐, 100 % → ⭐⭐⭐ of the round
-// first-try correct — a ratio, so a 12-question Schwer round scales with it.
-// Speed is deliberately not a criterion for stars: a child who reads or taps
-// slowly knows the times tables just as well. Speed has its own additive
-// ladder (§10.6, below), which can only ever add.
-export function starNeeds(total) {
-  // The three scores that pay the stars: the percent bands (≥60 % ⭐, ≥80 % ⭐⭐,
-  // 100 % ⭐⭐⭐), pulled apart when a short round would drop two stars on the
-  // same answer — 80 % and 100 % of three tasks are both "all three". Every
-  // star group then lands on its own waypoint (§10.3, §10.5): a three-task
-  // round pays at 1, 2 and 3, a four-task round at 2, 3 and 4.
-  if (!(total > 0)) return null;
-  const t3 = total;
-  const t2 = Math.max(1, Math.min(Math.ceil(0.8 * total), t3 - 1));
-  const t1 = Math.max(1, Math.min(Math.ceil(0.6 * total), t2 - 1));
-  return [t1, t2, t3];
-}
-
-export function starsFor(firstTryOk, total) {
-  const needs = starNeeds(total);
-  if (!needs) return 0;
-  return needs.filter((n) => firstTryOk >= n).length;
-}
-
-
-
-// The three stars a tile can ever hold (§10.3).
-export const STAR_SLOTS = 3;
-
 // --- the tempo ladder (§10.6) ------------------------------------------------
-// A second, purely additive ladder beside the stars: 0 = nothing yet,
-// 1 = hare, 2 = race car, 3 = rocket. Stars pay for being right; the tempo
-// symbol pays for *knowing* — a child who counts her way to every answer keeps
-// all her stars and simply has not won the rocket yet. Nothing is ever lost,
-// and the lowest visible state is an empty slot, never a snail.
-export const TEMPO_SLOTS = 3;
-
 // Upper bounds (ms) on the round's median answer time, per difficulty:
 // [hare, car, rocket]. Leicht is a tap on one of four choices; the keypad
 // rows also pay for finding and typing one to three digits, so their bounds
@@ -186,39 +160,9 @@ export const TEMPO_TIERS = [
   [11000, 7000, 4500], // Schwer
 ];
 
-// The ladder's three faces, indexed by tier: the icon name (graphics.js) and
-// the i18n key. Index 0 is the point of both: below the hare there is nothing
-// to draw and nothing to say — never a snail.
-export const TEMPO_ICONS = [null, "tempo-hare", "tempo-car", "tempo-rocket"];
-export const TEMPO_KEYS = [null, "tempo1", "tempo2", "tempo3"];
-
-// The median, because one long think about a new fact must not cost the round
-// its tempo — a sum or a mean would hand the slowest question a veto.
-export function median(values) {
-  const v = (values ?? []).filter(Number.isFinite).sort((a, b) => a - b);
-  if (v.length === 0) return null;
-  const m = v.length >> 1;
-  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
-}
-
 // Tier for a time (the round's median — or a single answer: tier 3 on one
-// answer is what triggers the in-round ⚡). Total: junk in, no tier out.
-export function tempoTier(ms, difficulty) {
-  const limits = TEMPO_TIERS[difficulty];
-  if (!limits || !Number.isFinite(ms) || ms < 0) return 0;
-  if (ms <= limits[2]) return 3;
-  if (ms <= limits[1]) return 2;
-  return ms <= limits[0] ? 1 : 0;
-}
-
-// What the tile stores after the round: fast-and-wrong must never pay, so a
-// round below two stars (§10.3) awards nothing — and like the star basket,
-// the stored tier only ever climbs (§10.5).
-export function awardTempo({ stars = 0, tier = 0, best = 0 } = {}) {
-  const held = Number.isInteger(best) && best > 0 ? Math.min(best, TEMPO_SLOTS) : 0;
-  const won = Number.isInteger(tier) && tier > 0 ? Math.min(tier, TEMPO_SLOTS) : 0;
-  return stars >= 2 ? Math.max(held, won) : held;
-}
+// answer is what triggers the in-round ⚡) against this game's bounds.
+export const tempoTier = (ms, difficulty) => tierFor(ms, TEMPO_TIERS[difficulty]);
 
 // --- per-fact recall telemetry (§20) ------------------------------------------
 // One digit per pair in a 100-char string beside `box`: 0 = never timed,
@@ -255,69 +199,10 @@ export function foldRecall(str, obs, count = POOL_COUNT) {
   return s.join("");
 }
 
-// The stars you own on this tile if the round stopped right now: your best ever
-// on it, or what this round has already banked, whichever is higher (§10.5).
-//
-// This is the whole scene. The sky holds `STAR_SLOTS - owned` stars still to be
-// won; the basket holds `owned`. Both terms are monotone, so a star can never
-// leave the basket, and a tile already taken to three stars starts with a full
-// basket and an empty sky — it cannot promise what `endRound()` will not pay,
-// because `improved = stars > old` uses exactly this `best`.
-export function ownedStars({ firstTrySolved = 0, total = 0 } = {}, best = 0) {
-  const held = Number.isInteger(best) && best > 0 ? Math.min(best, STAR_SLOTS) : 0;
-  const earned = total > 0 ? starsFor(firstTrySolved, total) : 0;
-  return Math.max(held, earned);
-}
-
+// --- star digit strings (§10.4) ------------------------------------------------
 // Index into the 11-digit per-difficulty star string: tables 1..10 → 0..9,
 // "Alle gemischt" → 10.
 export const tableStarIndex = (table) => (table === 0 ? 10 : table - 1);
-
-export function starDigit(starString, table) {
-  const d = Number.parseInt((starString ?? "")[tableStarIndex(table)], 10);
-  return Number.isInteger(d) ? Math.min(d, 3) : 0;
-}
-
-export function withStarDigit(starString, table, value) {
-  const s = (starString ?? "").padEnd(11, "0").split("");
-  s[tableStarIndex(table)] = String(value);
-  return s.join("");
-}
-
-// After a wrong answer the child does not press "understood" — she enters the
-// right answer (§8.1). Mara clicked "Verstanden" without ever noticing she had
-// erred; typing the answer herself is the smallest act that proves she read it.
-//
-// **The aid is answered the way the question was.** Digits go in, OK submits.
-// It used to be cleverer than the game around it: it matched on every keypress,
-// so the answer completed itself without an OK and a digit that could no longer
-// be right was refused before it was finished. That is a second set of rules on
-// the same keypad — the child has just been told she was wrong, and the buttons
-// under her thumb behave differently than they did one question ago.
-//
-// One keypress in, the next input and what the caller must do:
-//   "typing" — keep going
-//   "done"   — OK was pressed on the right answer; leave the aid
-//   "reject" — OK was pressed on the wrong one; shake, and clear the input
-export function retryStep(input, key, answer) {
-  const want = String(answer);
-  const cur = String(input ?? "");
-
-  if (key === "⌫") return { input: cur.slice(0, -1), state: "typing" };
-  if (key === "OK") {
-    if (cur === "") return { input: cur, state: "typing" }; // OK on an empty gap
-    return cur === want ? { input: cur, state: "done" } : { input: "", state: "reject" };
-  }
-  if (!/^[0-9]$/.test(key)) return { input: cur, state: "typing" };
-
-  return { input: cur.length < 3 ? cur + key : cur, state: "typing" };
-}
-
-// The question must always stay on one line (§10.1). Given the size the CSS
-// wishes for, the width the text needs at that size, and the width available,
-// return the size to use: unchanged when it already fits, otherwise shrunk to
-// the largest size that does. Pure so it can be tested without a DOM.
-export function fittedFontSize(size, avail, width) {
-  if (!(size > 0) || !(avail > 0) || !(width > 0) || width <= avail) return size;
-  return Math.floor((size * avail) / width);
-}
+export const starDigit = (starString, table) => digitAt(starString, tableStarIndex(table));
+export const withStarDigit = (starString, table, value) =>
+  withDigitAt(starString, tableStarIndex(table), value, 11);

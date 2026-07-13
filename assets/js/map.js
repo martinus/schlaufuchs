@@ -3,7 +3,7 @@
 
 import { initI18n, t } from "./i18n.js";
 import { loadState, getRewards, setRewards } from "./storage.js";
-import { gameStarsOf, regionState, starBadgeTier, totalTrophies, TOTAL_TROPHIES, GAMES, isPlayable, trophyCount } from "./rewards.js";
+import { gameStarsOf, regionState, pokalraumState, starBadgeTier, totalTrophies, TOTAL_TROPHIES, GAMES, isPlayable, trophyCount } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconSVG, applyIcons } from "./graphics.js";
 import { initTopBar } from "./chrome.js";
@@ -212,9 +212,12 @@ function soonBubble(region) {
 let foxAt = "einmaleins";
 let walking = false;
 
+// Resolved once — placeFox runs on every frame of a walk, and the element
+// never changes (render() only rewrites its innerHTML).
+const foxEl = document.getElementById("map-fox");
+
 function placeFox([x, y]) {
-  document.getElementById("map-fox")
-    ?.setAttribute("transform", `translate(${(x - 22).toFixed(1)}, ${(y - 40).toFixed(1)})`);
+  foxEl?.setAttribute("transform", `translate(${(x - 22).toFixed(1)}, ${(y - 40).toFixed(1)})`);
 }
 
 // A region opens only once the fox is standing in front of it. The map remembers
@@ -323,13 +326,13 @@ function render() {
   const trophies = totalTrophies(rewards.pr);
   const pkCount = document.getElementById("pokal-count");
   if (pkCount) pkCount.textContent = trophies;
-  pave("pokalraum", trophies >= 20);
+  const pkState = pokalraumState(trophies);
+  pave("pokalraum", pkState !== "base");
 
   const pkRegion = document.getElementById("region-pokalraum");
   if (pkRegion) {
     pkRegion.classList.remove("thriving", "mastered");
-    if (trophies >= 60) pkRegion.classList.add("mastered");
-    else if (trophies >= 20) pkRegion.classList.add("thriving");
+    if (pkState !== "base") pkRegion.classList.add(pkState);
     // the number on the wall is decorative; the link says what it means
     pkRegion.setAttribute("aria-label",
       `${t("region_pokalraum")} — ${t("trophyCount", { n: trophies, total: TOTAL_TROPHIES })}`);
@@ -338,8 +341,7 @@ function render() {
 
   // the fox stands where the child last went (§3.1)
   foxAt = ANCHORS[rewards.at] ? rewards.at : "einmaleins";
-  const fox = document.getElementById("map-fox");
-  if (fox) fox.innerHTML = foxSVG({ pose: "happy", size: 44 });
+  if (foxEl) foxEl.innerHTML = foxSVG({ pose: "happy", size: 44 });
   placeFox(ANCHORS[foxAt]);
 }
 

@@ -721,7 +721,7 @@ test("the tempo ladder is wired: first tries only, symbol only above nothing", (
   // the picker draws a badge only when there is one; tier 0 draws NOTHING
   assert.match(read("games/einmaleins/picker.js"), /const badge = tempo > 0\n\s*\? `<span class="ttempo"/);
   // the ⚡ moment: a single rocket-speed answer, marked as it lands
-  assert.match(src, /tempoTier\(took, diff\) === 3\) blitzFlash\(\)/);
+  assert.match(src, /tempoTier\(took, diff\) === 3\) blitzFlash\(/);
   // the summary line exists in the sheet
   assert.match(read("games/einmaleins/index.html"), /id="sum-tempo"/);
   // the three faces live in the registry, with their emoji fallbacks
@@ -730,16 +730,8 @@ test("the tempo ladder is wired: first tries only, symbol only above nothing", (
   }
 });
 
-test("tempo strings exist in both languages, and none of them names a time", () => {
-  for (const lang of ["de", "en"]) {
-    for (const key of ["tempo1", "tempo2", "tempo3", "tempoBest", "tileTempo"]) {
-      const s = strings[lang][key];
-      assert.equal(typeof s, "string", `${lang}.${key} is missing`);
-      assert.ok(!/\d/.test(s), `${lang}.${key} contains a number: "${s}"`);
-      assert.ok(!/\bs\b|sek|\bsec|\bms\b|minut/i.test(s), `${lang}.${key} names a unit of time: "${s}"`);
-    }
-  }
-});
+// The tempo ladder's names live in the shared dictionaries (every game shows
+// them); tests/i18n.test.js holds "exist in both languages, never a time".
 
 // --- per-fact recall telemetry (§20) ------------------------------------------
 // The digit a parent reads must be earned repeatedly: it drifts ONE step per

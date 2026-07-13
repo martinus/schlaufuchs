@@ -18,6 +18,7 @@ and screenshot-tested.** `node --test` is the only gate.
 pure logic        no DOM, no storage, no i18n lookups — unit-tested directly
   ├─ adaptive.js, mapwalk.js, parentstats.js, trophycard.js (string out)
   ├─ rewards.js (pure functions + two storage-backed writers at the bottom)
+  ├─ roundrules.js (star criteria, tempo ladder, retry, fitter — every game)
   └─ games/einmaleins/logic.js
 
 engines / chrome  DOM + shared behaviour, built on the pure layer

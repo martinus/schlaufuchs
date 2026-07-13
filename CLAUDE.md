@@ -124,7 +124,7 @@ workflow runs it before publishing.
   a new root page joins every test the moment it exists.
 - **Make it testable, then test it.** When the defect is inside DOM code, pull
   the arithmetic out as a pure function and unit-test that
-  (`fittedFontSize()` in `games/einmaleins/logic.js` is the pattern).
+  (`fittedFontSize()` in `assets/js/roundrules.js` is the pattern).
 - **Look at the page.** `sh tools/serve.sh`, then use `tools/shoot.mjs` to
   screenshot it at 390×844 and 360×640, and *read the image*. Every visual bug this project has
   had — a floating mountain, a clipped gear button, art standing in the sea, a

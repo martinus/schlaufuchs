@@ -1,6 +1,6 @@
-// The four games that do not exist yet (§3.1). Their pages were four copies of
-// one script, differing in a single word — the game's name — which is now on
-// the <body>. The page says what it is; this module says it four times.
+// The games that do not exist yet (§3.1). Their pages were copies of one
+// script, differing in a single word — the game's name — which is now on
+// the <body>. The page says what it is; this module says it once for all.
 
 import { initI18n, t } from "./i18n.js";
 import { iconHTML } from "./graphics.js";

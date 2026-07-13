@@ -8,14 +8,9 @@ import {
   packsFor, poolFor, itemAt, questionFor, optionsFor,
   STAR_SLOTS, starsFor, ownedStars,
   starDigit, withStarDigit, maxPoints,
-  TEMPO_SLOTS, TEMPO_TIERS, TEMPO_ICONS, TEMPO_KEYS, median, tempoTier, awardTempo,
+  TEMPO_SLOTS, TEMPO_TIERS, median, tempoTier, awardTempo,
   GUARD_MS, isBounce,
 } from "../games/lesen/logic.js";
-import {
-  starsFor as emStarsFor, ownedStars as emOwnedStars,
-  TEMPO_ICONS as emTempoIcons, TEMPO_KEYS as emTempoKeys,
-  median as emMedian, awardTempo as emAwardTempo,
-} from "../games/einmaleins/logic.js";
 import { CONTENT, itemCount } from "../games/lesen/content.js";
 import { BUDGET } from "../assets/js/storage.js";
 import strings from "../games/lesen/i18n.js";
@@ -169,24 +164,10 @@ test("stars on a round of eight: 5 → ⭐, 7 → ⭐⭐, 8 → ⭐⭐⭐", () =
   for (let ok = 0; ok <= ROUND_SIZE; ok++) assert.equal(starsFor(ok, ROUND_SIZE), want[ok], `${ok}/8`);
 });
 
-test("the star rules are the einmaleins rules — parity, so they cannot drift (D11)", () => {
-  for (let total = 0; total <= 12; total++) {
-    for (let ok = 0; ok <= total; ok++) {
-      assert.equal(starsFor(ok, total), emStarsFor(ok, total), `${ok}/${total}`);
-    }
-  }
-  for (let s = 0; s <= 4; s++) {
-  }
-  for (const best of [undefined, null, -1, 2, 99, NaN]) {
-    assert.equal(
-      ownedStars({ firstTrySolved: 4, total: 6 }, best),
-      emOwnedStars({ firstTrySolved: 4, total: 6 }, best),
-      `best=${String(best)}`,
-    );
-  }
-});
-
 // --- the tempo ladder (§10.6, §14.4) -------------------------------------------
+// The star rules and tempo mechanics are the shared round rules
+// (assets/js/roundrules.js), exercised in depth by tests/einmaleins.test.js;
+// here only lesen's own data — TEMPO_TIERS — and its wiring are tested.
 
 test("tempoTier: the bounds per difficulty, and on the bound still counts", () => {
   assert.equal(TEMPO_SLOTS, 3);
@@ -270,27 +251,6 @@ test("the double-tap guard is wired into every answer press", () => {
   );
 });
 
-// The ladder is einmaleins' ladder (§10.6) with lesen's own bounds: the shared
-// faces and mechanics must not drift apart — only TEMPO_TIERS differs, by
-// design (a sentence read is not a keypad answer).
-test("the tempo mechanics are the einmaleins mechanics — parity (D11)", () => {
-  assert.deepEqual(TEMPO_ICONS, emTempoIcons);
-  assert.deepEqual(TEMPO_KEYS, emTempoKeys);
-  const grids = [[], [500], [1000, 2000], [1, 2, 3, 4], [NaN, 800, -5]];
-  for (const g of grids) assert.equal(median(g), emMedian(g), JSON.stringify(g));
-  for (let stars = 0; stars <= 3; stars++) {
-    for (let tier = 0; tier <= 3; tier++) {
-      for (let best = 0; best <= 3; best++) {
-        assert.equal(
-          awardTempo({ stars, tier, best }),
-          emAwardTempo({ stars, tier, best }),
-          `stars=${stars} tier=${tier} best=${best}`,
-        );
-      }
-    }
-  }
-});
-
 // The wiring, pinned like einmaleins': measuring is easy to lose in a refactor
 // and its absence is silent — the ladder simply never pays again.
 test("the tempo ladder is wired: measured on first tries, saved, painted", () => {
@@ -298,12 +258,12 @@ test("the tempo ladder is wired: measured on first tries, saved, painted", () =>
   assert.match(src, /answerTimes = \[\];[\s\S]*?missedIds = new Set\(\);/, "the round must reset the clock");
   assert.match(src, /if \(!missedIds\.has\(currentId\)\) \{/, "only first tries feed the ladder");
   assert.match(src, /answerTimes\.push\(took\)/);
-  assert.match(src, /if \(tempoTier\(took, diff\) === 3\) blitzFlash\(\)/, "the ⚡ moment");
+  assert.match(src, /if \(tempoTier\(took, diff\) === 3\) blitzFlash\(/, "the ⚡ moment");
   assert.match(src, /tempoTier\(median\(answerTimes\), diff\)/, "the round's verdict is the median");
   assert.match(src, /awardTempo\(\{ stars, tier, best: oldTempo \}\)/, "the ⭐⭐ gate");
   assert.match(src, /tempo: tempoObj/, "…and it must reach the cookie");
   // the bolt flies over the stage, not inside the flipping word card
-  assert.match(src, /document\.querySelector\("\.stage"\)\.appendChild\(b\)/);
+  assert.match(src, /blitzFlash\(document\.querySelector\("\.stage"\)\)/);
 
   const picker = read("games/lesen/picker.js");
   assert.match(picker, /class="ttempo"/, "the picker tile wears the medal");
@@ -327,24 +287,14 @@ test("the tempo clock starts at the reveal for words, at the show for sentences"
   assert.ok(!/qShownAt/.test(wordBranch), "a covered word must not start the clock");
 });
 
-// The ⚡ deserves its own small sound (§10.6) — in both games, muted like all
-// the rest. A silent reward is one the child cannot brag about.
-test("a rocket answer zaps audibly, in both games", () => {
+// The ⚡ deserves its own small sound (§10.6) — muted like all the rest. A
+// silent reward is one the child cannot brag about. The bolt lives once, in
+// the shared blitz.js, so every game that flies it also sounds it.
+test("a rocket answer zaps audibly, in every game", () => {
   assert.match(read("assets/js/audio.js"), /blitz\(\)\s*\{/, "audio.js has no zap");
-  for (const f of ["games/lesen/lesen.js", "games/einmaleins/einmaleins.js"]) {
-    const fn = read(f);
-    const flash = fn.slice(fn.indexOf("function blitzFlash()"), fn.indexOf("function submit"));
-    assert.match(flash, /sfx\.blitz\(\)/, `${f}: the bolt must be heard`);
-  }
-});
-
-test("the tempo strings exist in both languages, and none names a time", () => {
-  for (const lang of ["de", "en"]) {
-    for (const key of ["tempo1", "tempo2", "tempo3", "tempoBest", "tileTempo"]) {
-      const s = strings[lang][key];
-      assert.ok(s, `${lang}.${key} is missing`);
-      assert.ok(!/\d\s*(s|ms|sek|sec)/i.test(s), `${lang}.${key} says "${s}" — never a time (§10.3)`);
-    }
+  assert.match(read("assets/js/blitz.js"), /sfx\.blitz\(\)/, "the bolt must be heard");
+  for (const f of ["games/lesen/lesen.js", "games/einmaleins/einmaleins.js", "games/rechnungen/rechnungen.js"]) {
+    assert.match(read(f), /blitzFlash\(/, `${f}: the bolt never flies`);
   }
 });
 
@@ -479,7 +429,7 @@ test("Schwer never reveals its answer — she picks again until right (§14.2)",
     "a wrong read tile is retired (passage stays); word/Mittel open the aid");
 
   // A wrong RE-PICK on Schwer retires that tile too — never reveals.
-  const press = game.slice(game.indexOf("function answerPress"), game.indexOf("function blitzFlash"));
+  const press = game.slice(game.indexOf("function answerPress"), game.indexOf("function submit"));
   assert.match(press, /question\.kind === "read"\)[\s\S]*?retireWrong\(btn\)/, "a wrong re-pick on Schwer is retired");
 
   // retireWrong disables the tile (so it cannot be tapped again) and never names

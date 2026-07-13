@@ -8,6 +8,8 @@ import { saveRound, loadRound, clearRound } from "../../assets/js/roundstore.js"
 import { recordRound, roundPoints, starValue, clampDifficulty, addPractice } from "../../assets/js/rewards.js";
 import { createJourney, starSlotsHTML } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
+import { fastPress } from "../../assets/js/fastpress.js";
+import { blitzFlash } from "../../assets/js/blitz.js";
 import { confetti } from "../../assets/js/confetti.js";
 import { trophyCardHTML } from "../../assets/js/trophycard.js";
 import { openShowcase } from "../../assets/js/showcase.js";
@@ -57,23 +59,6 @@ const summary = overlayFrom(document.getElementById("sum-overlay"), {
 });
 const SUM_OK_KEYS = ["sumOk1", "sumOk2", "sumOk3", "sumOk4", "sumOk5", "sumOk6"];
 const NEXT_MS = 250;
-
-// React on pointerdown for instant response on touch devices; the later
-// synthetic click is suppressed. Keyboard activation still works via click.
-function fastPress(btn, fn) {
-  let usedPointer = false;
-  btn.addEventListener("pointerdown", () => {
-    usedPointer = true;
-    fn();
-  });
-  btn.addEventListener("click", () => {
-    if (usedPointer) {
-      usedPointer = false;
-      return;
-    }
-    fn();
-  });
-}
 
 // --- persistent state ------------------------------------------------------
 let saved = getGame("einmaleins");
@@ -315,23 +300,8 @@ document.addEventListener("keydown", (e) => {
   e.preventDefault();
 });
 
-// The ⚡ moment (§10.6): one answer at rocket speed, marked the instant it
-// lands. Appended to the stage, not the question — renderQuestion rewrites the
-// question's innerHTML in this same tick and would eat it. Decorative only; a
-// slow answer sees nothing, because there is no negative moment. The flight is
-// a transition, so reduced motion degrades to "briefly there", never a
-// keyframe hanging mid-air (§10.5).
-function blitzFlash() {
-  const b = document.createElement("span");
-  b.className = "blitz";
-  b.setAttribute("aria-hidden", "true");
-  b.textContent = "⚡";
-  $("question").parentElement.appendChild(b);
-  requestAnimationFrame(() => b.classList.add("gone"));
-  setTimeout(() => b.remove(), 800);
-  sfx.blitz();
-}
-
+// The ⚡ (blitz.js) is appended to the stage, not the question — renderQuestion
+// rewrites the question's innerHTML in this same tick and would eat it.
 function submit(value, mcButton) {
   const correct = value === question.answer;
   if (mcButton) mcButton.classList.add(correct ? "flash-ok" : "flash-err");
@@ -346,7 +316,7 @@ function submit(value, mcButton) {
       // a slow first try is an observation too: the parents' recall tracker
       // must see counting, not just recall (§20)
       recallObs[currentId] = tempoTier(took, diff);
-      if (tempoTier(took, diff) === 3) blitzFlash();
+      if (tempoTier(took, diff) === 3) blitzFlash($("question").parentElement);
     }
     phase = "correct-wait";
     sfx.correct();
@@ -472,9 +442,6 @@ function endRound() {
     // helps.
     const ownedNow = Math.max(old, stars);
     $("sum-stars").innerHTML = starSlotsHTML(ownedNow, starValue(diff), improved ? stars - old : 0);
-    // what the next star costs — the rule is invisible otherwise (§10.3), and
-    // the count is computed from THIS round's length: "8 von 10" on a Schwer
-    // round of 12 would name a goal the round does not have
     $("sum-best").hidden = !improved;
     $("sum-best").textContent = t("newBest");
     // The finish line's verdict, as a symbol and its name — never a number of

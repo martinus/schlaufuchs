@@ -14,6 +14,7 @@ import { totalPoints, totalTrophies } from "./rewards.js";
 import { iconHTML } from "./graphics.js";
 import { initTopBar } from "./chrome.js";
 import { cellState, cellCounts, recallDigit, weakFacts, practiceSummary, minutesOf, secondsPerRound, sightTally, weakSightIds, groupState } from "./parentstats.js";
+import { DIFF_KEYS } from "./roundrules.js";
 import { POOL_COUNT, pairIndex, pairOf } from "../../games/einmaleins/logic.js";
 import { poolFor as lesenPoolFor, itemAt as lesenItemAt, MIXED as LESEN_MIXED } from "../../games/lesen/logic.js";
 import { CONTENT as LESEN_CONTENT, itemCount as lesenItemCount } from "../../games/lesen/content.js";
@@ -23,7 +24,6 @@ initI18n();
 initTopBar({ back: "./", title: "parentsTitle" });
 
 const $ = (id) => document.getElementById(id);
-const DIFFS = ["diffEasy", "diffMedium", "diffHard"];
 
 const saved = getGame("einmaleins");
 const boxes = boxesFromString(saved.box, POOL_COUNT);
@@ -44,7 +44,7 @@ const lesenTextIds = lesenPoolFor(2, LESEN_MIXED, lesenDe);
 // Rechnungen's box is one Leitner digit per skill bucket (§12.2); the buckets
 // that feed each picker cell (a mode at a difficulty) fold into one state.
 const rechBoxes = boxesFromString(getGame("rechnungen").box, RECH_BUCKETS);
-const rechAllBoxes = Array.from({ length: RECH_BUCKETS }, (_, i) => rechBoxes[i]);
+const rechAllBoxes = Object.values(rechBoxes);
 // The five tiles that own skill buckets; "mix" draws from the others, so it has
 // none of its own and never gets a row.
 const RECH_TILES = RECH_MODES.filter((m) => m !== "mix");
@@ -71,7 +71,7 @@ function renderTime() {
   const rows = practice.perDiff.map((d, i) => {
     const pace = secondsPerRound(d.seconds, d.rounds);
     return `<tr>
-      <th scope="row">${t(DIFFS[i])}</th>
+      <th scope="row">${t(DIFF_KEYS[i])}</th>
       <td>${d.rounds}</td>
       <td>${d.seconds > 0 ? t("parentsMinutes", { m: minutesOf(d.seconds) }) : "—"}</td>
       <td>${pace === null ? t("parentsNoPace") : t("parentsPace", { s: pace })}</td>
@@ -172,13 +172,13 @@ function renderLesen() {
 function renderRechnen() {
   let grid = '<div class="skillgrid" role="img" aria-label="' + t("parentsRechnenHint") + '">';
   grid += '<span class="sg-h"></span>';
-  for (let d = 0; d < 3; d++) grid += `<span class="sg-h">${t(DIFFS[d])}</span>`;
+  for (let d = 0; d < 3; d++) grid += `<span class="sg-h">${t(DIFF_KEYS[d])}</span>`;
   const weakTiles = [];
   for (const mode of RECH_TILES) {
     grid += `<span class="sg-mode">${RECH_LABEL[mode]}</span>`;
     for (let d = 0; d < 3; d++) {
       const state = groupState(rechBucketsFor(mode, d).map((i) => rechBoxes[i]));
-      const name = `${RECH_LABEL[mode]} · ${t(DIFFS[d])}`;
+      const name = `${RECH_LABEL[mode]} · ${t(DIFF_KEYS[d])}`;
       grid += `<span class="sg-c h-${state}" title="${name}"></span>`;
       if (state === "weak") weakTiles.push(name);
     }
