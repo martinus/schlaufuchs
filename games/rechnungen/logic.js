@@ -21,15 +21,14 @@
 //   { kind, cells: [ { answer, aid: {op, a, b, c?, answer, text} }, … ], … }
 //
 // A plain equation is a task with ONE cell. A number wall has three, a
-// decomposition two, a division with remainder two — the keypad contract
+// division with remainder two — the keypad contract
 // („one integer, then OK") never changes, only how often it is asked. Every
 // cell carries `aid`, an old-style binary question the wrong-answer card can
 // draw (number line for ±, dot grid for ×/÷): a wall brick's aid is the +/−
 // relation of its neighbours, a grid cell's is rowHeader ∘ colHeader.
 // Kinds and their extra layout data:
-//   op|gap|mulplus — `text` with exactly one "?" (one line)
+//   op|gap — `text` with exactly one "?" (one line)
 //   rest     — `text` "a : b = ? R ?", one "?" per cell in cell order
-//   zerlege  — `head` "a ± b = ?" plus two strategy rows (the cells' aids)
 //   mauer    — `vals` [top, m0, m1, b0, b1, b2] (the full wall), `given`
 //              (indices shown from the start), cells in solvable order with
 //              `pos` into vals
@@ -60,16 +59,14 @@ const MIX_MODES = ["+", "-", "rest"];
 export const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
 export const DIFF_SLUGS = ["easy", "medium", "hard"];
 
-// Tasks per round, per mode and difficulty (§12.2). A wall is three answers, a
-// grid up to four, and a Schwer ± round is half seven-cell decomposition
-// scaffolds — so those rounds hold fewer tasks. Every round lands at roughly
-// ten to twenty keypad entries, a comparable effort per star across the modes.
-export function roundSizeFor(mode, diff = 0) {
+// Tasks per round, per mode (§12.2). A wall is three answers, a grid up to
+// four, a ÷R task two — so those rounds hold fewer tasks. Every round lands at
+// roughly ten to sixteen keypad entries, a comparable effort per star.
+export function roundSizeFor(mode) {
   if (mode === "mauer") return 4;
   if (mode === "quad") return 3;
-  if (mode === "mix") return diff === 2 ? 7 : 8;
-  if (mode === "rest") return 8; // two cells per task
-  return diff === 2 && (mode === "+" || mode === "-") ? 6 : 10;
+  if (mode === "rest" || mode === "mix") return 8;
+  return 10;
 }
 
 // The three stars a tile can hold, and the three difficulty slots a mode's
@@ -131,40 +128,6 @@ function restTask(rng, divisor, quotient, divSign) {
     cells: [
       { answer: quotient, aid: { op: ":", a, b: divisor, answer: quotient, text: `${head}? R ${rest}` } },
       { answer: rest, aid: { op: ":", a, b: divisor, answer: rest, text: `${head}${quotient} R ?` } },
-    ],
-  };
-}
-
-// The workbook's „rechne schriftlich": the head sum is printed, the two
-// strategy rows underneath are EMPTY, and the child constructs the whole
-// tens-first decomposition herself — exactly the workbook's blank scaffold
-// („  +   =   "). For `13 + 69` she enters, in order: 13, 60, 73 (first row),
-// 73, 9, 82 (second row), and 82 into the head. Seven cells; the copies (13,
-// 73) teach the scheme's shape, the split (60/9) is the actual decision, and
-// the last cell IS the head's answer. Each cell's aid is the one-gap equation
-// that names its relation.
-function zerlege(op, a, b) {
-  const bt = Math.floor(b / 10) * 10;
-  const bu = b % 10;
-  const s1 = op === "+" ? a + bt : a - bt;
-  const answer = op === "+" ? a + b : a - b;
-  const sg = SIGN[op];
-  const s1Aid = { kind: "op", op, a, b: bt, answer: s1, text: `${a} ${sg} ${bt} = ?` };
-  const ansAid = { kind: "op", op, a: s1, b: bu, answer, text: `${s1} ${sg} ${bu} = ?` };
-  return {
-    kind: "zerlege", op, a, b, bt, bu, s1, answer,
-    head: `${a} ${sg} ${b} = ?`,
-    cells: [
-      // first row: a, the tens of b, their result
-      { answer: a, aid: { kind: "gap", op, a, b, answer: a, text: `? ${sg} ${b} = ${answer}` } },
-      { answer: bt, aid: { kind: "gap", op: "+", a: bt, b: bu, answer: bt, text: `? + ${bu} = ${b}` } },
-      { answer: s1, aid: s1Aid },
-      // second row: carry the result down, the ones of b, the final result
-      { answer: s1, aid: s1Aid },
-      { answer: bu, aid: { kind: "gap", op: "+", a: bt, b: bu, answer: bu, text: `${bt} + ? = ${b}` } },
-      { answer, aid: ansAid },
-      // …and the head's own gap fills last
-      { answer, aid: ansAid },
     ],
   };
 }
@@ -308,11 +271,16 @@ export const BUCKETS = [
   { key: "add-m-1d", mode: "+", diff: 1, gen: (r, d) => { const b = ri(r, 2, 9), u = ri(r, 10 - b, 9), a = ri(r, 1, 8) * 10 + u; return bin("+", a, b, a + b, d); } },
   { key: "add-m-2d", mode: "+", diff: 1, gen: (r, d) => { const au = ri(r, 1, 8), bu = ri(r, 1, 9 - au), at = ri(r, 1, 7), bt = ri(r, 1, 8 - at); return bin("+", at * 10 + au, bt * 10 + bu, (at + bt) * 10 + au + bu, d); } },
   { key: "add-m-carry", mode: "+", diff: 1, gen: (r, d) => { const au = ri(r, 1, 9), bu = ri(r, 10 - au, 9), at = ri(r, 1, 4), bt = ri(r, 1, 8 - at); const a = at * 10 + au, b = bt * 10 + bu; return bin("+", a, b, a + b, d); } },
-  // ＋ Schwer: the decomposition scaffold and gaps. (Mixed-operator chains
-  // were dropped: too hard for the second grade, and a ＋ chain carries a −
-  // anyway, so the two tiles asked practically the same questions.)
-  { key: "add-s-zerlege", mode: "+", diff: 2, gen: (r) => { const au = ri(r, 2, 9), bu = ri(r, 10 - au, 9), at = ri(r, 1, 4), bt = ri(r, 1, 8 - at); return zerlege("+", at * 10 + au, bt * 10 + bu); } },
+  // ＋ Schwer: gaps, and Ergänzen — complete to the next full ten or to 100,
+  // the second-grade technique behind every tens-crossing. (The seven-cell
+  // decomposition scaffold was cut on the ninth play-test: on a keypad it was
+  // mostly transcription; the strategy lives on in the ± aid card. Mixed
+  // chains fell earlier — too hard, and a ＋ chain carries a − anyway.)
   { key: "add-s-gap", mode: "+", diff: 2, gen: (r, d) => { const a = ri(r, 15, 60), b = ri(r, 15, 95 - a); return gap("+", a, b, a + b, r() < 0.5, d); } },
+  { key: "add-s-fill", mode: "+", diff: 2, gen: (r, d) => {
+    if (r() < 0.5) { const a = ri(r, 2, 9) * 10 + ri(r, 1, 9); return gap("+", a, 10 - (a % 10), a + 10 - (a % 10), false, d); } // 64 + ? = 70
+    const a = ri(r, 11, 89); return gap("+", a, 100 - a, 100, false, d); // 37 + ? = 100
+  } },
 
   // − Leicht: minus whole tens (75 − 10), and within 20
   { key: "sub-l-tens", mode: "-", diff: 0, gen: (r, d) => { const at = ri(r, 2, 9), a = at * 10 + ri(r, 0, 9), b = ri(r, 1, at - 1) * 10; return bin("-", a, b, a - b, d); } },
@@ -321,9 +289,12 @@ export const BUCKETS = [
   { key: "sub-m-1d", mode: "-", diff: 1, gen: (r, d) => { const b = ri(r, 2, 9), u = ri(r, 0, b - 1), a = ri(r, 1, 9) * 10 + u; return bin("-", a, b, a - b, d); } },
   { key: "sub-m-2d", mode: "-", diff: 1, gen: (r, d) => { const au = ri(r, 1, 9), bu = ri(r, 0, au), at = ri(r, 2, 9), bt = ri(r, 1, at - 1); return bin("-", at * 10 + au, bt * 10 + bu, (at - bt) * 10 + au - bu, d); } },
   { key: "sub-m-borrow", mode: "-", diff: 1, gen: (r, d) => { const au = ri(r, 0, 8), bu = ri(r, au + 1, 9), at = ri(r, 2, 9), bt = ri(r, 1, at - 1); const a = at * 10 + au, b = bt * 10 + bu; return bin("-", a, b, a - b, d); } },
-  // − Schwer: the decomposition scaffold and gaps
-  { key: "sub-s-zerlege", mode: "-", diff: 2, gen: (r) => { const au = ri(r, 0, 8), bu = ri(r, au + 1, 9), at = ri(r, 2, 9), bt = ri(r, 1, at - 1); return zerlege("-", at * 10 + au, bt * 10 + bu); } },
+  // − Schwer: gaps, and Ergänzen downward — to the full ten, or away from 100
   { key: "sub-s-gap", mode: "-", diff: 2, gen: (r, d) => { const a = ri(r, 30, 99), b = ri(r, 10, a); return gap("-", a, b, a - b, r() < 0.5, d); } },
+  { key: "sub-s-fill", mode: "-", diff: 2, gen: (r, d) => {
+    if (r() < 0.5) { const a = ri(r, 2, 9) * 10 + ri(r, 1, 9); return gap("-", a, a % 10, a - (a % 10), false, d); } // 73 − ? = 70
+    const b = ri(r, 11, 89); return gap("-", 100, b, 100 - b, false, d); // 100 − ? = 63
+  } },
 
   // ÷R — division with remainder, the one division einmaleins can NEVER teach.
   // (The tile used to hold ×, exact ÷ and table gaps: the einmaleins drill in

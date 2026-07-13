@@ -80,21 +80,20 @@ resolver is unit-tested the same way (`tests/play-lesen.test.js`).
 
 `tools/play-rechnungen.js` drives rechnungen: `playRechnung({...})` with the
 same options as play.js (`wrongAt`, `delayMs`, `stopAt`/`questions`, plus
-`stopInAid` and `stopKind: "zerlege"` — stop with a task of that kind freshly
+`stopInAid` and `stopKind: "mauer"` — stop with a task of that kind freshly
 on screen, the way to screenshot one kind out of a mixed pool). Keypad input on
 every difficulty, so it types digits and OK like play.js. Seed the cookie with
 difficulty `d` and mode `m` (`"+" "-" "rest" "mauer" "quad" "mix"`). A task can
-hold several cells (a number wall is three answers, a Zerlegen scaffold seven,
-§12.1); in a wall/grid the child picks each blank herself, so the driver CLICKS
+hold several cells (a number wall is three answers, a ÷R task two, §12.1); in
+a wall/grid the child picks each blank herself, so the driver CLICKS
 an open "?" first (the game waits with `dataset.cell` = -1), then types.
 `wrongAt` misses the task's first ANSWERED cell, `delayMs` sleeps before every
 cell (the per-cell tempo clock). A new task is announced on `#question`'s
 `dataset.q` stamp, a new cell on `dataset.cell`, because a re-queued skill asks
 a fresh task that may read the same. `resolveRechnung(text)` reads a printed
-one-line task — plain binary, a gap, `? R ?` —
-`resolveZerlege(head)` reconstructs the scaffold's seven cells from its head,
-and `resolveMauer`/`resolveQuad` complete a wall/grid from what is visible; all
-four are unit-tested against every `questionFor` shape, cell by cell
+one-line task — plain binary, a gap, `? R ?` — and
+`resolveMauer`/`resolveQuad` complete a wall/grid from what is visible; all
+three are unit-tested against every `questionFor` shape, cell by cell
 (`tests/play-rechnungen.test.js`).
 
 The hooks refuse a commit that fails `node --test` or that deletes tests
@@ -256,8 +255,8 @@ Pages (each an entry point):
   fully implemented: `einmaleins`, `lesen` (Blitzwörter + Quatsch-Sätze, §14 —
   content in `games/lesen/content.js`, which is **append-only**: item order is
   the box string's index) and `rechnungen` (workbook arithmetic within 100:
-  ＋ −, Division mit Rest ÷R, Rechenmauern 🧱, Rechenquadrate ⊞, Mix —
-  multi-cell tasks on one
+  ＋ − mit Ergänzen, Division mit Rest ÷R, Rechenmauern 🧱, Rechenquadrate ⊞,
+  Mix — multi-cell tasks on one
   keypad, §12 — skill buckets in `games/rechnungen/logic.js`, also
   **append-only**: a bucket's index is its box-string slot). `tippen`,
   `vokabeln` are stubs and

@@ -635,21 +635,6 @@ footer p { margin: 0; }
 .q-mauer .cell:not(.done),
 .q-quad .cell:not(.done) { cursor: pointer; }
 
-/* The decomposition scaffold: the head sum over two strategy rows the child
-   fills herself. One shared grid (rows are `display: contents`) keeps the
-   numbers in workbook columns; a SOLID rule under the head, like a jotter. */
-.q-zerlege { font-size: clamp(1.55rem, 8vw, 2.3rem); }
-.q-zerlege .zerlege {
-  display: grid;
-  grid-template-columns: repeat(5, auto);
-  gap: 4px 8px;
-  justify-content: center;
-  align-items: center;
-}
-.q-zerlege .zrow, .q-zerlege .zhead { display: contents; }
-.q-zerlege .zc { text-align: right; min-width: 1.4em; }
-.q-zerlege .zline { grid-column: 1 / -1; border-top: 3px solid var(--ink-soft); margin: 1px 0 3px; }
-
 /* The number wall: three rows of bricks, every brick the same box so the wall
    reads as one thing. A blank brick is dashed orange until it is filled. */
 .q-mauer { font-size: clamp(1.35rem, 7vw, 2rem); }

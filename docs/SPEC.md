@@ -1348,9 +1348,9 @@ workbook. **Shipped 2026-07; redesigned around the workbook before release.**
 
 **The task/cell model.** A round is a sequence of *tasks*; a task holds one or
 more *cells* — the numbers the child types, each on the same keypad. A plain
-equation is a task with one cell; a number wall has three, a decomposition
-scaffold seven, a division with remainder two. The line kinds and the scaffold
-read in one order, so their cells activate themselves; **in a wall or grid the
+equation is a task with one cell; a number wall has three, a division with
+remainder two. The line kinds read in one order, so their cells activate
+themselves; **in a wall or grid the
 child picks which blank to fill herself** — tapping a „?" activates it, only
 then does the keypad apply, and after every fill she picks again. The numbers
 she entered herself stay marked (blue, the colour of what you have) next to
@@ -1361,8 +1361,7 @@ the path grows by one node for the re-queued ask, so she still reaches the
 basket exactly on the round's last answer. She stumbles at the moment of the
 wrong cell, and a task counts as first-try only if every cell was — with ONE
 exception: **a task with more than one cell forgives its first wrong answer**.
-A wall or a seven-cell scaffold is a lot of typing, and one slip must not sink
-the whole waypoint: the cell shakes, the entry clears, the child rethinks — no
+A wall is a lot of typing, and one slip must not sink the whole waypoint: the cell shakes, the entry clears, the child rethinks — no
 aid card (it would give the answer away), no penalty. Only the second wrong
 answer in the task is a real miss. A one-cell task is one calculation and
 keeps the einmaleins contract: wrong is wrong. Every cell has an *aid* — a binary
@@ -1385,7 +1384,7 @@ would balloon a mixed round. The difficulty × mode grid the generators realise:
 |---|---|---|---|---|
 | Leicht | within 20 · ±  whole tens (`27 + 60`) | the concept, tiny divisors (`7 : 2 = 3 R 1`) | base given, climb with + (3 cells) | 2×2 „+" grid, small numbers (4 cells) |
 | Mittel | crossing the ten: ± one-digit with carry/borrow (`54 + 9`, `80 − 4`) · two-digit with and without (`25 + 32`, `22 + 38`, `91 − 36`) | full divisors, table-sized quotients (`49 : 5 = 9 R 4`) | top + one flank given, descend with − (3 cells) | 2×2 „−" grid ≤ 100 with a **hidden column header** and its anchor cell (4 cells) — a given cell only exists to buy a header |
-| Schwer | **Zerlegen** scaffold (7 cells, below) · gaps (`? + 27 = 61`, `82 − ? = 10`) — no mixed-operator chains: too hard, and a ＋ chain carries a −, so both tiles would ask the same questions | **two-digit quotients** (`74 : 6 = 12 R 2`) — beyond the tables | mixed blanks, + and − in both directions | 2×2 ± grid with a **hidden row AND column header**, each bought from its own anchor cell (no × grid: the tables are einmaleins' whole game) |
+| Schwer | gaps (`? + 27 = 61`, `82 − ? = 10`) · **Ergänzen** to the next full ten and to 100 (`64 + ? = 70`, `37 + ? = 100`; downward `73 − ? = 70`, `100 − ? = 63`) — no chains (too hard, and ＋/− would ask the same questions), no scaffold (see below) | **two-digit quotients** (`74 : 6 = 12 R 2`) — beyond the tables | mixed blanks, + and − in both directions | 2×2 ± grid with a **hidden row AND column header**, each bought from its own anchor cell (no × grid: the tables are einmaleins' whole game) |
 
 Every ÷R line asks BOTH slots (`? R ?`), and the remainder is sometimes
 genuinely 0: „R 0" is an answer the child gives, not a case the format hides.
@@ -1400,14 +1399,13 @@ tables (`games/einmaleins/logic.js`). The division sign is injected
 (`t("divSign")`: „:" German, „÷" English), so the logic module stays i18n-free —
 the einmaleins convention; the remainder is written `? R ?` in both languages.
 
-**The Zerlegen scaffold** is the workbook's „rechne schriftlich" with its
-blank rows („  +   =  "): the head sum is printed, the two strategy rows are
-EMPTY, and the child constructs the whole tens-first scheme herself — for
-`13 + 69` she enters, in reading order, `13`, `60`, `73`; `73`, `9`, `82`; and
-`82` into the head. Seven cells: the copies teach the scheme's shape, the
-split is the actual decision, the last cell is the head's answer. (A
-free-choice split strategy is not validatable with a keypad — the tens-first
-scheme is the one being taught.)
+**No Zerlegen scaffold.** The workbook's „rechne schriftlich" blank form was
+built and then cut after play-testing: of its seven keypad entries, four were
+transcription (copying operands down), not thinking — on paper the writing
+teaches the scheme's shape, on a phone it is friction — and six empty slots
+with no teacher alongside read as a wall of riddles. The tens-first strategy
+itself survives where it teaches best: **in the ± aid card**, which shows the
+two decomposition rows at the moment a sum was missed.
 
 **Consciously skipped:** the workbook's hardest wall variant (assemble a wall
 from loose numbers, one left over) is not a keypad answer and is out of scope.
@@ -1430,9 +1428,9 @@ variant's box is seeded from its bucket, so weak skills are weighted up, and the
 round's per-bucket outcome is folded back at the end (`foldBoxes`).
 
 **Round sizes are per mode and difficulty** (`roundSizeFor`): equations **10**
-tasks (Schwer ± **6** — half of them are seven-cell scaffolds), Mix **8**
-(Schwer **7**), walls **4** (12 cells), grids **3** (9–12 cells) — every round
-lands at roughly 10–20 keypad entries, a comparable effort per star. Stars
+tasks, ÷R and Mix **8**, walls **4** (12 cells), grids **3** (9–12 cells) —
+every round lands at roughly 10–16 keypad entries, a comparable effort per
+star. Stars
 per mode & difficulty with the einmaleins criteria (§10.3). The tempo ladder
 (§10.6) rides along per mode; its clock runs **per cell** — a wall brick and a
 plain sum are each one thinking step, and in a wall/grid the choosing counts as

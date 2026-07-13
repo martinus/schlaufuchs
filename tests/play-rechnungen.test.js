@@ -15,7 +15,7 @@ const src = readFileSync(fileURLToPath(new URL("../tools/play-rechnungen.js", im
 // Loading it must not touch the DOM: it defines functions and returns.
 const sandbox = { document: undefined, window: undefined };
 new Function("globalThis", `with (this) { ${src} }`).call(sandbox, sandbox);
-const { resolveRechnung, resolveMauer, resolveQuad, resolveZerlege } = sandbox;
+const { resolveRechnung, resolveMauer, resolveQuad } = sandbox;
 
 const seeded = (seed = 1) => () => {
   seed = (seed * 1664525 + 1013904223) % 4294967296;
@@ -26,7 +26,6 @@ test("play-rechnungen.js loads without a DOM and exposes its resolvers", () => {
   assert.equal(typeof resolveRechnung, "function");
   assert.equal(typeof resolveMauer, "function");
   assert.equal(typeof resolveQuad, "function");
-  assert.equal(typeof resolveZerlege, "function");
   assert.equal(typeof sandbox.playRechnung, "function");
   assert.equal(typeof sandbox.readRechnungScene, "function");
 });
@@ -46,7 +45,7 @@ function screenText(task, i) {
 test("the driver resolves every one-line task the game can ask, cell by cell, in both languages", () => {
   for (const divSign of [":", "÷"]) {
     for (let i = 0; i < BUCKET_COUNT; i++) {
-      if (["mauer", "quad", "zerlege"].some((k) => BUCKETS[i].key.includes(k))) continue;
+      if (["mauer", "quad"].some((k) => BUCKETS[i].key.includes(k))) continue;
       const rng = seeded(i * 53 + 3);
       for (let k = 0; k < 800; k++) {
         const task = questionFor(i, rng, divSign);
@@ -57,24 +56,6 @@ test("the driver resolves every one-line task the game can ask, cell by cell, in
       }
     }
   }
-});
-
-// The scaffold's printed HEAD names the whole scheme; the driver reconstructs
-// the seven cells from it — exactly what the child derives from "13 + 69".
-test("the driver reconstructs every zerlege scheme from its head", () => {
-  for (const key of ["add-s-zerlege", "sub-s-zerlege"]) {
-    const i = BUCKETS.findIndex((b) => b.key === key);
-    const rng = seeded(i * 53 + 3);
-    for (let k = 0; k < 800; k++) {
-      const task = questionFor(i, rng, ":");
-      // the head as the DOM concatenates it: no spaces between the spans
-      const headText = task.head.replace(/\s+/g, "");
-      assert.deepEqual(resolveZerlege(headText), task.cells.map((c) => c.answer), `${key}: "${task.head}"`);
-      // …and with the spaces the generator prints
-      assert.deepEqual(resolveZerlege(task.head), task.cells.map((c) => c.answer));
-    }
-  }
-  assert.throws(() => resolveZerlege("hello"), /not a zerlege head/);
 });
 
 // A wall as the screen shows it while cell `i` is active: given bricks and
