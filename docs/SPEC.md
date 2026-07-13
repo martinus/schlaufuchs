@@ -1371,7 +1371,13 @@ cell, so the one tap both fills and moves; if it is wrong she stays put (the
 slip shakes, or the aid opens). Tapping away from an *empty* active cell only
 moves the focus. The numbers
 she entered herself stay marked (blue, the colour of what you have) next to
-the printed givens. One task is one engine item, and **every asked task is
+the printed givens; a wall's or grid's **given** numbers sit on a blue field
+too — the frame she builds on. **The answer format follows the layout, not the
+mode**: any number typed on a *line* (a plain equation, an Ergänzen gap, and
+both of ÷R's `? R ?` slots) uses the exact `.gap` slot einmaleins uses — an
+orange digit on an orange underline; only the boxed *grids* (number walls,
+operation grids) draw filled cells, and there the active cell fills solid
+orange so one box among many is clearly the one being answered. One task is one engine item, and **every asked task is
 its own waypoint** (§10.5): when the task ends the fox steps forward — onto a
 green node if it went cleanly, onto a red one if any cell was wrong, and then
 the path grows by one node for the re-queued ask, so she still reaches the
