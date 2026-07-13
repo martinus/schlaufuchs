@@ -162,23 +162,7 @@ export function starsFor(firstTryOk, total) {
   return needs.filter((n) => firstTryOk >= n).length;
 }
 
-// The i18n key naming what the *next* star costs, so a child who scored 9/10
-// can see why they still have one star. Null once all three are earned — and
-// null, never undefined, for anything that is not a star count: t(undefined)
-// renders an empty string, so a bad caller would print a blank row instead of
-// failing. The lookup is total; only 0, 1 and 2 name a goal.
-export function nextStarGoal(stars) {
-  return ["starGoal1", "starGoal2", "starGoal3"][stars] ?? null;
-}
 
-// What the next star costs in first-try answers, for a round of `total`
-// questions: the smallest count whose ratio clears the next threshold. The
-// goal strings used to hardcode "6 von 10", which became a lie the moment a
-// Schwer round grew to 12 questions.
-export function starGoalNeed(stars, total) {
-  const needs = starNeeds(total);
-  return needs && needs[stars] !== undefined ? needs[stars] : null;
-}
 
 // The three stars a tile can ever hold (§10.3).
 export const STAR_SLOTS = 3;

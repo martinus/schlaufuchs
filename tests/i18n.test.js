@@ -32,7 +32,7 @@ test("game dictionaries: every key exists in every language (§6.3)", () => {
 });
 
 test("t(): placeholder substitution and fallback to key", () => {
-  assert.equal(t("starGoal3", { n: 10, total: 10 }), de.starGoal3.replace("{n}", "10").replace("{total}", "10"));
+  assert.equal(t("starsOwned", { n: 3 }), de.starsOwned.replace("{n}", "3"));
   assert.equal(t("nonexistent-key"), "nonexistent-key");
 });
 
@@ -88,7 +88,7 @@ test("no dictionary key is dead", () => {
         // the reader's pages name their heading's key when they build the bar
         for (const [, k] of src.matchAll(/\btitle:\s*["']([a-zA-Z0-9_]+)["']/g)) used.add(k);
         // keys built at runtime, e.g. `region_${game}` or DIFF_KEYS
-        for (const [, k] of src.matchAll(/["'`](region_|game_|diff|starGoal|sumOk)[a-zA-Z0-9]*["'`]/g)) used.add(k);
+        for (const [, k] of src.matchAll(/["'`](region_|game_|diff|sumOk)[a-zA-Z0-9]*["'`]/g)) used.add(k);
       }
     }
   };
@@ -101,7 +101,7 @@ test("no dictionary key is dead", () => {
   }
   used.add("region_pokalraum");
 
-  const dynamic = /^(region_|game_|diff|starGoal|sumOk)/;
+  const dynamic = /^(region_|game_|diff|sumOk)/;
   const dead = Object.keys(de).filter((k) => !used.has(k) && !dynamic.test(k));
   assert.deepEqual(dead, [], `dead strings in de.js/en.js: ${dead.join(", ")}`);
 });

@@ -7,7 +7,7 @@ import en from "../assets/i18n/en.js";
 import { read } from "./pages.js";
 import {
   POOL_COUNT, EASY_TABLES, pairIndex, pairOf, poolFor, questionFor,
-  choicesFor, starsFor, nextStarGoal, starGoalNeed, ownedStars, STAR_SLOTS, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
+  choicesFor, starsFor, ownedStars, STAR_SLOTS, starDigit, withStarDigit, tableStarIndex, fittedFontSize,
   retryStep, ALL_TABLES, HARD_TABLES, ROUND_SIZE, tablesFor, pairHardness, hardnessBoost,
   median, tempoTier, awardTempo, TEMPO_TIERS, TEMPO_SLOTS, recallStep, foldRecall,
 } from "../games/einmaleins/logic.js";
@@ -521,62 +521,6 @@ test("the aid shows the child's own wrong answer, struck through", () => {
   assert.ok(!src.includes("fb-next"), "…everywhere");
   assert.ok(!("gotIt" in de) && !("gotIt" in en), "…and so is its string");
   assert.match(src, /retryStep/, "the aid is driven by the pure retryStep");
-});
-
-test("the summary names the price of the next star", () => {
-  // A child who scores 9/10 keeps one star and is told nothing about why.
-  // Every un-earned star must have a goal line; a mastered round must not.
-  assert.equal(nextStarGoal(0), "starGoal1");
-  assert.equal(nextStarGoal(starsFor(6, 10)), "starGoal2");
-  assert.equal(nextStarGoal(starsFor(8, 10)), "starGoal3");
-  assert.equal(nextStarGoal(starsFor(10, 10)), null);
-});
-
-// The goal strings used to hardcode "6 von 10", which became a lie the moment
-// a Schwer round grew to 12 questions. The count is computed from the round.
-test("starGoalNeed names the cheapest score that pays the next star", () => {
-  for (const total of [8, 10, 12]) {
-    for (const stars of [0, 1, 2]) {
-      const need = starGoalNeed(stars, total);
-      assert.equal(starsFor(need, total), stars + 1, `${need}/${total} must pay star ${stars + 1}`);
-      assert.ok(starsFor(need - 1, total) <= stars, `${need - 1}/${total} must not`);
-    }
-  }
-  assert.equal(starGoalNeed(0, 10), 6);
-  assert.equal(starGoalNeed(1, 10), 8);
-  assert.equal(starGoalNeed(2, 12), 12);
-  assert.equal(starGoalNeed(0, 12), 8);
-  // total like nextStarGoal: junk answers null, never NaN into a string
-  for (const bad of [[3, 10], [-1, 10], [0, 0], [0, -5], [undefined, 10]]) {
-    assert.equal(starGoalNeed(...bad), null, `starGoalNeed(${bad})`);
-  }
-  // …and the summary must pass the round's own length. The goal is keyed on
-  // the TILE's owned groups (the slots painted right above it, §10.1), not on
-  // this round's result — a child who once had two stars and just scored one
-  // is still chasing the third, not the second.
-  assert.match(read("games/einmaleins/einmaleins.js"),
-    /t\(goal, \{ n: starGoalNeed\(ownedNow, total\), total \}\)/);
-});
-
-test("nextStarGoal is total: garbage in, a hidden row out — never a blank one", () => {
-  const KEYS = ["starGoal1", "starGoal2", "starGoal3"];
-
-  // The contract the caller leans on: a real key, or null. Never undefined —
-  // t(undefined) renders "" and `hidden = goal === null` stays false, so the
-  // summary would grow a blank row instead of failing loudly.
-  for (const any of [undefined, null, -1, 0, 1, 2, 3, 4, 1.5, "2", NaN, true, {}]) {
-    const goal = nextStarGoal(any);
-    assert.ok(goal === null || KEYS.includes(goal), `nextStarGoal(${String(any)}) → ${goal}`);
-  }
-  for (const stars of [0, 1, 2]) assert.equal(nextStarGoal(stars), KEYS[stars]);
-  for (const none of [-1, 3, 4, 1.5, NaN, undefined, null]) assert.equal(nextStarGoal(none), null);
-
-  // The dead-key test waves `starGoal*` through on a regex allowlist, so it can
-  // no longer notice one going missing. Name them here instead.
-  for (const k of KEYS) {
-    assert.equal(typeof de[k], "string", `de.js is missing ${k}`);
-    assert.equal(typeof en[k], "string", `en.js is missing ${k}`);
-  }
 });
 
 // Regression: the summary showed "9/10 · 46 s", which whispers "faster is

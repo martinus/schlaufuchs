@@ -26,7 +26,7 @@ import { CONTENT, itemCount } from "./content.js";
 import { createLevelPicker, packName } from "./picker.js";
 import {
   ROUND_SIZE, DIFF_KEYS, MIXED, flashMs, poolFor, questionFor, optionsFor,
-  starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit,
+  starsFor, ownedStars, starDigit, withStarDigit,
   fittedFontSize, median, tempoTier, awardTempo, TEMPO_ICONS, TEMPO_KEYS,
   isBounce,
 } from "./logic.js";
@@ -499,10 +499,6 @@ function endRound() {
     // helps.
     const ownedNow = Math.max(old, stars);
     $("sum-stars").innerHTML = starSlotsHTML(ownedNow, starValue(diff), improved ? stars - old : 0);
-    // the next UNOWNED group's price — keyed on the tile, like the slots above
-    const goal = nextStarGoal(ownedNow);
-    $("sum-goal").hidden = goal === null;
-    if (goal) $("sum-goal").textContent = t(goal, { n: starGoalNeed(ownedNow, total), total });
     $("sum-best").hidden = !improved;
     $("sum-best").textContent = t("newBest");
     // The finish line's verdict, as a symbol and its name — never a number of

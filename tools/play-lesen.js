@@ -89,7 +89,6 @@
     stars: document.querySelectorAll("#sum-stars .sslot.owned").length,
     fresh: document.querySelectorAll("#sum-stars .sslot.fresh").length,
     openSlots: document.querySelectorAll("#sum-stars .sslot.j-ghost").length,
-    goal: $("sum-goal").hidden ? null : $("sum-goal").textContent.trim(),
     trophies: [...document.querySelectorAll("#sum-trophy .won")].map((w) => w.textContent.trim()),
   });
 
