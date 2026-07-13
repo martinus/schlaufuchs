@@ -163,3 +163,13 @@ test("a cold Chrome launch cannot fail the smoke: long port wait, one retry", ()
   assert.ok(smoke.includes('elif out=$(node "$root/tools/shoot.mjs" "$u" --size "$size" 2>&1); then'),
     "smoke.sh must retry a failed page once before failing the run");
 });
+
+// One live smoke crashed whole — every page, one bare traceback — because a
+// probe fired while Firefox was tearing the old document down: ExecuteScript
+// returned None and json.loads(None) raised. A mid-navigation non-answer is
+// "poll again", never a crash.
+test("ff-probe survives a probe that lands mid-navigation", () => {
+  const ff = readFileSync(new URL("../tools/ff-probe.sh", import.meta.url), "utf8");
+  assert.ok(ff.includes("except RuntimeError:"), "a Marionette error mid-poll must not end the run");
+  assert.ok(ff.includes("if raw is None:"), "a None probe result means poll again, not crash");
+});

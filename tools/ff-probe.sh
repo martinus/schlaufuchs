@@ -157,7 +157,17 @@ for url in URLS:
         state = {"ready": "?", "uri": ""}
         while time.monotonic() - t0 < TIMEOUT:
             time.sleep(0.25)
-            state = json.loads(m.js(PROBE))
+            # Mid-navigation the old document is torn down under the script:
+            # ExecuteScript then returns None (or a Marionette error), which is
+            # not an answer but not a verdict either — poll again. One live
+            # smoke crashed whole with `json.loads(None)` exactly here.
+            try:
+                raw = m.js(PROBE)
+            except RuntimeError:
+                raw = None
+            if raw is None:
+                continue
+            state = json.loads(raw)
             # An unreachable host lands on about:neterror, which DOES reach
             # "complete" — so check the document, not just the ready state.
             if state["uri"].startswith("about:neterror"):
