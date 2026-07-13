@@ -148,3 +148,18 @@ test("horizontal overflow is measured against the viewport that was asked for", 
   assert.match(shoot, /if \(!opt\.allowHscroll\)/, "the guard must be on by default");
   assert.match(shoot, /report\.overflowX = overflow/, "…and the measurement must reach the report");
 });
+
+// Both deploy smokes on 2026-07-13 failed on the run's FIRST page with
+// "chrome never reported a debugging port" and passed on rerun: a cold CI
+// runner's first Chrome launch can outlive a 5s budget, or fail outright.
+// The cure is pinned twice — a long port wait that notices a crashed Chrome,
+// and one retry in smoke.sh so a launch flake never fails a deploy while a
+// page that fails twice still does.
+test("a cold Chrome launch cannot fail the smoke: long port wait, one retry", () => {
+  const shoot = readFileSync(new URL("../tools/shoot.mjs", import.meta.url), "utf8");
+  assert.ok(shoot.includes("i < 400 && !existsSync(portFile)"), "the port wait must survive a cold first launch");
+  assert.ok(shoot.includes("child.exitCode !== null"), "a crashed chrome must be reported as that");
+  const smoke = readFileSync(new URL("../tools/smoke.sh", import.meta.url), "utf8");
+  assert.ok(smoke.includes('elif out=$(node "$root/tools/shoot.mjs" "$u" --size "$size" 2>&1); then'),
+    "smoke.sh must retry a failed page once before failing the run");
+});
