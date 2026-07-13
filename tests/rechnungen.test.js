@@ -70,16 +70,16 @@ test("the modes and difficulties are the ones §12 names", () => {
 });
 
 // Round sizes per mode and difficulty (§12.2): a wall is three answers, a grid
-// up to four, and Schwer ± rounds carry seven-cell scaffolds — those rounds
+// up to four, and Schwer ± rounds are half seven-cell scaffolds — those rounds
 // hold fewer tasks, so every round is a comparable effort.
-test("roundSizeFor: equations 10 (Schwer ± 8), mix 8/7, walls 4, grids 3", () => {
+test("roundSizeFor: equations 10 (Schwer ± 6), mix 8/7, walls 4, grids 3", () => {
   for (const d of [0, 1]) {
     assert.equal(roundSizeFor("+", d), 10);
     assert.equal(roundSizeFor("-", d), 10);
     assert.equal(roundSizeFor("mix", d), 8);
   }
-  assert.equal(roundSizeFor("+", 2), 8, "Schwer ± carries scaffolds — shorter round");
-  assert.equal(roundSizeFor("-", 2), 8);
+  assert.equal(roundSizeFor("+", 2), 6, "Schwer ± is half scaffolds — shorter round");
+  assert.equal(roundSizeFor("-", 2), 6);
   assert.equal(roundSizeFor("x:", 2), 10);
   assert.equal(roundSizeFor("mix", 2), 7);
   for (const d of [0, 1, 2]) {
@@ -359,17 +359,14 @@ test("difficulty bands hold: carrying, borrowing, exact division, Leicht ranges"
     assert.equal(q.a % q.b, 0, `${key}: "${q.text}" has a remainder`);
     assert.equal(q.answer, q.a / q.b);
   }
-  // gaps hide exactly one operand; chains carry three terms and stay in range
+  // gaps hide exactly one operand
   for (const q of [...drawKey("add-s-gap"), ...drawKey("sub-s-gap"), ...drawKey("muldiv-s-gap")]) {
     assert.equal(q.kind, "gap");
     assert.equal((q.text.match(/\?/g) ?? []).length, 1, `gap has ${q.text}`);
   }
-  for (const q of [...drawKey("add-s-chain"), ...drawKey("sub-s-chain")]) {
-    assert.equal(q.kind, "chain");
-    assert.ok([q.a, q.b, q.c].every(Number.isInteger), `chain missing a term: "${q.text}"`);
-    const first = q.text.startsWith(`${q.a} + `) ? q.a + q.b : q.a - q.b;
-    assert.ok(first >= 0 && first <= 100, `chain intermediate out of range: "${q.text}"`);
-  }
+  // mixed-operator chains are GONE (user, sixth play-test): too hard, and a ＋
+  // chain carried a −, so the two tiles asked practically the same questions
+  assert.ok(!BUCKETS.some((b) => b.key.includes("chain")), "no chain bucket may return");
 });
 
 // The division sign is injected, so the module stays i18n-free (§12.1). A ÷
