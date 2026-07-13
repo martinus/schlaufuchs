@@ -569,6 +569,20 @@ test("a maxed rechnungen section stays a small fraction of the cookie budget", (
   assert.ok(bytes < BUDGET / 6, "…and a small fraction of the whole budget");
 });
 
+// A task with many cells forgives its FIRST wrong answer (§12.2): a wall or a
+// seven-cell scaffold is a lot of typing, and one slip must not sink the whole
+// waypoint. This is DOM-side behaviour (rechnungen.js), so what can be pinned
+// here is that the gate exists and is shaped right: multi-cell only, once per
+// task, and never once the task already missed — a silently deleted gate would
+// otherwise fail no test at all.
+test("a multi-cell task forgives its first slip — the gate is in the page module", () => {
+  const src = read("games/rechnungen/rechnungen.js");
+  assert.match(src, /task\.cells\.length > 1 && !slipUsed && !taskMissed/,
+    "the forgiveness gate must be multi-cell only, once, and before a real miss");
+  assert.match(src, /slipUsed = true;/, "the slip must be spent");
+  assert.match(src, /slipUsed = false;/, "…and handed back with every new task");
+});
+
 // The mode names are looked up at runtime — `t({...}[mode])` in picker.js — so
 // both i18n scans (tests/i18n.test.js) are blind to them: a missing modePlus
 // would render as the literal "modePlus" and no test would notice. So they are

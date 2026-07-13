@@ -805,6 +805,7 @@ footer p { margin: 0; }
   border-bottom: 4px solid var(--orange);
 }
 .feedback-aid .gap.stumbling,
+.question .cell.stumbling,
 .mc button.stumbling { animation: stumble 0.7s ease; }
 
 /* Up to ten rows of dots have to fit above the keypad on any phone, so the dot

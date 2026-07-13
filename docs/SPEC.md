@@ -1358,7 +1358,13 @@ its own waypoint** (§10.5): when the task ends the fox steps forward — onto a
 green node if it went cleanly, onto a red one if any cell was wrong, and then
 the path grows by one node for the re-queued ask, so she still reaches the
 basket exactly on the round's last answer. She stumbles at the moment of the
-wrong cell, and a task counts as first-try only if every cell was. Every cell has an *aid* — a binary
+wrong cell, and a task counts as first-try only if every cell was — with ONE
+exception: **a task with more than one cell forgives its first wrong answer**.
+A wall or a seven-cell scaffold is a lot of typing, and one slip must not sink
+the whole waypoint: the cell shakes, the entry clears, the child rethinks — no
+aid card (it would give the answer away), no penalty. Only the second wrong
+answer in the task is a real miss. A one-cell task is one calculation and
+keeps the einmaleins contract: wrong is wrong. Every cell has an *aid* — a binary
 sub-equation the wrong-answer card draws (§8.1: number line for ±, dot grid
 for ×/÷; no timer, no „Verstanden" — the way out is entering the right
 answer). A wall brick's aid is chosen at miss time from the bricks visible

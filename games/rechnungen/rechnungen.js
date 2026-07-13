@@ -103,6 +103,7 @@ let task = null; // the concrete task realised from the current bucket
 let cellIndex = -1; // the active cell, or -1 while a choice kind waits for a tap
 let cellDone = []; // per cell: answered (the child's own numbers stay marked)
 let taskMissed = false; // a wrong cell already told the engine about this task
+let slipUsed = false; // a multi-cell task forgives its FIRST wrong answer (§12.2)
 let currentId = null;
 let input = "";
 let buffer = ""; // digits typed during the short post-correct transition
@@ -176,6 +177,7 @@ function askNext() {
   task = questionFor(id, Math.random, t("divSign"));
   cellDone = task.cells.map(() => false);
   taskMissed = false;
+  slipUsed = false;
   qCounter++;
   startCell(CHOICE_KINDS.has(task.kind) ? -1 : 0);
 }
@@ -397,6 +399,18 @@ document.addEventListener("keydown", (e) => {
   e.preventDefault();
 });
 
+// The forgiven slip's feedback (§12.2): the active cell shakes, nothing else
+// happens. Called after renderQuestion rebuilt the markup, so the class lands
+// on the fresh element; under reduced motion the animation is killed and the
+// wrong-sound alone carries the message.
+function shakeActiveCell() {
+  const el = $("question").querySelector(".cell.active");
+  if (!el) return;
+  el.classList.remove("stumbling");
+  void el.offsetWidth; // restart the animation on a second slip… of the eye
+  el.classList.add("stumbling");
+}
+
 // The ⚡ moment (§10.6): one answer at rocket speed, marked the instant it
 // lands. Appended to the stage, not the question — renderQuestion rewrites the
 // question's innerHTML in this same tick and would eat it. The flight is a
@@ -457,6 +471,20 @@ function submit(value) {
     renderStatus();
     setTimeout(askNext, NEXT_MS);
   } else {
+    // A task with many cells forgives its FIRST wrong answer (§12.2): a wall
+    // or a scaffold is a lot of typing, and one slip must not sink the whole
+    // waypoint. The cell shakes, the entry clears, the child rethinks — no
+    // aid card (it would give the answer away), no penalty. Only the second
+    // wrong answer in the task is a real miss. A one-cell task is one
+    // calculation; it keeps the einmaleins contract: wrong is wrong.
+    if (task.cells.length > 1 && !slipUsed && !taskMissed) {
+      slipUsed = true;
+      input = "";
+      sfx.wrong();
+      renderQuestion();
+      shakeActiveCell();
+      return;
+    }
     // The engine hears only the FIRST miss (the task is already re-queued);
     // the child still finishes the remaining cells, aid in hand.
     if (!taskMissed) {
