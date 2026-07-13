@@ -638,7 +638,18 @@ footer p { margin: 0; }
    what you have — clearly apart from the printed ink of the givens. */
 .question .cell.done { color: var(--depth); }
 .question.qline .cell.done { border-color: transparent; }
-.question .cell.active { box-shadow: 0 0 0 3px var(--orange-soft); }
+/* The cell being answered has to be unmistakable — on a wall or grid every
+   blank is already dashed orange, so a pale ring around one of them did not
+   read as "this is the one you are filling" (play-test 2026-07-13, Mara).
+   The active cell now fills solid orange with white digits and a bold ring:
+   the eye lands on it at a glance. */
+.question .cell.active {
+  border-style: solid;
+  border-color: var(--orange);
+  background: var(--orange);
+  color: #fff;
+  box-shadow: 0 0 0 4px var(--orange-soft);
+}
 /* in a wall/grid an unfilled "?" is a real tap target (§12.1: pick, then type) */
 .q-mauer .cell:not(.done),
 .q-quad .cell:not(.done) { cursor: pointer; }
@@ -733,6 +744,22 @@ footer p { margin: 0; }
 }
 
 .pickheading:active { transform: scale(0.97); }
+
+/* The round chip reads "<place> <difficulty> │ <mode>". The separator between
+   the difficulty and the mode symbol used to be a middle dot, which a child
+   read as a multiplication sign standing between "Leicht" and "＋" (play-test
+   2026-07-13, Mara). A drawn vertical rule cannot be mistaken for an operator.
+   `.ph-txt` becomes a flex row so the rule sits centred beside the glyphs
+   (including the wall's inline `.modeglyph`). */
+.pickheading .ph-txt { display: inline-flex; align-items: center; gap: 0.45em; }
+.pickheading .ph-sep {
+  align-self: stretch;
+  width: 2px;
+  margin: 0.15em 0;
+  border-radius: 1px;
+  background: var(--ink-soft);
+  opacity: 0.45;
+}
 
 /* ---- the round's scene: sky, meadow, basket, fox (§10.5) ---- */
 .journey .j-sky { fill: #e8f3fa; }
@@ -1182,6 +1209,12 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   display: flex;
   flex-wrap: wrap;
   align-content: center;
+  /* A SINGLE row (a fresh Leicht tile: three stars) is one flex line, and
+     `align-content` has no effect on a single line — the line filled the box
+     and the stars sat pinned to its TOP, tucked under the name that paints over
+     them, so their crowns were clipped (play-test 2026-07-13, Mara). `align-items`
+     centres the row within the box whether it is one line or three. */
+  align-items: center;
   justify-content: center;
   row-gap: 2px;
   pointer-events: none;

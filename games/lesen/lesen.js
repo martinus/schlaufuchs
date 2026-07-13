@@ -126,7 +126,7 @@ fastPress(document.getElementById("wc-cover"), reveal);
 function updateChip() {
   $("pickchip").innerHTML =
     `<span class="ph-sym" aria-hidden="true">${iconHTML("region-lesen", { size: 20 })}</span>`
-    + `<span class="ph-txt">${t(DIFF_KEYS[diff])} · ${packFace(diff, pack)}</span>`;
+    + `<span class="ph-txt">${t(DIFF_KEYS[diff])}<span class="ph-sep" aria-hidden="true"></span>${packFace(diff, pack)}</span>`;
 }
 
 // `resume` is a round mirror from roundstore.js (§10.7); without one the

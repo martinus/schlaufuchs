@@ -23,7 +23,10 @@ export const THEMES = {
   // the village's first obstacle used to be a basket, which read as a second
   // copy of the big one standing at the end of the path
   village: { obstacles: ["j-sunflower", "j-rooster", "j-door"], path: "#d9b48f" },
-  mountain: { obstacles: ["j-rock", "j-bridge", "j-troll"], path: "#b0a99f" },
+  // a rock, a pine, a mountain goat — friendly things you pass on a climb. (The
+  // bridge and the troll it used to hold read as scary and out of place to a
+  // six-year-old, 2026-07-13.)
+  mountain: { obstacles: ["j-rock", "j-tree", "j-goat"], path: "#b0a99f" },
   forest: { obstacles: ["j-mushroom", "j-hedgehog", "j-door"], path: "#8fbf7f" },
   meadow: { obstacles: ["j-butterfly", "j-flower", "j-bee"], path: "#a8d08d" },
 };

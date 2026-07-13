@@ -711,8 +711,11 @@ unique item** in the round and the fox token on the current node.
   (§7.3), the fox always reaches the goal — the journey cannot be lost.
 - A wrong answer does **not** move the fox back; it plays the catch-breath
   animation in place.
-- Nodes 3, 6, 9 are **obstacle nodes** — visual milestones drawn from the
-  region theme (a friendly troll at a bridge, a locked gate, a river ferry).
+- Nodes 3, 6, 9 are **obstacle nodes** — friendly milestones drawn from the
+  region theme (a rock, a pine and a mountain goat on the Rechenberg climb; a
+  sunflower, a rooster and a gate in the village). They are scenery to pass, not
+  hazards: anything that reads as scary or puzzling to a young child (an earlier
+  bridge-and-troll pairing did) is out of place here.
   The question at an obstacle node is a normal question; passing it plays a
   themed mini-celebration on the obstacle glyph (bounce / wiggle / pop, one
   per obstacle index) with the normal correct-answer sound, then the glyph
@@ -1360,7 +1363,10 @@ equation is a task with one cell; a number wall has three, a division with
 remainder two. The line kinds read in one order, so their cells activate
 themselves; **in a wall or grid the
 child picks which blank to fill herself** — tapping a „?" activates it, only
-then does the keypad apply, and after every fill she picks again. The numbers
+then does the keypad apply, and after every fill she picks again. A number is
+committed by **OK — or by tapping the next blank while it is entered**, which
+submits it just as OK would (a child moves straight on without hunting for the
+OK key); tapping away from an *empty* active cell only moves the focus. The numbers
 she entered herself stay marked (blue, the colour of what you have) next to
 the printed givens. One task is one engine item, and **every asked task is
 its own waypoint** (§10.5): when the task ends the fox steps forward — onto a
