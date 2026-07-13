@@ -249,9 +249,16 @@ async function launch() {
   }
   if (!child) die(`no chrome found — tried ${CHROMES.join(", ")}. Set $CHROME.`);
 
-  // chrome writes the port it actually chose into the profile directory
+  // Chrome writes the port it actually chose into the profile directory.
+  // Wait up to 20s: the FIRST launch on a cold CI runner primes caches and
+  // sandboxes and has twice blown a 5s budget (both deploy smokes on
+  // 2026-07-13 failed exactly here, on the run's first page, and passed on
+  // rerun). A crashed Chrome is reported as that, not as a silent timeout.
   const portFile = join(dir, "DevToolsActivePort");
-  for (let i = 0; i < 100 && !existsSync(portFile); i++) await sleep(50);
+  for (let i = 0; i < 400 && !existsSync(portFile); i++) {
+    if (child.exitCode !== null) die(`chrome exited with ${child.exitCode} before reporting a port`);
+    await sleep(50);
+  }
   if (!existsSync(portFile)) die("chrome never reported a debugging port");
   const port = readFileSync(portFile, "utf8").split("\n")[0].trim();
 

@@ -79,6 +79,11 @@ echo "── Chrome (shoot.mjs) ──"
 for u in $urls; do
   if out=$(node "$root/tools/shoot.mjs" "$u" --size "$size" 2>&1); then
     echo "ok   $u"
+  # One retry: a cold runner's first Chrome launch can fail to come up at all,
+  # which says nothing about the page. A page that fails TWICE — once on a
+  # warmed-up Chrome — is a real failure and still fails the run.
+  elif out=$(node "$root/tools/shoot.mjs" "$u" --size "$size" 2>&1); then
+    echo "ok   $u (after one retry — first Chrome launch flaked)"
   else
     echo "FAIL $u"
     echo "$out" | sed 's/^/       /'
