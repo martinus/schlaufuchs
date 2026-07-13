@@ -12,8 +12,11 @@
 // round's summary is up. A task can hold several CELLS (a number wall is three
 // answers, a decomposition two, §12.1); the driver answers them in order, cell
 // by cell, reading each off the screen the way the child does. Options:
-// `wrongAt` (task number or list — that task's FIRST cell is answered wrongly,
-// which drives the aid), `delayMs` (think that long before every cell — the
+// `wrongAt` (task number or list — that task is answered wrongly until the aid
+// is up: a multi-cell task forgives the first slip, so the driver errs twice),
+// `slipAt` (task number or list — one wrong answer, then the right one: the
+// forgiveness itself, the task must still end clean),
+// `delayMs` (think that long before every cell — the
 // sleep lands in the game's per-cell tempo clock, the knob for reaching the
 // slow tempo tiers, §10.6), `stopAt` / `questions` (stop early, e.g. for a
 // mid-round screenshot), `stopInAid` (stop with the aid still open),
@@ -246,10 +249,11 @@
   // first cell gets the right answer plus one, which is never right. Returns a
   // trace, and throws rather than returning a half-played round.
   globalThis.playRechnung = async ({
-    questions = Infinity, wrongAt = [], stopAt = null, delayMs = 0, stopInAid = false,
+    questions = Infinity, wrongAt = [], slipAt = [], stopAt = null, delayMs = 0, stopInAid = false,
     stopKind = null,
   } = {}) => {
     const wrong = new Set(Array.isArray(wrongAt) ? wrongAt : [wrongAt]);
+    const slips = new Set(Array.isArray(slipAt) ? slipAt : [slipAt]);
     const pause = Number.isFinite(delayMs) && delayMs > 0 ? Math.round(delayMs) : 0;
     const trace = [];
     // a round is at most ~40 cells (walls and grids × requeues + margin)
@@ -288,10 +292,27 @@
       if (!Number.isInteger(want) || want < 0) throw new Error(`cannot solve cell ${cellNo} of "${st.text}" → ${want}`);
 
       if (pause) await sleep(pause); // "think" — counted by the per-cell tempo clock
-      const wrongNow = wrong.has(n) && firstOfTask;
+      const missNow = wrong.has(n) && firstOfTask;
+      const slipNow = slips.has(n) && firstOfTask;
       firstOfTask = false;
-      await answer(wrongNow ? want + 1 : want);
-      await sleep(SETTLE);
+
+      if (missNow || slipNow) {
+        await answer(want + 1);
+        await sleep(SETTLE);
+        if (!aidUp()) {
+          // the first wrong answer of a multi-cell task is forgiven (§12.2):
+          // the cell shakes and waits again — no aid, no penalty
+          trace.push({ q: n, cell: Number(cellNo), kind: st.kind, slip: true, ...readRechnungScene() });
+          if (missNow) {
+            // `wrongAt` wants the real miss: the SECOND wrong drives the aid
+            await answer(want + 1);
+            await sleep(SETTLE);
+          }
+        }
+      } else {
+        await answer(want);
+        await sleep(SETTLE);
+      }
 
       if (aidUp()) {
         trace.push({ q: n, cell: Number(cellNo), kind: st.kind, gave: want + 1, aid: true, ...readRechnungScene() });
@@ -299,6 +320,11 @@
         // The way out of the aid is entering the right answer.
         await answer(want);
         await sleep(SETTLE);
+      } else if (missNow || slipNow) {
+        // forgiven — now the right answer, the way the child rethinks
+        await answer(want);
+        await sleep(SETTLE);
+        trace.push({ q: n, cell: Number(cellNo), kind: st.kind, gave: want, ...readRechnungScene() });
       } else {
         trace.push({ q: n, cell: Number(cellNo), kind: st.kind, gave: want, ...readRechnungScene() });
       }
