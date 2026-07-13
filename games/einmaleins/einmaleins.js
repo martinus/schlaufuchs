@@ -16,7 +16,7 @@ import { createLeaveGuard } from "../../assets/js/leaveguard.js";
 import { iconHTML } from "../../assets/js/graphics.js";
 import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
 import strings from "./i18n.js";
-import { createLevelPicker, tableName } from "./picker.js";
+import { createLevelPicker, tableFace } from "./picker.js";
 import {
   POOL_COUNT, ROUND_SIZE, tablesFor, DIFF_KEYS, TEMPO_ICONS, TEMPO_KEYS, poolFor,
   questionFor, choicesFor, hardnessBoost,
@@ -117,7 +117,7 @@ let recallObs = {}; // {id: tier} per first-try answer, for the parents' grid (�
 function updateChip() {
   $("pickchip").innerHTML =
     `<span class="ph-sym" aria-hidden="true">${iconHTML("region-einmaleins", { size: 20 })}</span>`
-    + `<span class="ph-txt">${t(DIFF_KEYS[diff])} · ${tableName(table)}</span>`;
+    + `<span class="ph-txt">${t(DIFF_KEYS[diff])} · ${tableFace(table)}</span>`;
 }
 
 // `resume` is a round mirror from roundstore.js (§10.7); without one the

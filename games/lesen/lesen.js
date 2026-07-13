@@ -23,7 +23,7 @@ import { iconHTML } from "../../assets/js/graphics.js";
 import { overlayFrom } from "../../assets/js/overlay.js";
 import strings from "./i18n.js";
 import { CONTENT, itemCount } from "./content.js";
-import { createLevelPicker, packName } from "./picker.js";
+import { createLevelPicker, packFace } from "./picker.js";
 import {
   ROUND_SIZE, DIFF_KEYS, MIXED, flashMs, poolFor, questionFor, optionsFor,
   starsFor, ownedStars, starDigit, withStarDigit,
@@ -126,7 +126,7 @@ fastPress(document.getElementById("wc-cover"), reveal);
 function updateChip() {
   $("pickchip").innerHTML =
     `<span class="ph-sym" aria-hidden="true">${iconHTML("region-lesen", { size: 20 })}</span>`
-    + `<span class="ph-txt">${t(DIFF_KEYS[diff])} · ${packName(diff, pack)}</span>`;
+    + `<span class="ph-txt">${t(DIFF_KEYS[diff])} · ${packFace(diff, pack)}</span>`;
 }
 
 // `resume` is a round mirror from roundstore.js (§10.7); without one the
