@@ -264,6 +264,9 @@ test("a fogged region carries no star badge", () => {
   assert.ok(mapJs.includes('iconSVG("deco-trophy"'), "the badge must show THE cup, not a trophy's item emoji");
   assert.match(mapJs, /cup-ghost/, "a cupless region greys the cup");
   assert.ok(!mapJs.includes("TROPHIES[game]"), "no item emoji sneaks back onto the map");
+  // …and the plate holds the badge row too — half-off-the-plate counts on the
+  // grass were hard to read (user, 2026-07-13)
+  assert.match(mapJs, /badge && badge\.childNodes\.length/, "ensurePlate must union the badge into the plate");
 });
 
 // Regression: tapping a fogged region navigated to a stub page whose single

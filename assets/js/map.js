@@ -129,6 +129,14 @@ function fogRegion(region) {
 // me". The plate is measured from the label on every render, because switching
 // language makes "Times tables" out of "Einmaleins" and a plate cut to the old
 // name would sit under half of the new one.
+// An element's bbox in REGION coordinates: the badge group carries a translate
+// the label does not, and getBBox() is blind to it.
+function bboxInRegion(el) {
+  const b = el.getBBox();
+  const m = el.transform?.baseVal?.consolidate()?.matrix;
+  return m ? { x: b.x + m.e, y: b.y + m.f, width: b.width, height: b.height } : b;
+}
+
 function ensurePlate(region) {
   const label = region.querySelector(".region-label");
   let plate = region.querySelector(".label-plate");
@@ -138,7 +146,20 @@ function ensurePlate(region) {
     plate.setAttribute("rx", "9");
     region.insertBefore(plate, label);
   }
-  const b = label.getBBox();
+  // The plate holds the NAME AND THE BADGE ROW ("⭐ N 🏆 M"): the counts used
+  // to hang half off the plate's bottom edge onto the grass, where they were
+  // hard to read and looked like they belonged to nothing (user, 2026-07-13).
+  // Union the two boxes; a fogged region's badge is empty and adds nothing.
+  const badge = region.querySelector(".region-badge");
+  let b = bboxInRegion(label);
+  if (badge && badge.childNodes.length) {
+    const bb = bboxInRegion(badge);
+    const x1 = Math.max(b.x + b.width, bb.x + bb.width);
+    const y1 = Math.max(b.y + b.height, bb.y + bb.height);
+    b = { x: Math.min(b.x, bb.x), y: Math.min(b.y, bb.y) };
+    b.width = x1 - b.x;
+    b.height = y1 - b.y;
+  }
   plate.setAttribute("x", (b.x - 7).toFixed(1));
   plate.setAttribute("y", (b.y - 4).toFixed(1));
   plate.setAttribute("width", (b.width + 14).toFixed(1));
