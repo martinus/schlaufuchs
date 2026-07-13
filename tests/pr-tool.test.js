@@ -41,3 +41,11 @@ test("pr.sh merges the repo's way and proves the deploy", () => {
   assert.match(src, /grep -o 'v=\[a-z0-9\]\*'/,
     "the loop ends by reading the live site's version — deploy green is a claim, v=N is proof");
 });
+
+// The tool's own first run died writing its temp file to `.git/…`: in a git
+// WORKTREE, .git is a pointer file, not a directory. Temp files come from
+// mktemp, never from assumptions about the repo's plumbing layout.
+test("pr.sh takes its temp file from mktemp, not from under .git", () => {
+  assert.ok(src.includes("mktemp"), "the PR body temp file must come from mktemp");
+  assert.ok(!src.includes(".git/PR_BODY"), "nothing may be written under .git — a worktree's .git is a file");
+});

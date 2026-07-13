@@ -82,10 +82,14 @@ else
   if [ -n "$bodyfile" ]; then
     pr_url=$(gh pr create --title "$title" --body-file "$bodyfile")
   else
-    # the last commit's body IS the PR body — write the commit well once
-    git log -1 --format=%b > .git/PR_BODY.tmp
-    pr_url=$(gh pr create --title "$title" --body-file .git/PR_BODY.tmp)
-    rm -f .git/PR_BODY.tmp
+    # The last commit's body IS the PR body — write the commit well once.
+    # mktemp, not a path under .git: in a WORKTREE .git is a pointer FILE,
+    # and `> .git/…` dies with "Not a directory" (found by this tool's own
+    # first run, shipping itself).
+    body=$(mktemp -t pr-body-XXXXXX)
+    git log -1 --format=%b > "$body"
+    pr_url=$(gh pr create --title "$title" --body-file "$body")
+    rm -f "$body"
   fi
   pr=${pr_url##*/}
   echo "pr: opened $pr_url"
