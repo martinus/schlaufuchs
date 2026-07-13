@@ -128,7 +128,7 @@ let missedBuckets = new Set();
 function updateChip() {
   $("pickchip").innerHTML =
     `<span class="ph-sym" aria-hidden="true">${iconHTML("region-rechnungen", { size: 20 })}</span>`
-    + `<span class="ph-txt">${t(DIFF_KEYS[diff])} · ${modeSymbol(mode)}</span>`;
+    + `<span class="ph-txt">${t(DIFF_KEYS[diff])}<span class="ph-sep" aria-hidden="true"></span>${modeSymbol(mode)}</span>`;
 }
 
 // `resume` is a round mirror from roundstore.js (§10.7); without one the start
@@ -361,15 +361,18 @@ function keyPress(k) {
 }
 
 // Picking a brick (§12.1): in a wall or grid, tapping an unfilled "?" makes it
-// the active cell — the choosing itself is part of the task. Switching to
-// another blank is allowed until something is submitted; it clears the typed
-// digits but not the tempo clock (choosing counts as thinking).
+// the active cell — the choosing itself is part of the task. Switching from an
+// EMPTY active cell just moves the focus; switching while digits already wait
+// there commits them, exactly as OK would — a child who has typed her answer
+// moves straight to the next blank without hunting for OK (play-test
+// 2026-07-13, Mara). To abandon a half-typed cell she clears it (⌫) first.
 $("question").addEventListener("click", (e) => {
   if (roundOver || phase !== "answer" || !task || !CHOICE_KINDS.has(task.kind)) return;
   const el = e.target.closest(".cell");
   if (!el) return;
   const i = Number(el.dataset.cell);
   if (!Number.isInteger(i) || cellDone[i] || i === cellIndex) return;
+  if (cellIndex >= 0 && input !== "") { submit(Number(input)); return; }
   cellIndex = i;
   input = "";
   sfx.click();

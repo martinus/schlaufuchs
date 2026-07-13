@@ -117,7 +117,7 @@ let recallObs = {}; // {id: tier} per first-try answer, for the parents' grid (�
 function updateChip() {
   $("pickchip").innerHTML =
     `<span class="ph-sym" aria-hidden="true">${iconHTML("region-einmaleins", { size: 20 })}</span>`
-    + `<span class="ph-txt">${t(DIFF_KEYS[diff])} · ${tableFace(table)}</span>`;
+    + `<span class="ph-txt">${t(DIFF_KEYS[diff])}<span class="ph-sep" aria-hidden="true"></span>${tableFace(table)}</span>`;
 }
 
 // `resume` is a round mirror from roundstore.js (§10.7); without one the

@@ -480,14 +480,16 @@ export const TEMPO_SLOTS = 3;
 // Upper bounds (ms) on the round's median cell time, per difficulty:
 // [hare, car, rocket]. Leicht sits above einmaleins' keypad Leicht; Mittel adds
 // carrying/borrowing; Schwer's single step is a decomposition row or a
-// remainder, so it sits later still. Loosened after the first play-test: the
-// original rocket bounds (3/5/7 s including the typing) made the ⚡ nearly
-// unreachable even for an adult. Deliberately plain named numbers — retune
-// after a real child.
+// remainder, so it sits later still. Retuned twice: first after the first
+// play-test (the original rocket bounds of 3/5/7 s made ⚡ nearly unreachable
+// even for an adult), then again on 2026-07-13 after a real child — the HARE,
+// the entry medal, was still out of reach for a six-year-old, so its bound is
+// now generous ("you kept going"), and car/rocket stay the brisk/fast prizes.
+// Deliberately plain named numbers — retune after the next child.
 export const TEMPO_TIERS = [
-  [9000, 6500, 4500], // Leicht
-  [13000, 9000, 6500], // Mittel
-  [17000, 12500, 9000], // Schwer
+  [15000, 9000, 5500], // Leicht
+  [20000, 13000, 8000], // Mittel
+  [26000, 17000, 11000], // Schwer
 ];
 
 export const TEMPO_ICONS = [null, "tempo-hare", "tempo-car", "tempo-rocket"];
