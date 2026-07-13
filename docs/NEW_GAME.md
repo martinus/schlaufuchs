@@ -37,7 +37,9 @@ Copy-adapt from einmaleins/lesen; keep the element ids (`#pick-overlay`,
   What stays per game is data — `TEMPO_TIERS` bounds, round sizes, how the
   star digit strings are indexed. `maxPoints(content)` computes what the game
   can pay.
-- `games/<name>/picker.js` — copy of the picker; tiles, walk-then-open.
+- `games/<name>/picker.js` — a thin adapter over the shared picker
+  (`assets/js/levelpicker.js`, which owns tiles/fox/walk-then-open):
+  `tilesFor(d)` returns the game's tiles as `{id, face, name, left, tempo}`.
 - `games/<name>/i18n.js` — de+en in one file.
 - `games/<name>/content.js` (if data-driven) — **append-only** when item
   order feeds a box digit string; say so in the header comment. Authoring
@@ -47,7 +49,8 @@ Copy-adapt from einmaleins/lesen; keep the element ids (`#pick-overlay`,
 Free machinery — use, don't rebuild: `adaptive.js` (Leitner session),
 `journey.js` (themes: village/mountain/forest/meadow), `overlay.js`,
 `chrome.js`, `leaveguard.js`, `trophycard.js` + `showcase.js`, `confetti.js`,
-`audio.js`, `levelfox.js`.
+`audio.js`, `levelpicker.js` + `levelfox.js`, `roundrules.js`, `fastpress.js`,
+`blitz.js`.
 
 ## 2. The PLAYABLE flip and everything pinned to it
 

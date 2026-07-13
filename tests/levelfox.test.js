@@ -57,12 +57,12 @@ test("a walk starts under the fox and ends on the tile she tapped", () => {
 // without going through the walk would put the child in a round while the fox
 // is still mid-air two tiles away.
 test("a tile opens its level only once the fox has arrived", () => {
-  const src = read("games/einmaleins/picker.js");
+  const src = read("assets/js/levelpicker.js");
   const choose = src.slice(src.indexOf("function chooseLevel"), src.indexOf("function render"));
   assert.match(choose, /walkTo\(tile, \(\) => openLevel\(/, "the walk must open the level");
   assert.ok(!/onPick\(/.test(choose), "chooseLevel must not open a level itself");
   // …except when the fox is already there: no walk, no wait.
-  assert.match(choose, /if \(d === cur\.diff && tbl === cur\.table\) return openLevel/);
+  assert.match(choose, /if \(d === cur\.diff && id === cur\.id\) return openLevel/);
   // and a second tap during a walk cannot start a second one
   assert.match(choose, /if \(levelFox\?\.walking\) return/);
 });
@@ -70,10 +70,10 @@ test("a tile opens its level only once the fox has arrived", () => {
 // `onDismiss` reads `roundOver` and `session`, and `startRound` writes both.
 // Close the picker first and the summary of the round she just walked away from
 // opens on top of the round she just chose. The contract has two halves now:
-// picker.js promises `onPick` runs before the overlay closes, and einmaleins.js
-// promises `onPick` is the round's start.
+// levelpicker.js promises `onPick` runs before the overlay closes, and
+// einmaleins.js promises `onPick` is the round's start.
 test("a chosen level starts before the picker closes over it", () => {
-  const picker = read("games/einmaleins/picker.js");
+  const picker = read("assets/js/levelpicker.js");
   const open = picker.slice(picker.indexOf("function openLevel"), picker.indexOf("function chooseLevel"));
   assert.ok(
     open.indexOf("onPick(") >= 0 && open.indexOf("onPick(") < open.indexOf("overlay.close();"),
@@ -105,8 +105,8 @@ test("a dismissed picker never leaves the stage empty", () => {
   const dismiss = game.slice(game.indexOf("onDismiss() {"), game.indexOf("const summary"));
   assert.match(dismiss, /if \(roundOver\) summary\.open\(\)/, "a finished round shows its summary again");
   assert.match(dismiss, /else if \(!session\) startRound\(\)/, "no round behind it: start one");
-  // the walking guard lives in the picker, in front of every dismissal
-  const picker = read("games/einmaleins/picker.js");
+  // the walking guard lives in the shared picker, in front of every dismissal
+  const picker = read("assets/js/levelpicker.js");
   const onClose = picker.slice(picker.indexOf("onClose() {"), picker.indexOf("function openLevel"));
   assert.match(onClose, /if \(levelFox\?\.walking\) return/, "a walk in flight owns what happens next");
   assert.match(onClose, /onDismiss\(\)/, "everything else is the game's decision");
@@ -114,8 +114,8 @@ test("a dismissed picker never leaves the stage empty", () => {
 
 test("the fox on the tile is drawn, and said", () => {
   // It is aria-hidden, so a screen reader is told in words where the fox
-  // stands. The string is shared: every game's picker speaks it (§3.3).
-  const src = read("games/einmaleins/picker.js");
+  // stands. The string is shared, like the picker that speaks it (§3.3).
+  const src = read("assets/js/levelpicker.js");
   assert.match(src, /t\("tileHere"\)/);
   assert.match(read("assets/i18n/de.js"), /tileHere: "hier stehst du"/);
   assert.match(read("assets/i18n/en.js"), /tileHere: "you are here"/);

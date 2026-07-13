@@ -384,20 +384,23 @@ test('the "Alle" tile is the die alone — a picture, no word', () => {
 // pressed. It is now one scrollable list of every level the game has.
 test("the picker is one list of levels, not a switch above a grid", () => {
   const page = read("games/einmaleins/index.html");
-  const src = read("games/einmaleins/picker.js");
+  // the tile machinery is the shared picker; the game file only adapts tiles
+  const shared = read("assets/js/levelpicker.js");
   const css = read("assets/css/schlaufuchs.css");
 
   assert.match(page, /id="pick-levels"/);
   for (const gone of ["pick-diff", "pick-tables", 'class="seg"']) {
     assert.ok(!page.includes(gone), `${gone} survived in the picker markup`);
   }
-  assert.ok(!/aria-pressed/.test(src), "nothing in the picker is a toggle any more");
-  assert.ok(!/dmul|×\$\{v\}|diffWorth/.test(src), "the ×2 / ×3 promise is gone from the picker");
+  for (const src of [shared, read("games/einmaleins/picker.js")]) {
+    assert.ok(!/aria-pressed/.test(src), "nothing in the picker is a toggle any more");
+    assert.ok(!/dmul|×\$\{v\}|diffWorth/.test(src), "the ×2 / ×3 promise is gone from the picker");
+  }
   assert.ok(!/\.seg\b|\.dmul\b/.test(css), "dead rules for a control that no longer exists");
 
   // A difficulty is a heading, not a control: choosing one IS choosing a tile.
-  assert.match(src, /const head = document\.createElement\("h3"\)/);
-  assert.ok(!/head\.addEventListener/.test(src), "a heading must not be clickable");
+  assert.match(shared, /const head = document\.createElement\("h3"\)/);
+  assert.ok(!/head\.addEventListener/.test(shared), "a heading must not be clickable");
   for (const slug of ["easy", "medium", "hard"]) {
     assert.ok(css.includes(`.lvl-head.lvl-${slug}`), `no colour for the ${slug} heading`);
     assert.ok(css.includes(`.tilegrid.lvl-${slug} button`), `no colour for the ${slug} tiles`);
@@ -408,10 +411,11 @@ test("the picker is one list of levels, not a switch above a grid", () => {
 // Schwer 9 — so "harder pays three times as much" needs no words. As she wins
 // them the tile empties, and an empty one shows a tick.
 test("a tile shows the stars it still has to give", () => {
-  const src = read("games/einmaleins/picker.js");
-  assert.match(src, /tilePointsLeft\(starDigit\(starsByDiff\[d\], tbl\), d\)/);
-  assert.match(src, /left > 0 \? "<i>⭐<\/i>"\.repeat\(left\) : '<b class="tdone">✓<\/b>'/);
-  assert.match(src, /if \(left === 0\) b\.classList\.add\("mastered"\)/);
+  // the game's adapter computes what is left; the shared picker draws it
+  assert.match(read("games/einmaleins/picker.js"), /tilePointsLeft\(starDigit\(starsByDiff\[d\], tbl\), d\)/);
+  const shared = read("assets/js/levelpicker.js");
+  assert.match(shared, /left > 0 \? "<i>⭐<\/i>"\.repeat\(left\) : '<b class="tdone">✓<\/b>'/);
+  assert.match(shared, /if \(left === 0\) b\.classList\.add\("mastered"\)/);
 
   // 3 / 6 / 9 on an untouched tile, nothing on a finished one — the numbers the
   // colour bands promise. tilePointsLeft is unit-tested in rewards.test.js.
@@ -444,7 +448,7 @@ test("each difficulty offers its own tiles, and nothing is disabled anywhere", (
 
 // The list is long enough to scroll. It must open on the level she is playing.
 test("the picker opens on the tile she is on", () => {
-  const src = read("games/einmaleins/picker.js");
+  const src = read("assets/js/levelpicker.js");
   assert.match(src, /initialFocus: "\[aria-current='true'\]"/);
   assert.match(src, /b\.setAttribute\("aria-current", "true"\)/);
   assert.match(read("assets/css/schlaufuchs.css"), /\.tilegrid button\.current \{/);
@@ -719,7 +723,7 @@ test("the tempo ladder is wired: first tries only, symbol only above nothing", (
   assert.match(src, /awardTempo\(\{ stars, tier, best: oldTempo \}\)/);
   assert.match(src, /tempo: tempoObj/);
   // the picker draws a badge only when there is one; tier 0 draws NOTHING
-  assert.match(read("games/einmaleins/picker.js"), /const badge = tempo > 0\n\s*\? `<span class="ttempo"/);
+  assert.match(read("assets/js/levelpicker.js"), /const badge = tempo > 0\n\s*\? `<span class="ttempo"/);
   // the ⚡ moment: a single rocket-speed answer, marked as it lands
   assert.match(src, /tempoTier\(took, diff\) === 3\) blitzFlash\(/);
   // the summary line exists in the sheet
