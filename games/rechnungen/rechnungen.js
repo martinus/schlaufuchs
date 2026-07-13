@@ -104,6 +104,7 @@ let cellIndex = -1; // the active cell, or -1 while a choice kind waits for a ta
 let cellDone = []; // per cell: answered (the child's own numbers stay marked)
 let taskMissed = false; // a wrong cell already told the engine about this task
 let slipUsed = false; // a multi-cell task forgives its FIRST wrong answer (§12.2)
+let pendingCell = null; // a blank tapped to commit the active one → jump there next (§12.1)
 let currentId = null;
 let input = "";
 let buffer = ""; // digits typed during the short post-correct transition
@@ -178,6 +179,7 @@ function askNext() {
   cellDone = task.cells.map(() => false);
   taskMissed = false;
   slipUsed = false;
+  pendingCell = null;
   qCounter++;
   startCell(CHOICE_KINDS.has(task.kind) ? -1 : 0);
 }
@@ -200,9 +202,15 @@ function startCell(idx) {
 }
 
 // After a fill: the next undone cell in reading order — or, in a wall/grid,
-// back to "pick one" so every brick starts with the child's own choice.
+// back to "pick one" so every brick starts with the child's own choice. But if
+// the child committed THIS cell by tapping the next blank (§12.1), she has
+// already chosen — jump straight onto it instead of making her tap twice.
 function nextCell() {
-  startCell(CHOICE_KINDS.has(task.kind) ? -1 : cellDone.findIndex((d) => !d));
+  if (!CHOICE_KINDS.has(task.kind)) return startCell(cellDone.findIndex((d) => !d));
+  const p = pendingCell;
+  pendingCell = null;
+  const jump = Number.isInteger(p) && p >= 0 && p < cellDone.length && !cellDone[p];
+  startCell(jump ? p : -1);
 }
 
 function renderStatus() {
@@ -366,13 +374,15 @@ function keyPress(k) {
 // there commits them, exactly as OK would — a child who has typed her answer
 // moves straight to the next blank without hunting for OK (play-test
 // 2026-07-13, Mara). To abandon a half-typed cell she clears it (⌫) first.
+// If that commit is correct, `pendingCell` carries her onto the blank she
+// tapped, so the one tap both commits and moves (Martin, same play-test).
 $("question").addEventListener("click", (e) => {
   if (roundOver || phase !== "answer" || !task || !CHOICE_KINDS.has(task.kind)) return;
   const el = e.target.closest(".cell");
   if (!el) return;
   const i = Number(el.dataset.cell);
   if (!Number.isInteger(i) || cellDone[i] || i === cellIndex) return;
-  if (cellIndex >= 0 && input !== "") { submit(Number(input)); return; }
+  if (cellIndex >= 0 && input !== "") { pendingCell = i; submit(Number(input)); return; }
   cellIndex = i;
   input = "";
   sfx.click();
@@ -463,6 +473,9 @@ function submit(value) {
     renderStatus();
     setTimeout(askNext, NEXT_MS);
   } else {
+    // The tapped-to blank only carries her forward on a CORRECT commit; a wrong
+    // one keeps her on this cell (slip) or opens the aid, so drop the pick.
+    pendingCell = null;
     // A task with many cells forgives its FIRST wrong answer (§12.2): a wall
     // or a scaffold is a lot of typing, and one slip must not sink the whole
     // waypoint. The cell shakes, the entry clears, the child rethinks — no

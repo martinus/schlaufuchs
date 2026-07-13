@@ -1366,7 +1366,10 @@ child picks which blank to fill herself** — tapping a „?" activates it, only
 then does the keypad apply, and after every fill she picks again. A number is
 committed by **OK — or by tapping the next blank while it is entered**, which
 submits it just as OK would (a child moves straight on without hunting for the
-OK key); tapping away from an *empty* active cell only moves the focus. The numbers
+OK key). If that commit is **correct**, the blank she tapped becomes the active
+cell, so the one tap both fills and moves; if it is wrong she stays put (the
+slip shakes, or the aid opens). Tapping away from an *empty* active cell only
+moves the focus. The numbers
 she entered herself stay marked (blue, the colour of what you have) next to
 the printed givens. One task is one engine item, and **every asked task is
 its own waypoint** (§10.5): when the task ends the fox steps forward — onto a
