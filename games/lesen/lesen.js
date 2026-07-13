@@ -57,6 +57,11 @@ const summary = overlayFrom(document.getElementById("sum-overlay"), {
 });
 const SUM_OK_KEYS = ["sumOk1", "sumOk2", "sumOk3", "sumOk4", "sumOk5", "sumOk6"];
 const NEXT_MS = 250;
+// A correct reading answer is held a beat longer than a Leicht tap (§14.2): the
+// scene emoji cheers and the win lingers, so the reading — the real work on
+// Schwer — feels rewarded, not just ticked off. It never touches the tempo
+// clock, which stops at the answer, not at the next question.
+const READ_NEXT_MS = 650;
 
 // React on pointerdown for instant response on touch devices; the later
 // synthetic click is suppressed. Keyboard activation still works via click.
@@ -250,6 +255,14 @@ function renderQuestion() {
   const passage = $("passage");
   passage.hidden = question.kind !== "read";
   passage.textContent = question.kind === "read" ? `${question.passage} ` : "";
+  // The picture-book anchor (§14.2): a scene emoji floated beside the passage,
+  // so a Schwer screen is as inviting as the emoji of Leicht instead of a wall
+  // of grey text. Kept OUT of #question/#passage on purpose — the round driver
+  // reads their text to find the answer, and the scene must never join it.
+  const scene = $("scene");
+  scene.hidden = question.kind !== "read" || !question.scene;
+  scene.textContent = question.kind === "read" ? (question.scene ?? "") : "";
+  scene.classList.remove("cheer");
   // the driver watches this stamp to know a new question is up (play-lesen.js)
   $("question").dataset.q = String(qToken);
   fitQuestion();
@@ -352,7 +365,13 @@ function submit(value, btn) {
     sfx.correct();
     journey.advance();
     renderStatus(); // a banked star flies into the basket the moment it is won
-    setTimeout(askNext, NEXT_MS);
+    // A reading answer earns a warm beat (§14.2): the scene emoji cheers (a
+    // keyframe pop, decorative only — reduced motion stills it and nothing
+    // depends on it running, §10.5) and the win is held a touch longer than a
+    // Leicht tap.
+    const celebrate = question.kind === "read";
+    if (celebrate) $("scene").classList.add("cheer");
+    setTimeout(askNext, celebrate ? READ_NEXT_MS : NEXT_MS);
   } else {
     missedIds.add(currentId);
     phase = "wrong-wait";
@@ -384,7 +403,8 @@ function showFeedback(wrong) {
     fb.innerHTML = `<span class="fb-sent">${question.text}</span>
       <span class="eq"><b class="ans">${verdict}</b></span>`;
   } else {
-    fb.innerHTML = `<span class="fb-sent">${question.text}</span>
+    const anchor = question.scene ? `<span class="fb-scene" aria-hidden="true">${question.scene}</span>` : "";
+    fb.innerHTML = `${anchor}<span class="fb-sent">${question.text}</span>
       <span class="eq"><span class="fb-lbl">${t("lesenAnswerIs")}</span> <b class="ans">${question.answer}</b></span>`;
   }
   card.hidden = true;

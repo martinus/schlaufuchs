@@ -133,6 +133,7 @@ test("reading items ask their question, with the correct answer first (§14.2)",
     assert.equal(q.passage, item.text, `id ${id}: the passage is carried`);
     assert.equal(q.text, item.q, `id ${id}: the question is what she answers`);
     assert.equal(q.answer, item.a[0], `id ${id}: the correct answer is authored first`);
+    assert.equal(q.scene, item.e, `id ${id}: the scene emoji is carried for the card`);
   }
 });
 
@@ -435,7 +436,14 @@ test("the blitz is a JS timer wearing a CSS transition, never an animation", () 
   const css = read("assets/css/schlaufuchs.css");
   const cardCss = css.slice(css.indexOf("---- lesen:"), css.indexOf(".mc-emoji"));
   assert.match(cardCss, /transition: opacity/, "the fade is a transition");
-  assert.ok(!/animation\s*:|@keyframes/.test(cardCss), "a keyframe animation would survive nothing");
+  // Nothing that HIDES the word may animate — a keyframe would never run under
+  // reduced motion and the flash would silently stop flashing. A decorative
+  // scene cheer (the picture-book anchor, §14.2) is a keyframe on purpose, and
+  // reduced motion is meant to still it; it is whitelisted by name so any OTHER
+  // keyframe or a `wc-hidden` animation still fails here.
+  const wcHiddenRules = cardCss.match(/[^}]*wc-hidden[^{}]*\{[^}]*\}/g) ?? [];
+  for (const r of wcHiddenRules) assert.ok(!/animation/.test(r), `the word-hide must not animate: ${r}`);
+  assert.ok(!/@keyframes\s+(?!scene-cheer\b)/.test(cardCss), "only the decorative scene cheer may be a keyframe here");
 });
 
 test("a word waits behind the ready cover; the blitz arms only on reveal (§14.2)", () => {

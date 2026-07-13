@@ -884,6 +884,31 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   white-space: normal;
 }
 
+/* The picture-book anchor for a Schwer passage (§14.2): a scene emoji floated
+   into the text like an illustrated capital, so a reading screen is as inviting
+   as the emoji of Leicht — not a wall of grey — and gives a pre-reading anchor
+   for what the passage is about. It sets the scene, never the answer (content.js).
+   Only on the read card; the attribute-hidden span is display:none everywhere else. */
+.wordcard .scene[hidden] { display: none; }
+.wordcard.read .scene {
+  float: left;
+  font-size: 2.6rem;
+  line-height: 1;
+  margin: 2px 12px 2px 0;
+}
+/* The warm beat on a correct reading answer (§14.2): a quick happy pop. A
+   keyframe, decorative only — prefers-reduced-motion stills it (the rule at the
+   foot of the file), and nothing depends on it running. */
+@keyframes scene-cheer {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.28) rotate(-6deg); }
+  100% { transform: scale(1); }
+}
+.wordcard.read .scene.cheer { animation: scene-cheer 0.5s ease; }
+/* the same anchor beside the aid's passage, so the picture stays with the text
+   she is re-reading (§14.2) */
+.feedback-aid .fb-scene { font-size: 2rem; margin-right: 8px; vertical-align: -0.15em; }
+
 /* Four reading answers (§14.2): a single column of Choice tiles whose text
    wraps, so a whole answer sentence fits and reads left-to-right like a list.
    Kept a touch tighter than the emoji buttons so a full passage, its question

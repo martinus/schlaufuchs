@@ -1487,6 +1487,23 @@ plain named numbers to be retuned after watching a real child, like
   for a reading question — drawn large, since a reading screen has no keypad to
   leave room for — so she always sees how far she is; it steps aside only while
   the wrong-answer aid is up (as for every kind).
+- **A picture-book scene anchor** (each item's `e`, §14.3): a scene emoji floated
+  into the passage like an illustrated capital, so a Schwer screen is as inviting
+  as the emoji of Leicht instead of a wall of grey text, and the child has a
+  pre-reading anchor for what the passage is about. It sets the **scene** (the
+  subject, the place — 🦔 for the hedgehog, 🚢 for the ship), **never the answer**:
+  an emoji that telegraphed the answer would let her skip the reading it is there
+  to reward. It rides in its own element (`#scene`), out of `#question`/`#passage`
+  — the round driver reads their text to find the answer, and the scene must never
+  join it — and stays beside the passage in the wrong-answer aid too. It is
+  decorative, so under `prefers-reduced-motion` it simply shows (it is a float, not
+  an animation) and the reading survives.
+- **A correct reading answer earns a warm beat** — the scene emoji cheers (a
+  keyframe pop; reduced motion stills it to no pop, and nothing depends on it
+  running, §10.5) and the win is held a touch longer than a Leicht tap
+  (`READ_NEXT_MS`), so the reading — the real work on Schwer — feels rewarded,
+  not just ticked off. The longer pause never touches the tempo clock, which
+  stops at the answer, not at the next question (§14.4).
 
 ### 14.3 Content (`content.js`), tiles and the adaptive engine
 
@@ -1495,8 +1512,9 @@ order, items in theirs) is the box digit string's index, so reordering
 shifts every child's boxes. German first; content is keyed by language.
 
 - **12 tiles**: per difficulty four themed tiles — Leicht short words `{ w, e }`,
-  Mittel Stimmt/Blödsinn pairs `{ ok, no }`, Schwer reading passages `{ text, q, a }`
-  (the correct answer authored first, shuffled by `optionsFor`). Both non-word
+  Mittel Stimmt/Blödsinn pairs `{ ok, no }`, Schwer reading passages `{ e, text, q, a }`
+  (the correct answer authored first, shuffled by `optionsFor`; `e` a scene emoji
+  — the picture-book anchor of §14.2, setting the scene and never the answer). Both non-word
   difficulties were rewritten **in place** — Schwer from the old Quatsch pairs to
   passages, Mittel from the old long-word packs to pairs (their pack keys kept, so
   their i18n names stayed too): same item positions, so no child's Leitner box
