@@ -5,6 +5,7 @@
 // box of a fact is the diagnosis; nothing extra is stored to produce it.
 
 import { practiceTriple } from "./rewards.js";
+import { clampBox } from "./adaptive.js";
 
 // Box semantics (§7.1). `clampBox` defaults an unknown fact to 2, and a fact
 // leaves box 2 the moment it is asked (correct → 3, wrong → 0). So box 2 means
@@ -68,6 +69,35 @@ export function sightTally(boxes, ids) {
   const tally = { weak: 0, open: 0, solid: 0, fast: 0 };
   for (const id of ids) tally[sightState(boxes[id])]++;
   return tally;
+}
+
+// The word ids a parent should read with the child: box 0 or 1, weakest first,
+// then in content order so the list is stable. This is the reading game's
+// "here you help most" — the sight words that still slip.
+export function weakSightIds(boxes, ids) {
+  return ids
+    .map((id) => ({ id, box: clampBox(boxes[id]) }))
+    .filter(({ box }) => box === 0 || box === 1)
+    .sort((a, b) => a.box - b.box)
+    .map(({ id }) => id);
+}
+
+// --- rechnungen (§12, §20) ---------------------------------------------------
+// Rechnungen has no recall tracker — its Leitner box IS the whole diagnosis, so
+// a skill reads exactly like an einmaleins fact (heatOf). One picker cell (a
+// mode at a difficulty) pools SEVERAL skill buckets; this folds their boxes into
+// the one state a parent reads for that cell: weak if any bucket slips, else
+// solid if any sits, else open — nothing practised. The priority answers "is
+// there anything to help with here", so a single weak skill is never hidden by
+// its solid neighbours.
+export function groupState(boxes) {
+  let solid = false;
+  for (const b of boxes ?? []) {
+    const s = heatOf(b);
+    if (s === "weak") return "weak";
+    if (s === "solid") solid = true;
+  }
+  return solid ? "solid" : "open";
 }
 
 // Practice time per difficulty, plus totals. Reads whatever the cookie holds,

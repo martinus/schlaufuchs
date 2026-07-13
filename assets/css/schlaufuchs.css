@@ -1913,6 +1913,43 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 }
 .factlist .fact b { color: var(--depth); }
 
+/* A clickable index (§20): shown only once two games report, it jumps to each
+   section — the page grew long enough that a parent should not have to scroll
+   past one game to reach another. */
+.ptoc {
+  display: flex; flex-direction: column; gap: 3px;
+  background: var(--panel); box-shadow: var(--shadow);
+  border-radius: var(--radius); padding: 10px 14px; margin: 4px 0 10px;
+}
+.ptoc-h {
+  margin: 0 0 3px; color: var(--ink-soft);
+  font-size: 0.72rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase;
+}
+.ptoc a { color: var(--depth); font-weight: 700; text-decoration: none; }
+.ptoc a:hover { text-decoration: underline; }
+/* so an anchored jump does not tuck the heading under the top of the viewport */
+#p-em-sec, #p-lesen-sec, #p-rechnen-sec { scroll-margin-top: 12px; }
+
+/* One line per reading tier (§20): the tier name, then how it is spread across
+   the three states. A tally a parent scans, not a wall of chips. */
+.tierline { color: var(--ink-soft); margin: 6px 0; }
+.tierline b { color: var(--depth); }
+
+/* The rechnungen skill grid (§20): a wide label column and three level columns,
+   each cell one folded state square. The times-table heat wears the same
+   colours; here the rows are kinds of sums, not factors. */
+.skillgrid {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 1fr) repeat(3, 2.2rem);
+  gap: 4px; align-items: center;
+  max-width: 18rem; margin: 8px 0 12px;
+}
+.skillgrid .sg-h {
+  font-size: 0.68rem; font-weight: 700; color: var(--ink-soft); text-align: center;
+}
+.skillgrid .sg-mode { font-size: 0.85rem; font-weight: 700; color: var(--ink); }
+.skillgrid .sg-c { height: 2.2rem; border-radius: 4px; }
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
