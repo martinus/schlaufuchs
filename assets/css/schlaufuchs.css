@@ -638,12 +638,15 @@ footer p { margin: 0; }
    what you have — clearly apart from the printed ink of the givens. */
 .question .cell.done { color: var(--depth); }
 .question.qline .cell.done { border-color: transparent; }
-/* The cell being answered has to be unmistakable — on a wall or grid every
-   blank is already dashed orange, so a pale ring around one of them did not
-   read as "this is the one you are filling" (play-test 2026-07-13, Mara).
-   The active cell now fills solid orange with white digits and a bold ring:
-   the eye lands on it at a glance. */
-.question .cell.active {
+/* ONE format per shape. A task that asks a single number (op, gap, ÷R — every
+   `.qline` kind) writes its answer in the SAME `.gap` slot einmaleins uses: an
+   orange digit on an orange underline, nothing more (Martin, 2026-07-13 — "that
+   is plenty"). Only the boxed grids need more, because there every blank is
+   already an orange box and one of them has to say "this is the one you are
+   filling": on a wall or grid the active cell fills solid orange with white
+   digits and a bold ring, so the eye lands on it at a glance. */
+.q-mauer .cell.active,
+.q-quad .cell.active {
   border-style: solid;
   border-color: var(--orange);
   background: var(--orange);
@@ -666,6 +669,9 @@ footer p { margin: 0; }
   border: 2px solid var(--ink-soft);
   border-radius: 10px;
 }
+/* A given brick is the frame the wall is built on — blue, "what is already
+   there", the same face the grid gives its headers (user, 2026-07-13). */
+.mcell:not(.cell) { background: var(--depth-soft); border-color: var(--depth-soft); color: var(--depth); }
 .mcell.cell { border-style: dashed; border-color: var(--orange); }
 .mcell.cell.done { border-style: solid; border-color: var(--depth-soft); }
 
