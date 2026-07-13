@@ -416,10 +416,14 @@ function rejectRetry(el) {
 }
 
 // The only way out of the aid, on every difficulty: the right answer, entered.
+// The missed question still ends here — so the fox still takes her step, onto
+// a red waypoint, and the path grows by the re-queued ask (§10.5).
 function continueRound() {
   if (phase !== "wrong-wait") return;
   phase = "correct-wait";
   sfx.correct();
+  journey.advanceMissed();
+  renderStatus();
   setTimeout(askNext, NEXT_MS);
 }
 
