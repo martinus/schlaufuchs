@@ -259,10 +259,11 @@ test("a fogged region carries no star badge", () => {
   assert.ok(render.includes("const cups = trophyCount(game, rewards.pr?.[game] ?? 0)"),
     "…and a playable region keeps its badge — counting cups without throwing on a "
     + "fresh cookie, where rewards.pr does not exist yet (smoke.sh caught exactly that)");
-  // …which now also carries the region's latest trophy — grey ghost before the
-  // first is won (user request, 2026-07-13), so the map shows progress wordlessly
-  assert.match(mapJs, /cup-ghost/, "a cupless region must show the ghost of the first");
-  assert.match(mapJs, /TROPHIES\[game\]\[Math\.max\(cups - 1, 0\)\]/, "the cup shown is the latest won");
+  // …which also carries the trophy count in the fox chip's own grammar
+  // ("⭐ N 🏆 M") — the latest trophy's own emoji read as stray decoration.
+  assert.ok(mapJs.includes('iconSVG("deco-trophy"'), "the badge must show THE cup, not a trophy's item emoji");
+  assert.match(mapJs, /cup-ghost/, "a cupless region greys the cup");
+  assert.ok(!mapJs.includes("TROPHIES[game]"), "no item emoji sneaks back onto the map");
 });
 
 // Regression: tapping a fogged region navigated to a stub page whose single
