@@ -495,6 +495,8 @@ footer p { margin: 0; }
 .journey { width: 100%; height: auto; display: block; }
 .journey .j-node { fill: var(--orange-soft); stroke: var(--orange); stroke-width: 2; }
 .journey .j-node.done { fill: var(--ok); stroke: var(--ok); }
+/* a task that ended after a stumble still earns its waypoint — a red one */
+.journey .j-node.missed { fill: #f2b6ba; stroke: var(--err); }
 /* obstacle mini-celebrations when the fox passes a milestone (§8.2).
    transform-box/origin are required so scale/rotate pivot on the glyph
    itself, for both <text> and swapped-in <image>. */

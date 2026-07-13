@@ -399,11 +399,15 @@ function rejectRetry(el) {
   el.classList.add("stumbling");
 }
 
-// The only way out of the aid: the right answer, given.
+// The only way out of the aid: the right answer, given. The missed word still
+// ends here — so the fox still takes her step, onto a red waypoint, and the
+// path grows by the re-queued ask (§10.5).
 function continueRound() {
   if (phase !== "wrong-wait") return;
   phase = "correct-wait";
   sfx.correct();
+  journey.advanceMissed();
+  renderStatus();
   setTimeout(askNext, NEXT_MS);
 }
 

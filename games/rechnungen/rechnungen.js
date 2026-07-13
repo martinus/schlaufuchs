@@ -443,13 +443,18 @@ function submit(value) {
       setTimeout(nextCell, NEXT_MS);
       return;
     }
-    // the task is done: the engine hears about it once — now, if no cell missed
+    // The task is done: the engine heard about it once (at the first miss, or
+    // now, cleanly). Either way the fox takes her step — every asked task is
+    // its own waypoint (§10.5); a missed one is red and grows the path by the
+    // re-queued ask.
     if (!taskMissed) {
       session.answer(currentId, true);
       journey.advance();
-      renderStatus();
       mirrorRound();
+    } else {
+      journey.advanceMissed();
     }
+    renderStatus();
     setTimeout(askNext, NEXT_MS);
   } else {
     // The engine hears only the FIRST miss (the task is already re-queued);
@@ -561,13 +566,21 @@ function rejectRetry() {
 }
 
 // The only way out of the aid: the right answer, entered. The task carries on
-// with its next cell — a wall is always finished, even after a stumble.
+// with its next cell — a wall is always finished, even after a stumble. When
+// the aided cell WAS the last one, the task ends here, and the fox still takes
+// her step, onto a red waypoint (§10.5).
 function continueRound() {
   if (phase !== "wrong-wait") return;
   cellDone[cellIndex] = true;
   phase = "correct-wait";
   sfx.correct();
-  setTimeout(cellDone.includes(false) ? nextCell : askNext, NEXT_MS);
+  if (cellDone.includes(false)) {
+    setTimeout(nextCell, NEXT_MS);
+    return;
+  }
+  journey.advanceMissed();
+  renderStatus();
+  setTimeout(askNext, NEXT_MS);
 }
 
 function endRound() {
