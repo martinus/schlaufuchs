@@ -12,7 +12,7 @@ import {
   median, tempoTier, awardTempo, TEMPO_TIERS, TEMPO_SLOTS, recallStep, foldRecall,
 } from "../games/einmaleins/logic.js";
 import { tilePointsLeft } from "../assets/js/rewards.js";
-import { starGroupsHTML } from "../assets/js/levelpicker.js";
+import { starGroupsHTML, winFlightHTML } from "../assets/js/levelpicker.js";
 import { BUDGET } from "../assets/js/storage.js";
 import { GRAPHICS } from "../assets/js/graphics.js";
 import strings from "../games/einmaleins/i18n.js";
@@ -457,6 +457,32 @@ test("the picker clusters a tile's stars into the rounds that pay them", () => {
   const partial = starGroupsHTML(tilePointsLeft(1, 1), 1);
   assert.equal((partial.match(/class="sgroup"/g) ?? []).length, 2);
   assert.equal((partial.match(/⭐/g) ?? []).length, 4);
+});
+
+// When the picker reopens after a round that paid stars, the played tile replays
+// the win (§10.1): `winFlightHTML(from, to, d)` draws the tile as it stood BEFORE
+// the round (3-from groups), tags the (to-from) groups just earned `.won-depart`
+// to fly off, and hands the groups still to win the anchor a settled tile puts
+// them at (`data-to-left`) so they can glide there.
+test("the win replay flies off exactly the groups a round earned", () => {
+  const groups = (s) => (s.match(/class="sgroup(?:| won-depart)"/g) ?? []).length;
+  const depart = (s) => (s.match(/won-depart/g) ?? []).length;
+  const glide = (s) => (s.match(/data-to-left/g) ?? []).length;
+
+  for (const [from, to, d] of [[0, 1, 1], [1, 2, 1], [2, 3, 0], [0, 3, 2], [0, 2, 2]]) {
+    const html = winFlightHTML(from, to, d);
+    // the tile starts at its pre-round fullness…
+    assert.equal(groups(html), 3 - from, `${from}->${to} d${d}: starts with 3-from groups`);
+    // …the earned groups fly off…
+    assert.equal(depart(html), to - from, `${from}->${to} d${d}: to-from groups depart`);
+    // …and every group still to win carries a glide target, none of the departing ones
+    assert.equal(glide(html), 3 - to, `${from}->${to} d${d}: 3-to groups glide`);
+    // a group is still a whole round's worth of stars (§10.4)
+    assert.equal((html.match(/⭐/g) ?? []).length, (3 - from) * (d + 1));
+  }
+  // mastering a tile (to = 3) flies off every group and glides none — the tick is
+  // what the picker restores behind them
+  assert.equal(glide(winFlightHTML(0, 3, 2)), 0);
 });
 
 // Leicht teaches four tables, Mittel all ten, Schwer the eight with something

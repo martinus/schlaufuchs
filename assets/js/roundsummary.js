@@ -66,6 +66,9 @@ export function createRoundSummary({ picker, refresh }) {
       // helps.
       const ownedNow = Math.max(old, stars);
       $("sum-stars").innerHTML = starSlotsHTML(ownedNow, starValue(diff), improved ? stars - old : 0);
+      // Hand the win to the picker the OK button opens next: the played tile flies
+      // the earned groups off when it reopens (§10.1). Only a real gain animates.
+      if (improved) picker.flagWin?.(old, stars);
       $("sum-best").hidden = !improved;
       $("sum-best").textContent = t("newBest");
       // The finish line's verdict, as a symbol and its name — never a number of
