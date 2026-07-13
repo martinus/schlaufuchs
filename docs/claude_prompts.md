@@ -140,8 +140,111 @@ Erstelle ein einheitliches Konzept fuer mehr Koonsistenz. Diese Designentscheidu
 
 Die Bewegung des Fuchses zwischen den Levels ist nur linear, auf der Karte macht der Fuchs wirklich kleine Huepfer. Das soll konsistent sein.
 
-
-
 -----
 
-TODO: Offline play through a service worker. The site is already fully static, has no network calls after load, and stores everything in one cookie — it is perhaps twenty lines from working on a train, in a waiting room, or on a school tablet with no Wi-Fi, which is exactly where a child practises times tables. It is listed in SPEC as M7 "Polish", which undersells it: for a kids' learning site, "works with no internet" is a feature parents choose on, and almost none of the commercial competitors have it because their business model needs the network.
+Zum Rechenberg, es gibt dazu ja schon einen PR #58. Ich möchte aber die Rechnungen komplett umgestalten, ich habe ein Übungsheft für meine 8 jährige Tochter bekommen und daraus möchte ich Ideen nehmen. Erstelle damit motivierende Aufgaben die wieder zum Pokale sammeln anregen. Ergebnis soll ein Umsetzungsplan sein dass das Opus model autonom abarbeiten kann. Entscheide selbst ob du den PR #58 dazu nutzen möchtest oder besser verwerfen. Achte besonders auf gutes balancing und auf motivierende Lerneffekt. Hier was im Übungsheft steht:
+
+* Addition & Subtraktion: 27+60=?. 81+10=?, 12+40=?, 99-55=?, 88-22=?, 91-36=?, 26-0=?, 75-10=?, 100-14=?, 22+38=?, 11+19=?, 82-?=10, 33-?=8, 31-13=?, 85+13=?
+
+* Addition, rechne schriftlich. Es gibt zwei verschi9edene Möglichkeiten (2 Beispiele wie man die Zahlen in mehrere Rechnungen aufteilt):
+55+27=
+---------
+50+20=
+ 5+ 7=
+ 
+Andere Aufteilung:
+54+26=
+---------
+54+20=
+64+ 6=
+
+Das Kind muss das dann sebst aufteilen und ausrchnen, z.b. mit diesen Vorgaben:
+16+39=
+---------
+  +  =
+  +  =
+
+oder
+49+32=
+---------
+  +  =
+  +  =
+
+  
+* Selbes mit Subtraktion, soll so aussehen:
+35-26= 9
+---------
+35-20=15
+15- 6= 9
+
+Und dazu die zu befüllende Aufgaben:
+54-26=
+---------
+  -  =
+  -  =
+
+oder
+49-32=
+---------
+  -  =
+  -  =
+
+
+* Addition und Subtraktion mit Zehnerübergang: 54+9=?, 11+9=?, 73+8=?, 80-4=?, 50-1=?, 65-9=?, 35+6=?
+  25+32=?, 64-41=?, 84-34=?, 73+17=?, 72-54=?
+  
+* Addition und Subtraktion, rechne aus. Das kind bekommt ein Quadrat und muss alle leeren Felder befüllen. z.b. 55+15=70, oder das freie Feld oben 73-62=11
+
+  +|  |15|19|23
+---+------------
+ 55|  |  |  |
+ 77|  |  |  |
+ 52|  |  |  |
+ 62|73|  |  |
+ 68|  |  |  |
+ 22|  |  |  |
+
+Selbes mit subtraktion:
+  -| 8|18|  |19
+---+------------
+ 84|  |  |  |
+ 62|  |  |  |
+ 45|  |  |  |
+ 55|  |  |46|
+ 95|  |  |  |
+ 72|  |  |  |
+
+* schreibe zur Malaufgabe die passende Plusaufgabe und löse:
+ Malaufgabe: 3*6=?, Plusaufgabe: 6+6+6=18
+ Malaufgabe: 2*7=?, Plusaufgabe: 7+7=14
+ 
+* Multiplikation, rechne aus (ein rechteck wie oben):
+  *| 2|  | 7| 2
+---+------------
+  9|  |  |  |
+  8|  |  |  |
+  4|  |  |  |
+  5|  |20|  |
+  3|  |  |  |
+  0|  |  |  |
+
+* Division: 8:2=?, 18:6=?, 20:4=?, ...
+
+* Multiplikation und Division: 8:2=?, 28:7=?, 3*2=?, 9*5=?
+
+* Division mit Rest: 49:5=? R ?, 77:8=? R ?, 54:7=? R ?
+
+* Rechenmauern: das sind Pyramiden, mit 3 Reihen mit 1, 2, 3 Feldern, oben ist jeweils die Summe der 2 Felder darunter. Z.B. so:
+   76
+ 29|?
+18|? | ?
+
+Dann kann man z.b. 29-18=11 rechnen und hat das Feld mitte unten. 76-29=47 2. Reihe rechts. Resultat sieht so aus:
+   76
+ 29|47
+18|11|36
+
+Ganz schwer, hier  muss man so eine Rechenmauer selbst zusammensetzen. Vorgaben sind zahlen und eine leere Pyramide, eine Zahl bleibt über:
+10, 16, 18, 34, 44, 62, 96
+
+
