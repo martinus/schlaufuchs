@@ -15,7 +15,13 @@
 // import map" test below is the regression guard for that.
 //
 // These tests fail if someone adds a module, or a page, and forgets to
-// regenerate the maps: `node tools/version-assets.js <n>`.
+// regenerate the maps: `node tools/version-assets.js dev`.
+//
+// The VERSION itself is stamped at deploy time (deploy.yml runs
+// version-assets with the commit count; the repo stays at `dev`), so PRs no
+// longer conflict on the ?v= lines. The last test pins that workflow step:
+// were it dropped, every deploy would share the `dev` version and the
+// mixed-deploy cache bug would return with no failing test anywhere.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -195,4 +201,29 @@ test("the deploy workflow ships every page this repo builds", () => {
   );
   for (const dir of ["assets", "games"]) assert.ok(cp.includes(dir), `deploy must ship ${dir}/`);
   assert.ok(ROOT_PAGES.includes("index.html"), "sanity: pages are discovered");
+});
+
+// The deploy workflow must stamp a real, monotonic version into the pages it
+// publishes — from the FULL clone (the commit count of a depth-1 checkout is
+// always 1), before the site is assembled, and the smoke job must refuse a
+// site still carrying `dev`.
+test("deploy.yml stamps the version at deploy time, from the full history", () => {
+  const wf = read(".github/workflows/deploy.yml");
+  assert.match(wf, /fetch-depth: 0/, "the commit count needs the full history");
+  const stamp = wf.indexOf('version-assets.js "$(git rev-list --count HEAD)"');
+  assert.ok(stamp >= 0, "the deploy must run version-assets with the commit count");
+  const assemble = wf.indexOf("Assemble site");
+  assert.ok(assemble > stamp, "the version must be stamped BEFORE the site is assembled");
+  assert.match(wf, /v=dev/, "the smoke job must refuse a site still carrying `dev`");
+});
+
+// …and the repo itself stays at the placeholder: a committed real-looking
+// version invites the next person to hand-bump again, which is the conflict
+// machine this setup retired.
+test("the committed pages carry the `dev` placeholder, not a hand-bumped number", () => {
+  for (const page of PAGES) {
+    const v = read(page).match(/schlaufuchs\.css\?v=([^"]+)"/)?.[1];
+    assert.equal(v, "dev", `${page}: committed version is "${v}" — commit `
+      + "`node tools/version-assets.js dev`; the deploy stamps the real one");
+  }
 });

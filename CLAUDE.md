@@ -18,7 +18,7 @@ sh tools/serve.sh               # serve on :8000 — ALWAYS, never file:// (ES m
 sh tools/kill-serve.sh          # stop it again
 node --test                     # run unit tests (tests/*.test.js), needs Node 22+
 node --check <file.js>          # syntax-check a module
-node tools/version-assets.js N  # bump asset version — REQUIRED before deploying a change
+node tools/version-assets.js dev # regenerate import maps (deploy stamps the real version)
 node tools/shoot.mjs <url> …    # drive a real Chrome: screenshot + measure (--help)
 sh tools/firefox-shot.sh <url> out.png [WxH]   # the same page in Gecko
 sh tools/ff-probe.sh <url> …                   # Firefox: did the `load` event fire?
@@ -311,14 +311,20 @@ Shared modules in `assets/js/`:
 
 ## Key invariants & gotchas
 
-- **Bump the asset version on every deploy** (`node tools/version-assets.js N`).
+- **The asset version is stamped at deploy time — never hand-bump it.**
   GitHub Pages serves everything with `Cache-Control: max-age=86400` and each
   file expires on its own clock, so a browser can pair a cached old
   `index.html` with a freshly fetched `map.js`. They disagree about element
   ids, the JS throws, and the page renders without its chips and buttons —
   invisible in incognito, which has an empty cache. Every URL a page loads
   therefore carries the page's version, propagated to nested imports by an
-  import map in each HTML file. Read the header of `tools/version-assets.js`.
+  import map in each HTML file. The DEPLOY WORKFLOW stamps that version (the
+  commit count) into every page just before publishing; the repo stays at the
+  `?v=dev` placeholder (hand-bumps used to touch every HTML in every PR, so
+  any two open PRs conflicted). After adding a module or a page, regenerate
+  the maps with `node tools/version-assets.js dev` and commit that.
+  `tests/cache.test.js` pins the workflow step, the placeholder, and map
+  coverage. Read the header of `tools/version-assets.js`.
 
 - **Graphics registry** (`graphics.js`): all icon-like art is a named entry
   with an emoji fallback. A name renders as an SVG file
