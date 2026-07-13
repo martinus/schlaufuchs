@@ -256,7 +256,9 @@ test("the clouds have an edge; only the veil is blurred", () => {
 test("a fogged region carries no star badge", () => {
   const render = mapJs.slice(mapJs.indexOf("function render"));
   assert.match(render, /if \(locked\) badge\.replaceChildren\(\);/);
-  assert.match(render, /else \{\n\s*const cups = trophyCount\(/, "…and a playable region keeps its badge");
+  assert.ok(render.includes("const cups = trophyCount(game, rewards.pr?.[game] ?? 0)"),
+    "…and a playable region keeps its badge — counting cups without throwing on a "
+    + "fresh cookie, where rewards.pr does not exist yet (smoke.sh caught exactly that)");
   // …which now also carries the region's latest trophy — grey ghost before the
   // first is won (user request, 2026-07-13), so the map shows progress wordlessly
   assert.match(mapJs, /cup-ghost/, "a cupless region must show the ghost of the first");

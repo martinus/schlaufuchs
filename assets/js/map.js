@@ -267,7 +267,10 @@ function render() {
     if (badge) {
       if (locked) badge.replaceChildren();
       else {
-        const cups = trophyCount(game, rewards.pr[game]);
+        // rewards.pr does not exist before the first star is banked — a fresh
+        // visitor's map must not throw over an empty pocket (found by smoke.sh:
+        // every seeded screenshot had points, only the bare page had none)
+        const cups = trophyCount(game, rewards.pr?.[game] ?? 0);
         renderBadge(badge, "ui-star", gameStarsOf(rewards.pr, game), starBadgeTier(rewards.pr, game),
           TROPHIES[game][Math.max(cups - 1, 0)], cups > 0);
       }
