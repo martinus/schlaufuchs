@@ -26,7 +26,7 @@
 // draw (number line for ±, dot grid for ×/÷): a wall brick's aid is the +/−
 // relation of its neighbours, a grid cell's is rowHeader ∘ colHeader.
 // Kinds and their extra layout data:
-//   op|gap|chain|mulplus — `text` with exactly one "?" (one line)
+//   op|gap|mulplus — `text` with exactly one "?" (one line)
 //   rest     — `text` "a : b = ? R ?", one "?" per cell in cell order
 //   zerlege  — `head` "a ± b = ?" plus two strategy rows (the cells' aids)
 //   mauer    — `vals` [top, m0, m1, b0, b1, b2] (the full wall), `given`
@@ -60,14 +60,14 @@ export const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
 export const DIFF_SLUGS = ["easy", "medium", "hard"];
 
 // Tasks per round, per mode and difficulty (§12.2). A wall is three answers, a
-// grid up to four, and a Schwer ± round carries seven-cell decomposition
+// grid up to four, and a Schwer ± round is half seven-cell decomposition
 // scaffolds — so those rounds hold fewer tasks. Every round lands at roughly
 // ten to twenty keypad entries, a comparable effort per star across the modes.
 export function roundSizeFor(mode, diff = 0) {
   if (mode === "mauer") return 4;
   if (mode === "quad") return 3;
   if (mode === "mix") return diff === 2 ? 7 : 8;
-  return diff === 2 && (mode === "+" || mode === "-") ? 8 : 10;
+  return diff === 2 && (mode === "+" || mode === "-") ? 6 : 10;
 }
 
 // The three stars a tile can hold, and the three difficulty slots a mode's
@@ -110,18 +110,6 @@ function gap(op, a, b, result, hideLeft, divSign) {
   return lineTask(hideLeft
     ? { kind: "gap", op, a, b, answer: a, text: `? ${s} ${b} = ${result}` }
     : { kind: "gap", op, a, b, answer: b, text: `${a} ${s} ? = ${result}` });
-}
-
-// A three-term chain "a op1 b op2 c = ?", evaluated left to right (§12.1). Both
-// ops are ± so there is no precedence to trip over. Callers guarantee every
-// intermediate and the result stay in 0–100.
-function chain(a, op1, b, op2, c, divSign) {
-  const step = (x, op, y) => (op === "+" ? x + y : x - y);
-  const answer = step(step(a, op1, b), op2, c);
-  return lineTask({
-    kind: "chain", op: op1, answer, a, b, c,
-    text: `${a} ${sign(op1, divSign)} ${b} ${sign(op2, divSign)} ${c} = ?`,
-  });
 }
 
 // Multiplication within the tables, straight from the einmaleins generator
@@ -343,10 +331,11 @@ export const BUCKETS = [
   { key: "add-m-1d", mode: "+", diff: 1, gen: (r, d) => { const b = ri(r, 2, 9), u = ri(r, 10 - b, 9), a = ri(r, 1, 8) * 10 + u; return bin("+", a, b, a + b, d); } },
   { key: "add-m-2d", mode: "+", diff: 1, gen: (r, d) => { const au = ri(r, 1, 8), bu = ri(r, 1, 9 - au), at = ri(r, 1, 7), bt = ri(r, 1, 8 - at); return bin("+", at * 10 + au, bt * 10 + bu, (at + bt) * 10 + au + bu, d); } },
   { key: "add-m-carry", mode: "+", diff: 1, gen: (r, d) => { const au = ri(r, 1, 9), bu = ri(r, 10 - au, 9), at = ri(r, 1, 4), bt = ri(r, 1, 8 - at); const a = at * 10 + au, b = bt * 10 + bu; return bin("+", a, b, a + b, d); } },
-  // ＋ Schwer: the decomposition scaffold, gaps, chains
+  // ＋ Schwer: the decomposition scaffold and gaps. (Mixed-operator chains
+  // were dropped: too hard for the second grade, and a ＋ chain carries a −
+  // anyway, so the two tiles asked practically the same questions.)
   { key: "add-s-zerlege", mode: "+", diff: 2, gen: (r) => { const au = ri(r, 2, 9), bu = ri(r, 10 - au, 9), at = ri(r, 1, 4), bt = ri(r, 1, 8 - at); return zerlege("+", at * 10 + au, bt * 10 + bu); } },
   { key: "add-s-gap", mode: "+", diff: 2, gen: (r, d) => { const a = ri(r, 15, 60), b = ri(r, 15, 95 - a); return gap("+", a, b, a + b, r() < 0.5, d); } },
-  { key: "add-s-chain", mode: "+", diff: 2, gen: (r, d) => { const a = ri(r, 20, 60), b = ri(r, 20, 95 - a), c = ri(r, 5, a + b - 1); return chain(a, "+", b, "-", c, d); } },
 
   // − Leicht: minus whole tens (75 − 10), and within 20
   { key: "sub-l-tens", mode: "-", diff: 0, gen: (r, d) => { const at = ri(r, 2, 9), a = at * 10 + ri(r, 0, 9), b = ri(r, 1, at - 1) * 10; return bin("-", a, b, a - b, d); } },
@@ -355,10 +344,9 @@ export const BUCKETS = [
   { key: "sub-m-1d", mode: "-", diff: 1, gen: (r, d) => { const b = ri(r, 2, 9), u = ri(r, 0, b - 1), a = ri(r, 1, 9) * 10 + u; return bin("-", a, b, a - b, d); } },
   { key: "sub-m-2d", mode: "-", diff: 1, gen: (r, d) => { const au = ri(r, 1, 9), bu = ri(r, 0, au), at = ri(r, 2, 9), bt = ri(r, 1, at - 1); return bin("-", at * 10 + au, bt * 10 + bu, (at - bt) * 10 + au - bu, d); } },
   { key: "sub-m-borrow", mode: "-", diff: 1, gen: (r, d) => { const au = ri(r, 0, 8), bu = ri(r, au + 1, 9), at = ri(r, 2, 9), bt = ri(r, 1, at - 1); const a = at * 10 + au, b = bt * 10 + bu; return bin("-", a, b, a - b, d); } },
-  // − Schwer: the decomposition scaffold, gaps, chains
+  // − Schwer: the decomposition scaffold and gaps
   { key: "sub-s-zerlege", mode: "-", diff: 2, gen: (r) => { const au = ri(r, 0, 8), bu = ri(r, au + 1, 9), at = ri(r, 2, 9), bt = ri(r, 1, at - 1); return zerlege("-", at * 10 + au, bt * 10 + bu); } },
   { key: "sub-s-gap", mode: "-", diff: 2, gen: (r, d) => { const a = ri(r, 30, 99), b = ri(r, 10, a); return gap("-", a, b, a - b, r() < 0.5, d); } },
-  { key: "sub-s-chain", mode: "-", diff: 2, gen: (r, d) => { const a = ri(r, 40, 99), b = ri(r, 10, a - 5), c = ri(r, 5, Math.min(40, 99 - (a - b))); return chain(a, "-", b, "+", c, d); } },
 
   // ×÷ Leicht: the ×→+ link, and small exact division
   { key: "mul-l-plus", mode: "x:", diff: 0, gen: (r) => mulPlus(ri(r, 2, 4), ri(r, 2, 9)) },
