@@ -1382,7 +1382,7 @@ would balloon a mixed round. The difficulty × mode grid the generators realise:
 |---|---|---|---|---|
 | Leicht | within 20 · ±  whole tens (`27 + 60`) | ×→+ link (`3 × 6 = 6 + 6 + 6 = ?`) · exact ÷, tables 1–5 | base given, climb with + (3 cells) | 2×2 „+" grid, small numbers (4 cells) |
 | Mittel | crossing the ten: ± one-digit with carry/borrow (`54 + 9`, `80 − 4`) · two-digit with and without (`25 + 32`, `22 + 38`, `91 − 36`) | × full tables · exact ÷ full tables | top + one flank given, descend with − (3 cells) | 2×2 „−" grid ≤ 100 with a **hidden column header** and its anchor cell (4 cells) — a given cell only exists to buy a header |
-| Schwer | **Zerlegen** scaffold (7 cells, below) · gaps (`? + 27 = 61`, `82 − ? = 10`) · chains (`45 + 38 − 17`) | **division with remainder** (`49 : 5 = ? R ?`, 2 cells — the remainder slot is always asked and is sometimes genuinely 0: „R 0" is an answer the child gives) · ×/÷ gaps (`? × 7 = 28`) | mixed blanks, + and − in both directions | 2×2 ± grid with a **hidden row AND column header**, each bought from its own anchor cell (no × grid: the tables are einmaleins' whole game) |
+| Schwer | **Zerlegen** scaffold (7 cells, below) · gaps (`? + 27 = 61`, `82 − ? = 10`) — no mixed-operator chains: too hard, and a ＋ chain carries a −, so both tiles would ask the same questions | **division with remainder** (`49 : 5 = ? R ?`, 2 cells — the remainder slot is always asked and is sometimes genuinely 0: „R 0" is an answer the child gives) · ×/÷ gaps (`? × 7 = 28`) | mixed blanks, + and − in both directions | 2×2 ± grid with a **hidden row AND column header**, each bought from its own anchor cell (no × grid: the tables are einmaleins' whole game) |
 
 A wall's six values are pairwise **distinct**, and so are a grid's four headers
 and its four interior values — a puzzle with two 9s reads as a trick.
@@ -1424,7 +1424,7 @@ variant's box is seeded from its bucket, so weak skills are weighted up, and the
 round's per-bucket outcome is folded back at the end (`foldBoxes`).
 
 **Round sizes are per mode and difficulty** (`roundSizeFor`): equations **10**
-tasks (Schwer ± **8** — their scaffolds are seven cells each), Mix **8**
+tasks (Schwer ± **6** — half of them are seven-cell scaffolds), Mix **8**
 (Schwer **7**), walls **4** (12 cells), grids **3** (9–12 cells) — every round
 lands at roughly 10–20 keypad entries, a comparable effort per star. Stars
 per mode & difficulty with the einmaleins criteria (§10.3). The tempo ladder
