@@ -1570,6 +1570,16 @@ plain named numbers to be retuned after watching a real child, like
   nothing is taken away), so their answers are live at once. The cover is a real
   `<button>` (keyboard-reachable); `armFlash()` lives in `reveal()`, not `askNext()`.
 - Answering **during** the flash is allowed — that is the fluent path.
+- **A double-click's second tap is swallowed.** The answer buttons are live the
+  instant a question is answerable, and the next follows the last by only the
+  250ms transition, so a stray second tap of an accidental double-click would
+  answer the freshly shown next question — or skip the aid's retry — before the
+  child has read a thing. A press within `GUARD_MS` (300ms, `isBounce` in
+  games/lesen/logic.js) of the last accepted press is treated as that bounce and
+  ignored. It is measured from the previous press, never the question's age, so a
+  deliberate fast answer — a word is always at least the 250ms transition newer
+  than the last press — still lands at once and the ⚡ tempo tier (§10.6) is
+  untouched.
 - The hide is **decided by a JS timer and decorated by a CSS transition**,
   never a keyframe animation: `prefers-reduced-motion` kills transitions
   site-wide, so the fade degrades to an instant flip and the mechanic
