@@ -10,8 +10,8 @@
 //
 // playRechnung() escapes the level picker the game opens on and runs until the
 // round's summary is up. A task can hold several CELLS (a number wall is three
-// answers, a decomposition two, §12.1); the driver answers them in order, cell
-// by cell, reading each off the screen the way the child does. Options:
+// answers, a ÷R task two, §12.1); the driver answers them in order, cell by
+// cell, reading each off the screen the way the child does. Options:
 // `wrongAt` (task number or list — that task is answered wrongly until the aid
 // is up: a multi-cell task forgives the first slip, so the driver errs twice),
 // `slipAt` (task number or list — one wrong answer, then the right one: the
@@ -84,23 +84,6 @@
     return Number(a) / c; // a : ? = c  →  a / c
   }
   globalThis.resolveRechnung = resolveRechnung;
-
-  // The scaffold, reconstructed from its printed HEAD ("13 + 69 = ?"): the
-  // seven numbers the child enters, in reading order — a, the tens of b, the
-  // first row's result, that result again, the ones of b, the final result,
-  // and the final result once more up in the head.
-  function resolveZerlege(headText) {
-    const m = String(headText).replace(/\s+/g, "").match(/^(\d+)([+−-])(\d+)=/);
-    if (!m) throw new Error(`not a zerlege head: "${headText}"`);
-    const a = Number(m[1]);
-    const b = Number(m[3]);
-    const plus = m[2] === "+";
-    const bt = b - (b % 10);
-    const s1 = plus ? a + bt : a - bt;
-    const ans = plus ? a + b : a - b;
-    return [a, bt, s1, s1, b % 10, ans, ans];
-  }
-  globalThis.resolveZerlege = resolveZerlege;
 
   // Complete a number wall from what is visible. `vals` is
   // [top, m0, m1, b0, b1, b2] with null where a brick still shows "?"; the
@@ -208,11 +191,6 @@
       if (active.dataset.row !== undefined) return full.rows[Number(active.dataset.row)];
       const [r, c] = active.dataset.rc.split(",").map(Number);
       return full.grid[r][c];
-    }
-    if (kind === "zerlege") {
-      // the head names the whole scheme; the active cell picks its slot
-      const head = q.querySelector(".zhead").textContent;
-      return resolveZerlege(head)[Number(active.dataset.cell)];
     }
     // one-line kinds: the equation as printed
     return resolveRechnung(q.textContent.trim());

@@ -69,20 +69,15 @@ test("the modes and difficulties are the ones §12 names", () => {
   assert.equal(DIFF_SLOTS, 3);
 });
 
-// Round sizes per mode and difficulty (§12.2): a wall is three answers, a grid
-// up to four, and Schwer ± rounds are half seven-cell scaffolds — those rounds
-// hold fewer tasks, so every round is a comparable effort.
-test("roundSizeFor: equations 10 (Schwer ± 6), mix 8/7, walls 4, grids 3", () => {
-  for (const d of [0, 1]) {
+// Round sizes per mode (§12.2): a wall is three answers, a grid up to four, a
+// ÷R task two — those rounds hold fewer tasks, so every round is a comparable
+// effort.
+test("roundSizeFor: equations 10, rest and mix 8, walls 4, grids 3", () => {
+  for (const d of [0, 1, 2]) {
     assert.equal(roundSizeFor("+", d), 10);
     assert.equal(roundSizeFor("-", d), 10);
+    assert.equal(roundSizeFor("rest", d), 8, "two cells per rest task");
     assert.equal(roundSizeFor("mix", d), 8);
-  }
-  assert.equal(roundSizeFor("+", 2), 6, "Schwer ± is half scaffolds — shorter round");
-  assert.equal(roundSizeFor("-", 2), 6);
-  for (const d of [0, 1, 2]) assert.equal(roundSizeFor("rest", d), 8, "two cells per rest task");
-  assert.equal(roundSizeFor("mix", 2), 7);
-  for (const d of [0, 1, 2]) {
     assert.equal(roundSizeFor("mauer", d), 4);
     assert.equal(roundSizeFor("quad", d), 3);
   }
@@ -144,7 +139,7 @@ test("every cell's aid evaluates to its own answer, within 100, at every difficu
 // order — that is the contract the renderer interleaves on.
 test("one-line tasks carry one '?' per cell in their text", () => {
   for (const b of BUCKETS) {
-    if (["zerlege", "mauer", "quad"].some((k) => b.key.includes(k))) continue;
+    if (["mauer", "quad"].some((k) => b.key.includes(k))) continue;
     for (const task of drawKey(b.key, 500)) {
       assert.ok(typeof task.text === "string", `${b.key}: no text`);
       assert.equal((task.text.match(/\?/g) ?? []).length, task.cells.length,
@@ -153,25 +148,33 @@ test("one-line tasks carry one '?' per cell in their text", () => {
   }
 });
 
-// The workbook's decomposition scaffold (§12.1): the child constructs the
-// whole scheme herself — a, the tens of b, the first result; that result
-// again, the ones of b, the final result; and the head's answer last. Seven
-// cells, in that reading order.
-test("zerlege: the child builds the whole tens-first scheme, seven cells", () => {
-  for (const key of ["add-s-zerlege", "sub-s-zerlege"]) {
-    for (const task of drawKey(key)) {
-      assert.equal(task.kind, "zerlege");
-      const bt = task.b - (task.b % 10);
-      const bu = task.b % 10;
-      assert.ok(bt >= 10 && bu >= 1, `${key}: ${task.b} has no tens or no ones — nothing to decompose`);
-      const s1 = task.head.includes("+") ? task.a + bt : task.a - bt;
-      assert.deepEqual(task.cells.map((c) => c.answer), [task.a, bt, s1, s1, bu, task.answer, task.answer],
-        `${key}: the seven cells are the scheme in reading order`);
-      assert.equal(evaluate(`${task.a} ${task.head.split(" ")[1]} ${task.b} = ?`), task.answer);
-      // every cell's aid names its relation without contradicting it
-      for (const cell of task.cells) assert.equal(evaluate(cell.aid.text), cell.answer, `${key}: "${cell.aid.text}"`);
-    }
+// Ergänzen (§12.1 Schwer): complete to the next full ten or to 100 (and, for
+// −, down to the full ten or away from 100) — the technique behind every
+// tens-crossing. Mechanically a gap, so nothing new for the UI. (The seven-cell
+// decomposition scaffold that used to live here was cut on the ninth
+// play-test: on a keypad it was mostly transcription; the strategy survives in
+// the ± aid card.)
+test("fill: Ergänzen always targets a full ten or the hundred", () => {
+  for (const task of drawKey("add-s-fill")) {
+    assert.equal(task.kind, "gap");
+    const m = task.text.match(/^(\d+) \+ \? = (\d+)$/);
+    assert.ok(m, `add-s-fill text "${task.text}"`);
+    const [, a, target] = m.map(Number);
+    assert.ok(target === 100 || (target % 10 === 0 && target - a < 10),
+      `${task.text}: the target must be the NEXT full ten, or 100`);
+    assert.ok(task.answer >= 1 && a + task.answer === target);
   }
+  for (const task of drawKey("sub-s-fill")) {
+    assert.equal(task.kind, "gap");
+    const m = task.text.match(/^(\d+) − \? = (\d+)$/);
+    assert.ok(m, `sub-s-fill text "${task.text}"`);
+    const [, a, target] = m.map(Number);
+    assert.ok((a === 100 && target >= 1) || (target % 10 === 0 && a - target < 10),
+      `${task.text}: down to the full ten, or away from 100`);
+    assert.ok(task.answer >= 1 && a - task.answer === target);
+  }
+  // no scaffold may return
+  assert.ok(!BUCKETS.some((b) => b.key.includes("zerlege")), "the scaffold stays retired");
 });
 
 // Division with remainder (§12.1) — the whole ÷R tile, the one division
@@ -356,13 +359,6 @@ test("difficulty bands hold: carrying, borrowing, exact division, Leicht ranges"
   for (const q of drawKey("sub-m-2d")) {
     assert.ok((q.a % 10) >= (q.b % 10), `sub-m-2d must not borrow: "${q.text}"`);
     assert.ok(q.b >= 10, `sub-m-2d wants two digits: "${q.text}"`);
-  }
-  // the decomposition rows genuinely cross the ten — that is what they train
-  for (const t of drawKey("add-s-zerlege")) {
-    assert.ok((t.a % 10) + (t.b % 10) >= 10, `zerlege without a carry: ${t.a}+${t.b}`);
-  }
-  for (const t of drawKey("sub-s-zerlege")) {
-    assert.ok((t.a % 10) < (t.b % 10), `zerlege without a borrow: ${t.a}−${t.b}`);
   }
   // gaps hide exactly one operand
   for (const q of [...drawKey("add-s-gap"), ...drawKey("sub-s-gap")]) {
