@@ -133,6 +133,7 @@ test("reading items ask their question, with the correct answer first (§14.2)",
     assert.equal(q.passage, item.text, `id ${id}: the passage is carried`);
     assert.equal(q.text, item.q, `id ${id}: the question is what she answers`);
     assert.equal(q.answer, item.a[0], `id ${id}: the correct answer is authored first`);
+    assert.equal(q.scene, item.e, `id ${id}: the scene emoji is carried for the card`);
   }
 });
 
@@ -435,7 +436,67 @@ test("the blitz is a JS timer wearing a CSS transition, never an animation", () 
   const css = read("assets/css/schlaufuchs.css");
   const cardCss = css.slice(css.indexOf("---- lesen:"), css.indexOf(".mc-emoji"));
   assert.match(cardCss, /transition: opacity/, "the fade is a transition");
-  assert.ok(!/animation\s*:|@keyframes/.test(cardCss), "a keyframe animation would survive nothing");
+  // Nothing that HIDES the word may animate — a keyframe would never run under
+  // reduced motion and the flash would silently stop flashing. A decorative
+  // scene cheer (the picture-book anchor, §14.2) is a keyframe on purpose, and
+  // reduced motion is meant to still it; it is whitelisted by name so any OTHER
+  // keyframe or a `wc-hidden` animation still fails here.
+  const wcHiddenRules = cardCss.match(/[^}]*wc-hidden[^{}]*\{[^}]*\}/g) ?? [];
+  for (const r of wcHiddenRules) assert.ok(!/animation/.test(r), `the word-hide must not animate: ${r}`);
+  assert.ok(!/@keyframes\s+(?!scene-cheer\b)/.test(cardCss), "only the decorative scene cheer may be a keyframe here");
+});
+
+test("the scene anchor and the lively tap moment are wired (§14.2)", () => {
+  const game = read("games/lesen/lesen.js");
+  // The scene emoji renders into its OWN element, and #question/#passage carry
+  // only the question and passage text — the round driver reads THEIR text to
+  // find the answer, and the scene (which could telegraph it) must never join it.
+  const render = game.slice(game.indexOf("function renderQuestion"), game.indexOf("window.addEventListener"));
+  assert.match(render, /const scene = \$\("scene"\)/, "renderQuestion fills its own scene element");
+  assert.match(render, /scene\.textContent =/, "the scene emoji is written to #scene");
+  assert.match(render, /\$\("question"\)\.textContent = question\.text/, "#question stays the question text");
+  assert.ok(!/\$\("(?:question|passage)"\)[^\n]*scene/.test(render), "the scene must not be mixed into the question/passage text");
+
+  // A correct answer hops with a ✓, a wrong one shakes — added on the same tile
+  // the child tapped, in submit and in the aid's retry.
+  const submit = game.slice(game.indexOf("function submit"), game.indexOf("function showFeedback"));
+  assert.match(submit, /"ans-hop"/, "a correct tile hops");
+  assert.match(submit, /"ans-shake"/, "a wrong tile shakes");
+
+  // The ✓ badge is a ::after (not an animation), so reduced motion keeps it; the
+  // hop and shake ARE keyframes, meant to be stilled under reduced motion.
+  const css = read("assets/css/schlaufuchs.css");
+  assert.match(css, /\.ans-hop::after\s*\{[^}]*content:\s*"✓"/, "the correct tile wears a ✓ badge");
+  assert.match(css, /@keyframes ans-hop/, "the hop is a keyframe, stilled under reduced motion");
+  assert.match(css, /\.ans-shake\s*\{[^}]*animation/, "the shake is an animation");
+});
+
+test("Schwer never reveals its answer — she picks again until right (§14.2)", () => {
+  const game = read("games/lesen/lesen.js");
+
+  // A wrong reading answer must NOT open the reveal aid: the passage stays on
+  // screen and the tapped tile is retired. Word and Mittel still re-teach via
+  // showFeedback (a blitzed word / a verdict she may not have grasped).
+  const submit = game.slice(game.indexOf("function submit"), game.indexOf("function showFeedback"));
+  assert.match(submit, /question\.kind === "read"\) btn\.disabled = true;\s*else showFeedback\(value\)/,
+    "a wrong read tile is retired (passage stays); word/Mittel open the aid");
+
+  // A wrong RE-PICK on Schwer retires that tile too — never reveals.
+  const press = game.slice(game.indexOf("function answerPress"), game.indexOf("function blitzFlash"));
+  assert.match(press, /question\.kind === "read"\)[\s\S]*?retireWrong\(btn\)/, "a wrong re-pick on Schwer is retired");
+
+  // retireWrong disables the tile (so it cannot be tapped again) and never names
+  // the answer.
+  const retire = game.slice(game.indexOf("function retireWrong"), game.indexOf("function rejectRetry"));
+  assert.match(retire, /btn\.disabled = true/, "the retired tile cannot be tapped again");
+  assert.ok(!/question\.answer/.test(retire), "retireWrong must never name the answer");
+
+  // The reveal is gone entirely: no reading branch in the aid, and the
+  // "Correct: …" string is removed from i18n (both directions of the parity test
+  // in lesen-content already guard key parity — this guards its absence).
+  const aid = game.slice(game.indexOf("function showFeedback"), game.indexOf("function retireWrong"));
+  assert.ok(!/lesenAnswerIs|fb-lbl|fb-scene/.test(aid), "no Schwer reveal left in the aid");
+  assert.ok(!/lesenAnswerIs/.test(read("games/lesen/i18n.js")), "the reveal string is removed from i18n");
 });
 
 test("a word waits behind the ready cover; the blitz arms only on reveal (§14.2)", () => {

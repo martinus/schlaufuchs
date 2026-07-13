@@ -141,7 +141,8 @@ export function itemAt(id, content) {
 // A Schwer item is a reading passage: the child reads `text` and answers the
 // question `q`, the correct answer being the first option (§14.2). `text` is
 // carried as `passage`, and `text` on the question is the *question* — the same
-// field the word card renders.
+// field the word card renders. `scene` carries the item's picture-book emoji
+// (§14.2), the anchor the read card draws beside the passage.
 export function questionFor(id, content, rng = Math.random) {
   const found = itemAt(id, content);
   if (!found) return null;
@@ -152,7 +153,7 @@ export function questionFor(id, content, rng = Math.random) {
       ? { kind: "sent", text: item.ok, answer: true }
       : { kind: "sent", text: item.no, answer: false };
   }
-  return { kind: "read", passage: item.text, text: item.q, answer: item.a[0] };
+  return { kind: "read", passage: item.text, text: item.q, answer: item.a[0], scene: item.e };
 }
 
 function shuffle(arr, rng) {

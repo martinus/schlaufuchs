@@ -849,6 +849,34 @@ footer p { margin: 0; }
 button.flash-ok { background: var(--ok) !important; color: #fff !important; }
 button.flash-err { background: var(--err) !important; color: #fff !important; }
 
+/* A lively tap moment on a lesen answer (§14.2): the chosen right one HOPS and
+   wears a ✓ badge, the chosen wrong one SHAKES — so picking feels alive, and a
+   correct reading answer is celebrated on the tile as well as by the scene emoji
+   (§14.2). The classes are only ever added by lesen.js (never einmaleins), so
+   they need no container scoping. The green/red flash carries the meaning on its
+   own; the hop and shake are decorative keyframes (reduced motion stills them),
+   and the ✓ is a ::after badge, not an animation, so it survives reduced motion. */
+@keyframes ans-hop { 40% { translate: 0 -8px; } 100% { translate: 0 0; } }
+.ans-hop { position: relative; animation: ans-hop 0.42s ease; }
+.ans-shake { animation: stumble 0.45s ease; }
+.ans-hop::after {
+  content: "✓";
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: var(--ok);
+  color: #fff;
+  border: 2px solid var(--panel);
+  border-radius: 50%;
+  font-size: 0.95rem;
+  font-weight: 900;
+  box-shadow: var(--shadow);
+}
+
 /* ---- lesen: the word card and the blitz (§14.2) ---- */
 /* The hide is DECIDED by a JS timer and merely decorated by these transitions:
    prefers-reduced-motion kills every transition site-wide, so the fade
@@ -953,6 +981,28 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   white-space: normal;
 }
 
+/* The picture-book anchor for a Schwer passage (§14.2): a scene emoji floated
+   into the text like an illustrated capital, so a reading screen is as inviting
+   as the emoji of Leicht — not a wall of grey — and gives a pre-reading anchor
+   for what the passage is about. It sets the scene, never the answer (content.js).
+   Only on the read card; the attribute-hidden span is display:none everywhere else. */
+.wordcard .scene[hidden] { display: none; }
+.wordcard.read .scene {
+  float: left;
+  font-size: 2.6rem;
+  line-height: 1;
+  margin: 2px 12px 2px 0;
+}
+/* The warm beat on a correct reading answer (§14.2): a quick happy pop. A
+   keyframe, decorative only — prefers-reduced-motion stills it (the rule at the
+   foot of the file), and nothing depends on it running. */
+@keyframes scene-cheer {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.28) rotate(-6deg); }
+  100% { transform: scale(1); }
+}
+.wordcard.read .scene.cheer { animation: scene-cheer 0.5s ease; }
+
 /* Four reading answers (§14.2): a single column of Choice tiles whose text
    wraps, so a whole answer sentence fits and reads left-to-right like a list.
    Kept a touch tighter than the emoji buttons so a full passage, its question
@@ -981,9 +1031,6 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    a 640px one. `meet` keeps the aspect ratio, so whichever bound binds first
    wins. Sized against the longest passages fitting the 360×640 baseline. */
 .stage:has(#wordcard.read) .journey { max-width: 86%; max-height: 18vh; margin-inline: auto; }
-
-/* the aid's "Correct:" label, before the answer she should have chosen (§14.2) */
-.feedback-aid .fb-lbl { color: var(--ink-soft); font-weight: 700; font-size: 0.9rem; }
 
 /* Four emoji to choose from: the emoji is the label, so it has to be big. */
 .mc-emoji button {

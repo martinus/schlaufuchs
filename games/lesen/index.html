@@ -66,13 +66,16 @@
       <!-- The word card (§14.2): a "ready" cover on top, the word on its face,
            a ❓ on its back. The child taps the cover to start the blitz — so it
            never begins before she has looked; a word covers and turns, a Schwer
-           reading passage does neither — it shows its passage and question and
-           stays put while she reads (§14.2). -->
+           reading passage does neither — it shows its scene emoji, its passage
+           and question and stays put while she reads (§14.2). The scene emoji is
+           a picture-book anchor beside the passage: it sets the scene, never the
+           answer. -->
       <div class="wordcard" id="wordcard">
         <button class="wc-cover" type="button" id="wc-cover" data-i18n-label="lesenTapReady">
           <span class="wc-cover-eye" aria-hidden="true">👀</span>
           <span class="wc-cover-txt" data-i18n="lesenReady"></span>
         </button>
+        <span class="scene" id="scene" aria-hidden="true" hidden></span>
         <div class="passage" id="passage" hidden></div>
         <div class="question" id="question"></div>
         <div class="wordback" role="img" data-i18n-label="lesenCardHidden">❓</div>

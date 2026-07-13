@@ -190,6 +190,13 @@
         // The way out of the aid is the right answer, on the same buttons.
         answerButton(res, res.answer).click();
         await sleep(SETTLE);
+      } else if (wrongNow && res.kind === "read") {
+        // Schwer never opens the aid (§14.2): a wrong reading tile is retired in
+        // place and the passage stays up, so the way on is to pick the right
+        // answer on the same four buttons — exactly as the child does.
+        trace.push({ q: n, text: q.text, kind: res.kind, gave: give, retry: true, ...readLesenScene() });
+        answerButton(res, res.answer).click();
+        await sleep(SETTLE);
       } else {
         trace.push({ q: n, text: q.text, kind: res.kind, gave: give, ...readLesenScene() });
       }
