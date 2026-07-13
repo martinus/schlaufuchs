@@ -1,5 +1,5 @@
 // The Rechnungen level picker (§12.1, §3.3): one scrollable list of every tile
-// the game has — six mode chips (＋ − ×÷ 🧱 ⊞ 🎲) per difficulty — with the fox
+// the game has — six mode chips (＋ − ÷R 🧱 ⊞ 🎲) per difficulty — with the fox
 // standing on the one being played. Same contract as the einmaleins picker: a
 // tile opens only once the fox has arrived on it, and how many stars a tile
 // still has to give IS the difficulty display.
@@ -25,7 +25,7 @@ import {
 export function modeSymbol(mode) {
   if (mode === "+") return "＋";
   if (mode === "-") return "−";
-  if (mode === "x:") return `×${t("divSign")}`;
+  if (mode === "rest") return `${t("divSign")}R`;
   if (mode === "mauer") return "🧱";
   if (mode === "quad") return "⊞";
   return "🎲";
@@ -34,7 +34,7 @@ export function modeSymbol(mode) {
 // The spoken name of a mode, for a screen reader and the aria-label.
 function modeName(mode) {
   return t({
-    "+": "modePlus", "-": "modeMinus", "x:": "modeTimesDiv",
+    "+": "modePlus", "-": "modeMinus", rest: "modeRest",
     mauer: "modeMauer", quad: "modeQuad", mix: "modeMix",
   }[mode]);
 }
