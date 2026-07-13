@@ -463,14 +463,27 @@ test("stars on a round of ten: 6 → ⭐, 8 → ⭐⭐, 10 → ⭐⭐⭐", () =>
   for (let ok = 0; ok <= 10; ok++) assert.equal(starsFor(ok, 10), want[ok], `${ok}/10`);
 });
 
-// The short rounds the walls and grids play (§12.2): the ratios still hold.
-test("stars on the short rounds: a wall round of 4, a grid round of 3", () => {
-  assert.equal(starsFor(4, 4), 3);
-  assert.equal(starsFor(3, 4), 1, "3 of 4 is 75 % — one star, not two");
-  assert.equal(starsFor(2, 4), 0);
-  assert.equal(starsFor(3, 3), 3);
-  assert.equal(starsFor(2, 3), 1);
-  assert.equal(starsFor(1, 3), 0);
+// The short rounds the walls and grids play (§12.2): the percent bands are
+// pulled apart so every star has its own score — and therefore its own
+// waypoint. On three tasks 80 % and 100 % are both "all three"; taken
+// literally, two star groups would land on the last waypoint together.
+test("stars on the short rounds spread out: one star per score, never two", () => {
+  assert.deepEqual([0, 1, 2, 3].map((ok) => starsFor(ok, 3)), [0, 1, 2, 3],
+    "a grid round of 3 pays at 1, 2 and 3");
+  assert.deepEqual([0, 1, 2, 3, 4].map((ok) => starsFor(ok, 4)), [0, 0, 1, 2, 3],
+    "a wall round of 4 pays at 2, 3 and 4");
+  // …and in EVERY round any mode can play, one more first-try answer never
+  // pays two stars at once (§10.5: at most one group per waypoint)
+  for (const m of MODES) {
+    for (let d = 0; d < 3; d++) {
+      const total = roundSizeFor(m, d);
+      for (let ok = 1; ok <= total; ok++) {
+        assert.ok(starsFor(ok, total) - starsFor(ok - 1, total) <= 1,
+          `${m}/${d}: answer ${ok} of ${total} pays two stars at once`);
+      }
+      assert.equal(starsFor(total, total), 3, `${m}/${d}: a perfect round pays all three`);
+    }
+  }
 });
 
 test("retryStep and fittedFontSize are einmaleins' verbatim — parity", () => {
