@@ -104,6 +104,22 @@ test("at most one star group lands per waypoint", () => {
   assert.match(rerender, /land\(Math\.max\(held, 0\), false\)/, "a re-render must not flush the backlog");
 });
 
+// The round summary paints the stars as the GROUPS they are won in (§10.1) —
+// the same slots the sky holds — in EVERY game. A numeric score line or a
+// loose "⭐".repeat count sneaking back would fail here, not in a play-test.
+test("every game's summary shows star groups, never a score line", () => {
+  for (const g of ["einmaleins/einmaleins", "lesen/lesen", "rechnungen/rechnungen"]) {
+    const src = read(`games/${g}.js`);
+    assert.match(src, /starSlotsHTML\(/, `${g}.js must paint the star groups`);
+    assert.ok(!src.includes("roundStat"), `${g}.js still paints the numeric score line`);
+    assert.ok(!/"⭐"\.repeat/.test(src), `${g}.js still paints loose stars`);
+    assert.ok(!read(`games/${g.split("/")[0]}/index.html`).includes("sum-score"),
+      `${g}: the score line is still in the markup`);
+  }
+  // the slot builder itself: three slots, gold/fresh/ghost states
+  assert.match(journey, /export function starSlotsHTML/, "journey.js must offer the slot builder");
+});
+
 // The scene is the tallest thing in the stage after the aid card, and the aid
 // card holds ten rows of dots. They must never be on screen together.
 test("the scene yields the stage to the feedback aid", () => {

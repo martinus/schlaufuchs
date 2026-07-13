@@ -550,9 +550,12 @@ test("starGoalNeed names the cheapest score that pays the next star", () => {
   for (const bad of [[3, 10], [-1, 10], [0, 0], [0, -5], [undefined, 10]]) {
     assert.equal(starGoalNeed(...bad), null, `starGoalNeed(${bad})`);
   }
-  // …and the summary must pass the round's own length
+  // …and the summary must pass the round's own length. The goal is keyed on
+  // the TILE's owned groups (the slots painted right above it, §10.1), not on
+  // this round's result — a child who once had two stars and just scored one
+  // is still chasing the third, not the second.
   assert.match(read("games/einmaleins/einmaleins.js"),
-    /t\(goal, \{ n: starGoalNeed\(stars, total\), total \}\)/);
+    /t\(goal, \{ n: starGoalNeed\(ownedNow, total\), total \}\)/);
 });
 
 test("nextStarGoal is total: garbage in, a hidden row out — never a blank one", () => {
@@ -597,21 +600,16 @@ test("the round is timed for the parents, and never shown to the child", () => {
 
   // the summary is everything the child sees of the round, and it must be mute
   const painted = endRound.slice(endRound.indexOf("setTimeout("));
-  assert.ok(painted.includes('t("roundStat"'), "the summary must still report the score");
+  // the stars are shown as the GROUPS they are won in (§10.1) — never as a
+  // numeric score line ("8/8 +6 ⭐" read as homework) and never as a flat
+  // count of loose stars
+  assert.ok(painted.includes("starSlotsHTML("), "the summary must paint the star groups");
+  assert.ok(!painted.includes("roundStat"), "the numeric score line is retired");
+  assert.ok(!/"⭐"\.repeat/.test(painted), "loose star counts are retired");
   assert.ok(
     !/Date\.now|seconds|\bt0\b|elapsed|\bms\b|sekunde|answerTimes|qShownAt|median/i.test(painted),
     "the summary must not mention the round's duration — the tempo ladder is painted as a symbol, never a number (§10.6)",
   );
-  assert.match(
-    painted,
-    /t\("roundStat", \{ ok: firstTryOk, total \}\)/,
-    "roundStat takes the score and nothing else",
-  );
-
-  for (const [lang, dict] of [["de", de], ["en", en]]) {
-    assert.ok(!dict.roundStat.includes("{s}"), `${lang}.roundStat still has a seconds slot`);
-    assert.ok(!/\bs\b|sek|\bsec/i.test(dict.roundStat), `${lang}.roundStat names a unit of time`);
-  }
 });
 
 test("star digit string: 11 slots, mixed table at index 10", () => {
