@@ -1113,14 +1113,23 @@ always holds three slots. (Leicht offers fewer stars across the whole game —
 5 tiles to Mittel's 11 and Schwer's 9 — but never more than three in one
 round.)
 
-**A sky slot is exactly one star, in every difficulty.** It briefly held the
-stars a slot pays (two on Mittel, three on Schwer — `starCluster(worth)`), but
-on a short round the pairs hung right over single waypoints and read as "two
-stars for THAT node"; the clusters are retired. What a star is worth is the
-summary's (`+N ⭐`) and the picker's job.
+**On Mittel and Schwer a sky slot holds the stars it pays** — two of them, or
+three, drawn smaller so the group takes about the room one big star took
+(`starCluster(worth)`, `createJourney(…, { worth })`). It used to be one star
+with a `×2` tag written under it, and a tag is a sentence: a child who cannot
+read one still had to be told. Now a Schwer sky simply holds nine stars and a
+Leicht sky three. Until any of this existed, the claim that harder work pays
+more appeared only inside a picker a child never opened.
 
-The star is wrapped in a `<g>` and the group is what moves; given a keyframe,
-it would not move under reduced motion.
+The whole cluster is one `<g>`, so one transform carries every star in it into
+the basket; given a keyframe each, none of them would move under reduced motion.
+
+**At most one group flies per waypoint.** On a short round the ⭐⭐ and ⭐⭐⭐
+thresholds fall on the same last task (80 % and 100 % of three tasks are both
+„all three"), and two groups leaving one waypoint together read as a glitch.
+`setStars` therefore throttles its landings to one group per call — the game
+calls it once per waypoint — and `finish()` flies whatever is still owed as
+the fox reaches the basket.
 
 An earned slot flies into the basket and stays there, leaving a grey ghost of
 the same shape behind. The flight is a CSS `transform` + `transition`, never a

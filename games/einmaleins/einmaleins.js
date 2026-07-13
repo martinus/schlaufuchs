@@ -5,7 +5,7 @@ import { initI18n, t, getLang } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString, hasProgress, validResume } from "../../assets/js/adaptive.js";
 import { saveRound, loadRound, clearRound } from "../../assets/js/roundstore.js";
-import { recordRound, roundPoints, clampDifficulty, addPractice } from "../../assets/js/rewards.js";
+import { recordRound, roundPoints, starValue, clampDifficulty, addPractice } from "../../assets/js/rewards.js";
 import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { confetti } from "../../assets/js/confetti.js";
@@ -146,6 +146,7 @@ function startRound(resume = null) {
     nodes: session.items().length,
     theme: "village",
     stars: best,
+    worth: starValue(diff), // a Schwer star says "×3" on its way to the basket
   });
   buffer = "";
   roundOver = false;

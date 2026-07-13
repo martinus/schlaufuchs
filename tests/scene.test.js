@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import de from "../assets/i18n/de.js";
 import en from "../assets/i18n/en.js";
+import { starCluster } from "../assets/js/journey.js";
 
 const root = new URL("../", import.meta.url);
 const read = (p) => readFileSync(fileURLToPath(new URL(p, root)), "utf8");
@@ -33,33 +34,43 @@ test("a star reaches the basket even with prefers-reduced-motion", () => {
   assert.match(css, /\.journey \.j-star\.landed \{[^}]*transform: translate/, "landing is a transform");
 });
 
-// A sky slot is exactly ONE star, in every game and every difficulty. It
-// briefly held `worth` stars (two on Mittel, three on Schwer), but on a short
-// round the pairs hung right over single waypoints and read as "two stars for
-// THAT node" (Martin, third play-test). What a star is worth is the summary's
-// and the picker's job; the sky shows only the round's one-to-three stars.
-test("a sky slot is one star — never a pair over a waypoint", () => {
-  assert.ok(!/starCluster|CLUSTERS/.test(journey), "the worth clusters are retired from the scene");
-  assert.ok(!/[({,]\s*worth\b|worth\s*[:=]/.test(journey), "no worth parameter reaches the scene");
-  // …and a slot literally draws ONE star: starAt is a single icon, nothing added
-  const def = journey.slice(journey.indexOf("const starAt"), journey.indexOf(";", journey.indexOf("const starAt")));
-  assert.equal((def.match(/iconSVG\(/g) ?? []).length, 1, "a slot must draw exactly one star");
-  for (const g of ["einmaleins/einmaleins", "lesen/lesen", "rechnungen/rechnungen"]) {
-    assert.ok(!/worth: starValue/.test(read(`games/${g}.js`)), `${g}.js still tells the scene a worth`);
+// Mara could not tell that Mittel and Schwer pay more: the claim only ever
+// appeared inside a picker she never opened. It was then written on each star
+// as "×2" — a sentence, aimed at a child who cannot read one. A slot now simply
+// holds the stars it pays.
+test("a slot holds as many stars as it pays", () => {
+  for (const [worth, n] of [[1, 1], [2, 2], [3, 3]]) {
+    assert.equal(starCluster(worth).length, n, `worth ${worth} must draw ${n} stars`);
   }
+  // a one-star slot keeps the big single star the scene was built around
+  assert.deepEqual(starCluster(1), [{ dx: 0, dy: 0, size: 28 }]);
+
+  // two or three stars must share roughly the room one big star took, or the
+  // three slots in the sky start colliding with one another
+  for (const worth of [2, 3]) {
+    for (const { dx, dy, size } of starCluster(worth)) {
+      assert.ok(Math.abs(dx) <= 14 && Math.abs(dy) <= 14, `worth ${worth}: (${dx},${dy}) strays`);
+      assert.ok(size < 28, `worth ${worth}: a grouped star must be smaller than a lone one`);
+    }
+  }
+  // nothing outside 1..3 can ask for an empty sky or a swarm
+  assert.equal(starCluster(0).length, 1);
+  assert.equal(starCluster(9).length, 3);
+  assert.equal(starCluster(undefined).length, 1);
 });
 
-test("every star flies into the basket, and none is left in the sky", () => {
-  // ONE group per slot, and the star inside it: the group is what moves.
-  // Given a keyframe, it would not move under reduced motion.
+test("every star in a slot flies into the basket, and none is left in the sky", () => {
+  // ONE group per slot, and the whole cluster inside it: the group is what
+  // moves. Given a keyframe each, none of them would move under reduced motion.
   const loop = journey.slice(journey.indexOf("for (let i = 0; i < SLOTS; i++) {"), journey.indexOf(".j-fox"));
-  assert.match(loop, /<g class="j-star"[\s\S]*?starAt\(g\.sky\[i\]\.x, g\.sky\[i\]\.y, ""\)/,
-    "the star must be a child of the flying group");
+  assert.match(loop, /<g class="j-star"[\s\S]*?clusterAt\(g\.sky\[i\]\.x, g\.sky\[i\]\.y, ""\)/,
+    "the cluster must be a child of the flying group");
   assert.ok(!/j-worth/.test(journey) && !/j-worth/.test(css), "the ×N tag is retired, everywhere");
 
   // the ghost slot is the same shape, or a collected slot would not match the
   // hole it left behind
-  assert.match(journey, /starAt\(g\.sky\[i\]\.x, g\.sky\[i\]\.y, "j-ghost"\)/);
+  assert.match(journey, /clusterAt\(g\.sky\[i\]\.x, g\.sky\[i\]\.y, "j-ghost"\)/);
+  assert.match(game, /worth: starValue\(diff\)/, "the round tells the scene what its stars are worth");
 });
 
 // Every asked task is its own waypoint (§10.5): the fox steps forward when a
@@ -75,6 +86,22 @@ test("every asked task is its own waypoint — a missed one steps onto a red nod
     const src = read(`games/${g}.js`);
     assert.match(src, /journey\.advanceMissed\(\)/, `${g}.js never takes the missed step`);
   }
+});
+
+// On a short round the ⭐⭐ and ⭐⭐⭐ thresholds fall on the same last task
+// (80 % and 100 % of three tasks are both "all three"), and two groups leaving
+// one waypoint together read as a glitch (Martin, third play-test). At most ONE
+// star group flies per waypoint; whatever is still owed lands with the fox at
+// the basket.
+test("at most one star group lands per waypoint", () => {
+  assert.match(journey, /Math\.min\(want, Math\.max\(owned, 0\) \+ 1\)/,
+    "setStars must throttle its landings to one group per call");
+  const fin = journey.slice(journey.indexOf("finish() {"));
+  assert.match(fin, /land\(want, true\)/, "finish() must fly the owed groups at the basket");
+  // the rebuild after a missed step re-lands only what had landed — flushing
+  // the backlog there would collect a group on the missed waypoint
+  const rerender = journey.slice(journey.indexOf("const held = owned"), journey.indexOf("function moveFox"));
+  assert.match(rerender, /land\(Math\.max\(held, 0\), false\)/, "a re-render must not flush the backlog");
 });
 
 // The scene is the tallest thing in the stage after the aid card, and the aid
