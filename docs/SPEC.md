@@ -1071,7 +1071,7 @@ can name the same score — 80 % and 100 % of three tasks are both „all three"
 and two star groups would then land on one waypoint together. `starNeeds`
 pulls the thresholds apart so every star has its own score: a three-task round
 pays at 1 / 2 / 3, a four-task round at 2 / 3 / 4. Ten-question rounds are
-unchanged. (The same rule, duplicated per game as ever, D11.)
+unchanged. (The same rule for every game — shared in `assets/js/roundrules.js`.)
 
 **Accuracy is the only criterion for stars.** Speed is not: a child who reads
 or taps slowly knows the times tables just as well, and being slow must never
@@ -1227,7 +1227,7 @@ additive collectible** for *knowing* the fact.
 - The same per-question observations feed the parents' **per-fact recall
   grid** (§20) — as a damped class per pair, never as a stored time.
 - **Lesen carries the same ladder** with its own bounds and clock start
-  (§14.4); the mechanics are duplicated, pinned by a parity test.
+  (§14.4); the mechanics are the shared round rules (`assets/js/roundrules.js`).
 
 ### 10.7 Guarding a round that is not saved yet
 
@@ -1731,7 +1731,7 @@ two lesen-specific rules:
   via `playLesen({ delayMs })`.
 
 The mechanics (`median`, `tempoTier`, `awardTempo`, the icons and keys) are
-duplicated from einmaleins like the star rules, pinned by the D11 parity test;
+the shared round rules (`assets/js/roundrules.js`), like the star rules;
 no recall telemetry (`rc`, §20) for lesen. The ⚡ moment additionally plays a
 small zap (`sfx.blitz`, §10.6) — in both games.
 

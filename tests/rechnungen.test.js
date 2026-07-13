@@ -1,7 +1,7 @@
 // Rechnungen pure logic (§12): the skill buckets and their generators, the
 // task/cell model (walls, grids, scaffolds, remainders), the variant-expansion
-// the shared engine draws over, the per-bucket box fold, the star/tempo digit
-// strings, and the einmaleins rules this game duplicates.
+// the shared engine draws over, the per-bucket box fold, and the star/tempo
+// digit strings.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -9,16 +9,9 @@ import {
   MODES, DIFF_KEYS, DIFF_SLUGS, STAR_SLOTS, DIFF_SLOTS, VARIANTS, roundSizeFor,
   BUCKETS, BUCKET_COUNT, bucketOf, bucketsFor, poolFor, questionFor, foldBoxes,
   mauerAidFor, quadAidFor,
-  starsFor, ownedStars, starDigit, withStarDigit,
-  fittedFontSize, retryStep, maxPoints,
-  TEMPO_SLOTS, TEMPO_TIERS, TEMPO_ICONS, TEMPO_KEYS, median, tempoTier, awardTempo,
+  starsFor, starDigit, withStarDigit, retryStep, maxPoints,
+  TEMPO_TIERS, tempoTier,
 } from "../games/rechnungen/logic.js";
-import {
-  starsFor as emStarsFor, ownedStars as emOwnedStars,
-  fittedFontSize as emFitted, retryStep as emRetry,
-  TEMPO_ICONS as emTempoIcons, TEMPO_KEYS as emTempoKeys,
-  median as emMedian, awardTempo as emAwardTempo,
-} from "../games/einmaleins/logic.js";
 import { MAX_POINTS, THRESHOLDS, trophyCount, TROPHIES_PER_GAME } from "../assets/js/rewards.js";
 import { BUDGET } from "../assets/js/storage.js";
 import strings from "../games/rechnungen/i18n.js";
@@ -453,22 +446,9 @@ test("foldBoxes is total: junk strings and junk ids never throw or leak", () => 
   assert.equal(foldBoxes(s, [-1, BUCKET_COUNT, 1.5, BUCKET_COUNT + 99], []), s);
 });
 
-// --- stars, tempo, retry: the einmaleins rules, pinned (D11) -------------------
-
-test("the star rules are the einmaleins rules — parity so they cannot drift", () => {
-  for (let total = 0; total <= 12; total++) {
-    for (let ok = 0; ok <= total; ok++) {
-      assert.equal(starsFor(ok, total), emStarsFor(ok, total), `${ok}/${total}`);
-    }
-  }
-  for (const best of [undefined, null, -1, 2, 99, NaN]) {
-    assert.equal(
-      ownedStars({ firstTrySolved: 6, total: 10 }, best),
-      emOwnedStars({ firstTrySolved: 6, total: 10 }, best),
-      `best=${String(best)}`,
-    );
-  }
-});
+// --- stars, tempo, retry: the shared round rules (assets/js/roundrules.js) ----
+// Exercised in depth by tests/einmaleins.test.js; here only rechnungen's own
+// data — round sizes, TEMPO_TIERS, the four-digit retry — is tested.
 
 test("stars on a round of ten: 6 → ⭐, 8 → ⭐⭐, 10 → ⭐⭐⭐", () => {
   const want = [0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3];
@@ -498,34 +478,14 @@ test("stars on the short rounds spread out: one star per score, never two", () =
   }
 });
 
-test("retryStep and fittedFontSize are einmaleins' verbatim — parity", () => {
-  for (let answer = 1; answer <= 300; answer++) {
-    for (const key of ["1", "9", "0", "⌫", "OK", "x"]) {
-      assert.deepEqual(retryStep("12", key, answer), emRetry("12", key, answer), `${answer} ${key}`);
-    }
-  }
-  // the aid must never strand a four-digit entry mid-typing
+test("retryStep: room for a wall's four-digit top brick — one more than einmaleins", () => {
+  // the aid must never strand a four-digit entry mid-typing…
   assert.deepEqual(retryStep("123", "4", 1234), { input: "1234", state: "typing" });
-  for (const [a, w] of [[76, 388], [76, 292], [30, 100]]) {
-    assert.equal(fittedFontSize(a, w, 500), emFitted(a, w, 500));
-  }
-  assert.equal(fittedFontSize(76, 0, 0), 76);
+  // …and the cap still holds at four
+  assert.deepEqual(retryStep("1234", "5", 12345), { input: "1234", state: "typing" });
 });
 
-test("the tempo ladder: einmaleins' faces and mechanics, rechnungen's bounds", () => {
-  assert.deepEqual(TEMPO_ICONS, emTempoIcons);
-  assert.deepEqual(TEMPO_KEYS, emTempoKeys);
-  assert.equal(TEMPO_SLOTS, 3);
-  for (const g of [[], [500], [1000, 2000], [1, 2, 3, 4], [NaN, 800, -5]]) {
-    assert.equal(median(g), emMedian(g), JSON.stringify(g));
-  }
-  for (let stars = 0; stars <= 3; stars++) {
-    for (let tier = 0; tier <= 3; tier++) {
-      for (let best = 0; best <= 3; best++) {
-        assert.equal(awardTempo({ stars, tier, best }), emAwardTempo({ stars, tier, best }));
-      }
-    }
-  }
+test("the tempo ladder: rechnungen's bounds", () => {
   // the bounds climb within a row and grow harder-slower across difficulty
   for (let d = 0; d < TEMPO_TIERS.length; d++) {
     const [hare, car, rocket] = TEMPO_TIERS[d];
@@ -609,13 +569,6 @@ test("every mode has a spoken name in both languages, and the picker uses them",
   // …and no mode-name key is dead: every one the picker maps must exist
   const mapped = [...src.matchAll(/"(mode[A-Z][a-z]+)"/g)].map((m) => m[1]);
   for (const key of mapped) assert.ok(strings.de[key] && strings.en[key], `${key} is mapped but untranslated`);
-  // the division sign and the tempo faces exist in both languages, none a time
-  for (const lang of ["de", "en"]) {
-    assert.ok(strings[lang].divSign, `${lang}.divSign is missing`);
-    for (const key of ["tempo1", "tempo2", "tempo3", "tempoBest", "tileTempo"]) {
-      const s = strings[lang][key];
-      assert.ok(s, `${lang}.${key} is missing`);
-      assert.ok(!/\d\s*(s|ms|sek|sec)/i.test(s), `${lang}.${key} names a time`);
-    }
-  }
+  // divSign and the tempo faces live in the SHARED dictionaries now
+  // (tests/i18n.test.js holds "both languages, never a time").
 });

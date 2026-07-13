@@ -106,6 +106,15 @@ export default {
   sumOk5: "Stark!",
   sumOk6: "Du schaffst das!",
   newBest: "Neuer Rekord!",
+  // The tempo ladder (§10.6): a name per tier, never a number with a unit of
+  // time — the child sees an animal or a vehicle, never seconds.
+  tempo1: "Hase",
+  tempo2: "Rennauto",
+  tempo3: "Rakete",
+  tempoBest: "Neuer Tempo-Rekord!",
+  tileTempo: "Tempo: {name}",
+  // German schools write division as ":" — Mara did not recognise "÷".
+  divSign: ":",
   trophyCount: "{n} von {total} Pokalen",
   diffEasy: "Leicht",
   diffMedium: "Mittel",

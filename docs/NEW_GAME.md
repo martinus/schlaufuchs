@@ -31,10 +31,12 @@ Copy-adapt from einmaleins/lesen; keep the element ids (`#pick-overlay`,
   is the right answer, no timer, no "Verstanden") → `endRound` (persist
   FIRST, then the 700ms celebration timer — the leave guard trusts
   `roundOver` to mean "cookie written").
-- `games/<name>/logic.js` — pure, unit-tested. Star helpers (`starsFor`,
-  goals, digit-string codecs) are **duplicated per game, with a parity test
-  against einmaleins'** (see tests/lesen.test.js) — never imported across
-  games. `maxPoints(content)` computes what the game can pay.
+- `games/<name>/logic.js` — pure, unit-tested. The star/tempo rules, the
+  aid's retry and the one-line fitter are **shared**: re-export what the game
+  uses from `assets/js/roundrules.js` (games still never import each other).
+  What stays per game is data — `TEMPO_TIERS` bounds, round sizes, how the
+  star digit strings are indexed. `maxPoints(content)` computes what the game
+  can pay.
 - `games/<name>/picker.js` — copy of the picker; tiles, walk-then-open.
 - `games/<name>/i18n.js` — de+en in one file.
 - `games/<name>/content.js` (if data-driven) — **append-only** when item

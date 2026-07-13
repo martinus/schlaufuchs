@@ -14,6 +14,8 @@ import { saveRound, loadRound, clearRound } from "../../assets/js/roundstore.js"
 import { recordRound, roundPoints, starValue, clampDifficulty } from "../../assets/js/rewards.js";
 import { createJourney, starSlotsHTML } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
+import { fastPress } from "../../assets/js/fastpress.js";
+import { blitzFlash } from "../../assets/js/blitz.js";
 import { confetti } from "../../assets/js/confetti.js";
 import { trophyCardHTML } from "../../assets/js/trophycard.js";
 import { openShowcase } from "../../assets/js/showcase.js";
@@ -62,23 +64,6 @@ const NEXT_MS = 250;
 // Schwer — feels rewarded, not just ticked off. It never touches the tempo
 // clock, which stops at the answer, not at the next question.
 const READ_NEXT_MS = 650;
-
-// React on pointerdown for instant response on touch devices; the later
-// synthetic click is suppressed. Keyboard activation still works via click.
-function fastPress(btn, fn) {
-  let usedPointer = false;
-  btn.addEventListener("pointerdown", () => {
-    usedPointer = true;
-    fn();
-  });
-  btn.addEventListener("click", () => {
-    if (usedPointer) {
-      usedPointer = false;
-      return;
-    }
-    fn();
-  });
-}
 
 // --- persistent state ------------------------------------------------------
 let saved = getGame("lesen");
@@ -331,24 +316,9 @@ function answerPress(value, btn) {
   }
 }
 
-// The ⚡ moment (§10.6): one answer at rocket speed, marked the instant it
-// lands. Appended to the stage, not the word card — the card flips and hides
-// (transforms and overflow that would clip or re-anchor the flight), while
-// `.stage .blitz` positions against the stage. Decorative only; a slow answer
-// sees nothing, because there is no negative moment. The flight is a
-// transition, so reduced motion degrades to "briefly there", never a keyframe
-// hanging mid-air (§10.5).
-function blitzFlash() {
-  const b = document.createElement("span");
-  b.className = "blitz";
-  b.setAttribute("aria-hidden", "true");
-  b.textContent = "⚡";
-  document.querySelector(".stage").appendChild(b);
-  requestAnimationFrame(() => b.classList.add("gone"));
-  setTimeout(() => b.remove(), 800);
-  sfx.blitz();
-}
-
+// The ⚡ (blitz.js) is appended to the stage, not the word card — the card
+// flips and hides (transforms and overflow that would clip or re-anchor the
+// flight), while `.stage .blitz` positions against the stage.
 function submit(value, btn) {
   clearTimeout(flashTimer);
   const correct = value === question.answer;
@@ -363,7 +333,7 @@ function submit(value, btn) {
     if (!missedIds.has(currentId)) {
       const took = Date.now() - qShownAt;
       answerTimes.push(took);
-      if (tempoTier(took, diff) === 3) blitzFlash();
+      if (tempoTier(took, diff) === 3) blitzFlash(document.querySelector(".stage"));
     }
     phase = "correct-wait";
     // the word comes back for the short pause — the child sees what she just

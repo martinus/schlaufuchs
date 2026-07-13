@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import {
   THRESHOLDS, TROPHIES, GAMES, trophyCount, totalTrophies, TOTAL_TROPHIES,
-  gameStarsOf, totalPoints, regionState, starBadgeTier, nextTrophyInfo,
+  gameStarsOf, totalPoints, regionState, pokalraumState, starBadgeTier, nextTrophyInfo,
   roundPoints, tilePointsLeft, starValue, clampDifficulty, addPractice, MAX_ROUND_SECONDS,
   ladderFor, MAX_POINTS, TROPHIES_PER_GAME,
 } from "../assets/js/rewards.js";
@@ -220,6 +220,14 @@ test("region states at 0 / one third / 100 % (§3.1)", () => {
     assert.ok(MAX_POINTS[game] > 0, `${game}: a zero maximum divides by zero`);
     assert.equal(regionState({ [game]: MAX_POINTS[game] }, game), "mastered");
   }
+
+  // The Trophy Room follows the same rule over TOTAL_TROPHIES (60): thriving
+  // from a third (20 cups), mastered only with every cup on the shelf.
+  assert.equal(pokalraumState(0), "base");
+  assert.equal(pokalraumState(TOTAL_TROPHIES / 3 - 1), "base");
+  assert.equal(pokalraumState(TOTAL_TROPHIES / 3), "thriving");
+  assert.equal(pokalraumState(TOTAL_TROPHIES - 1), "thriving");
+  assert.equal(pokalraumState(TOTAL_TROPHIES), "mastered");
 });
 
 // The lesen twin of the einmaleins balance above: its maximum is computed from

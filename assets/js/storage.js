@@ -52,8 +52,23 @@ function save(state) {
   return true;
 }
 
+// Decode once per cookie value, not once per call. The hottest paths — a
+// sound effect on every keypad press, the top-bar refresh after every answer
+// — each land here, and a full decode of a cookie near its 3500-byte budget
+// per keystroke is pure waste. The raw string is the cache key, so any write
+// (this tab's or another's) invalidates by simply not matching. Callers treat
+// the returned state as read-only (writes go through save()), which is what
+// makes sharing one object safe.
+let lastRaw = null;
+let lastState = null;
+
 export function loadState() {
-  return decodeState(readRaw());
+  const raw = readRaw();
+  if (raw !== lastRaw) {
+    lastRaw = raw;
+    lastState = decodeState(raw);
+  }
+  return lastState;
 }
 
 // One reader and one writer per section of the cookie. `getGame` takes the

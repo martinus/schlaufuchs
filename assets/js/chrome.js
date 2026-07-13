@@ -119,7 +119,7 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
       <hr class="cx-sep">
       <div class="backuprow">
         <button class="btn-menu" id="cx-export"></button>
-        <button class="btn-menu" id="cx-import" data-armable></button>
+        <button class="btn-menu" id="cx-import" data-armable data-idle="backupLoad"></button>
         <input type="file" id="cx-import-file" accept=".json,application/json" hidden>
       </div>
       <p class="backupbad" id="cx-backup-bad" hidden></p>
@@ -135,6 +135,7 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
   const closeBtn = el.querySelector("#cx-close");
 
   function renderRows() {
+    disarmConfirm(); // a reopened sheet starts with nothing half-pressed
     el.querySelector(".cx-title").textContent = t("settings");
     el.querySelector(".cx-l-sound").textContent = t("sound");
     el.querySelector(".cx-l-lang").textContent = t("language");
@@ -160,7 +161,7 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
   }
   const resetRowHTML = (id, label) =>
     `<div class="resetrow"><span>${label}</span>`
-    + `<button class="resetbtn" type="button" data-reset="${id}">${t("resetBtn")}</button></div>`;
+    + `<button class="resetbtn" type="button" data-reset="${id}" data-idle="resetBtn">${t("resetBtn")}</button></div>`;
 
   soundBtn.addEventListener("click", () => {
     setSettings({ sound: getSettings().sound === false });
@@ -190,30 +191,40 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
     onChange?.();
   });
 
-  // Two-step confirm for every reset row (§3.4): the first tap arms the row and
-  // names the stakes, a second within a few seconds does it. Arming one row
-  // disarms the others, so two half-pressed buttons can never both fire.
+  // Two-step confirm for everything destructive on the sheet (§3.4): the first
+  // tap arms the button and names the stakes, a second within a few seconds
+  // fires it. ONE button is armed at a time — arming any disarms the rest,
+  // reset rows and the backup import alike, so two half-pressed buttons can
+  // never both fire. `data-idle` names the i18n key of the button's calm label.
+  let armedBtn = null;
   let armTimer = null;
-  function disarmReset() {
+  function disarmConfirm() {
     clearTimeout(armTimer);
-    for (const b of resetList.querySelectorAll("[data-reset]")) {
-      delete b.dataset.armed;
-      b.classList.remove("armed");
-      b.textContent = t("resetBtn");
-    }
+    const btn = armedBtn;
+    armedBtn = null;
+    if (!btn) return;
+    btn.classList.remove("armed");
+    btn.textContent = t(btn.dataset.idle);
   }
+  // True on the confirming second tap; otherwise arms `btn` and starts the
+  // disarm clock.
+  function confirmPress(btn) {
+    if (armedBtn === btn) {
+      disarmConfirm();
+      return true;
+    }
+    disarmConfirm();
+    armedBtn = btn;
+    btn.classList.add("armed");
+    btn.textContent = t("resetConfirm");
+    sfx.click();
+    armTimer = setTimeout(disarmConfirm, 4000);
+    return false;
+  }
+
   resetList.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-reset]");
-    if (!btn) return;
-    if (btn.dataset.armed !== "1") {
-      disarmReset();
-      btn.dataset.armed = "1";
-      btn.classList.add("armed");
-      btn.textContent = t("resetConfirm");
-      sfx.click();
-      armTimer = setTimeout(disarmReset, 4000);
-      return;
-    }
+    if (!btn || !confirmPress(btn)) return;
     const id = btn.dataset.reset;
     if (id === "__all__") resetAll();
     else resetGame(id);
@@ -234,23 +245,9 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
   const importBtn = el.querySelector("#cx-import");
   const importFile = el.querySelector("#cx-import-file");
   const backupBad = el.querySelector("#cx-backup-bad");
-  let importArmTimer = null;
   importBtn.addEventListener("click", () => {
     backupBad.hidden = true;
-    if (importBtn.dataset.armed !== "1") {
-      importBtn.dataset.armed = "1";
-      importBtn.classList.add("armed");
-      importBtn.textContent = t("resetConfirm");
-      sfx.click();
-      clearTimeout(importArmTimer);
-      importArmTimer = setTimeout(() => {
-        delete importBtn.dataset.armed;
-        importBtn.classList.remove("armed");
-        importBtn.textContent = t("backupLoad");
-      }, 4000);
-      return;
-    }
-    importFile.click();
+    if (confirmPress(importBtn)) importFile.click();
   });
 
   async function importFrom(file) {

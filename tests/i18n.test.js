@@ -87,8 +87,11 @@ test("no dictionary key is dead", () => {
         for (const [, k] of src.matchAll(/data-i18n(?:-label)?="([a-zA-Z0-9_]+)"/g)) used.add(k);
         // the reader's pages name their heading's key when they build the bar
         for (const [, k] of src.matchAll(/\btitle:\s*["']([a-zA-Z0-9_]+)["']/g)) used.add(k);
-        // keys built at runtime, e.g. `region_${game}` or DIFF_KEYS
-        for (const [, k] of src.matchAll(/["'`](region_|game_|diff|sumOk)[a-zA-Z0-9]*["'`]/g)) used.add(k);
+        // keys held whole in arrays or built at runtime, e.g. DIFF_KEYS,
+        // roundrules' TEMPO_KEYS, lesen's verdict pair, `region_${game}` (the
+        // runtime-built ones never match whole and ride the `dynamic`
+        // exemption below instead)
+        for (const [, k] of src.matchAll(/["'`]((?:region_|game_|diff|sumOk|tempo|lesen|mode)[a-zA-Z0-9]*)["'`]/g)) used.add(k);
       }
     }
   };
@@ -104,6 +107,17 @@ test("no dictionary key is dead", () => {
   const dynamic = /^(region_|game_|diff|sumOk)/;
   const dead = Object.keys(de).filter((k) => !used.has(k) && !dynamic.test(k));
   assert.deepEqual(dead, [], `dead strings in de.js/en.js: ${dead.join(", ")}`);
+
+  // The game dictionaries accumulate corpses the same way — emTitle sat in
+  // einmaleins' for a year with no caller. lesenPack<Key> keys are built at
+  // runtime from content.js and have their own two-way liveness test
+  // (tests/lesen-content.test.js).
+  const gameDicts = { einmaleins: einmaleins.de, lesen: lesen.de, rechnungen: rechnungen.de };
+  for (const [game, dict] of Object.entries(gameDicts)) {
+    const deadG = Object.keys(dict)
+      .filter((k) => !used.has(k) && !dynamic.test(k) && !k.startsWith("lesenPack"));
+    assert.deepEqual(deadG, [], `dead strings in games/${game}/i18n.js: ${deadG.join(", ")}`);
+  }
 });
 
 // Adding a language must be one declaration, not a hunt through the codebase.
@@ -133,6 +147,21 @@ test("the language picker offers a way back to every language", () => {
   assert.ok(chrome.includes("LANGUAGES.map"), "the picker must be built from LANGUAGES");
   assert.ok(chrome.includes('aria-pressed'), "the active language must be marked");
   assert.ok(!/getLang\(\) === "de" \? "EN" : "DE"/.test(chrome), "the old toggle is back");
+});
+
+// The tempo ladder's names (§10.6) and the division sign are shared strings —
+// every game shows them. Never a number, never a unit of time: the child sees
+// an animal or a vehicle, never seconds (§10.3).
+test("tempo strings and divSign exist in both languages, and none names a time", () => {
+  for (const [lang, dict] of [["de", de], ["en", en]]) {
+    assert.ok(dict.divSign, `${lang}.divSign is missing`);
+    for (const key of ["tempo1", "tempo2", "tempo3", "tempoBest", "tileTempo"]) {
+      const s = dict[key];
+      assert.equal(typeof s, "string", `${lang}.${key} is missing`);
+      assert.ok(!/\d/.test(s), `${lang}.${key} contains a number: "${s}"`);
+      assert.ok(!/\bs\b|sek|\bsec|\bms\b|minut/i.test(s), `${lang}.${key} names a unit of time: "${s}"`);
+    }
+  }
 });
 
 // The chip's icons are aria-hidden, so these two strings are the only thing a

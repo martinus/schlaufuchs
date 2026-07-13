@@ -7,6 +7,20 @@
 // is why the content file is append-only.
 
 import { clampBox } from "../../assets/js/adaptive.js";
+import {
+  DIFF_KEYS, STAR_SLOTS,
+  tempoTier as tierFor,
+  starDigit as digitAt,
+  withStarDigit as withDigitAt,
+} from "../../assets/js/roundrules.js";
+
+// The round rules every game shares — star criteria, tempo mechanics and
+// faces, the one-line fitter — live in roundrules.js; see there for the
+// reasoning. This module keeps only lesen's own data and indexing.
+export {
+  DIFF_KEYS, DIFF_SLUGS, STAR_SLOTS, starNeeds, starsFor, ownedStars,
+  TEMPO_SLOTS, TEMPO_ICONS, TEMPO_KEYS, median, awardTempo, fittedFontSize,
+} from "../../assets/js/roundrules.js";
 
 // Questions per round (§7.3): eight items. Lesen rounds were six — kept short
 // for a young reader's patience — but every tile's three stars were too quick
@@ -14,11 +28,6 @@ import { clampBox } from "../../assets/js/adaptive.js";
 // round meatier without outlasting a child, and three-starring one (all eight
 // first try) is real work. Every pack still outgrows the round (smallest is 10).
 export const ROUND_SIZE = 8;
-
-// How the three difficulty indices are *named*: the i18n key the child reads
-// and the CSS slug that colours a picker section (same contract as einmaleins).
-export const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
-export const DIFF_SLUGS = ["easy", "medium", "hard"];
 
 // Tile addressing within a difficulty: packs 0..3 in content order, and the
 // "Alle" tile at index 4 that mixes the whole difficulty. Also the slot count
@@ -183,72 +192,14 @@ export function optionsFor(id, content, rng = Math.random) {
   return null;
 }
 
-// --- stars (§14.3) -------------------------------------------------------------
-// The einmaleins ratios exactly (≥60 % ⭐, ≥80 % ⭐⭐, 100 % ⭐⭐⭐ first-try): on a
-// round of six that is 4, 5 and 6. Duplicated, not imported — einmaleins'
-// logic is a shipped game, not a shared library, and tests/lesen.test.js pins
-// the two against each other so they cannot drift apart silently.
-export const STAR_SLOTS = 3;
-
-export function starNeeds(total) {
-  // The three scores that pay the stars: the percent bands (≥60 % ⭐, ≥80 % ⭐⭐,
-  // 100 % ⭐⭐⭐), pulled apart when a short round would drop two stars on the
-  // same answer — 80 % and 100 % of three tasks are both "all three". Every
-  // star group then lands on its own waypoint (§10.3, §10.5): a three-task
-  // round pays at 1, 2 and 3, a four-task round at 2, 3 and 4.
-  if (!(total > 0)) return null;
-  const t3 = total;
-  const t2 = Math.max(1, Math.min(Math.ceil(0.8 * total), t3 - 1));
-  const t1 = Math.max(1, Math.min(Math.ceil(0.6 * total), t2 - 1));
-  return [t1, t2, t3];
-}
-
-export function starsFor(firstTryOk, total) {
-  const needs = starNeeds(total);
-  if (!needs) return 0;
-  return needs.filter((n) => firstTryOk >= n).length;
-}
-
-
-
-// The stars you own on this tile if the round stopped right now — the round
-// scene's basket (§10.5). Monotone in both terms, so a star can never leave.
-export function ownedStars({ firstTrySolved = 0, total = 0 } = {}, best = 0) {
-  const held = Number.isInteger(best) && best > 0 ? Math.min(best, STAR_SLOTS) : 0;
-  const earned = total > 0 ? starsFor(firstTrySolved, total) : 0;
-  return Math.max(held, earned);
-}
-
 // --- star digit strings (§14.5) ------------------------------------------------
 // One digit per tile in a 5-char per-difficulty string: packs 0..3, "Alle" at
-// index 4. Junk in, zero out.
-export function starDigit(starString, pack) {
-  const d = Number.parseInt((starString ?? "")[pack], 10);
-  return Number.isInteger(d) ? Math.min(d, 3) : 0;
-}
-
-export function withStarDigit(starString, pack, value) {
-  const s = (starString ?? "").padEnd(STAR_TILES, "0").split("");
-  s[pack] = String(value);
-  return s.join("");
-}
-
-// The word must always stay on one line — a broken "Geburtstags-kuchen" is two
-// reads, and the blitz pays for one. Same contract as the einmaleins question
-// (§10.1), duplicated like the star rules and pinned by the same parity test.
-export function fittedFontSize(size, avail, width) {
-  if (!(size > 0) || !(avail > 0) || !(width > 0) || width <= avail) return size;
-  return Math.floor((size * avail) / width);
-}
+// index 4.
+export const starDigit = (starString, pack) => digitAt(starString, pack);
+export const withStarDigit = (starString, pack, value) =>
+  withDigitAt(starString, pack, value, STAR_TILES);
 
 // --- the tempo ladder (§10.6, §14.4) -------------------------------------------
-// The same second, purely additive collectible einmaleins pays: 🐇 → 🚗 → 🚀,
-// only ever upward, worth nothing but itself. Duplicated from einmaleins'
-// logic.js like the star rules above — a shipped game is not a shared library
-// — and pinned against it by the parity test in tests/lesen.test.js. When a
-// third game wants the ladder, promote the shared parts to assets/js/tempo.js.
-export const TEMPO_SLOTS = 3;
-
 // Upper bounds (ms) on the round's median answer time, per difficulty:
 // [hare, car, rocket]. The clock starts when the child sees the question — the
 // reveal tap for a word (§14.2), the show for a sentence or passage — so Leicht
@@ -265,39 +216,9 @@ export const TEMPO_TIERS = [
   [25000, 16000, 10000], // Schwer — reading a passage takes real time
 ];
 
-// The ladder's three faces, indexed by tier: the icon name (graphics.js) and
-// the i18n key. Index 0 is the point of both: below the hare there is nothing
-// to draw and nothing to say — never a snail.
-export const TEMPO_ICONS = [null, "tempo-hare", "tempo-car", "tempo-rocket"];
-export const TEMPO_KEYS = [null, "tempo1", "tempo2", "tempo3"];
-
-// The median, because one long think about a new word must not cost the round
-// its tempo — a sum or a mean would hand the slowest question a veto.
-export function median(values) {
-  const v = (values ?? []).filter(Number.isFinite).sort((a, b) => a - b);
-  if (v.length === 0) return null;
-  const m = v.length >> 1;
-  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
-}
-
 // Tier for a time (the round's median — or a single answer: tier 3 on one
-// answer is what triggers the in-round ⚡). Total: junk in, no tier out.
-export function tempoTier(ms, difficulty) {
-  const limits = TEMPO_TIERS[difficulty];
-  if (!limits || !Number.isFinite(ms) || ms < 0) return 0;
-  if (ms <= limits[2]) return 3;
-  if (ms <= limits[1]) return 2;
-  return ms <= limits[0] ? 1 : 0;
-}
-
-// What the tile stores after the round: fast-and-wrong must never pay, so a
-// round below two stars (§14.3) awards nothing — and like the star basket,
-// the stored tier only ever climbs.
-export function awardTempo({ stars = 0, tier = 0, best = 0 } = {}) {
-  const held = Number.isInteger(best) && best > 0 ? Math.min(best, TEMPO_SLOTS) : 0;
-  const won = Number.isInteger(tier) && tier > 0 ? Math.min(tier, TEMPO_SLOTS) : 0;
-  return stars >= 2 ? Math.max(held, won) : held;
-}
+// answer is what triggers the in-round ⚡) against this game's bounds.
+export const tempoTier = (ms, difficulty) => tierFor(ms, TEMPO_TIERS[difficulty]);
 
 // Everything the game can pay, computed from its real tiles (§8.3): each
 // difficulty offers its packs plus "Alle", each tile holds three stars, and a

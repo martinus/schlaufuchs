@@ -38,11 +38,27 @@
 //
 // The star/tempo digit strings are per MODE, indexed by difficulty (§12.3) —
 // transposed from einmaleins/lesen, which key stars by difficulty. The star
-// *ratios*, the tempo ladder, the aid's retry and the one-line fitter are the
-// einmaleins rules verbatim (a shipped game is not a shared library, D11);
-// tests/rechnungen.test.js pins them against einmaleins so they cannot drift.
+// ratios, the tempo ladder, the aid's retry and the one-line fitter are the
+// shared round rules (assets/js/roundrules.js).
 
 import { clampBox } from "../../assets/js/adaptive.js";
+import {
+  STAR_SLOTS,
+  tempoTier as tierFor,
+  starDigit as digitAt,
+  withStarDigit as withDigitAt,
+  retryStep as retry,
+} from "../../assets/js/roundrules.js";
+
+// The round rules every game shares — star criteria, tempo mechanics and
+// faces, the aid's retry, the one-line fitter — live in roundrules.js; see
+// there for the reasoning. This module keeps only rechnungen's own data and
+// indexing (star strings per MODE, indexed by difficulty — transposed from
+// einmaleins/lesen, which key stars by difficulty).
+export {
+  DIFF_KEYS, DIFF_SLUGS, STAR_SLOTS, starNeeds, starsFor, ownedStars,
+  TEMPO_SLOTS, TEMPO_ICONS, TEMPO_KEYS, median, awardTempo, fittedFontSize,
+} from "../../assets/js/roundrules.js";
 
 // The six modes, in picker order (§12.1). These strings ARE the keys of the
 // cookie's `stars`/`tempo` maps (§12.3): "rest" is division with remainder
@@ -54,11 +70,6 @@ import { clampBox } from "../../assets/js/adaptive.js";
 export const MODES = ["+", "-", "rest", "mauer", "quad", "mix"];
 const MIX_MODES = ["+", "-", "rest"];
 
-// How the three difficulty indices are *named*: the i18n key the child reads
-// and the CSS slug that colours a picker section (same contract as einmaleins).
-export const DIFF_KEYS = ["diffEasy", "diffMedium", "diffHard"];
-export const DIFF_SLUGS = ["easy", "medium", "hard"];
-
 // Tasks per round, per mode (§12.2). A wall is three answers, a grid up to
 // four, a ÷R task two — so those rounds hold fewer tasks. Every round lands at
 // roughly ten to sixteen keypad entries, a comparable effort per star.
@@ -69,9 +80,8 @@ export function roundSizeFor(mode) {
   return 10;
 }
 
-// The three stars a tile can hold, and the three difficulty slots a mode's
-// star/tempo string carries (§12.3). Both happen to be three.
-export const STAR_SLOTS = 3;
+// The three difficulty slots a mode's star/tempo string carries (§12.3) —
+// which happens to equal STAR_SLOTS, the stars a tile can hold.
 export const DIFF_SLOTS = 3;
 
 // How many concrete variants one bucket expands into for a round. The smallest
@@ -86,7 +96,7 @@ export const VARIANTS = 12;
 // German schools write ":", English "÷" — so this module stays i18n-free, like
 // einmaleins' `divSign`.
 const SIGN = { "+": "+", "-": "−", x: "×" };
-const sign = (op, divSign) => (op === ":" ? divSign : SIGN[op]);
+export const sign = (op, divSign) => (op === ":" ? divSign : SIGN[op]);
 
 // --- generation helpers -------------------------------------------------------
 const ri = (rng, lo, hi) => lo + Math.floor(rng() * (hi - lo + 1));
@@ -403,80 +413,19 @@ export function foldBoxes(boxStr, touched = [], missed = [], count = BUCKET_COUN
   return s.join("");
 }
 
-// --- stars (§10.3, §12.2) -----------------------------------------------------
-// The einmaleins ratios exactly (≥60 % ⭐, ≥80 % ⭐⭐, 100 % ⭐⭐⭐ first-try).
-// Duplicated, not imported — pinned against einmaleins by tests/rechnungen.test.js.
-export function starNeeds(total) {
-  // The three scores that pay the stars: the percent bands (≥60 % ⭐, ≥80 % ⭐⭐,
-  // 100 % ⭐⭐⭐), pulled apart when a short round would drop two stars on the
-  // same answer — 80 % and 100 % of three tasks are both "all three". Every
-  // star group then lands on its own waypoint (§10.3, §10.5): a three-task
-  // round pays at 1, 2 and 3, a four-task round at 2, 3 and 4.
-  if (!(total > 0)) return null;
-  const t3 = total;
-  const t2 = Math.max(1, Math.min(Math.ceil(0.8 * total), t3 - 1));
-  const t1 = Math.max(1, Math.min(Math.ceil(0.6 * total), t2 - 1));
-  return [t1, t2, t3];
-}
-
-export function starsFor(firstTryOk, total) {
-  const needs = starNeeds(total);
-  if (!needs) return 0;
-  return needs.filter((n) => firstTryOk >= n).length;
-}
-
-
-
-// The stars you own on this tile if the round stopped now — the round scene's
-// basket (§10.5). Monotone in both terms, so a star can never leave.
-export function ownedStars({ firstTrySolved = 0, total = 0 } = {}, best = 0) {
-  const held = Number.isInteger(best) && best > 0 ? Math.min(best, STAR_SLOTS) : 0;
-  const earned = total > 0 ? starsFor(firstTrySolved, total) : 0;
-  return Math.max(held, earned);
-}
-
 // --- star digit strings (§12.3) -----------------------------------------------
-// One digit per DIFFICULTY in a 3-char string, held per mode. Junk in, zero out.
-export function starDigit(starString, diff) {
-  const d = Number.parseInt((starString ?? "")[diff], 10);
-  return Number.isInteger(d) ? Math.min(d, 3) : 0;
-}
+// One digit per DIFFICULTY in a 3-char string, held per mode.
+export const starDigit = (starString, diff) => digitAt(starString, diff);
+export const withStarDigit = (starString, diff, value) =>
+  withDigitAt(starString, diff, value, DIFF_SLOTS);
 
-export function withStarDigit(starString, diff, value) {
-  const s = (starString ?? "").padEnd(DIFF_SLOTS, "0").split("");
-  s[diff] = String(value);
-  return s.join("");
-}
-
-// The one-line kinds must always stay on one line (§10.1). Same fitter as
-// einmaleins, duplicated and pinned by the parity test.
-export function fittedFontSize(size, avail, width) {
-  if (!(size > 0) || !(avail > 0) || !(width > 0) || width <= avail) return size;
-  return Math.floor((size * avail) / width);
-}
-
-// After a wrong answer the child re-enters the right answer (§8.1): the aid is
-// answered the way the cell was — digits, then OK. The einmaleins contract
-// verbatim, pinned by parity.
-export function retryStep(input, key, answer) {
-  const want = String(answer);
-  const cur = String(input ?? "");
-  if (key === "⌫") return { input: cur.slice(0, -1), state: "typing" };
-  if (key === "OK") {
-    if (cur === "") return { input: cur, state: "typing" };
-    return cur === want ? { input: cur, state: "done" } : { input: "", state: "reject" };
-  }
-  if (!/^[0-9]$/.test(key)) return { input: cur, state: "typing" };
-  return { input: cur.length < 4 ? cur + key : cur, state: "typing" };
-}
+// The aid's retry (§8.1), with room for the four-digit answers a wall's top
+// brick can reach — einmaleins caps at three.
+export const retryStep = (input, key, answer) => retry(input, key, answer, 4);
 
 // --- the tempo ladder (§10.6) -------------------------------------------------
-// The same purely additive collectible einmaleins pays: 🐇 → 🚗 → 🚀, only ever
-// upward. Faces and mechanics are einmaleins' (pinned by parity); only the
-// bounds differ. The clock runs PER CELL (§12.2) — a wall brick and a plain sum
-// are each one thinking step — so the bounds describe one step, not one task.
-export const TEMPO_SLOTS = 3;
-
+// The clock runs PER CELL (§12.2) — a wall brick and a plain sum are each one
+// thinking step — so the bounds describe one step, not one task.
 // Upper bounds (ms) on the round's median cell time, per difficulty:
 // [hare, car, rocket]. Leicht sits above einmaleins' keypad Leicht; Mittel adds
 // carrying/borrowing; Schwer's single step is a decomposition row or a
@@ -492,29 +441,7 @@ export const TEMPO_TIERS = [
   [26000, 17000, 11000], // Schwer
 ];
 
-export const TEMPO_ICONS = [null, "tempo-hare", "tempo-car", "tempo-rocket"];
-export const TEMPO_KEYS = [null, "tempo1", "tempo2", "tempo3"];
-
-export function median(values) {
-  const v = (values ?? []).filter(Number.isFinite).sort((a, b) => a - b);
-  if (v.length === 0) return null;
-  const m = v.length >> 1;
-  return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2;
-}
-
-export function tempoTier(ms, difficulty) {
-  const limits = TEMPO_TIERS[difficulty];
-  if (!limits || !Number.isFinite(ms) || ms < 0) return 0;
-  if (ms <= limits[2]) return 3;
-  if (ms <= limits[1]) return 2;
-  return ms <= limits[0] ? 1 : 0;
-}
-
-export function awardTempo({ stars = 0, tier = 0, best = 0 } = {}) {
-  const held = Number.isInteger(best) && best > 0 ? Math.min(best, TEMPO_SLOTS) : 0;
-  const won = Number.isInteger(tier) && tier > 0 ? Math.min(tier, TEMPO_SLOTS) : 0;
-  return stars >= 2 ? Math.max(held, won) : held;
-}
+export const tempoTier = (ms, difficulty) => tierFor(ms, TEMPO_TIERS[difficulty]);
 
 // --- the game's worth (§8.3, §12.2) -------------------------------------------
 // Everything the game can pay, computed from its real tiles: six modes × three
