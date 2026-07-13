@@ -6,14 +6,13 @@ import assert from "node:assert/strict";
 import {
   ROUND_SIZE, DIFF_KEYS, DIFF_SLUGS, MIXED, STAR_TILES, FLASH_MS, flashMs,
   packsFor, poolFor, itemAt, questionFor, optionsFor,
-  STAR_SLOTS, starsFor, nextStarGoal, starGoalNeed, ownedStars,
+  STAR_SLOTS, starsFor, ownedStars,
   starDigit, withStarDigit, maxPoints,
   TEMPO_SLOTS, TEMPO_TIERS, TEMPO_ICONS, TEMPO_KEYS, median, tempoTier, awardTempo,
   GUARD_MS, isBounce,
 } from "../games/lesen/logic.js";
 import {
-  starsFor as emStarsFor, nextStarGoal as emNextStarGoal,
-  starGoalNeed as emStarGoalNeed, ownedStars as emOwnedStars,
+  starsFor as emStarsFor, ownedStars as emOwnedStars,
   TEMPO_ICONS as emTempoIcons, TEMPO_KEYS as emTempoKeys,
   median as emMedian, awardTempo as emAwardTempo,
 } from "../games/einmaleins/logic.js";
@@ -177,8 +176,6 @@ test("the star rules are the einmaleins rules — parity, so they cannot drift (
     }
   }
   for (let s = 0; s <= 4; s++) {
-    assert.equal(nextStarGoal(s), emNextStarGoal(s), `goal after ${s} stars`);
-    assert.equal(starGoalNeed(s, 6), emStarGoalNeed(s, 6), `need after ${s} stars`);
   }
   for (const best of [undefined, null, -1, 2, 99, NaN]) {
     assert.equal(

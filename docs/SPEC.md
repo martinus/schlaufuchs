@@ -957,11 +957,13 @@ walks the village lane; goal node: ringing the school bell.
 4. Summary overlay, kept deliberately quiet: **the tile's three star GROUPS**
    (the same slots the round's sky holds — a slot is `worth` stars and is only
    ever won whole; gold = owned, a freshly won group pops in, grey ghost =
-   still to win: `starSlotsHTML` in journey.js), the price of the next
-   *unowned* group (§10.3), the tempo symbol when the round awarded one
-   (§10.6 — a symbol and its name, never a time), the trophy if one was
-   earned, and **one** button carrying a random congratulation, which opens
-   the level picker (§3.4). There is deliberately **no numeric score line** —
+   still to win: `starSlotsHTML` in journey.js), the tempo symbol when the
+   round awarded one (§10.6 — a symbol and its name, never a time), the
+   trophy if one was earned, and **one** button carrying a random
+   congratulation, which opens the level picker (§3.4). There is no goal line
+   either („⭐⭐⭐ bei 10 von 10 richtig" was one more sentence to read): the
+   ghost groups already say what is still to win, and the ratio rule lives in
+   §10.3 for the grown-ups. There is deliberately **no numeric score line** —
    the earlier `{ok}/{total} +6 ⭐` read as homework and said in numbers what
    the slots say at a glance. A child who has just won reads almost nothing —
    the slots say how the tile stands and the trophy is the prize, so neither
@@ -1080,9 +1082,10 @@ A wrong answer leaves its item unsolved, so the round asks it again: a round
 ends only when every drawn item is *solved*, and only the first try counts for
 stars.
 
-The summary names the price of the next star (`nextStarGoal`), quietly, under
-the score — otherwise a child who scores 9/10 has no way to learn why they
-still have one star.
+The summary does NOT spell these thresholds out (a goal line — „⭐⭐⭐ bei 10
+von 10 richtig" — existed twice and was cut twice as one sentence too many):
+the grey ghost groups say what is still to win, and a child who replays the
+tile discovers the rule by playing.
 
 ### 10.4 Cookie state (`einmaleins`)
 
@@ -1785,8 +1788,8 @@ need first.
 - **Reward & currency type scale.** ⭐ is the only currency, so the two labels
   that carry it are single `:root` tokens, one legible size each on the 360px
   baseline: `--fs-trophy-name` (a trophy's name under its cup, shelf and summary)
-  and `--fs-star-note` (every "+N ⭐ until the next thing" — locked shelf slots
-  and the summary's goal line). Colour follows the law: `--depth` when it is the
+  and `--fs-star-note` (every "+N ⭐ until the next thing" — locked shelf
+  slots). Colour follows the law: `--depth` when it is the
   very next thing to chase or a thing owned, muted otherwise. New reward text
   reuses a token; it does not pick a fresh px size.
 

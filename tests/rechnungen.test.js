@@ -9,13 +9,12 @@ import {
   MODES, DIFF_KEYS, DIFF_SLUGS, STAR_SLOTS, DIFF_SLOTS, VARIANTS, roundSizeFor,
   BUCKETS, BUCKET_COUNT, bucketOf, bucketsFor, poolFor, questionFor, foldBoxes,
   mauerAidFor, quadAidFor,
-  starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit,
+  starsFor, ownedStars, starDigit, withStarDigit,
   fittedFontSize, retryStep, maxPoints,
   TEMPO_SLOTS, TEMPO_TIERS, TEMPO_ICONS, TEMPO_KEYS, median, tempoTier, awardTempo,
 } from "../games/rechnungen/logic.js";
 import {
-  starsFor as emStarsFor, nextStarGoal as emNextStarGoal,
-  starGoalNeed as emStarGoalNeed, ownedStars as emOwnedStars,
+  starsFor as emStarsFor, ownedStars as emOwnedStars,
   fittedFontSize as emFitted, retryStep as emRetry,
   TEMPO_ICONS as emTempoIcons, TEMPO_KEYS as emTempoKeys,
   median as emMedian, awardTempo as emAwardTempo,
@@ -461,10 +460,6 @@ test("the star rules are the einmaleins rules — parity so they cannot drift", 
     for (let ok = 0; ok <= total; ok++) {
       assert.equal(starsFor(ok, total), emStarsFor(ok, total), `${ok}/${total}`);
     }
-  }
-  for (let s = 0; s <= 4; s++) {
-    assert.equal(nextStarGoal(s), emNextStarGoal(s), `goal after ${s}`);
-    assert.equal(starGoalNeed(s, 10), emStarGoalNeed(s, 10), `need after ${s}`);
   }
   for (const best of [undefined, null, -1, 2, 99, NaN]) {
     assert.equal(

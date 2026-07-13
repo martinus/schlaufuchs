@@ -20,7 +20,7 @@ import { createLevelPicker, tableName } from "./picker.js";
 import {
   POOL_COUNT, ROUND_SIZE, tablesFor, DIFF_KEYS, TEMPO_ICONS, TEMPO_KEYS, poolFor,
   questionFor, choicesFor, hardnessBoost,
-  starsFor, nextStarGoal, starGoalNeed, ownedStars, starDigit, withStarDigit, fittedFontSize, retryStep,
+  starsFor, ownedStars, starDigit, withStarDigit, fittedFontSize, retryStep,
   median, tempoTier, awardTempo, foldRecall,
 } from "./logic.js";
 
@@ -475,10 +475,6 @@ function endRound() {
     // what the next star costs — the rule is invisible otherwise (§10.3), and
     // the count is computed from THIS round's length: "8 von 10" on a Schwer
     // round of 12 would name a goal the round does not have
-    // the next UNOWNED group's price — keyed on the tile, like the slots above
-    const goal = nextStarGoal(ownedNow);
-    $("sum-goal").hidden = goal === null;
-    if (goal) $("sum-goal").textContent = t(goal, { n: starGoalNeed(ownedNow, total), total });
     $("sum-best").hidden = !improved;
     $("sum-best").textContent = t("newBest");
     // The finish line's verdict, as a symbol and its name — never a number of

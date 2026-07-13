@@ -209,16 +209,7 @@ export function starsFor(firstTryOk, total) {
   return needs.filter((n) => firstTryOk >= n).length;
 }
 
-// The i18n key naming what the *next* star costs; null once all three are won.
-export function nextStarGoal(stars) {
-  return ["starGoal1", "starGoal2", "starGoal3"][stars] ?? null;
-}
 
-// What the next star costs in first-try answers, for a round of `total`.
-export function starGoalNeed(stars, total) {
-  const needs = starNeeds(total);
-  return needs && needs[stars] !== undefined ? needs[stars] : null;
-}
 
 // The stars you own on this tile if the round stopped right now — the round
 // scene's basket (§10.5). Monotone in both terms, so a star can never leave.
