@@ -29,8 +29,13 @@ Copy-adapt from einmaleins/lesen; keep the element ids (`#pick-overlay`,
 - `games/<name>/<name>.js` — controller. Mirror the einmaleins round flow:
   picker → `startRound` (createSession) → ask/submit → aid (§8.1: the way out
   is the right answer, no timer, no "Verstanden") → `endRound` (persist
-  FIRST, then the 700ms celebration timer — the leave guard trusts
-  `roundOver` to mean "cookie written").
+  FIRST, then hand the round to `showSummary(...)`). The summary sheet is
+  **shared** (`assets/js/roundsummary.js`, which owns the paint, the overlay
+  and its two buttons + the 700ms celebration timer): create it with
+  `createRoundSummary({ picker, refresh: () => bar.refresh() })` and call
+  `show({ old, stars, improved, diff, tier, tempoImproved, trophies })`. The
+  leave guard trusts `roundOver` to mean "cookie written" — so the persist must
+  finish before `showSummary`, whose timer is what actually opens the sheet.
 - `games/<name>/logic.js` — pure, unit-tested. The star/tempo rules, the
   aid's retry and the one-line fitter are **shared**: re-export what the game
   uses from `assets/js/roundrules.js` (games still never import each other).
@@ -49,8 +54,8 @@ Copy-adapt from einmaleins/lesen; keep the element ids (`#pick-overlay`,
 Free machinery — use, don't rebuild: `adaptive.js` (Leitner session),
 `journey.js` (themes: village/mountain/forest/meadow), `overlay.js`,
 `chrome.js`, `leaveguard.js`, `trophycard.js` + `showcase.js`, `confetti.js`,
-`audio.js`, `levelpicker.js` + `levelfox.js`, `roundrules.js`, `fastpress.js`,
-`blitz.js`.
+`audio.js`, `levelpicker.js` + `levelfox.js`, `roundsummary.js`,
+`roundrules.js`, `fastpress.js`, `blitz.js`.
 
 ## 2. The PLAYABLE flip and everything pinned to it
 

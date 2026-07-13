@@ -17,6 +17,7 @@ const css = read("assets/css/schlaufuchs.css");
 const journey = read("assets/js/journey.js");
 const game = read("games/einmaleins/einmaleins.js");
 const html = read("games/einmaleins/index.html");
+const roundsummary = read("assets/js/roundsummary.js");
 
 // The site-wide reduced-motion rule kills `animation` and `transition`, and
 // nothing else. A star moved by a keyframe animation would therefore never
@@ -108,9 +109,11 @@ test("at most one star group lands per waypoint", () => {
 // the same slots the sky holds — in EVERY game. A numeric score line or a
 // loose "⭐".repeat count sneaking back would fail here, not in a play-test.
 test("every game's summary shows star groups, never a score line", () => {
+  // The groups are painted once, by the shared summary; each game only feeds it.
+  assert.match(roundsummary, /starSlotsHTML\(/, "the shared summary must paint the star groups");
   for (const g of ["einmaleins/einmaleins", "lesen/lesen", "rechnungen/rechnungen"]) {
     const src = read(`games/${g}.js`);
-    assert.match(src, /starSlotsHTML\(/, `${g}.js must paint the star groups`);
+    assert.match(src, /showSummary\(/, `${g}.js must hand the round to the shared summary`);
     assert.ok(!src.includes("roundStat"), `${g}.js still paints the numeric score line`);
     assert.ok(!/"⭐"\.repeat/.test(src), `${g}.js still paints loose stars`);
     assert.ok(!read(`games/${g.split("/")[0]}/index.html`).includes("sum-score"),
@@ -181,17 +184,20 @@ test("the round hands the scene the tile's best stars", () => {
 // top bar still read "⭐ 0" while three stars lit up in the summary beneath it.
 // The child only saw the real count after walking back to the map.
 test("the star chip is refreshed when the round changes the stars", () => {
-  const endRound = game.slice(game.indexOf("function endRound()"));
-  // Bound the slice to the setTimeout body. Reading to the end of the file made
-  // this test pass on the settings overlay's own refresh, so it stayed green
-  // with the summary's call deleted — a guard that guarded nothing.
-  const open = endRound.indexOf("setTimeout(");
-  const close = endRound.indexOf("}, 700);", open);
+  // The shared summary refreshes the chip inside its celebration timer; each
+  // game hands it that refresh as a thunk over its own top bar. Bound the slice
+  // to the setTimeout body — reading to the end of the file let this pass on an
+  // unrelated refresh, a guard that guarded nothing.
+  const show = roundsummary.slice(roundsummary.indexOf("function show("));
+  const open = show.indexOf("setTimeout(");
+  const close = show.indexOf("}, SETTLE_MS);", open);
   assert.ok(close > open, "the summary is still painted inside a setTimeout");
-  const painted = endRound.slice(open, close);
+  const painted = show.slice(open, close);
+  assert.ok(painted.includes("refresh()"), "the summary must refresh the chip it just invalidated");
 
-  assert.ok(
-    painted.includes("bar.refresh()"),
-    "the summary must refresh the chip it just invalidated",
-  );
+  // …and each game supplies that refresh over its real top bar.
+  for (const g of ["einmaleins/einmaleins", "lesen/lesen", "rechnungen/rechnungen"]) {
+    assert.match(read(`games/${g}.js`), /refresh: \(\) => bar\.refresh\(\)/,
+      `${g}.js must hand the summary its top bar`);
+  }
 });

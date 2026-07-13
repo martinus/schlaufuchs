@@ -62,7 +62,9 @@ test("extra classes ride along, so the summary can mark it as just won", () => {
 // The whole point is that the two are the same card. If either page goes back
 // to building its own markup, the child loses the thread again.
 test("the album and the round summary both draw the shared card", () => {
-  for (const f of ["assets/js/album.js", "games/einmaleins/einmaleins.js"]) {
+  // The summary's trophy card is painted by the shared roundsummary.js, which
+  // all three games drive; the album draws its shelf directly.
+  for (const f of ["assets/js/album.js", "assets/js/roundsummary.js"]) {
     assert.match(read(f), /trophycard\.js/, `${f} must import the shared trophy card`);
   }
 });

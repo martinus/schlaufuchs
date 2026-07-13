@@ -14,26 +14,24 @@
 // lands, stumbles on any wrong one, and the engine hears about the task once —
 // `answer(id, false)` at the first miss, `answer(id, true)` on a clean finish.
 
-import { initI18n, t, getLang } from "../../assets/js/i18n.js";
+import { initI18n, t } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, hasProgress, validResume } from "../../assets/js/adaptive.js";
 import { saveRound, loadRound, clearRound } from "../../assets/js/roundstore.js";
 import { recordRound, roundPoints, starValue, clampDifficulty } from "../../assets/js/rewards.js";
-import { createJourney, starSlotsHTML } from "../../assets/js/journey.js";
+import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { fastPress } from "../../assets/js/fastpress.js";
 import { blitzFlash } from "../../assets/js/blitz.js";
-import { confetti } from "../../assets/js/confetti.js";
-import { trophyCardHTML } from "../../assets/js/trophycard.js";
-import { openShowcase } from "../../assets/js/showcase.js";
+import { createRoundSummary } from "../../assets/js/roundsummary.js";
 import { initTopBar } from "../../assets/js/chrome.js";
 import { createLeaveGuard } from "../../assets/js/leaveguard.js";
 import { iconHTML } from "../../assets/js/graphics.js";
-import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
+import { anyOverlayOpen } from "../../assets/js/overlay.js";
 import strings from "./i18n.js";
 import { createLevelPicker, modeSymbol } from "./picker.js";
 import {
-  MODES, BUCKET_COUNT, DIFF_KEYS, TEMPO_ICONS, TEMPO_KEYS, sign,
+  MODES, BUCKET_COUNT, DIFF_KEYS, sign,
   roundSizeFor, poolFor, bucketOf, questionFor, foldBoxes, mauerAidFor, quadAidFor,
   starsFor, ownedStars, starDigit, withStarDigit,
   fittedFontSize, retryStep, median, tempoTier, awardTempo,
@@ -58,11 +56,10 @@ const picker = createLevelPicker(document.getElementById("pick-overlay"), {
     else if (!session) startRound();
   },
 });
-const summary = overlayFrom(document.getElementById("sum-overlay"), {
-  dismissible: false,
-  initialFocus: "#sum-ok",
+const { summary, show: showSummary } = createRoundSummary({
+  picker,
+  refresh: () => bar.refresh(),
 });
-const SUM_OK_KEYS = ["sumOk1", "sumOk2", "sumOk3", "sumOk4", "sumOk5", "sumOk6"];
 const NEXT_MS = 250;
 
 // The operator faces, for markup this module builds itself (the wall bricks'
@@ -96,7 +93,6 @@ let retry = ""; // the answer the child re-enters after getting it wrong
 let phase = "answer"; // answer | correct-wait | wrong-wait
 let best = 0; // stars already won on this tile, before the round
 let roundOver = false;
-let wonTrophies = [];
 let qCounter = 0; // the stamp the driver watches for a new task
 // The tempo ladder's raw material (§10.6): when the current cell appeared, and
 // how long each first-try-correct answer took — the clock runs per CELL.
@@ -619,55 +615,8 @@ function endRound() {
   const res = recordRound("rechnungen", { points });
 
   journey.finish();
-  setTimeout(() => {
-    // The stars as the GROUPS they are won in (§10.1): the tile's state after
-    // the round — gold slots you own (a fresh one pops in), ghosts still to
-    // win. The old "8/8 +6 ⭐" line said this in numbers and read as homework;
-    // the slots ARE the score, and the goal line names the one number that
-    // helps.
-    const ownedNow = Math.max(old, stars);
-    $("sum-stars").innerHTML = starSlotsHTML(ownedNow, starValue(diff), improved ? stars - old : 0);
-    $("sum-best").hidden = !improved;
-    $("sum-best").textContent = t("newBest");
-    const paid = stars >= 2 && tier > 0;
-    $("sum-tempo").hidden = !paid;
-    if (paid) {
-      $("sum-tempo").innerHTML =
-        `${iconHTML(TEMPO_ICONS[tier], { size: 22 })} ${t(TEMPO_KEYS[tier])}`
-        + (tempoImproved ? ` · <b>${t("tempoBest")}</b>` : "");
-    }
-    // One round can cross several thresholds at once (§8.3) — the summary holds
-    // every trophy it paid, each one the same card the album shows.
-    const st = $("sum-trophy");
-    const won = res.newTrophies;
-    wonTrophies = won;
-    st.hidden = won.length === 0;
-    if (won.length > 0) {
-      const size = [82, 68, 48][won.length - 1] ?? 48;
-      const lang = getLang();
-      st.innerHTML = won
-        .map((s, i) => trophyCardHTML(s, {
-          size, lang, cls: "won", button: true, attrs: `data-won="${i}"`,
-        }))
-        .join("");
-      sfx.trophy();
-    }
-    $("sum-ok").textContent = t(SUM_OK_KEYS[Math.floor(Math.random() * SUM_OK_KEYS.length)]);
-    bar.refresh(); // the top bar's counters just changed with the cookie
-    summary.open();
-    if (improved || tempoImproved || stars === 3 || res.newTrophies.length > 0) confetti();
-  }, 700);
+  showSummary({ old, stars, improved, diff, tier, tempoImproved, trophies: res.newTrophies });
 }
-
-// The one button in the summary opens the level picker, with the fox still
-// standing on the tile she just played (§10.1).
-$("sum-ok").addEventListener("click", picker.open);
-
-// A trophy she just won, held up without leaving the round (§8.3).
-$("sum-trophy").addEventListener("click", (e) => {
-  const card = e.target.closest(".won");
-  if (card) openShowcase(wonTrophies[Number(card.dataset.won)]);
-});
 
 // --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------
 $("pickchip").addEventListener("click", picker.open);

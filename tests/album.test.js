@@ -138,13 +138,15 @@ test("the shelf and the round summary hold a trophy up the same way", () => {
     assert.ok(css.includes(`${sel} {`), `${sel} is unstyled`);
   }
 
-  for (const f of ["assets/js/album.js", "games/einmaleins/einmaleins.js"]) {
+  // The summary's celebration is the shared roundsummary.js; the album opens
+  // the same showcase. Neither builds its own overlay.
+  for (const f of ["assets/js/album.js", "assets/js/roundsummary.js"]) {
     assert.match(read(f), /openShowcase/, `${f} must not build its own celebration`);
     assert.ok(!read(f).includes("createOverlay"), `${f} builds a second showcase`);
   }
   // The summary's trophy must not navigate: the round is not over until she says so.
-  const game = read("games/einmaleins/einmaleins.js");
-  assert.ok(!/href: "\.\.\/\.\.\/album\.html"/.test(game), "a won trophy must not leave the round");
+  const rs = read("assets/js/roundsummary.js");
+  assert.ok(!/href: "\.\.\/\.\.\/album\.html"/.test(rs), "a won trophy must not leave the round");
 
   // It sits above the summary, which is z-index 40 and cannot be dismissed.
   assert.match(css, /#sum-overlay \{ z-index: 40; \}/);

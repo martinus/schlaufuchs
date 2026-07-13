@@ -7,29 +7,26 @@
 // boxes live under box.de whatever the UI language says. An English content
 // set is a later milestone and slots in beside both.
 
-import { initI18n, t, getLang } from "../../assets/js/i18n.js";
+import { initI18n, t } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString, hasProgress, validResume } from "../../assets/js/adaptive.js";
 import { saveRound, loadRound, clearRound } from "../../assets/js/roundstore.js";
 import { recordRound, roundPoints, starValue, clampDifficulty } from "../../assets/js/rewards.js";
-import { createJourney, starSlotsHTML } from "../../assets/js/journey.js";
+import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { fastPress } from "../../assets/js/fastpress.js";
 import { blitzFlash } from "../../assets/js/blitz.js";
-import { confetti } from "../../assets/js/confetti.js";
-import { trophyCardHTML } from "../../assets/js/trophycard.js";
-import { openShowcase } from "../../assets/js/showcase.js";
+import { createRoundSummary } from "../../assets/js/roundsummary.js";
 import { initTopBar } from "../../assets/js/chrome.js";
 import { createLeaveGuard } from "../../assets/js/leaveguard.js";
 import { iconHTML } from "../../assets/js/graphics.js";
-import { overlayFrom } from "../../assets/js/overlay.js";
 import strings from "./i18n.js";
 import { CONTENT, itemCount } from "./content.js";
 import { createLevelPicker, packFace } from "./picker.js";
 import {
   ROUND_SIZE, DIFF_KEYS, MIXED, flashMs, poolFor, questionFor, optionsFor,
   starsFor, ownedStars, starDigit, withStarDigit,
-  fittedFontSize, median, tempoTier, awardTempo, TEMPO_ICONS, TEMPO_KEYS,
+  fittedFontSize, median, tempoTier, awardTempo,
   isBounce,
 } from "./logic.js";
 
@@ -53,11 +50,10 @@ const picker = createLevelPicker(document.getElementById("pick-overlay"), {
     else if (!session) startRound();
   },
 });
-const summary = overlayFrom(document.getElementById("sum-overlay"), {
-  dismissible: false,
-  initialFocus: "#sum-ok",
+const { summary, show: showSummary } = createRoundSummary({
+  picker,
+  refresh: () => bar.refresh(),
 });
-const SUM_OK_KEYS = ["sumOk1", "sumOk2", "sumOk3", "sumOk4", "sumOk5", "sumOk6"];
 const NEXT_MS = 250;
 // A correct reading answer is held a beat longer than a Leicht tap (§14.2): the
 // scene emoji cheers and the win lingers, so the reading — the real work on
@@ -85,7 +81,6 @@ let phase = "answer"; // answer | correct-wait | wrong-wait
 let guardArmedAt = 0;
 let best = 0; // stars already won on this tile, before the round
 let roundOver = false;
-let wonTrophies = []; // what this round just handed over, for the showcase
 // The blitz (§14.2): which question the pending hide belongs to. A fast answer
 // plus the 250ms transition can put the NEXT question up before an old timer
 // fires — the token is what keeps a stale timer from hiding a fresh word.
@@ -461,58 +456,8 @@ function endRound() {
   const res = recordRound("lesen", { points });
 
   journey.finish();
-  setTimeout(() => {
-    // The stars as the GROUPS they are won in (§10.1): the tile's state after
-    // the round — gold slots you own (a fresh one pops in), ghosts still to
-    // win. The old "8/8 +6 ⭐" line said this in numbers and read as homework;
-    // the slots ARE the score, and the goal line names the one number that
-    // helps.
-    const ownedNow = Math.max(old, stars);
-    $("sum-stars").innerHTML = starSlotsHTML(ownedNow, starValue(diff), improved ? stars - old : 0);
-    $("sum-best").hidden = !improved;
-    $("sum-best").textContent = t("newBest");
-    // The finish line's verdict, as a symbol and its name — never a number of
-    // time (§10.6). A round that awarded no tier shows nothing: below the
-    // hare there is no snail, only an empty line that never appears.
-    const paid = stars >= 2 && tier > 0;
-    $("sum-tempo").hidden = !paid;
-    if (paid) {
-      $("sum-tempo").innerHTML =
-        `${iconHTML(TEMPO_ICONS[tier], { size: 22 })} ${t(TEMPO_KEYS[tier])}`
-        + (tempoImproved ? ` · <b>${t("tempoBest")}</b>` : "");
-    }
-    // One round can cross several thresholds at once (§8.3) — the summary
-    // holds every trophy it paid, each one the same card the album shows.
-    const st = $("sum-trophy");
-    const won = res.newTrophies;
-    wonTrophies = won;
-    st.hidden = won.length === 0;
-    if (won.length > 0) {
-      const size = [82, 68, 48][won.length - 1] ?? 48;
-      const lang = getLang();
-      st.innerHTML = won
-        .map((s, i) => trophyCardHTML(s, {
-          size, lang, cls: "won", button: true, attrs: `data-won="${i}"`,
-        }))
-        .join("");
-      sfx.trophy();
-    }
-    $("sum-ok").textContent = t(SUM_OK_KEYS[Math.floor(Math.random() * SUM_OK_KEYS.length)]);
-    bar.refresh(); // the top bar's counters just changed with the cookie
-    summary.open();
-    if (improved || tempoImproved || stars === 3 || res.newTrophies.length > 0) confetti();
-  }, 700);
+  showSummary({ old, stars, improved, diff, tier, tempoImproved, trophies: res.newTrophies });
 }
-
-// The one button in the summary opens the level picker, with the fox still
-// standing on the tile she just played (§10.1).
-$("sum-ok").addEventListener("click", picker.open);
-
-// A trophy she just won, held up without leaving the round (§8.3).
-$("sum-trophy").addEventListener("click", (e) => {
-  const cardEl = e.target.closest(".won");
-  if (cardEl) openShowcase(wonTrophies[Number(cardEl.dataset.won)]);
-});
 
 // --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------
 $("pickchip").addEventListener("click", picker.open);

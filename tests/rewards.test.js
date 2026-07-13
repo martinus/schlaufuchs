@@ -393,17 +393,24 @@ test("one round can win several trophies, and the summary must show them all", (
   // not a corner case of an empty account: it happens mid-collection too
   assert.ok(trophyCount("einmaleins", 11 + best) - trophyCount("einmaleins", 11) >= 2);
 
-  // ...and the round-summary code must iterate rather than index the first
+  // ...and the shared round-summary painter must iterate rather than index the
+  // first: the game hands it every won trophy, and it maps over them all.
   const src = readFileSync(
-    fileURLToPath(new URL("../games/einmaleins/einmaleins.js", import.meta.url)),
+    fileURLToPath(new URL("../assets/js/roundsummary.js", import.meta.url)),
     "utf8",
   );
-  const endRound = src.slice(src.indexOf("function endRound()"));
+  const show = src.slice(src.indexOf("function show("));
   assert.ok(
-    !/newTrophies\[0\]/.test(endRound),
-    "showing only newTrophies[0] swallows the other prizes",
+    !/trophies\[0\]/.test(show),
+    "showing only trophies[0] swallows the other prizes",
   );
-  assert.ok(/\.map\(/.test(endRound), "the summary must render every won trophy");
+  assert.ok(/trophies\s*\n?\s*\.map\(/.test(show), "the summary must render every won trophy");
+  // and every game feeds it the full list
+  const root = new URL("../", import.meta.url);
+  for (const g of ["einmaleins/einmaleins", "lesen/lesen", "rechnungen/rechnungen"]) {
+    const game = readFileSync(fileURLToPath(new URL(`games/${g}.js`, root)), "utf8");
+    assert.match(game, /trophies: res\.newTrophies/, `${g}.js must hand the summary every won trophy`);
+  }
 });
 
 // Practice time exists for the parents' view (§20) and is the only clock in
