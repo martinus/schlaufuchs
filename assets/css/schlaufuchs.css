@@ -759,10 +759,10 @@ footer p { margin: 0; }
 .journey .j-star.landed { transform: translate(var(--dx), var(--dy)) scale(0.52); }
 .journey .j-star.j-instant { transition: none; }
 
-/* What a slot counts (§10.2) is not written on it, and not drawn on it either:
-   a sky slot is exactly ONE star (§10.5) — the worth clusters hung as pairs
-   over single waypoints on short rounds and read as "two stars for that node".
-   The picker tiles and the summary carry what a star pays. */
+/* What a slot counts (§10.2) is no longer written on it. Mittel and Schwer pay
+   double and triple, so a slot simply holds two stars, or three, and they fly
+   into the basket together (`starCluster` in journey.js). A "×3" tag was a
+   sentence, and it was aimed at a child who cannot read one. */
 
 .feedback-aid {
   background: var(--panel);
