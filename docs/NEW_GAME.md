@@ -86,7 +86,8 @@ for a PLAYABLE game.
 - [ ] Cookie section per §9.2; add a budget test (maxed section small, and
   everything-maxed-together `< BUDGET` — see "cookie budget" in
   tests/lesen.test.js).
-- [ ] `node tools/version-assets.js <n+1>` regenerates every importmap. The
+- [ ] `node tools/version-assets.js dev` regenerates every importmap (the
+  real version is stamped by deploy.yml at publish time — no hand-bump). The
   shared list carries `games/*/logic.js` and `games/*/content.js`; the
   game's other modules are picked up as page siblings. `tests/cache.test.js`
   fails on any reachable-but-unversioned module.
