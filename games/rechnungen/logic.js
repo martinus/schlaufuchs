@@ -441,11 +441,23 @@ export function foldBoxes(boxStr, touched = [], missed = [], count = BUCKET_COUN
 // --- stars (§10.3, §12.2) -----------------------------------------------------
 // The einmaleins ratios exactly (≥60 % ⭐, ≥80 % ⭐⭐, 100 % ⭐⭐⭐ first-try).
 // Duplicated, not imported — pinned against einmaleins by tests/rechnungen.test.js.
+export function starNeeds(total) {
+  // The three scores that pay the stars: the percent bands (≥60 % ⭐, ≥80 % ⭐⭐,
+  // 100 % ⭐⭐⭐), pulled apart when a short round would drop two stars on the
+  // same answer — 80 % and 100 % of three tasks are both "all three". Every
+  // star group then lands on its own waypoint (§10.3, §10.5): a three-task
+  // round pays at 1, 2 and 3, a four-task round at 2, 3 and 4.
+  if (!(total > 0)) return null;
+  const t3 = total;
+  const t2 = Math.max(1, Math.min(Math.ceil(0.8 * total), t3 - 1));
+  const t1 = Math.max(1, Math.min(Math.ceil(0.6 * total), t2 - 1));
+  return [t1, t2, t3];
+}
+
 export function starsFor(firstTryOk, total) {
-  const ratio = total > 0 ? firstTryOk / total : 0;
-  if (ratio >= 1) return 3;
-  if (ratio >= 0.8) return 2;
-  return ratio >= 0.6 ? 1 : 0;
+  const needs = starNeeds(total);
+  if (!needs) return 0;
+  return needs.filter((n) => firstTryOk >= n).length;
 }
 
 export function nextStarGoal(stars) {
@@ -453,8 +465,8 @@ export function nextStarGoal(stars) {
 }
 
 export function starGoalNeed(stars, total) {
-  const ratio = [0.6, 0.8, 1][stars];
-  return ratio === undefined || !(total > 0) ? null : Math.ceil(ratio * total);
+  const needs = starNeeds(total);
+  return needs && needs[stars] !== undefined ? needs[stars] : null;
 }
 
 // The stars you own on this tile if the round stopped now — the round scene's
