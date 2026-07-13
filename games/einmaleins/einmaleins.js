@@ -1,26 +1,24 @@
 // Einmaleins page module (§10): wires the pure logic to the DOM, using the
 // shared engines (adaptive, journey, rewards, storage, i18n, audio).
 
-import { initI18n, t, getLang } from "../../assets/js/i18n.js";
+import { initI18n, t } from "../../assets/js/i18n.js";
 import { getGame, setGame } from "../../assets/js/storage.js";
 import { createSession, boxesFromString, boxesToString, hasProgress, validResume } from "../../assets/js/adaptive.js";
 import { saveRound, loadRound, clearRound } from "../../assets/js/roundstore.js";
 import { recordRound, roundPoints, starValue, clampDifficulty, addPractice } from "../../assets/js/rewards.js";
-import { createJourney, starSlotsHTML } from "../../assets/js/journey.js";
+import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { fastPress } from "../../assets/js/fastpress.js";
 import { blitzFlash } from "../../assets/js/blitz.js";
-import { confetti } from "../../assets/js/confetti.js";
-import { trophyCardHTML } from "../../assets/js/trophycard.js";
-import { openShowcase } from "../../assets/js/showcase.js";
+import { createRoundSummary } from "../../assets/js/roundsummary.js";
 import { initTopBar } from "../../assets/js/chrome.js";
 import { createLeaveGuard } from "../../assets/js/leaveguard.js";
 import { iconHTML } from "../../assets/js/graphics.js";
-import { overlayFrom, anyOverlayOpen } from "../../assets/js/overlay.js";
+import { anyOverlayOpen } from "../../assets/js/overlay.js";
 import strings from "./i18n.js";
 import { createLevelPicker, tableFace } from "./picker.js";
 import {
-  POOL_COUNT, ROUND_SIZE, tablesFor, DIFF_KEYS, TEMPO_ICONS, TEMPO_KEYS, poolFor,
+  POOL_COUNT, ROUND_SIZE, tablesFor, DIFF_KEYS, poolFor,
   questionFor, choicesFor, hardnessBoost,
   starsFor, ownedStars, starDigit, withStarDigit, fittedFontSize, retryStep,
   median, tempoTier, awardTempo, foldRecall,
@@ -51,13 +49,10 @@ const picker = createLevelPicker(document.getElementById("pick-overlay"), {
     else if (!session) startRound();
   },
 });
-// The summary leads with the trophy it just handed out, and that trophy is a
-// link to the album — so the button, not the link, must have the focus.
-const summary = overlayFrom(document.getElementById("sum-overlay"), {
-  dismissible: false,
-  initialFocus: "#sum-ok",
+const { summary, show: showSummary } = createRoundSummary({
+  picker,
+  refresh: () => bar.refresh(),
 });
-const SUM_OK_KEYS = ["sumOk1", "sumOk2", "sumOk3", "sumOk4", "sumOk5", "sumOk6"];
 const NEXT_MS = 250;
 
 // --- persistent state ------------------------------------------------------
@@ -85,7 +80,6 @@ let choices = []; // Leicht: this question's four options, so the aid can reuse 
 let phase = "answer"; // answer | correct-wait | wrong-wait
 let best = 0; // stars already won on this tile, before the round
 let roundOver = false;
-let wonTrophies = []; // what this round just handed over, for the showcase
 // Only ever flows into the parents' view (§20). The child is never shown it.
 let t0 = 0;
 // The tempo ladder's raw material (§10.6): when the current question appeared,
@@ -434,78 +428,8 @@ function endRound() {
   const res = recordRound("einmaleins", { points });
 
   journey.finish();
-  setTimeout(() => {
-    // The stars as the GROUPS they are won in (§10.1): the tile's state after
-    // the round — gold slots you own (a fresh one pops in), ghosts still to
-    // win. The old "8/8 +6 ⭐" line said this in numbers and read as homework;
-    // the slots ARE the score, and the goal line names the one number that
-    // helps.
-    const ownedNow = Math.max(old, stars);
-    $("sum-stars").innerHTML = starSlotsHTML(ownedNow, starValue(diff), improved ? stars - old : 0);
-    $("sum-best").hidden = !improved;
-    $("sum-best").textContent = t("newBest");
-    // The finish line's verdict, as a symbol and its name — never a number of
-    // time (§10.6). A round that awarded no tier shows nothing: below the
-    // hare there is no snail, only an empty line that never appears.
-    const paid = stars >= 2 && tier > 0;
-    $("sum-tempo").hidden = !paid;
-    if (paid) {
-      $("sum-tempo").innerHTML =
-        `${iconHTML(TEMPO_ICONS[tier], { size: 22 })} ${t(TEMPO_KEYS[tier])}`
-        + (tempoImproved ? ` · <b>${t("tempoBest")}</b>` : "");
-    }
-    // One round can cross several thresholds at once — a first Schwer round to
-    // three stars is worth 18 points and passes 2, 9 and 18. Showing only the
-    // first would quietly swallow two prizes (§8.3).
-    const st = $("sum-trophy");
-    const won = res.newTrophies;
-    wonTrophies = won;
-    st.hidden = won.length === 0;
-    if (won.length > 0) {
-      // The very same card the album shelf shows, so the child can find it
-      // again: the cup, her emoji on it, its name. Mara tapped the trophy she
-      // had won and nothing happened.
-      //
-      // It was then a link to the Pokalraum, which celebrated by taking her out
-      // of the round she had just finished and dropping her in a room full of
-      // empty slots. It is a button now, and it holds the trophy up right here
-      // (`showcase.js`, the same one the room uses).
-      //
-      // The cup fills its card. At 44px in a 167px card it was a token adrift in
-      // a white square — the one thing the round handed over, drawn small. The
-      // three widths are in the CSS (`.summary .trophy-earn .won`).
-      const size = [82, 68, 48][won.length - 1] ?? 48;
-      const lang = getLang();
-      st.innerHTML = won
-        .map((s, i) => trophyCardHTML(s, {
-          size, lang, cls: "won", button: true, attrs: `data-won="${i}"`,
-        }))
-        .join("");
-      sfx.trophy();
-    }
-    $("sum-ok").textContent = t(SUM_OK_KEYS[Math.floor(Math.random() * SUM_OK_KEYS.length)]);
-    // The stars just changed. The chip was rendered at startRound() and nobody
-    // told it, so a child read "⭐ 0" in the top bar while three stars lit up
-    // beneath it — until they walked back to the map.
-    bar.refresh();
-    summary.open();
-    if (improved || stars === 3 || res.newTrophies.length > 0 || tempoImproved) confetti();
-  }, 700);
+  showSummary({ old, stars, improved, diff, tier, tempoImproved, trophies: res.newTrophies });
 }
-
-// The one button in the summary opens the level picker, with the fox still
-// standing on the level she just played: pressing that tile plays it again, and
-// every other level is one tap away instead of two. The map lives in the top
-// bar, reachable while the summary is up, which is where Mara reached for it.
-$("sum-ok").addEventListener("click", picker.open);
-
-// A trophy she just won, held up the way the Pokalraum holds it up — without
-// sending her to the Pokalraum. Delegated once: `endRound` rewrites this row's
-// innerHTML on every round that pays.
-$("sum-trophy").addEventListener("click", (e) => {
-  const card = e.target.closest(".won");
-  if (card) openShowcase(wonTrophies[Number(card.dataset.won)]);
-});
 
 // --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------
 // The tiles, the fox on them, and the walk-then-open rule live in picker.js.

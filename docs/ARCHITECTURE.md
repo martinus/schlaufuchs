@@ -24,6 +24,7 @@ pure logic        no DOM, no storage, no i18n lookups — unit-tested directly
 engines / chrome  DOM + shared behaviour, built on the pure layer
   ├─ storage.js, i18n.js, graphics.js, fox.js, audio.js, confetti.js
   ├─ overlay.js, chrome.js, showcase.js, journey.js, levelpicker.js
+  ├─ roundsummary.js (the finish sheet: star groups, tempo, trophies — every game)
   └─ motion.js, levelfox.js, leaveguard.js
 
 pages             one entry module per HTML page; wiring only

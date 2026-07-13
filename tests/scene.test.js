@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import de from "../assets/i18n/de.js";
 import en from "../assets/i18n/en.js";
-import { starCluster } from "../assets/js/journey.js";
+import { starCluster, starSlotsHTML } from "../assets/js/journey.js";
 
 const root = new URL("../", import.meta.url);
 const read = (p) => readFileSync(fileURLToPath(new URL(p, root)), "utf8");
@@ -17,6 +17,7 @@ const css = read("assets/css/schlaufuchs.css");
 const journey = read("assets/js/journey.js");
 const game = read("games/einmaleins/einmaleins.js");
 const html = read("games/einmaleins/index.html");
+const roundsummary = read("assets/js/roundsummary.js");
 
 // The site-wide reduced-motion rule kills `animation` and `transition`, and
 // nothing else. A star moved by a keyframe animation would therefore never
@@ -57,6 +58,35 @@ test("a slot holds as many stars as it pays", () => {
   assert.equal(starCluster(0).length, 1);
   assert.equal(starCluster(9).length, 3);
   assert.equal(starCluster(undefined).length, 1);
+});
+
+// Regression: a summary slot's viewBox started at y=6, but ⭐ is drawn as a
+// <text> glyph that rides ABOVE its baseline — so the tip of the big single
+// star (baseline 38, size 44.8) reached y≈-2 and was sheared off the top, with
+// dead space left below. Making the star smaller could not help: the glyph is
+// clipped by the window, not by its own size. The window must clear the glyph
+// on every side, for every worth.
+test("the summary's star slot never shears a star's tip", () => {
+  // Emoji glyph extents relative to its baseline, as fractions of font-size:
+  // the tip rides ~0.85 above the baseline, the foot ~0.15 below. Conservative
+  // bounds — a real ⭐ sits inside them in the fonts we ship to.
+  const RISE = 0.85, DROP = 0.15;
+  for (const worth of [1, 2, 3]) {
+    // three identical slots come back; one carries the whole cluster
+    const full = starSlotsHTML(3, worth, 0);
+    const slot = full.slice(0, full.indexOf("</svg>"));
+    const vb = slot.match(/viewBox="(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)"/);
+    assert.ok(vb, `worth ${worth}: a slot must carry a viewBox`);
+    const [top, height] = [Number(vb[2]), Number(vb[4])];
+    const bottom = top + height;
+    const stars = [...slot.matchAll(/<text[^>]*\by="(-?[\d.]+)"[^>]*\bfont-size="([\d.]+)"/g)];
+    assert.equal(stars.length, worth, `worth ${worth}: expected ${worth} star glyphs`);
+    for (const m of stars) {
+      const y = Number(m[1]), fs = Number(m[2]);
+      assert.ok(y - RISE * fs >= top, `worth ${worth}: a star's tip (${(y - RISE * fs).toFixed(1)}) is sheared off the top (${top})`);
+      assert.ok(y + DROP * fs <= bottom, `worth ${worth}: a star's foot is clipped at the bottom`);
+    }
+  }
 });
 
 test("every star in a slot flies into the basket, and none is left in the sky", () => {
@@ -108,9 +138,11 @@ test("at most one star group lands per waypoint", () => {
 // the same slots the sky holds — in EVERY game. A numeric score line or a
 // loose "⭐".repeat count sneaking back would fail here, not in a play-test.
 test("every game's summary shows star groups, never a score line", () => {
+  // The groups are painted once, by the shared summary; each game only feeds it.
+  assert.match(roundsummary, /starSlotsHTML\(/, "the shared summary must paint the star groups");
   for (const g of ["einmaleins/einmaleins", "lesen/lesen", "rechnungen/rechnungen"]) {
     const src = read(`games/${g}.js`);
-    assert.match(src, /starSlotsHTML\(/, `${g}.js must paint the star groups`);
+    assert.match(src, /showSummary\(/, `${g}.js must hand the round to the shared summary`);
     assert.ok(!src.includes("roundStat"), `${g}.js still paints the numeric score line`);
     assert.ok(!/"⭐"\.repeat/.test(src), `${g}.js still paints loose stars`);
     assert.ok(!read(`games/${g.split("/")[0]}/index.html`).includes("sum-score"),
@@ -181,17 +213,20 @@ test("the round hands the scene the tile's best stars", () => {
 // top bar still read "⭐ 0" while three stars lit up in the summary beneath it.
 // The child only saw the real count after walking back to the map.
 test("the star chip is refreshed when the round changes the stars", () => {
-  const endRound = game.slice(game.indexOf("function endRound()"));
-  // Bound the slice to the setTimeout body. Reading to the end of the file made
-  // this test pass on the settings overlay's own refresh, so it stayed green
-  // with the summary's call deleted — a guard that guarded nothing.
-  const open = endRound.indexOf("setTimeout(");
-  const close = endRound.indexOf("}, 700);", open);
+  // The shared summary refreshes the chip inside its celebration timer; each
+  // game hands it that refresh as a thunk over its own top bar. Bound the slice
+  // to the setTimeout body — reading to the end of the file let this pass on an
+  // unrelated refresh, a guard that guarded nothing.
+  const show = roundsummary.slice(roundsummary.indexOf("function show("));
+  const open = show.indexOf("setTimeout(");
+  const close = show.indexOf("}, SETTLE_MS);", open);
   assert.ok(close > open, "the summary is still painted inside a setTimeout");
-  const painted = endRound.slice(open, close);
+  const painted = show.slice(open, close);
+  assert.ok(painted.includes("refresh()"), "the summary must refresh the chip it just invalidated");
 
-  assert.ok(
-    painted.includes("bar.refresh()"),
-    "the summary must refresh the chip it just invalidated",
-  );
+  // …and each game supplies that refresh over its real top bar.
+  for (const g of ["einmaleins/einmaleins", "lesen/lesen", "rechnungen/rechnungen"]) {
+    assert.match(read(`games/${g}.js`), /refresh: \(\) => bar\.refresh\(\)/,
+      `${g}.js must hand the summary its top bar`);
+  }
 });

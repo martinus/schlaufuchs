@@ -1412,8 +1412,8 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 /* The round's stars as the GROUPS they are won in (§10.1): the same slots the
    sky holds — gold = owned, ghost = still to win, and a freshly won group pops
    in. Under reduced motion the pop is killed and the group is simply there. */
-.summary .bigstars { display: flex; justify-content: center; gap: 8px; }
-.summary .sslot { width: clamp(60px, 19vw, 92px); aspect-ratio: 56 / 50; }
+.summary .bigstars { display: flex; justify-content: center; gap: 6px; }
+.summary .sslot { width: clamp(76px, 25vw, 112px); aspect-ratio: 1; }
 .summary .sslot svg { width: 100%; height: 100%; display: block; }
 .summary .sslot.j-ghost { opacity: 0.22; filter: grayscale(1); }
 .summary .sslot.fresh svg { animation: slot-pop 0.5s ease; }

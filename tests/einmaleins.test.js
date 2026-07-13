@@ -264,8 +264,9 @@ test("the round summary has one button and nothing else to press", () => {
   }
   // …and that one button must be the one the focus lands on. The trophy row is
   // injected above it and its cards are buttons too, so Enter would otherwise
-  // hold a trophy up instead of starting the next round.
-  assert.match(read("games/einmaleins/einmaleins.js"), /initialFocus: "#sum-ok"/);
+  // hold a trophy up instead of starting the next round. The focus is set by the
+  // shared summary that all three games drive.
+  assert.match(read("assets/js/roundsummary.js"), /initialFocus: "#sum-ok"/);
 });
 
 // The summary is the only overlay a child meets without asking for it, and the
@@ -305,12 +306,13 @@ test("the top bar and the chip stay above the round summary", () => {
 
 test("the round summary congratulates in six ways, in both languages", () => {
   // The dead-key scanner waves `sumOk*` through on a regex allowlist, so it can
-  // no longer notice one going missing. Name them here instead.
-  const src = read("games/einmaleins/einmaleins.js");
+  // no longer notice one going missing. Name them here instead. The keys are
+  // offered by the shared summary now, not the game.
+  const src = read("assets/js/roundsummary.js");
   for (let i = 1; i <= 6; i++) {
     assert.equal(typeof de[`sumOk${i}`], "string", `de.js is missing sumOk${i}`);
     assert.equal(typeof en[`sumOk${i}`], "string", `en.js is missing sumOk${i}`);
-    assert.ok(src.includes(`"sumOk${i}"`), `einmaleins.js never offers sumOk${i}`);
+    assert.ok(src.includes(`"sumOk${i}"`), `roundsummary.js never offers sumOk${i}`);
   }
   assert.ok(!("again" in de) && !("again" in en), '"Nochmal" retired with the button');
 });
@@ -320,13 +322,14 @@ test("the round summary congratulates in six ways, in both languages", () => {
 // finished and dropping her in a room full of empty slots. It holds the trophy
 // up where she is standing.
 test("tapping a trophy she just won holds it up, without leaving the round", () => {
-  const src = read("games/einmaleins/einmaleins.js");
-  const block = src.slice(src.indexOf("if (won.length > 0)"), src.indexOf("sfx.trophy()"));
+  // The trophy row is painted by the shared summary, one card per won trophy.
+  const src = read("assets/js/roundsummary.js");
+  const block = src.slice(src.indexOf("if (trophies.length > 0)"), src.indexOf("sfx.trophy()"));
   assert.match(block, /button: true/, "the trophy must be tappable");
   assert.match(block, /attrs: `data-won="\$\{i\}"`/, "…and say which of them it is");
   assert.match(block, /cls: "won"/, "…and still readable by tools/play.js");
   assert.ok(!block.includes("href"), "a won trophy must not navigate anywhere");
-  // one delegated listener: endRound rewrites the row on every round that pays
+  // one delegated listener: the summary rewrites the row on every round that pays
   assert.match(src, /\$\("sum-trophy"\)\.addEventListener\("click"/);
   assert.match(src, /openShowcase\(wonTrophies\[Number\(card\.dataset\.won\)\]\)/);
   // Regression: `.won { width: 5.5em }` with `.tcard { font-size: 1.9rem }` made
@@ -334,7 +337,7 @@ test("tapping a trophy she just won holds it up, without leaving the round", () 
   const css = read("assets/css/schlaufuchs.css");
   assert.match(css, /\.summary \.trophy-earn \.won \{ width: \d+(\.\d+)?rem; \}/, "em here is 1.9rem");
   assert.ok(!/\.trophy-earn[^{]*\{ width: [\d.]+em/.test(css));
-  assert.match(block, /\[82, 68, 48\]\[won\.length - 1\]/, "the cup must fill the card it is given");
+  assert.match(block, /\[82, 68, 48\]\[trophies\.length - 1\]/, "the cup must fill the card it is given");
 });
 
 // Mara never found the level picker: the chip above the scene read as a
@@ -549,8 +552,12 @@ test("the round is timed for the parents, and never shown to the child", () => {
   assert.ok(endRound.includes("addPractice("), "the round's duration must reach storage (§20)");
   assert.ok(endRound.includes("Date.now()"), "…so it has to be read from the clock");
 
-  // the summary is everything the child sees of the round, and it must be mute
-  const painted = endRound.slice(endRound.indexOf("setTimeout("));
+  // the summary is everything the child sees of the round, and it must be mute.
+  // It is painted by the shared roundsummary.js now.
+  const painted = readFileSync(
+    fileURLToPath(new URL("../assets/js/roundsummary.js", import.meta.url)),
+    "utf8",
+  );
   // the stars are shown as the GROUPS they are won in (§10.1) — never as a
   // numeric score line ("8/8 +6 ⭐" read as homework) and never as a flat
   // count of loose stars

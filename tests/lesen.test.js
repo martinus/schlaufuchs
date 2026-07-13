@@ -488,14 +488,18 @@ test("the aid keeps the same buttons, and only the right one lets the round on",
 test("a finished round is written before the summary opens (§10.7)", () => {
   // The leave guard trusts `roundOver` to mean "the cookie is written": the
   // stars are banked by setGame/recordRound inside endRound, synchronously,
-  // before the 700ms celebration timer that opens the summary.
+  // before `showSummary` — whose 700ms celebration timer is what actually
+  // opens the sheet.
   const game = read("games/lesen/lesen.js");
-  const end = game.slice(game.indexOf("function endRound"), game.indexOf("$(\"sum-ok\")"));
+  const end = game.slice(game.indexOf("function endRound"), game.indexOf("showSummary("));
   const write = end.indexOf("setGame(");
   const record = end.indexOf("recordRound(");
-  const celebrate = end.indexOf("setTimeout(");
-  assert.ok(write > -1 && record > -1 && celebrate > -1);
-  assert.ok(write < celebrate && record < celebrate, "the cookie is written before the wait");
+  assert.ok(write > -1 && record > -1, "endRound must write the cookie before it hands off");
+  // …and the sheet is only opened after the wait, in the shared summary.
+  const show = read("assets/js/roundsummary.js");
+  const painted = show.slice(show.indexOf("function show("));
+  assert.ok(painted.indexOf("setTimeout(") < painted.indexOf("summary.open()"),
+    "the summary opens inside the celebration timer");
 });
 
 test("the summary holds exactly one button (§10.1)", () => {

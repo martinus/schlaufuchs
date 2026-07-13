@@ -91,7 +91,9 @@ test("the game opens on its levels, and every round ends back on them", () => {
   // and everything else still lands in the picker.
   assert.match(src, /picker\.open\(\);/, "the game must open in the level picker when nothing resumes");
   assert.match(src, /loadRound\("einmaleins"\)/, "…after asking for an interrupted round first");
-  assert.match(src, /\$\("sum-ok"\)\.addEventListener\("click", picker\.open\)/);
+  // The summary's OK button opens the picker; that wiring lives in the shared
+  // roundsummary.js, which the game hands its own picker.
+  assert.match(read("assets/js/roundsummary.js"), /\$\("sum-ok"\)\.addEventListener\("click", picker\.open\)/);
   assert.ok(
     !/addEventListener\("click", startRound\)/.test(src),
     "the summary must not restart a round behind the child's back",
@@ -102,7 +104,7 @@ test("the game opens on its levels, and every round ends back on them", () => {
 // Now Escape and a backdrop tap can leave a child in front of an empty stage.
 test("a dismissed picker never leaves the stage empty", () => {
   const game = read("games/einmaleins/einmaleins.js");
-  const dismiss = game.slice(game.indexOf("onDismiss() {"), game.indexOf("const summary"));
+  const dismiss = game.slice(game.indexOf("onDismiss() {"), game.indexOf("= createRoundSummary"));
   assert.match(dismiss, /if \(roundOver\) summary\.open\(\)/, "a finished round shows its summary again");
   assert.match(dismiss, /else if \(!session\) startRound\(\)/, "no round behind it: start one");
   // the walking guard lives in the shared picker, in front of every dismissal

@@ -76,9 +76,14 @@ export function starSlotsHTML(owned, worth, fresh = 0) {
   const stars = cluster
     .map(({ dx, dy, size }) => iconSVG("ui-star", { x: 32 + dx * 1.6, y: 38 + dy * 1.6, size: size * 1.6 }))
     .join("");
+  // The viewBox reaches above y=6 because ⭐ is drawn as a <text> glyph, which
+  // sits ABOVE its baseline: the cluster is centred on y≈38 but the emoji's tip
+  // rides up to y≈-2 (the big single star), and a window that started at 6
+  // sheared that tip off while leaving dead space below. `4 -4 56 56` frames
+  // the whole glyph — tip included — for every worth (1, 2 and 3 stars).
   return Array.from({ length: SLOTS }, (_, i) => {
     const state = i >= own ? "j-ghost" : i >= own - neu ? "owned fresh" : "owned";
-    return `<span class="sslot ${state}"><svg viewBox="4 6 56 50" aria-hidden="true">${stars}</svg></span>`;
+    return `<span class="sslot ${state}"><svg viewBox="4 -4 56 56" aria-hidden="true">${stars}</svg></span>`;
   }).join("");
 }
 
