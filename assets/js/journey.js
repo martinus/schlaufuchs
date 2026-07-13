@@ -41,25 +41,13 @@ const STAR_SIZE = 28;
 const BASKET_SIZE = 52;
 const SLOTS = 3;
 
-// What a slot in the sky looks like when its star counts double or triple
-// (§10.2). It used to be one star with "×2" written under it, and a tag is a
-// sentence: a child who cannot read still has to be told. A slot now simply
-// *holds two stars*, or three — smaller, so the group takes about the room one
-// big star took — and the whole group flies into the basket together.
+// A sky slot is exactly ONE star (§10.5). It briefly held `worth` stars — two
+// on Mittel, three on Schwer, so the sky showed what a slot pays — but on a
+// short round (a wall's four waypoints, a grid's three) the pairs hung right
+// over single waypoints and read as "two stars for THAT node" (Martin, third
+// play-test). The sky now always shows the round's one-to-three stars, single
+// and spread out; what a star is worth is the summary's and the picker's job.
 //
-// Offsets are relative to the slot's anchor (x, and y as a text baseline);
-// sizes are viewBox units.
-const CLUSTERS = {
-  1: [[0, 0, STAR_SIZE]],
-  2: [[-8, -3, 20], [8, 5, 20]],
-  3: [[0, -8, 17], [-9, 6, 17], [9, 6, 17]],
-};
-
-export function starCluster(worth) {
-  const w = Math.min(3, Math.max(1, Math.round(worth) || 1));
-  return CLUSTERS[w].map(([dx, dy, size]) => ({ dx, dy, size }));
-}
-
 // The three stars hang as a small constellation, not as a row of three. Given
 // as fractions of the scene's width and absolute text baselines, so the shape
 // survives a round with a different number of questions.
@@ -102,10 +90,6 @@ export function sceneGeometry(nodes, theme = "village") {
 }
 
 // `stars` is what the basket holds: the stars this tile has already earned.
-// `worth` is what each slot counts (§10.2): 1 on Leicht, 2 on Mittel, 3 on
-// Schwer. Mara could not see that the harder levels paid more, because the
-// claim only ever appeared inside the picker she never opened. Now a slot is
-// drawn as the stars it pays, and they all fly into the basket together.
 //
 // EVERY ASKED TASK IS ITS OWN WAYPOINT (Martin, second play-test): the fox
 // steps forward when a task ends, whether it went right (`advance`, a green
@@ -114,7 +98,7 @@ export function sceneGeometry(nodes, theme = "village") {
 // path by one node — the scene re-renders in place, strides narrowing, and the
 // fox still reaches the basket exactly on the round's last answer. `stumble()`
 // stays the miss animation at the moment of the wrong answer.
-export function createJourney(container, { nodes, theme = "village", stars = 0, worth = 1 }) {
+export function createJourney(container, { nodes, theme = "village", stars = 0 }) {
   const th = THEMES[theme] ?? THEMES.village;
   let count = Math.max(1, Math.floor(nodes) || 1);
   let pos = 0;
@@ -172,28 +156,22 @@ export function createJourney(container, { nodes, theme = "village", stars = 0, 
     // the goal, and the place the stars fall into
     svg += iconSVG("ui-basket", { x: bx, y: by, size: BASKET_SIZE, cls: "j-basket-big j-goal" });
 
-    // The sky. A grey ghost marks every slot; the gold stars on top of it are the
-    // ones that fly. Their trip is a CSS transform, so `prefers-reduced-motion`
-    // (which kills every transition site-wide) simply places them in the basket.
-    //
-    // A slot holds `worth` stars, so a Schwer round has nine stars in its sky and
-    // a Leicht round three. Nobody is told that hard work pays triple; the sky is
-    // three times as full.
-    const cluster = starCluster(worth);
-    const clusterAt = (x, y, cls) => cluster
-      .map(({ dx, dy, size }) => iconSVG("ui-star", { x: x + dx, y: y + dy, size, cls }))
-      .join("");
+    // The sky. A grey ghost marks every slot; the gold star on top of it is the
+    // one that flies. Its trip is a CSS transform, so `prefers-reduced-motion`
+    // (which kills every transition site-wide) simply places it in the basket.
+    // One star per slot, always — never a pair over a waypoint (see SKY above).
+    const starAt = (x, y, cls) => iconSVG("ui-star", { x, y, size: STAR_SIZE, cls });
 
-    for (let i = 0; i < SLOTS; i++) svg += clusterAt(g.sky[i].x, g.sky[i].y, "j-ghost");
+    for (let i = 0; i < SLOTS; i++) svg += starAt(g.sky[i].x, g.sky[i].y, "j-ghost");
     for (let i = 0; i < SLOTS; i++) {
       const to = g.landing[i];
       const dx = to.x - g.sky[i].x;
       const dy = to.y - g.sky[i].y;
-      // The whole cluster is one group, so one transform carries every star in it
-      // to the basket. Given a keyframe each, none of them would move under
-      // prefers-reduced-motion.
+      // The star is wrapped in a group and the GROUP moves: the transform is a
+      // transition, so under prefers-reduced-motion it degrades to "already in
+      // the basket", never to hanging mid-air.
       svg += `<g class="j-star" data-s="${i}" style="--dx:${dx}px; --dy:${dy}px">`
-        + clusterAt(g.sky[i].x, g.sky[i].y, "")
+        + starAt(g.sky[i].x, g.sky[i].y, "")
         + "</g>";
     }
 
