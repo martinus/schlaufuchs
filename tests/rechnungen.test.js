@@ -248,19 +248,25 @@ test("mauer: walls are true and distinct, and every blank solves from what is vi
 });
 
 // The operation grids (§12.1): cell (r,c) = rows[r] op cols[c]; the blanks and
-// the given anchors partition the four cells; a hidden column header (Schwer)
-// solves first, as a gap off the one visible cell in its column.
+// the given anchors partition the four cells; hidden headers (a column on
+// Mittel, a row AND a column on Schwer) solve first, each as a gap off the
+// anchor in its column or row. NEVER a × grid — the times tables are
+// einmaleins' whole game, and the same drill in a different coat teaches
+// nothing new (user, fifth play-test).
 test("quad: the grid is true, anchors and blanks partition it, headers solve first", () => {
-  const OP = { "+": (x, y) => x + y, "-": (x, y) => x - y, x: (x, y) => x * y };
+  const OP = { "+": (x, y) => x + y, "-": (x, y) => x - y };
   for (const key of ["quad-l", "quad-m", "quad-s"]) {
     for (const task of drawKey(key)) {
       assert.equal(task.kind, "quad");
       const f = OP[task.op];
-      assert.ok(f, `${key}: bogus op ${task.op}`);
+      assert.ok(f, `${key}: bogus op ${task.op} — a quad is ±, never ×`);
       for (let r = 0; r < 2; r++) for (let c = 0; c < 2; c++) {
         assert.equal(task.grid[r][c], f(task.rows[r], task.cols[c]), `${key}: grid broken at ${r},${c}`);
+        assert.ok(task.grid[r][c] >= 0, `${key}: negative cell at ${r},${c}`);
       }
-      const interiorCells = task.cells.filter((c) => c.pos.hdr === undefined);
+      const headerCells = task.cells.filter((c) => c.pos.hdr !== undefined || c.pos.hdrRow !== undefined);
+      const interiorCells = task.cells.filter((c) => c.pos.r !== undefined);
+      assert.equal(headerCells.length + interiorCells.length, task.cells.length);
       assert.equal(interiorCells.length + task.given.length, 4, `${key}: cells+given must cover the grid`);
       const seen = new Set();
       for (const p of [...interiorCells.map((c) => c.pos), ...task.given]) {
@@ -268,25 +274,41 @@ test("quad: the grid is true, anchors and blanks partition it, headers solve fir
         assert.ok(!seen.has(k), `${key}: ${k} is both cell and given`);
         seen.add(k);
       }
-      const hdrCell = task.cells.find((c) => c.pos.hdr !== undefined);
+      // the hidden headers come first in the cells, and each one's anchor sits
+      // on the VISIBLE counterpart axis, so it is genuinely one gap away
+      assert.deepEqual(task.cells.slice(0, headerCells.length), headerCells,
+        `${key}: the headers must solve first`);
       if (task.hdr !== null) {
-        assert.ok(hdrCell, `${key}: hidden header without a header cell`);
-        assert.equal(task.cells[0], hdrCell, `${key}: the header must solve first`);
-        assert.equal(hdrCell.answer, task.cols[task.hdr]);
-        assert.equal(task.given.length, 1, `${key}: the header needs exactly one anchor`);
-        assert.equal(task.given[0].c, task.hdr, `${key}: the anchor must sit in the hidden column`);
-        assert.equal(evaluate(quadAidFor(task, hdrCell.pos).text), hdrCell.answer, `${key}: header aid`);
-      } else {
-        assert.equal(hdrCell, undefined);
+        const cell = headerCells.find((c) => c.pos.hdr === task.hdr);
+        assert.ok(cell, `${key}: hidden column without a header cell`);
+        assert.equal(cell.answer, task.cols[task.hdr]);
+        assert.ok(task.given.some((g) => g.c === task.hdr && g.r !== task.hdrRow),
+          `${key}: the column anchor must sit in a visible row`);
       }
+      if (task.hdrRow !== null) {
+        const cell = headerCells.find((c) => c.pos.hdrRow === task.hdrRow);
+        assert.ok(cell, `${key}: hidden row without a header cell`);
+        assert.equal(cell.answer, task.rows[task.hdrRow]);
+        assert.ok(task.given.some((g) => g.r === task.hdrRow && g.c !== task.hdr),
+          `${key}: the row anchor must sit in a visible column`);
+      }
+      assert.equal(task.given.length, headerCells.length, `${key}: one anchor per hidden header`);
       // headers pairwise distinct, and so are the four interior values — a grid
       // with two identical 9-rows reads as a trick (user, first play-test)
       assert.equal(new Set([...task.rows, ...task.cols]).size, 4, `${key}: headers repeat [${task.rows} | ${task.cols}]`);
       assert.equal(new Set(task.grid.flat()).size, 4, `${key}: interior values repeat [${task.grid.flat()}]`);
-      for (const cell of interiorCells) {
-        assert.equal(cell.answer, task.grid[cell.pos.r][cell.pos.c]);
-        assert.equal(evaluate(quadAidFor(task, cell.pos).text), cell.answer);
+      for (const cell of task.cells) {
+        assert.equal(evaluate(quadAidFor(task, cell.pos).text), cell.answer, `${key}: aid for ${JSON.stringify(cell.pos)}`);
       }
+    }
+    // the difficulty ladder: Leicht shows everything, Mittel hides a column,
+    // Schwer hides a row AND a column
+    const t = drawKey(key, 50);
+    if (key === "quad-l") assert.ok(t.every((x) => x.hdr === null && x.hdrRow === null));
+    if (key === "quad-m") assert.ok(t.every((x) => x.hdr !== null && x.hdrRow === null));
+    if (key === "quad-s") {
+      assert.ok(t.every((x) => x.hdr !== null && x.hdrRow !== null));
+      assert.ok(t.some((x) => x.op === "+") && t.some((x) => x.op === "-"), "Schwer mixes + and −");
     }
   }
 });

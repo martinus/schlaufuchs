@@ -99,30 +99,36 @@ test("the driver completes every wall the game can show, at every step", () => {
   }
 });
 
-// A grid as the screen shows it: rows always visible, a hidden column header
-// null until its cell lands, anchors and solved cells visible.
+// A grid as the screen shows it: a hidden header — column OR row — is null
+// until its cell lands, anchors and solved cells visible.
 test("the driver completes every grid the game can show, at every step", () => {
-  const FACE = { "+": "+", "-": "−", x: "×" };
+  const FACE = { "+": "+", "-": "−" };
   for (const key of ["quad-l", "quad-m", "quad-s"]) {
     const i = BUCKETS.findIndex((b) => b.key === key);
     const rng = seeded(i * 53 + 3);
     for (let k = 0; k < 800; k++) {
       const task = questionFor(i, rng, ":");
       task.cells.forEach((cell, c) => {
-        const cols = task.cols.map((v, idx) => {
-          if (task.hdr !== idx) return v;
-          const hi = task.cells.findIndex((x) => x.pos.hdr === idx);
-          return hi >= 0 && hi < c ? v : null;
-        });
+        const landed = (pred) => {
+          const idx = task.cells.findIndex(pred);
+          return idx >= 0 && idx < c;
+        };
+        const cols = task.cols.map((v, idx) =>
+          (task.hdr === idx && !landed((x) => x.pos.hdr === idx) ? null : v));
+        const rows = task.rows.map((v, idx) =>
+          (task.hdrRow === idx && !landed((x) => x.pos.hdrRow === idx) ? null : v));
         const grid = [[null, null], [null, null]];
         for (const g of task.given) grid[g.r][g.c] = task.grid[g.r][g.c];
         task.cells.forEach((x, idx) => {
-          if (idx < c && x.pos.hdr === undefined) grid[x.pos.r][x.pos.c] = x.answer;
+          if (idx < c && x.pos.r !== undefined) grid[x.pos.r][x.pos.c] = x.answer;
         });
-        const full = resolveQuad({ op: FACE[task.op], rows: task.rows, cols, grid });
-        const want = cell.pos.hdr !== undefined ? full.cols[cell.pos.hdr] : full.grid[cell.pos.r][cell.pos.c];
+        const full = resolveQuad({ op: FACE[task.op], rows, cols, grid });
+        const want = cell.pos.hdr !== undefined ? full.cols[cell.pos.hdr]
+          : cell.pos.hdrRow !== undefined ? full.rows[cell.pos.hdrRow]
+          : full.grid[cell.pos.r][cell.pos.c];
         assert.equal(want, cell.answer, `${key}: step ${c}`);
         assert.deepEqual(full.grid, task.grid, `${key}: the grid completes wrongly`);
+        assert.deepEqual(full.rows, task.rows, `${key}: the rows complete wrongly`);
       });
     }
   }

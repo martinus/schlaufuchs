@@ -276,15 +276,22 @@ function quadNums(op, drawRow, drawCol) {
 
 // The aid for one grid slot. An interior cell is its row ∘ column — printed
 // with the true header even while that header is still hidden (the child
-// jumped ahead; the aid names the right answer anyway). The hidden header
-// itself solves as a gap off the anchor cell in its column.
+// jumped ahead; the aid names the right answer anyway). A hidden header
+// itself solves as a gap off the anchor cell in its column (or row).
 export function quadAidFor(task, pos) {
   const { op, rows, cols, grid } = task;
   if (pos.hdr !== undefined) {
-    const from = task.given.find((g) => g.c === pos.hdr) ?? { r: 0 };
+    const from = task.given.find((g) => g.c === pos.hdr && g.r !== task.hdrRow) ?? { r: 0 };
     return {
       kind: "gap", op, a: rows[from.r], b: cols[pos.hdr], answer: cols[pos.hdr],
       text: `${rows[from.r]} ${SIGN[op]} ? = ${grid[from.r][pos.hdr]}`,
+    };
+  }
+  if (pos.hdrRow !== undefined) {
+    const from = task.given.find((g) => g.r === pos.hdrRow && g.c !== task.hdr) ?? { c: 0 };
+    return {
+      kind: "gap", op, a: rows[pos.hdrRow], b: cols[from.c], answer: rows[pos.hdrRow],
+      text: `? ${SIGN[op]} ${cols[from.c]} = ${grid[pos.hdrRow][from.c]}`,
     };
   }
   return {
@@ -293,13 +300,20 @@ export function quadAidFor(task, pos) {
   };
 }
 
-function quadTask(op, rows, cols, { given = [], hdr = null } = {}) {
+// `hideCol`/`hideRow` hide a header; its `from` names the anchor cell that
+// reveals it (the anchor's OTHER coordinate — a row for a column header). The
+// header cells come first in `cells`, each one one gap away from its anchor.
+function quadTask(op, rows, cols, { given = [], hideCol = null, hideRow = null } = {}) {
   const grid = [[quadVal(op, rows[0], cols[0]), quadVal(op, rows[0], cols[1])],
     [quadVal(op, rows[1], cols[0]), quadVal(op, rows[1], cols[1])]];
   const cells = [];
-  if (hdr) {
-    cells.push({ pos: { hdr: hdr.idx }, answer: cols[hdr.idx] });
-    given = [...given, { r: hdr.from, c: hdr.idx }];
+  if (hideCol) {
+    cells.push({ pos: { hdr: hideCol.idx }, answer: cols[hideCol.idx] });
+    given = [...given, { r: hideCol.from, c: hideCol.idx }];
+  }
+  if (hideRow) {
+    cells.push({ pos: { hdrRow: hideRow.idx }, answer: rows[hideRow.idx] });
+    given = [...given, { r: hideRow.idx, c: hideRow.from }];
   }
   for (let r = 0; r < 2; r++) {
     for (let c = 0; c < 2; c++) {
@@ -307,7 +321,10 @@ function quadTask(op, rows, cols, { given = [], hdr = null } = {}) {
       cells.push({ pos: { r, c }, answer: grid[r][c] });
     }
   }
-  return { kind: "quad", op, rows, cols, grid, given, hdr: hdr ? hdr.idx : null, cells };
+  return {
+    kind: "quad", op, rows, cols, grid, given, cells,
+    hdr: hideCol ? hideCol.idx : null, hdrRow: hideRow ? hideRow.idx : null,
+  };
 }
 
 // --- the skill buckets (§12.2) ------------------------------------------------
@@ -365,22 +382,29 @@ export const BUCKETS = [
   // ⊞ Quadrate: Leicht a small + grid (all four); Mittel the workbook's − grid
   // with a HIDDEN column header and its anchor cell (a given cell with all
   // headers visible would teach nothing — the anchor must buy the header);
-  // Schwer a × grid, or a + grid whose column header is hidden.
+  // Schwer a ± grid with a hidden ROW header AND a hidden COLUMN header, each
+  // bought from its own anchor. (A × grid was dropped: the times tables are
+  // einmaleins' whole game — the same drill in a different coat.)
   { key: "quad-l", mode: "quad", diff: 0, gen: (r) => {
     const { rows, cols } = quadNums("+", () => ri(r, 2, 10), () => ri(r, 2, 10));
     return quadTask("+", rows, cols);
   } },
   { key: "quad-m", mode: "quad", diff: 1, gen: (r) => {
     const { rows, cols } = quadNums("-", () => ri(r, 40, 95), () => ri(r, 11, 35));
-    return quadTask("-", rows, cols, { hdr: { idx: ri(r, 0, 1), from: ri(r, 0, 1) } });
+    return quadTask("-", rows, cols, { hideCol: { idx: ri(r, 0, 1), from: ri(r, 0, 1) } });
   } },
   { key: "quad-s", mode: "quad", diff: 2, gen: (r) => {
-    if (r() < 0.5) {
-      const { rows, cols } = quadNums("x", () => ri(r, 2, 9), () => ri(r, 2, 9));
-      return quadTask("x", rows, cols);
-    }
-    const { rows, cols } = quadNums("+", () => ri(r, 20, 60), () => ri(r, 10, 39));
-    return quadTask("+", rows, cols, { hdr: { idx: ri(r, 0, 1), from: ri(r, 0, 1) } });
+    const op = r() < 0.5 ? "+" : "-";
+    const { rows, cols } = op === "+"
+      ? quadNums("+", () => ri(r, 20, 60), () => ri(r, 10, 39))
+      : quadNums("-", () => ri(r, 40, 95), () => ri(r, 11, 35));
+    const hc = ri(r, 0, 1);
+    const hr = ri(r, 0, 1);
+    // each anchor sits on the VISIBLE counterpart axis, or nothing reveals it
+    return quadTask(op, rows, cols, {
+      hideCol: { idx: hc, from: 1 - hr },
+      hideRow: { idx: hr, from: 1 - hc },
+    });
   } },
 ];
 
