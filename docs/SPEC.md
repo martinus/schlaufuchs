@@ -1054,8 +1054,14 @@ i18n. Anything that reprints the equation (the aid card) must build it from
 ### 10.3 Stars (per table & difficulty)
 
 ≥ 60 % → ⭐ · ≥ 80 % → ⭐⭐ · 100 % → ⭐⭐⭐ of the round first-try correct
-(`starsFor` is a ratio, so a 12-question Schwer round needs 8 / 10 / 12 where
-a 10-question round needs 6 / 8 / 10).
+(`starsFor`/`starNeeds` scale with the round, so a 12-question Schwer round
+needs 8 / 10 / 12 where a 10-question round needs 6 / 8 / 10). **The percent
+bands are taken loosely, not literally** (§10.5): on a short round two bands
+can name the same score — 80 % and 100 % of three tasks are both „all three" —
+and two star groups would then land on one waypoint together. `starNeeds`
+pulls the thresholds apart so every star has its own score: a three-task round
+pays at 1 / 2 / 3, a four-task round at 2 / 3 / 4. Ten-question rounds are
+unchanged. (The same rule, duplicated per game as ever, D11.)
 
 **Accuracy is the only criterion for stars.** Speed is not: a child who reads
 or taps slowly knows the times tables just as well, and being slow must never
