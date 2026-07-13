@@ -31,6 +31,13 @@ export function tableName(tbl) {
   return tbl === 0 ? t("emMixed") : t("emTableShort", { t: tbl });
 }
 
+// The tile's FACE: the die alone for the mixed tile — a picture, no word, the
+// same face the Rechenberg's Mix tile wears (user cleanup, 2026-07-13). The
+// spoken name stays `tableName` for the aria-label.
+export function tableFace(tbl) {
+  return tbl === 0 ? "🎲" : tableName(tbl);
+}
+
 // Wrap the picker overlay that sits in the page markup.
 //   current()        — the {diff, table} being played, for the ring and the fox
 //   onPick(d, tbl)   — a level was chosen; runs BEFORE the overlay closes, so
@@ -104,9 +111,7 @@ export function createLevelPicker(el, { current, onPick, onDismiss }) {
           b.setAttribute("aria-current", "true");
           currentTile = b;
         }
-        // "Alle" is the only tile whose name is a word rather than a number, and
-        // a child who reads nothing cannot tell it from the rest. A die can.
-        const name = tbl === 0 ? `🎲 ${tableName(tbl)}` : tableName(tbl);
+        const name = tableFace(tbl);
         const art = left > 0 ? "<i>⭐</i>".repeat(left) : '<b class="tdone">✓</b>';
         // The tempo symbol the tile has earned (§10.6), a badge in the corner.
         // Tier 0 draws nothing at all — an empty corner, never a snail.

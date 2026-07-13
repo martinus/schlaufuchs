@@ -19,10 +19,17 @@ import {
 // it too, so the name over the stage is the name on the tile that started it.
 // Pack keys become i18n keys (lesenPack<Key>); the content test keeps every
 // key named in both languages.
-export function packName(diff, pack) {
+function packName(diff, pack) {
   if (pack === MIXED) return t("lesenMixed");
   const key = packsFor(diff, CONTENT.de)[pack]?.key ?? "";
   return t(`lesenPack${key[0].toUpperCase()}${key.slice(1)}`);
+}
+
+// The tile's FACE: the die alone for the mixed tile — a picture, no word, the
+// same face every game's mixed tile wears (user cleanup, 2026-07-13). The
+// spoken name stays `packName` for the aria-label.
+export function packFace(diff, pack) {
+  return pack === MIXED ? "🎲" : packName(diff, pack);
 }
 
 // Wrap the picker overlay that sits in the page markup. Same contract as the
@@ -86,9 +93,8 @@ export function createLevelPicker(el, { current, onPick, onDismiss }) {
           b.setAttribute("aria-current", "true");
           currentTile = b;
         }
-        // "Alle" is the only tile whose name means a mix, and the die says so
         // to a child who is here because she reads nothing fluently yet.
-        const name = p === MIXED ? `🎲 ${packName(d, p)}` : packName(d, p);
+        const name = packFace(d, p);
         const art = left > 0 ? "<i>⭐</i>".repeat(left) : '<b class="tdone">✓</b>';
         // The tempo symbol the tile has earned (§10.6, §14.4), a badge in the
         // corner. Tier 0 draws nothing at all — an empty corner, never a snail.

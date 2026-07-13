@@ -3,7 +3,7 @@
 
 import { initI18n, t } from "./i18n.js";
 import { loadState, getRewards, setRewards } from "./storage.js";
-import { gameStarsOf, regionState, starBadgeTier, totalTrophies, TOTAL_TROPHIES, GAMES, isPlayable } from "./rewards.js";
+import { gameStarsOf, regionState, starBadgeTier, totalTrophies, TOTAL_TROPHIES, GAMES, isPlayable, TROPHIES, trophyCount } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconSVG, applyIcons } from "./graphics.js";
 import { initTopBar } from "./chrome.js";
@@ -13,10 +13,18 @@ import { prefersReducedMotion, runWalk } from "./motion.js";
 initI18n();
 applyIcons(document); // upgrade static [data-icon] decorations if SVGs exist
 
-// A region star badge: small icon + count, styled by tier (gold / glow).
-function renderBadge(badgeEl, iconName, count, tier) {
-  badgeEl.innerHTML = iconSVG(iconName, { x: -8, y: 0, size: 12 })
-    + `<text class="region-stars" x="2" y="0" text-anchor="start">${count}</text>`;
+// A region star badge: small icon + count, styled by tier (gold / glow) —
+// and the region's LATEST trophy beside it, so the map says how far a place
+// has come without a word of text (user request, 2026-07-13): a region that
+// has won nothing yet shows the FIRST trophy as a grey ghost, the same tease
+// the Pokalraum's locked slots make; a mastered one shows its twelfth.
+function renderBadge(badgeEl, iconName, count, tier, cup, cupWon) {
+  const cupSVG = cup
+    ? `<text class="region-cup${cupWon ? "" : " cup-ghost"}" x="-16" y="0.5" font-size="13" text-anchor="middle" aria-hidden="true">${cup.e}</text>`
+    : "";
+  badgeEl.innerHTML = cupSVG
+    + iconSVG(iconName, { x: -4, y: 0, size: 12 })
+    + `<text class="region-stars" x="6" y="0" text-anchor="start">${count}</text>`;
   badgeEl.classList.remove("badge-t1", "badge-t2", "badge-t3");
   if (tier) badgeEl.classList.add(`badge-t${tier}`);
 }
@@ -258,7 +266,14 @@ function render() {
     // promise the clouds just took back. The group stays for the day it ships.
     if (badge) {
       if (locked) badge.replaceChildren();
-      else renderBadge(badge, "ui-star", gameStarsOf(rewards.pr, game), starBadgeTier(rewards.pr, game));
+      else {
+        // rewards.pr does not exist before the first star is banked — a fresh
+        // visitor's map must not throw over an empty pocket (found by smoke.sh:
+        // every seeded screenshot had points, only the bare page had none)
+        const cups = trophyCount(game, rewards.pr?.[game] ?? 0);
+        renderBadge(badge, "ui-star", gameStarsOf(rewards.pr, game), starBadgeTier(rewards.pr, game),
+          TROPHIES[game][Math.max(cups - 1, 0)], cups > 0);
+      }
     }
     const region = document.getElementById(`region-${game}`);
     if (region) {

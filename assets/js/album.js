@@ -17,9 +17,10 @@ applyIcons(document); // the room's own symbol, once real SVGs land
 // The village is now called after its game, so its two names are one word said
 // twice. Every other region still has a place name and a game name.
 function sectionTitle(game) {
-  const place = t(`region_${game}`);
-  const game_ = t(`game_${game}`);
-  return place === game_ ? place : `${place} · ${game_}`;
+  // Just the place (user cleanup, 2026-07-13): "Rechenberg · Rechnungen — 1/12"
+  // made a child read a subtitle and a fraction; the shelf itself shows how
+  // full it is, and the region name is how the map already talks.
+  return t(`region_${game}`);
 }
 
 // The cup size on the shelf. Three slots to a row (not four) leaves each slot
@@ -78,7 +79,7 @@ function render() {
       })
       .join("");
     section.innerHTML = `
-      <h2>${sectionTitle(game)} — ${earned}/${TROPHIES_PER_GAME}</h2>
+      <h2>${sectionTitle(game)}</h2>
       <div class="trophies">${slots}</div>`;
     main.appendChild(section);
   }

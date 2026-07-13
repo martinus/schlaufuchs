@@ -26,7 +26,16 @@ export function modeSymbol(mode) {
   if (mode === "+") return "＋";
   if (mode === "-") return "−";
   if (mode === "rest") return `${t("divSign")}R`;
-  if (mode === "mauer") return "🧱";
+  if (mode === "mauer") {
+    // A number wall IS a pyramid of bricks (§12.1) — the flat 🧱 wall read as
+    // the grid's rectangles instead (user cleanup, 2026-07-13). Drawn, not an
+    // emoji: no glyph has this shape, and currentColor follows the tile text.
+    return `<svg class="modeglyph" viewBox="0 0 26 23" aria-hidden="true"><g fill="currentColor">`
+      + `<rect x="9" y="0.5" width="8" height="6" rx="1.4"/>`
+      + `<rect x="4.5" y="8" width="8" height="6" rx="1.4"/><rect x="13.5" y="8" width="8" height="6" rx="1.4"/>`
+      + `<rect x="0" y="15.5" width="8" height="6" rx="1.4"/><rect x="9" y="15.5" width="8" height="6" rx="1.4"/><rect x="18" y="15.5" width="8" height="6" rx="1.4"/>`
+      + `</g></svg>`;
+  }
   if (mode === "quad") return "⊞";
   return "🎲";
 }

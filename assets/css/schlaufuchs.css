@@ -495,6 +495,14 @@ footer p { margin: 0; }
 .journey { width: 100%; height: auto; display: block; }
 .journey .j-node { fill: var(--orange-soft); stroke: var(--orange); stroke-width: 2; }
 .journey .j-node.done { fill: var(--ok); stroke: var(--ok); }
+/* The region's latest trophy on the map badge; a region with none yet shows
+   the first one as a grey ghost — the Pokalraum's own tease, without a word. */
+.region-cup.cup-ghost { opacity: 0.35; filter: grayscale(1); }
+
+/* A drawn tile symbol (the Rechenberg's wall pyramid): sized like the glyph it
+   stands beside, coloured by the text it sits in. */
+.modeglyph { width: 1.1em; height: 0.95em; }
+
 /* a task that ended after a stumble still earns its waypoint — a red one */
 .journey .j-node.missed { fill: #f2b6ba; stroke: var(--err); }
 /* obstacle mini-celebrations when the fox passes a milestone (§8.2).

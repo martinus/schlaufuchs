@@ -371,9 +371,12 @@ test("the chip looks like the button it is", () => {
   assert.ok(!read("games/einmaleins/einmaleins.js").includes("▾"));
 });
 
-test('the "Alle" tile says with a picture that it mixes the tables', () => {
+test('the "Alle" tile is the die alone — a picture, no word', () => {
+  // Every game's mixed tile wears the same bare 🎲 (user cleanup, 2026-07-13);
+  // the spoken name stays tableName for the aria-label.
   const src = read("games/einmaleins/picker.js");
-  assert.match(src, /tbl === 0 \? `🎲 \$\{tableName\(tbl\)\}`/);
+  assert.match(src, /tbl === 0 \? "🎲" : tableName\(tbl\)/);
+  assert.ok(!src.includes("`🎲 ${"), "no text may ride along with the die");
 });
 
 // The picker was two controls: three difficulty buttons that silently rewrote
