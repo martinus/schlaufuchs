@@ -27,6 +27,42 @@ import { createLevelFox } from "./levelfox.js";
 import { iconHTML } from "./graphics.js";
 import { t } from "./i18n.js";
 import { DIFF_KEYS, DIFF_SLUGS, TEMPO_ICONS, TEMPO_KEYS } from "./roundrules.js";
+import { starCluster } from "./journey.js";
+
+// Where the round-groups sit inside a tile, as a percentage of the star box — the
+// same shallow arc the round scene's sky hangs on (`SKY` in journey.js): the
+// three spread across with the MIDDLE one lifted, so the tile is a little map of
+// the Wegbild she is about to walk. Fewer groups keep the spacing, centred.
+const GROUP_ANCHORS = {
+  1: [[50, 52]],
+  2: [[32, 52], [68, 52]],
+  3: [[18, 60], [50, 38], [82, 60]],
+};
+
+// The stars a tile still owes, drawn as the UNITS they are actually won in and in
+// the very SHAPE the round scene draws them (§10.2, §10.4). One round pays a whole
+// GROUP at once — a single on Leicht, a pair on Mittel, a mini-pyramid of three on
+// Schwer — and never one star out of a group; drawing six loose stars on a Mittel
+// tile hid that. So each group is a `starCluster` — the exact constellation the
+// Wegbild's sky and the summary use — and a fresh tile is always THREE of them
+// (three rounds to master), the group growing with difficulty, not their number.
+// Each star carries its cluster offset (`--dx/--dy`) and size (`--sz`) in Wegbild
+// units; the CSS scales them to the tile. `left` is the point total, so there are
+// `left / worth` groups.
+export function starGroupsHTML(left, difficulty) {
+  const worth = difficulty + 1;
+  const cluster = starCluster(worth);
+  const rounds = left / worth;
+  const anchors = GROUP_ANCHORS[rounds] ?? GROUP_ANCHORS[3];
+  return anchors
+    .map(([ax, ay]) => {
+      const stars = cluster
+        .map(({ dx, dy, size }) => `<i style="--dx:${dx};--dy:${dy};--sz:${size}">⭐</i>`)
+        .join("");
+      return `<span class="sgroup" style="left:${ax}%;top:${ay}%">${stars}</span>`;
+    })
+    .join("");
+}
 
 // Wrap the picker overlay that sits in the page markup.
 //   current()        — the { diff, id } being played, for the ring and the fox
@@ -99,11 +135,11 @@ export function createLevelPicker(el, { current, onPick, onDismiss, tilesFor }) 
           b.setAttribute("aria-current", "true");
           currentTile = b;
         }
-        const art = left > 0 ? "<i>⭐</i>".repeat(left) : '<b class="tdone">✓</b>';
+        const art = left > 0 ? starGroupsHTML(left, d) : '<b class="tdone">✓</b>';
         // The tempo symbol the tile has earned (§10.6), a badge in the corner.
         // Tier 0 draws nothing at all — an empty corner, never a snail.
         const badge = tempo > 0
-          ? `<span class="ttempo" aria-hidden="true">${iconHTML(TEMPO_ICONS[tempo], { size: 18 })}</span>`
+          ? `<span class="ttempo" aria-hidden="true">${iconHTML(TEMPO_ICONS[tempo], { size: 26 })}</span>`
           : "";
         b.innerHTML = `<span class="tstars" aria-hidden="true">${art}</span>`
           + badge + `<span class="tname">${face}</span>`;

@@ -12,6 +12,7 @@ import {
   median, tempoTier, awardTempo, TEMPO_TIERS, TEMPO_SLOTS, recallStep, foldRecall,
 } from "../games/einmaleins/logic.js";
 import { tilePointsLeft } from "../assets/js/rewards.js";
+import { starGroupsHTML } from "../assets/js/levelpicker.js";
 import { BUDGET } from "../assets/js/storage.js";
 import { GRAPHICS } from "../assets/js/graphics.js";
 import strings from "../games/einmaleins/i18n.js";
@@ -417,7 +418,7 @@ test("a tile shows the stars it still has to give", () => {
   // the game's adapter computes what is left; the shared picker draws it
   assert.match(read("games/einmaleins/picker.js"), /tilePointsLeft\(starDigit\(starsByDiff\[d\], tbl\), d\)/);
   const shared = read("assets/js/levelpicker.js");
-  assert.match(shared, /left > 0 \? "<i>⭐<\/i>"\.repeat\(left\) : '<b class="tdone">✓<\/b>'/);
+  assert.match(shared, /left > 0 \? starGroupsHTML\(left, d\) : '<b class="tdone">✓<\/b>'/);
   assert.match(shared, /if \(left === 0\) b\.classList\.add\("mastered"\)/);
 
   // 3 / 6 / 9 on an untouched tile, nothing on a finished one — the numbers the
@@ -426,6 +427,36 @@ test("a tile shows the stars it still has to give", () => {
     assert.equal(tilePointsLeft(0, d), fresh, `a fresh tile of difficulty ${d}`);
     assert.equal(tilePointsLeft(3, d), 0, `a mastered tile of difficulty ${d}`);
   }
+});
+
+// The stars are drawn in the UNITS they are won in: a round pays a whole group
+// at once (§10.4), one star on Leicht, a pair on Mittel, a triple on Schwer —
+// never a single star out of a group. So the picture is always as many groups as
+// there are rounds left (a fresh tile: three, on every difficulty), and it is the
+// GROUP that grows with difficulty, not the number of groups.
+test("the picker clusters a tile's stars into the rounds that pay them", () => {
+  // the group's SHAPE is the round scene's own constellation, reused not
+  // re-drawn — so the tile and the Wegbild can never disagree about it
+  const shared = read("assets/js/levelpicker.js");
+  assert.match(shared, /import \{ starCluster \} from "\.\/journey\.js"/);
+  assert.match(shared, /starCluster\(worth\)/);
+
+  // group size = difficulty + 1; group count = rounds left, never a loose count
+  for (const [d, size] of [[0, 1], [1, 2], [2, 3]]) {
+    const fresh = starGroupsHTML(tilePointsLeft(0, d), d); // an untouched tile
+    const groups = fresh.match(/class="sgroup"/g) ?? [];
+    assert.equal(groups.length, 3, `a fresh difficulty-${d} tile is three rounds`);
+    const stars = fresh.match(/⭐/g) ?? [];
+    assert.equal(stars.length, 3 * size, `three groups of ${size} on difficulty ${d}`);
+    // every group carries a whole round's worth of stars, not a leftover
+    for (const g of fresh.split("</span>").filter(Boolean)) {
+      assert.equal((g.match(/⭐/g) ?? []).length, size, `a group holds exactly ${size}`);
+    }
+  }
+  // one round already won on Mittel leaves two pairs, not four loose stars
+  const partial = starGroupsHTML(tilePointsLeft(1, 1), 1);
+  assert.equal((partial.match(/class="sgroup"/g) ?? []).length, 2);
+  assert.equal((partial.match(/⭐/g) ?? []).length, 4);
 });
 
 // Leicht teaches four tables, Mittel all ten, Schwer the eight with something
