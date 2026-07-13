@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import {
   heatOf, weakFacts, practiceSummary, minutesOf, secondsPerRound,
   recallDigit, cellState, cellCounts, sightState, sightTally,
+  weakSightIds, groupState,
 } from "../assets/js/parentstats.js";
 import { boxesFromString, clampBox } from "../assets/js/adaptive.js";
 import { pairOf, POOL_COUNT } from "../games/einmaleins/logic.js";
@@ -108,6 +109,30 @@ test("sightTally counts lesen's words and sentences separately, over one box str
   const boxes = { ...fresh, [wordIds[0]]: 4, [wordIds[1]]: 0, [sentIds[0]]: 3 };
   assert.deepEqual(sightTally(boxes, wordIds), { weak: 1, open: 158, solid: 0, fast: 1 });
   assert.deepEqual(sightTally(boxes, sentIds), { weak: 0, open: 95, solid: 1, fast: 0 });
+});
+
+// The reading game's "here you help most" (§20): only the sight words that
+// still slip, weakest box first, and a fresh reader (every word box 2) has none.
+test("weakSightIds lists the slipping words, weakest first, and nothing else", () => {
+  const ids = [10, 11, 12, 13, 14];
+  const boxes = { 10: 2, 11: 1, 12: 4, 13: 0, 14: 3 };
+  // box 0 (id 13) before box 1 (id 11); the open/solid/fast words are not help
+  assert.deepEqual(weakSightIds(boxes, ids), [13, 11]);
+  const fresh = boxesFromString(undefined, 20); // all box 2 → open, none weak
+  assert.deepEqual(weakSightIds(fresh, ids), []);
+});
+
+// One rechnungen picker cell pools several skill buckets; groupState folds their
+// boxes into the one state a parent reads (§20). A single weak bucket is never
+// hidden by its solid neighbours — the whole point is "is there help to give".
+test("groupState: weak wins, then solid, and an all-untouched cell is open", () => {
+  assert.equal(groupState([2, 2]), "open", "nothing practised");
+  assert.equal(groupState([3, 2]), "solid", "one sits, one untouched");
+  assert.equal(groupState([4, 3]), "solid");
+  assert.equal(groupState([3, 0]), "weak", "a slip is never hidden by a solid");
+  assert.equal(groupState([1, 2]), "weak");
+  assert.equal(groupState([]), "open", "an empty cell reads as untouched");
+  for (const junk of [undefined, null]) assert.equal(groupState(junk), "open");
 });
 
 test("practiceSummary survives an empty, absent or corrupted cookie", () => {

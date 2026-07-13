@@ -73,22 +73,43 @@ test("the copy never calls an unpractised fact a mistake", () => {
   assert.match(en.parentsPace1, /Time is not a goal/);
 });
 
-// Two games report now (§20): each game's block stands on its own, and a child
-// who has only read must not see her page claim she has done nothing.
-test("the lesen section is wired, and either game alone defeats the empty state", () => {
+// Three games report now (§20): each game's block stands on its own, and a child
+// who has only read (or only done sums) must not see her page claim she has done
+// nothing.
+test("every game section is wired, and any one alone defeats the empty state", () => {
   const html = read("parents.html");
-  for (const id of ["p-em-sec", "p-lesen-sec", "p-lesen"]) {
+  for (const id of ["p-em-sec", "p-lesen-sec", "p-lesen", "p-rechnen-sec", "p-rechnen", "p-toc"]) {
     assert.ok(html.includes(`id="${id}"`), `parents.html lost #${id}`);
   }
-  assert.ok(html.includes('data-i18n="parentsLesenHint"'));
+  assert.ok(html.includes('data-i18n="parentsLesenIntro"'));
+  assert.ok(html.includes('data-i18n="parentsRechnenHint"'));
+  // the reading heading is the map's own name for the region, "Lesewiese"
+  assert.ok(html.includes('data-i18n="region_lesen"'));
+  assert.ok(html.includes('data-i18n="region_rechnungen"'));
 
   const src = read("assets/js/parents.js");
-  assert.match(src, /const played = emPlayed \|\| lesenPlayed/, "one game played must unhide the page");
+  assert.match(src, /const played = emPlayed \|\| lesenPlayed \|\| rechnenPlayed/, "one game played must unhide the page");
   assert.match(src, /"p-em-sec"\)\.hidden = !emPlayed/);
   assert.match(src, /"p-lesen-sec"\)\.hidden = !lesenPlayed/);
-  // the words come from the content module, never from a copied list
+  assert.match(src, /"p-rechnen-sec"\)\.hidden = !rechnenPlayed/);
+  // the words come from the content module, and the skills from rechnungen logic
   assert.match(src, /games\/lesen\/content\.js/);
-  // the sentence line merges "fast" into solid: a sentence is comprehension,
-  // not sight speed, and a tally that drops a state would miscount
+  assert.match(src, /games\/rechnungen\/logic\.js/);
+  // the tier line merges "fast" into solid: the top box is "sits" for every
+  // reading skill, and a tally that dropped a state would miscount
   assert.match(src, /s\.solid \+ s\.fast/);
+});
+
+// The "undefined" wall (§20): the old report treated poolFor(0)+poolFor(1) as
+// the words, but Mittel became whole Stimmt/Quatsch sentences with no `.w`
+// field — so every Mittel item rendered its missing word as the literal
+// "undefined". Words are difficulty 0 alone now, and each tier is reported apart.
+test("the reading report reads only difficulty-0 items as words", () => {
+  const src = read("assets/js/parents.js");
+  assert.match(src, /lesenWordIds = lesenPoolFor\(0,/, "words are Leicht only");
+  assert.match(src, /lesenSentIds = lesenPoolFor\(1,/);
+  assert.match(src, /lesenTextIds = lesenPoolFor\(2,/);
+  // and only weak words become chips — never the whole set as a wall
+  assert.match(src, /weakSightIds\(lesenBoxes, lesenWordIds\)/);
+  assert.match(src, /\$\{item\.w\}/, "a word chip resolves to the item's word");
 });
