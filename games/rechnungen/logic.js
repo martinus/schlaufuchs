@@ -362,15 +362,17 @@ export const BUCKETS = [
   { key: "mauer-s", mode: "mauer", diff: 2, gen: (r) =>
     mauerTask(r, mauerBase(r, 8, 24, 25), pick(r, [[1, 2, 5], [2, 1, 3], [0, 3, 5]])) }, // mixed +/− directions
 
-  // ⊞ Quadrate: Leicht a small + grid (all four); Mittel a − grid with one
-  // anchor shown; Schwer a × grid, or a + grid whose column header is hidden.
+  // ⊞ Quadrate: Leicht a small + grid (all four); Mittel the workbook's − grid
+  // with a HIDDEN column header and its anchor cell (a given cell with all
+  // headers visible would teach nothing — the anchor must buy the header);
+  // Schwer a × grid, or a + grid whose column header is hidden.
   { key: "quad-l", mode: "quad", diff: 0, gen: (r) => {
     const { rows, cols } = quadNums("+", () => ri(r, 2, 10), () => ri(r, 2, 10));
     return quadTask("+", rows, cols);
   } },
   { key: "quad-m", mode: "quad", diff: 1, gen: (r) => {
     const { rows, cols } = quadNums("-", () => ri(r, 40, 95), () => ri(r, 11, 35));
-    return quadTask("-", rows, cols, { given: [{ r: ri(r, 0, 1), c: ri(r, 0, 1) }] });
+    return quadTask("-", rows, cols, { hdr: { idx: ri(r, 0, 1), from: ri(r, 0, 1) } });
   } },
   { key: "quad-s", mode: "quad", diff: 2, gen: (r) => {
     if (r() < 0.5) {

@@ -63,14 +63,29 @@ test("every star in a slot flies into the basket, and none is left in the sky", 
   // ONE group per slot, and the whole cluster inside it: the group is what
   // moves. Given a keyframe each, none of them would move under reduced motion.
   const loop = journey.slice(journey.indexOf("for (let i = 0; i < SLOTS; i++) {"), journey.indexOf(".j-fox"));
-  assert.match(loop, /<g class="j-star"[\s\S]*?clusterAt\(skyX\(i\), skyY\(i\), ""\)/,
+  assert.match(loop, /<g class="j-star"[\s\S]*?clusterAt\(g\.sky\[i\]\.x, g\.sky\[i\]\.y, ""\)/,
     "the cluster must be a child of the flying group");
   assert.ok(!/j-worth/.test(journey) && !/j-worth/.test(css), "the ×N tag is retired, everywhere");
 
   // the ghost slot is the same shape, or a collected slot would not match the
   // hole it left behind
-  assert.match(journey, /clusterAt\(skyX\(i\), skyY\(i\), "j-ghost"\)/);
+  assert.match(journey, /clusterAt\(g\.sky\[i\]\.x, g\.sky\[i\]\.y, "j-ghost"\)/);
   assert.match(game, /worth: starValue\(diff\)/, "the round tells the scene what its stars are worth");
+});
+
+// Every asked task is its own waypoint (§10.5): the fox steps forward when a
+// task ends, however it went — a missed one onto a RED node, and the path
+// grows by the re-queued ask. Martin watched the fox freeze on a node while
+// new questions kept coming; this pins the cure in ALL games, because a
+// forgotten advanceMissed() would reproduce exactly that, silently.
+test("every asked task is its own waypoint — a missed one steps onto a red node", () => {
+  assert.match(journey, /advanceMissed\(\)/, "journey.js must offer the missed step");
+  assert.match(journey, /count \+= 1;\s*\n\s*render\(\);/, "a missed step must grow the path and re-render");
+  assert.match(css, /\.journey \.j-node\.missed \{/, "the red waypoint must be styled");
+  for (const g of ["einmaleins/einmaleins", "lesen/lesen", "rechnungen/rechnungen"]) {
+    const src = read(`games/${g}.js`);
+    assert.match(src, /journey\.advanceMissed\(\)/, `${g}.js never takes the missed step`);
+  }
 });
 
 // The scene is the tallest thing in the stage after the aid card, and the aid

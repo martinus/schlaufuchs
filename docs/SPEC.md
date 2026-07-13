@@ -1097,7 +1097,15 @@ One picture, no prose. `createJourney()` in `journey.js` draws all of it:
   the stars land, so the reward and the finish line are one object. The fox's
   last step lands beside it. There is no themed goal icon in any theme any
   more; `THEMES` is a path colour and three obstacles.
-- **the path** carries the fox, who advances on every correct answer.
+- **the path** carries the fox. **Every asked question is its own waypoint**:
+  the fox steps forward when a question ends, however it went — onto a green
+  node for a clean answer, onto a **red** node for a missed one. A missed item
+  is re-queued within the round, so the red step also **grows the path by one
+  node** (the scene re-renders in place, strides narrowing — `sceneGeometry`
+  keeps the ten-node width, §10.5): the fox reaches the basket exactly on the
+  round's last answer, and never freezes on a node while new questions come.
+  This holds in **every game and every level**; `advanceMissed()` is the shared
+  journey API for it, called when an aided question finally ends.
 
 A round awards at most **three** stars in every difficulty; what scales with
 difficulty is what each star *counts* (×1 / ×2 / ×3, §8.3). The sky therefore
@@ -1332,9 +1340,12 @@ read in one order, so their cells activate themselves; **in a wall or grid the
 child picks which blank to fill herself** — tapping a „?" activates it, only
 then does the keypad apply, and after every fill she picks again. The numbers
 she entered herself stay marked (blue, the colour of what you have) next to
-the printed givens. One task is one journey node and one engine item: the fox
-advances when the last cell lands, stumbles on any wrong one, and a task
-counts as first-try only if every cell was. Every cell has an *aid* — a binary
+the printed givens. One task is one engine item, and **every asked task is
+its own waypoint** (§10.5): when the task ends the fox steps forward — onto a
+green node if it went cleanly, onto a red one if any cell was wrong, and then
+the path grows by one node for the re-queued ask, so she still reaches the
+basket exactly on the round's last answer. She stumbles at the moment of the
+wrong cell, and a task counts as first-try only if every cell was. Every cell has an *aid* — a binary
 sub-equation the wrong-answer card draws (§8.1: number line for ±, dot grid
 for ×/÷; no timer, no „Verstanden" — the way out is entering the right
 answer). A wall brick's aid is chosen at miss time from the bricks visible
@@ -1351,7 +1362,7 @@ would balloon a mixed round. The difficulty × mode grid the generators realise:
 | | ＋ / − | ×÷ | 🧱 Mauern | ⊞ Quadrate |
 |---|---|---|---|---|
 | Leicht | within 20 · ±  whole tens (`27 + 60`) | ×→+ link (`3 × 6 = 6 + 6 + 6 = ?`) · exact ÷, tables 1–5 | base given, climb with + (3 cells) | 2×2 „+" grid, small numbers (4 cells) |
-| Mittel | crossing the ten: ± one-digit with carry/borrow (`54 + 9`, `80 − 4`) · two-digit with and without (`25 + 32`, `22 + 38`, `91 − 36`) | × full tables · exact ÷ full tables | top + one flank given, descend with − (3 cells) | 2×2 „−" grid ≤ 100, one anchor shown (3 cells) |
+| Mittel | crossing the ten: ± one-digit with carry/borrow (`54 + 9`, `80 − 4`) · two-digit with and without (`25 + 32`, `22 + 38`, `91 − 36`) | × full tables · exact ÷ full tables | top + one flank given, descend with − (3 cells) | 2×2 „−" grid ≤ 100 with a **hidden column header** and its anchor cell (4 cells) — a given cell only exists to buy a header |
 | Schwer | **Zerlegen** scaffold (7 cells, below) · gaps (`? + 27 = 61`, `82 − ? = 10`) · chains (`45 + 38 − 17`) | **division with remainder** (`49 : 5 = ? R ?`, 2 cells — the remainder slot is always asked and is sometimes genuinely 0: „R 0" is an answer the child gives) · ×/÷ gaps (`? × 7 = 28`) | mixed blanks, + and − in both directions | 2×2 „×" grid (tables), or „+" grid with a **hidden column header** (`62 + ? = 73` first) |
 
 A wall's six values are pairwise **distinct**, and so are a grid's four headers

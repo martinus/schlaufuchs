@@ -148,7 +148,10 @@
   globalThis.readRechnungScene = () => ({
     stars: document.querySelectorAll(".j-star.landed").length,
     aria: $("journey")?.getAttribute("aria-label") ?? null,
-    foxAtNode: [...document.querySelectorAll(".j-node.done")].length,
+    // every finished task is a waypoint (§10.5): green for clean, red for missed
+    foxAtNode: document.querySelectorAll(".j-node.done, .j-node.missed").length,
+    missedNodes: document.querySelectorAll(".j-node.missed").length,
+    pathNodes: document.querySelectorAll(".j-node").length,
   });
 
   globalThis.readRechnungSummary = () => ({
