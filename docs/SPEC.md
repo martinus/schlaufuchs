@@ -776,8 +776,13 @@ and an 8-year-old understood neither.
   rounds to master, whatever the difficulty. Two tile states, two looks, and the
   pull is on the one that still pays: **open** wears a warm invite ring and its
   star groups; **mastered** is faded and quiet under a small tick, and may be
-  replayed for nothing. The round summary shows the stars just earned next to the
-  score („+6 ⭐"); that is the only place a number appears.
+  replayed for nothing. When the picker reopens after a round that paid stars,
+  the played tile **replays the win**: the groups just earned fly off (the fall
+  the round scene's sky makes into the basket) and the ones still to win glide in,
+  so „I finished a round" and „the tile filled in" are one moment — honoured only
+  under `prefers-reduced-motion: no-preference`, else the tile just opens settled.
+  The round summary shows the stars just earned next to the score („+6 ⭐"); that
+  is the only place a number appears.
 - Each region keeps a lifetime **star** counter (`rewards.pr`, §9.2). The
   field keeps its short name for the cookie budget (§9.2).
 - Each region has **12 fixed trophies** (emoji + translated name, defined in

@@ -28,6 +28,7 @@ import { iconHTML } from "./graphics.js";
 import { t } from "./i18n.js";
 import { DIFF_KEYS, DIFF_SLUGS, TEMPO_ICONS, TEMPO_KEYS } from "./roundrules.js";
 import { starCluster } from "./journey.js";
+import { prefersReducedMotion } from "./motion.js";
 
 // Where the round-groups sit inside a tile, as a percentage of the star box — the
 // same shallow arc the round scene's sky hangs on (`SKY` in journey.js): the
@@ -54,12 +55,37 @@ export function starGroupsHTML(left, difficulty) {
   const cluster = starCluster(worth);
   const rounds = left / worth;
   const anchors = GROUP_ANCHORS[rounds] ?? GROUP_ANCHORS[3];
-  return anchors
-    .map(([ax, ay]) => {
-      const stars = cluster
-        .map(({ dx, dy, size }) => `<i style="--dx:${dx};--dy:${dy};--sz:${size}">⭐</i>`)
-        .join("");
-      return `<span class="sgroup" style="left:${ax}%;top:${ay}%">${stars}</span>`;
+  return anchors.map(([ax, ay]) => groupHTML(cluster, ax, ay)).join("");
+}
+
+function groupHTML(cluster, ax, ay, extraCls = "", extraAttrs = "") {
+  const stars = cluster
+    .map(({ dx, dy, size }) => `<i style="--dx:${dx};--dy:${dy};--sz:${size}">⭐</i>`)
+    .join("");
+  const cls = extraCls ? `sgroup ${extraCls}` : "sgroup";
+  return `<span class="${cls}" style="left:${ax}%;top:${ay}%"${extraAttrs}>${stars}</span>`;
+}
+
+// The star groups for a tile mid-replay of a round it just won (§10.1): the tile
+// as it stood BEFORE the round (`from` stars), with the groups it just earned
+// tagged `.won-depart` so the CSS can fly them off, and the groups still to win
+// carrying the anchor a settled tile would put them at (`data-to-*`), so they can
+// glide there as the won ones leave. A round wins whole groups off the top, so the
+// first `newGroups` are kept and the rest depart; when `to` reaches 3 the tile is
+// mastered and every group flies off, leaving the tick behind.
+export function winFlightHTML(from, to, difficulty) {
+  const worth = difficulty + 1;
+  const cluster = starCluster(worth);
+  const newGroups = 3 - to;
+  const oldAnchors = GROUP_ANCHORS[3 - from] ?? GROUP_ANCHORS[3];
+  const newAnchors = GROUP_ANCHORS[newGroups] ?? [];
+  return oldAnchors
+    .map(([ax, ay], i) => {
+      if (i < newGroups) {
+        const [nx, ny] = newAnchors[i];
+        return groupHTML(cluster, ax, ay, "", ` data-to-left="${nx}%" data-to-top="${ny}%"`);
+      }
+      return groupHTML(cluster, ax, ay, "won-depart");
     })
     .join("");
 }
@@ -77,6 +103,10 @@ export function starGroupsHTML(left, difficulty) {
 export function createLevelPicker(el, { current, onPick, onDismiss, tilesFor }) {
   const list = el.querySelector("#pick-levels");
   let levelFox = null; // rebuilt with the tiles on every open
+  // A round just paid stars; the next time the picker opens, the tile it was won
+  // on replays the win. { from, to } are the tile's mastered stars before/after —
+  // it belongs to whatever tile is `current()` then (the one just played, §10.1).
+  let pendingWin = null;
 
   const overlay = overlayFrom(el, {
     onOpen: render,
@@ -89,6 +119,39 @@ export function createLevelPicker(el, { current, onPick, onDismiss, tilesFor }) 
       onDismiss();
     },
   });
+
+  // The round summary tells the picker a round paid off, so the played tile can
+  // fly the won groups off when it reopens (§10.1). Only an actual gain animates.
+  overlay.flagWin = (from, to) => {
+    if (to > from) pendingWin = { from, to };
+  };
+
+  // How long the fly-off runs; must outlast the CSS transitions below so the tile
+  // is restored to its settled markup only once they have played.
+  const FLIGHT_MS = 560;
+
+  // Play the win back on `tile`: the groups earned this round lift off and shrink
+  // away — the fall the round scene's sky makes into the basket — while the groups
+  // still to win glide to where a settled tile sits them. Ends by restoring the
+  // tile's own settled markup, so nothing about the resting state depends on this.
+  function flyWin(tile, restingArt, { from, to }, d) {
+    const box = tile.querySelector(".tstars");
+    const settledMastered = tile.classList.contains("mastered");
+    box.innerHTML = winFlightHTML(from, to, d);
+    tile.classList.remove("mastered"); // full colour while the groups fly
+    void box.offsetWidth; // commit the starting layout before the transitions
+    requestAnimationFrame(() => {
+      for (const g of box.querySelectorAll(".won-depart")) g.classList.add("gone");
+      for (const g of box.querySelectorAll(".sgroup[data-to-left]")) {
+        g.style.left = g.dataset.toLeft;
+        g.style.top = g.dataset.toTop;
+      }
+    });
+    setTimeout(() => {
+      box.innerHTML = restingArt;
+      if (settledMastered) tile.classList.add("mastered");
+    }, FLIGHT_MS);
+  }
 
   // Open the level `id` stands for. Called when the fox has arrived on it, so
   // a round never starts under a fox that is still in the air. The order is the
@@ -117,6 +180,7 @@ export function createLevelPicker(el, { current, onPick, onDismiss, tilesFor }) 
     list.innerHTML = "";
     const cur = current();
     let currentTile = null;
+    let currentArt = ""; // the played tile's settled star markup, to restore after a win flies
 
     DIFF_KEYS.forEach((key, d) => {
       // A heading, not a control: pressing a difficulty is choosing a tile in it.
@@ -136,6 +200,7 @@ export function createLevelPicker(el, { current, onPick, onDismiss, tilesFor }) 
           currentTile = b;
         }
         const art = left > 0 ? starGroupsHTML(left, d) : '<b class="tdone">✓</b>';
+        if (b === currentTile) currentArt = art; // remember it for the win replay
         // The tempo symbol the tile has earned (§10.6), a badge in the corner.
         // Tier 0 draws nothing at all — an empty corner, never a snail.
         const badge = tempo > 0
@@ -162,6 +227,14 @@ export function createLevelPicker(el, { current, onPick, onDismiss, tilesFor }) 
     // time onOpen runs, so the numbers are real.
     levelFox = createLevelFox(list);
     if (currentTile) levelFox.jumpTo(currentTile);
+
+    // A round just paid off? Play it back on the tile it was won on — but only
+    // when motion is welcome; under prefers-reduced-motion the tile just opens in
+    // its settled state (the group is present, not animated). Consumed either way.
+    if (pendingWin && currentTile && !prefersReducedMotion()) {
+      flyWin(currentTile, currentArt, pendingWin, cur.diff);
+    }
+    pendingWin = null;
   }
 
   return overlay;

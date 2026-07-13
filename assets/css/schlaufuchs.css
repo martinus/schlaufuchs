@@ -1275,6 +1275,26 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   opacity: 0.75;
 }
 
+/* The win replay (§10.1, `flyWin` in levelpicker.js): when the picker reopens
+   after a round that paid stars, the played tile shows the round back — the
+   groups just earned lift off and shrink away, the same fall the round scene's
+   sky makes into the basket, while the groups still to win glide to where a
+   settled tile sits them. Motion only when it is welcome: under reduced motion
+   the tile just opens settled, and `flyWin` is never called, so these transitions
+   never have anything to fire on. */
+@media (prefers-reduced-motion: no-preference) {
+  .tilegrid .sgroup {
+    transition: left 0.45s ease, top 0.45s ease;
+  }
+  .tilegrid .sgroup.won-depart {
+    transition: transform 0.5s ease, opacity 0.5s ease;
+  }
+  .tilegrid .sgroup.won-depart.gone {
+    transform: translateY(16px) scale(0.25);
+    opacity: 0;
+  }
+}
+
 /* The tempo badge (§10.6): the pace this tile has been *known* at, worn as a
    little medal in its bottom corner. No white disc around it — the same white
    outline the star groups wear lifts the bare emoji off the busy band, so the
