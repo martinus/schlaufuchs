@@ -471,6 +471,34 @@ test("the scene anchor and the lively tap moment are wired (§14.2)", () => {
   assert.match(css, /\.ans-shake\s*\{[^}]*animation/, "the shake is an animation");
 });
 
+test("Schwer never reveals its answer — she picks again until right (§14.2)", () => {
+  const game = read("games/lesen/lesen.js");
+
+  // A wrong reading answer must NOT open the reveal aid: the passage stays on
+  // screen and the tapped tile is retired. Word and Mittel still re-teach via
+  // showFeedback (a blitzed word / a verdict she may not have grasped).
+  const submit = game.slice(game.indexOf("function submit"), game.indexOf("function showFeedback"));
+  assert.match(submit, /question\.kind === "read"\) btn\.disabled = true;\s*else showFeedback\(value\)/,
+    "a wrong read tile is retired (passage stays); word/Mittel open the aid");
+
+  // A wrong RE-PICK on Schwer retires that tile too — never reveals.
+  const press = game.slice(game.indexOf("function answerPress"), game.indexOf("function blitzFlash"));
+  assert.match(press, /question\.kind === "read"\)[\s\S]*?retireWrong\(btn\)/, "a wrong re-pick on Schwer is retired");
+
+  // retireWrong disables the tile (so it cannot be tapped again) and never names
+  // the answer.
+  const retire = game.slice(game.indexOf("function retireWrong"), game.indexOf("function rejectRetry"));
+  assert.match(retire, /btn\.disabled = true/, "the retired tile cannot be tapped again");
+  assert.ok(!/question\.answer/.test(retire), "retireWrong must never name the answer");
+
+  // The reveal is gone entirely: no reading branch in the aid, and the
+  // "Correct: …" string is removed from i18n (both directions of the parity test
+  // in lesen-content already guard key parity — this guards its absence).
+  const aid = game.slice(game.indexOf("function showFeedback"), game.indexOf("function retireWrong"));
+  assert.ok(!/lesenAnswerIs|fb-lbl|fb-scene/.test(aid), "no Schwer reveal left in the aid");
+  assert.ok(!/lesenAnswerIs/.test(read("games/lesen/i18n.js")), "the reveal string is removed from i18n");
+});
+
 test("a word waits behind the ready cover; the blitz arms only on reveal (§14.2)", () => {
   // The blitz used to start the instant a word appeared, so the first word of a
   // round flashed before the child had looked or knew one was coming. A word now

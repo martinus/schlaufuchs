@@ -1476,9 +1476,14 @@ plain named numbers to be retuned after watching a real child, like
   SAME four options; the way out is tapping the right one. On Mittel the sentence
   is shown again with the verdict it should have got (😊 „Das stimmt wirklich!"
   or 😜 „Das ist Blödsinn!"); the way out is the right verdict on the same two
-  buttons. On Schwer the question is shown again with the answer she should have
-  chosen in green („Richtig: …"); the way out is that answer on the same four
-  buttons. No timer, no "Verstanden" button.
+  buttons. **On Schwer nothing is revealed** — no aid at all: the passage and its
+  four answers stay on screen and the child simply reads again and picks until she
+  gets it right; each wrong tile is struck out (red, shaken, disabled) so she
+  narrows in without re-tapping it, and the correct one hops with its ✓ when she
+  finds it. (Only reading retries in place — a blitzed Leicht word and a Mittel
+  verdict may not have been grasped, so those still re-teach; a Schwer passage and
+  all four answers are right there to re-read, so revealing them would only let her
+  skip the reading.) No timer, no "Verstanden" button.
 - **Schwer's question runs on as the passage's last sentence** — same body font,
   size and weight, in one flowing block, not a line of its own. A question that
   stood out (its own line, or the bold display face) let a child skim straight to
@@ -1495,9 +1500,8 @@ plain named numbers to be retuned after watching a real child, like
   an emoji that telegraphed the answer would let her skip the reading it is there
   to reward. It rides in its own element (`#scene`), out of `#question`/`#passage`
   — the round driver reads their text to find the answer, and the scene must never
-  join it — and stays beside the passage in the wrong-answer aid too. It is
-  decorative, so under `prefers-reduced-motion` it simply shows (it is a float, not
-  an animation) and the reading survives.
+  join it. It is decorative, so under `prefers-reduced-motion` it simply shows (it
+  is a float, not an animation) and the reading survives.
 - **A correct reading answer earns a warm beat** — the scene emoji cheers (a
   keyframe pop; reduced motion stills it to no pop, and nothing depends on it
   running, §10.5) and the win is held a touch longer than a Leicht tap
@@ -1505,8 +1509,9 @@ plain named numbers to be retuned after watching a real child, like
   not just ticked off. The longer pause never touches the tempo clock, which
   stops at the answer, not at the next question (§14.4).
 - **A lively tap moment on every answer** — the chosen tile HOPS with a ✓ badge
-  when it is right (`ans-hop`), SHAKES when it is wrong (`ans-shake`), in the
-  first answer and in the aid's retry alike. It never touches the answers
+  when it is right (`ans-hop`), SHAKES when it is wrong (`ans-shake`), on every
+  try (the first answer, the Schwer re-pick, the word/Mittel aid retry). It never
+  touches the answers
   themselves: an emoji or hint *per answer* would turn comprehension into
   picture-matching (a child could pick the right tile without reading the
   passage), so the answers stay plain text and only the **feedback** on the

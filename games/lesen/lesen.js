@@ -321,6 +321,11 @@ function answerPress(value, btn) {
   if (value === question.answer) {
     btn.classList.add("flash-ok", "ans-hop");
     continueRound();
+  } else if (question.kind === "read") {
+    // Schwer never reveals the answer (§14.2): a wrong tile is struck out and
+    // retired, the passage stays on screen, and she reads again and picks among
+    // the rest until she finds it. Word/Mittel keep the re-teaching aid retry.
+    retireWrong(btn);
   } else {
     rejectRetry(btn);
   }
@@ -379,8 +384,12 @@ function submit(value, btn) {
     phase = "wrong-wait";
     sfx.wrong();
     journey.stumble();
-    // The aid needs the room; the whole scene hides while it is up.
-    showFeedback(value);
+    // Schwer never reveals the answer (§14.2): keep the passage on screen and
+    // just retire the wrong tile (its flash-err + ans-shake are already on it),
+    // so she reads again and picks until it is right. Word and Mittel still open
+    // the re-teaching aid — a blitzed word or a verdict she may not have grasped.
+    if (question.kind === "read") btn.disabled = true;
+    else showFeedback(value);
   }
   // Mirror the round after every recorded answer (§10.7): an interruption from
   // here on resumes instead of costing the round.
@@ -390,30 +399,34 @@ function submit(value, btn) {
   });
 }
 
-// Wrong answer (§8.1, §14.2): what she tapped, retracted, and the right answer
+// Wrong answer (§8.1, §14.2): what she tapped, retracted, and the right one
 // given — the way out is choosing it on the same buttons. For a word: the right
 // emoji. For a Mittel sentence: the sentence and the verdict it should have got.
-// For a Schwer passage: the question again and the answer she should have picked.
-// No "Verstanden" button, no timer — the einmaleins aid contract.
+// Schwer does NOT come here — it never reveals its answer (§14.2), she simply
+// picks again. No "Verstanden" button, no timer — the einmaleins aid contract.
 function showFeedback(wrong) {
   const fb = $("feedback");
   if (question.kind === "word") {
     fb.innerHTML = `<span class="eq eq-wrong"><s>${wrong}</s></span>
       <span class="eq"><b class="ans">${question.text}</b></span>`;
-  } else if (question.kind === "sent") {
+  } else {
     const verdict = question.answer ? `😊 ${t("lesenIsTrue")}` : `😜 ${t("lesenIsFalse")}`;
     fb.innerHTML = `<span class="fb-sent">${question.text}</span>
       <span class="eq"><b class="ans">${verdict}</b></span>`;
-  } else {
-    const anchor = question.scene ? `<span class="fb-scene" aria-hidden="true">${question.scene}</span>` : "";
-    fb.innerHTML = `${anchor}<span class="fb-sent">${question.text}</span>
-      <span class="eq"><span class="fb-lbl">${t("lesenAnswerIs")}</span> <b class="ans">${question.answer}</b></span>`;
   }
   card.hidden = true;
   fb.hidden = false;
 }
 
-// The child tapped something that cannot become the answer.
+// A retired Schwer answer (§14.2): struck out red, shaken, and disabled, so she
+// cannot tap it again and picks from what is left. The answer is never revealed.
+function retireWrong(btn) {
+  sfx.wrong();
+  btn.classList.add("flash-err", "ans-shake");
+  btn.disabled = true;
+}
+
+// The child tapped something that cannot become the answer (the word/Mittel aid).
 function rejectRetry(el) {
   sfx.wrong();
   el.classList.remove("stumbling");
@@ -426,7 +439,12 @@ function continueRound() {
   if (phase !== "wrong-wait") return;
   phase = "correct-wait";
   sfx.correct();
-  setTimeout(askNext, NEXT_MS);
+  // Finding the right answer after a miss earns the same warm beat as a first-try
+  // read (§14.2): on Schwer the passage is still on screen, so the scene emoji
+  // cheers and the win lingers a touch. Word/Mittel came via the aid (no scene).
+  const celebrate = question.kind === "read";
+  if (celebrate) $("scene").classList.add("cheer");
+  setTimeout(askNext, celebrate ? READ_NEXT_MS : NEXT_MS);
 }
 
 function endRound() {

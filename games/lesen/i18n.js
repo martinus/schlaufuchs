@@ -24,8 +24,6 @@ export default {
     lesenFalse: "Blödsinn!",
     lesenIsTrue: "Das stimmt wirklich!",
     lesenIsFalse: "Das ist Blödsinn!",
-    // The Schwer reading aid names the right answer after a wrong one (§14.2).
-    lesenAnswerIs: "Richtig:",
     // What a screen reader hears once the blitz has hidden the word (§14.2).
     lesenCardHidden: "Das Wort hat sich versteckt",
     // The "ready" cover the child taps to start a word's blitz (§14.2): the
@@ -58,7 +56,6 @@ export default {
     lesenFalse: "Nonsense!",
     lesenIsTrue: "That is really true!",
     lesenIsFalse: "That is nonsense!",
-    lesenAnswerIs: "Correct:",
     lesenCardHidden: "The word is hiding",
     lesenReady: "Ready? Tap",
     lesenTapReady: "Tap to see the word",

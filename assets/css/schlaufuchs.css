@@ -933,9 +933,6 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
   100% { transform: scale(1); }
 }
 .wordcard.read .scene.cheer { animation: scene-cheer 0.5s ease; }
-/* the same anchor beside the aid's passage, so the picture stays with the text
-   she is re-reading (§14.2) */
-.feedback-aid .fb-scene { font-size: 2rem; margin-right: 8px; vertical-align: -0.15em; }
 
 /* Four reading answers (§14.2): a single column of Choice tiles whose text
    wraps, so a whole answer sentence fits and reads left-to-right like a list.
@@ -965,9 +962,6 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    a 640px one. `meet` keeps the aspect ratio, so whichever bound binds first
    wins. Sized against the longest passages fitting the 360×640 baseline. */
 .stage:has(#wordcard.read) .journey { max-width: 86%; max-height: 18vh; margin-inline: auto; }
-
-/* the aid's "Correct:" label, before the answer she should have chosen (§14.2) */
-.feedback-aid .fb-lbl { color: var(--ink-soft); font-weight: 700; font-size: 0.9rem; }
 
 /* Four emoji to choose from: the emoji is the label, so it has to be big. */
 .mc-emoji button {
