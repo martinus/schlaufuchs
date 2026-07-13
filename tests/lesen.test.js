@@ -265,9 +265,9 @@ test("the tempo ladder is wired: measured on first tries, saved, painted", () =>
   // the bolt flies over the stage, not inside the flipping word card
   assert.match(src, /blitzFlash\(document\.querySelector\("\.stage"\)\)/);
 
-  const picker = read("games/lesen/picker.js");
-  assert.match(picker, /class="ttempo"/, "the picker tile wears the medal");
-  assert.match(picker, /TEMPO_ICONS\[tempo\]/);
+  // the medal is drawn by the shared picker; lesen's adapter feeds it the tier
+  assert.match(read("assets/js/levelpicker.js"), /class="ttempo"/, "the picker tile wears the medal");
+  assert.match(read("games/lesen/picker.js"), /tempo: starDigit\(tempoByDiff\[d\], p\)/);
 
   assert.match(read("games/lesen/index.html"), /id="sum-tempo"/, "the summary needs its quiet line");
 });

@@ -23,7 +23,7 @@ pure logic        no DOM, no storage, no i18n lookups — unit-tested directly
 
 engines / chrome  DOM + shared behaviour, built on the pure layer
   ├─ storage.js, i18n.js, graphics.js, fox.js, audio.js, confetti.js
-  ├─ overlay.js, chrome.js, showcase.js, journey.js
+  ├─ overlay.js, chrome.js, showcase.js, journey.js, levelpicker.js
   └─ motion.js, levelfox.js, leaveguard.js
 
 pages             one entry module per HTML page; wiring only
@@ -82,7 +82,7 @@ Three modules, one line each in the story: `mapwalk.js` is the pure arithmetic
 of the fox's gait (anchors, hop curve, duration); `motion.js` is the runtime —
 the single rAF driver `runWalk` plus `prefersReducedMotion()`; `levelfox.js`
 is the fox as a DOM element inside the picker. The island (`map.js`) and the
-picker (`picker.js`) share the driver, so there is one gait and one loop.
+picker (`levelpicker.js`) share the driver, so there is one gait and one loop.
 `prefers-reduced-motion` is non-negotiable (§15): CSS kills all transitions
 globally, and every scripted animation asks `prefersReducedMotion()` first,
 always leaving the end state in place (the fox arrives, stars land, regions
@@ -151,7 +151,8 @@ the tests bite), `i18n.js` (both languages in one file). Wire `initTopBar`,
 Then: move the name from stubs to `PLAYABLE` (rewards.js), **recompute its
 `MAX_POINTS` from its real tiles** (the current number is a guess), delete its
 stub page, run `version-assets.js`. The einmaleins folder is the worked
-example; `picker.js` shows how a game-owned overlay is split out.
+example; `picker.js` shows how a game adapts the shared level picker
+(`assets/js/levelpicker.js`).
 
 **A new language**: write `assets/i18n/<code>.js`, import it in `i18n.js`,
 add a row to `LANGUAGES`, register its flag in `graphics.js`. Key parity is
