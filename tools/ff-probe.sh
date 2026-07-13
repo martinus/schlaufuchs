@@ -60,8 +60,16 @@ command -v python3 >/dev/null || {
 profile=$(mktemp -d -t ff-probe-XXXXXX)
 ffpid=""
 cleanup() {
-  [ -n "$ffpid" ] && kill "$ffpid" 2>/dev/null || true
-  rm -rf "$profile"
+  # Wait for Firefox to actually die before deleting its profile: killed but
+  # not yet gone, it kept writing into the directory and `rm -rf` lost the
+  # race ("Directory not empty") — which failed one live smoke whose thirty
+  # probes had ALL passed. Cleanup must never be the verdict: every step may
+  # fail without setting the script's exit status.
+  if [ -n "$ffpid" ]; then
+    kill "$ffpid" 2>/dev/null || true
+    wait "$ffpid" 2>/dev/null || true
+  fi
+  rm -rf "$profile" 2>/dev/null || true
 }
 trap cleanup EXIT INT TERM
 

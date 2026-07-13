@@ -173,3 +173,13 @@ test("ff-probe survives a probe that lands mid-navigation", () => {
   assert.ok(ff.includes("except RuntimeError:"), "a Marionette error mid-poll must not end the run");
   assert.ok(ff.includes("if raw is None:"), "a None probe result means poll again, not crash");
 });
+
+// One live smoke failed with all thirty probes green: the EXIT trap killed
+// Firefox and raced it for the profile directory — rm -rf lost ("Directory
+// not empty") and the failure leaked into the script's exit status. Cleanup
+// must wait for the process and must never be the verdict.
+test("ff-probe's cleanup waits for Firefox and cannot fail the run", () => {
+  const ff = readFileSync(new URL("../tools/ff-probe.sh", import.meta.url), "utf8");
+  assert.ok(ff.includes('wait "$ffpid" 2>/dev/null || true'), "cleanup must wait for the killed Firefox");
+  assert.ok(ff.includes('rm -rf "$profile" 2>/dev/null || true'), "a lost rm race must not set the exit status");
+});
