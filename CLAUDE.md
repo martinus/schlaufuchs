@@ -83,7 +83,7 @@ same options as play.js (`wrongAt`, `delayMs`, `stopAt`/`questions`, plus
 `stopInAid` and `stopKind: "zerlege"` — stop with a task of that kind freshly
 on screen, the way to screenshot one kind out of a mixed pool). Keypad input on
 every difficulty, so it types digits and OK like play.js. Seed the cookie with
-difficulty `d` and mode `m` (`"+" "-" "x:" "mauer" "quad" "mix"`). A task can
+difficulty `d` and mode `m` (`"+" "-" "rest" "mauer" "quad" "mix"`). A task can
 hold several cells (a number wall is three answers, a Zerlegen scaffold seven,
 §12.1); in a wall/grid the child picks each blank herself, so the driver CLICKS
 an open "?" first (the game waits with `dataset.cell` = -1), then types.
@@ -91,7 +91,7 @@ an open "?" first (the game waits with `dataset.cell` = -1), then types.
 cell (the per-cell tempo clock). A new task is announced on `#question`'s
 `dataset.q` stamp, a new cell on `dataset.cell`, because a re-queued skill asks
 a fresh task that may read the same. `resolveRechnung(text)` reads a printed
-one-line task — plain binary, a ± chain, a gap, the ×→+ link, `? R ?` —
+one-line task — plain binary, a gap, `? R ?` —
 `resolveZerlege(head)` reconstructs the scaffold's seven cells from its head,
 and `resolveMauer`/`resolveQuad` complete a wall/grid from what is visible; all
 four are unit-tested against every `questionFor` shape, cell by cell
@@ -256,7 +256,8 @@ Pages (each an entry point):
   fully implemented: `einmaleins`, `lesen` (Blitzwörter + Quatsch-Sätze, §14 —
   content in `games/lesen/content.js`, which is **append-only**: item order is
   the box string's index) and `rechnungen` (workbook arithmetic within 100:
-  ＋ − ×÷, Rechenmauern 🧱, Rechenquadrate ⊞, Mix — multi-cell tasks on one
+  ＋ −, Division mit Rest ÷R, Rechenmauern 🧱, Rechenquadrate ⊞, Mix —
+  multi-cell tasks on one
   keypad, §12 — skill buckets in `games/rechnungen/logic.js`, also
   **append-only**: a bucket's index is its box-string slot). `tippen`,
   `vokabeln` are stubs and

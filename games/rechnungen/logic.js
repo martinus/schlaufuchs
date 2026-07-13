@@ -1,5 +1,6 @@
 // Rechnungen pure logic (§12): workbook-style arithmetic tasks over six mode
-// tiles — ＋, −, ×÷, Rechenmauern, Rechenquadrate and „Mix" — across three
+// tiles — ＋, −, ÷R (division with remainder), Rechenmauern, Rechenquadrate
+// and „Mix" — across three
 // difficulties, everything within the number range 100. No DOM, no storage —
 // unit-tested in tests/rechnungen.test.js.
 //
@@ -43,16 +44,16 @@
 // tests/rechnungen.test.js pins them against einmaleins so they cannot drift.
 
 import { clampBox } from "../../assets/js/adaptive.js";
-import { questionFor as emQuestion, pairIndex } from "../einmaleins/logic.js";
 
 // The six modes, in picker order (§12.1). These strings ARE the keys of the
-// cookie's `stars`/`tempo` maps (§12.3): "x:" is the one ×÷ tile (einmaleins
-// already trains the tables deeply — here they are applied, not drilled),
+// cookie's `stars`/`tempo` maps (§12.3): "rest" is division with remainder
+// (the one division einmaleins can never teach — everything table-shaped was
+// cut so the two regions do not overlap),
 // "mauer" the number walls, "quad" the operation grids. "mix" draws from the
 // EQUATION buckets at the chosen difficulty — not from mauer/quad, whose
 // multi-cell tasks would balloon a mixed round.
-export const MODES = ["+", "-", "x:", "mauer", "quad", "mix"];
-const MIX_MODES = ["+", "-", "x:"];
+export const MODES = ["+", "-", "rest", "mauer", "quad", "mix"];
+const MIX_MODES = ["+", "-", "rest"];
 
 // How the three difficulty indices are *named*: the i18n key the child reads
 // and the CSS slug that colours a picker section (same contract as einmaleins).
@@ -67,6 +68,7 @@ export function roundSizeFor(mode, diff = 0) {
   if (mode === "mauer") return 4;
   if (mode === "quad") return 3;
   if (mode === "mix") return diff === 2 ? 7 : 8;
+  if (mode === "rest") return 8; // two cells per task
   return diff === 2 && (mode === "+" || mode === "-") ? 6 : 10;
 }
 
@@ -112,32 +114,6 @@ function gap(op, a, b, result, hideLeft, divSign) {
     : { kind: "gap", op, a, b, answer: b, text: `${a} ${s} ? = ${result}` });
 }
 
-// Multiplication within the tables, straight from the einmaleins generator
-// (§12.1: „×/÷ reuse the Einmaleins generator"). It hands back "t × f = ?"
-// with the product; we only re-shape it into this game's task object.
-function emMul(t, f) {
-  const q = emQuestion(pairIndex(t, f), 0);
-  return lineTask({ kind: "op", op: "x", a: t, b: f, answer: q.answer, text: q.text });
-}
-
-// Division without remainder: built from a product so it always comes out even
-// (§12.1 Leicht/Mittel). `dividend : divisor = quotient`.
-const evenDiv = (divisor, quotient, divSign) =>
-  bin(":", divisor * quotient, divisor, quotient, divSign);
-
-// The ×→+ link, straight off the workbook page („schreibe zur Malaufgabe die
-// passende Plusaufgabe"): the plus form is printed WITH the times form, so
-// answering the product is reading the repeated addition. One cell; its aid's
-// dot grid is `n` rows of `f` — the picture of that same addition.
-function mulPlus(n, f) {
-  const answer = n * f;
-  const q = {
-    kind: "mulplus", op: "x", a: n, b: f, answer,
-    text: `${n} × ${f} = ${Array(n).fill(f).join(" + ")} = ?`,
-  };
-  return lineTask(q);
-}
-
 // Division with remainder (§12.1 Schwer): two cells on one line, quotient then
 // remainder — the second answer slot the old one-number contract could not
 // carry. The remainder slot is ALWAYS asked, and it is sometimes genuinely
@@ -145,7 +121,8 @@ function mulPlus(n, f) {
 // hides (user request from the first play-test). Each cell's aid shows the
 // line with the OTHER slot already true, and the ÷ dot grid draws `quotient`
 // full rows plus the leftover.
-function restTask(divisor, quotient, rest, divSign) {
+function restTask(rng, divisor, quotient, divSign) {
+  const rest = ri(rng, 0, divisor - 1);
   const a = divisor * quotient + rest;
   const head = `${a} ${sign(":", divSign)} ${divisor} = `;
   return {
@@ -348,16 +325,21 @@ export const BUCKETS = [
   { key: "sub-s-zerlege", mode: "-", diff: 2, gen: (r) => { const au = ri(r, 0, 8), bu = ri(r, au + 1, 9), at = ri(r, 2, 9), bt = ri(r, 1, at - 1); return zerlege("-", at * 10 + au, bt * 10 + bu); } },
   { key: "sub-s-gap", mode: "-", diff: 2, gen: (r, d) => { const a = ri(r, 30, 99), b = ri(r, 10, a); return gap("-", a, b, a - b, r() < 0.5, d); } },
 
-  // ×÷ Leicht: the ×→+ link, and small exact division
-  { key: "mul-l-plus", mode: "x:", diff: 0, gen: (r) => mulPlus(ri(r, 2, 4), ri(r, 2, 9)) },
-  { key: "div-l", mode: "x:", diff: 0, gen: (r, d) => evenDiv(ri(r, 2, 5), ri(r, 2, 10), d) },
-  // ×÷ Mittel: the full tables, applied
-  { key: "mul-m", mode: "x:", diff: 1, gen: (r) => emMul(ri(r, 2, 10), ri(r, 2, 10)) },
-  { key: "div-m", mode: "x:", diff: 1, gen: (r, d) => evenDiv(ri(r, 2, 10), ri(r, 2, 10), d) },
-  // ×÷ Schwer: division with remainder (sometimes genuinely 0 — the child
-  // answers "R 0" herself), and gaps in the tables
-  { key: "div-s-rest", mode: "x:", diff: 2, gen: (r, d) => { const b = ri(r, 3, 9), q = ri(r, 4, 10), rest = ri(r, 0, b - 1); return restTask(b, q, rest, d); } },
-  { key: "muldiv-s-gap", mode: "x:", diff: 2, gen: (r, d) => { const a = ri(r, 3, 9), b = ri(r, 3, 9); return r() < 0.5 ? gap("x", a, b, a * b, r() < 0.5, d) : gap(":", a * b, a, b, r() < 0.5, d); } },
+  // ÷R — division with remainder, the one division einmaleins can NEVER teach.
+  // (The tile used to hold ×, exact ÷ and table gaps: the einmaleins drill in
+  // a different coat, cut on Martin's seventh play-test — each region teaches
+  // its own thing. The remainder is sometimes genuinely 0: "R 0" is an answer
+  // the child gives, not a case the format hides.)
+  // Leicht: tiny divisors, the concept (7 : 2 = 3 R 1)
+  { key: "rest-l", mode: "rest", diff: 0, gen: (r, d) => restTask(r, ri(r, 2, 5), ri(r, 2, 9), d) },
+  // Mittel: full divisors, table-sized quotients
+  { key: "rest-m", mode: "rest", diff: 1, gen: (r, d) => restTask(r, ri(r, 3, 9), ri(r, 4, 10), d) },
+  // Schwer: TWO-DIGIT quotients (74 : 6 = 12 R 2) — beyond the tables
+  { key: "rest-s", mode: "rest", diff: 2, gen: (r, d) => {
+    const b = ri(r, 3, 8);
+    const q = ri(r, 11, Math.min(19, Math.floor((99 - (b - 1)) / b)));
+    return restTask(r, b, q, d);
+  } },
 
   // 🧱 Mauern: Leicht climbs (base given, pure +); Mittel descends a flank
   // (top + one side given, pure −); Schwer mixes both directions.

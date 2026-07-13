@@ -1336,8 +1336,9 @@ progress display. Requires a physical keyboard (friendly hint otherwise).
 
 ## 12. Game 3: Rechnungen — region **Rechenberg**
 
-Workbook-style arithmetic within the number range **100**: **＋ − ×÷**, number
-walls (Rechenmauern), operation grids (Rechenquadrate) and „Mix". Journey theme:
+Workbook-style arithmetic within the number range **100**: **＋ −**, division
+with remainder (**÷R**), number walls (Rechenmauern), operation grids
+(Rechenquadrate) and „Mix". Journey theme:
 `mountain` — the fox climbs; the basket at the summit is the goal, exactly as in
 the other games (§10.5). Keypad input on every difficulty (like einmaleins,
 §10; never multiple choice). The task types are modelled on a real 2nd-grade
@@ -1372,17 +1373,22 @@ right now; a grid cell's is rowHeader ∘ colHeader. A plain ± miss at
 Mittel/Schwer additionally shows the **tens-first decomposition** of the
 failed sum — the workbook's own teaching device, lent to the aid.
 
-**Six mode tiles** (＋ − ×÷ 🧱 ⊞ 🎲Mix) per difficulty section in the picker
-overlay. ×÷ is one tile: einmaleins already trains the tables deeply — on the
-Rechenberg they are applied, not drilled. „Mix" pools the *equation* modes
-(＋ − ×÷) at the chosen difficulty — not walls or grids, whose multi-cell tasks
+**Six mode tiles** (＋ − ÷R 🧱 ⊞ 🎲Mix) per difficulty section in the picker
+overlay. **The regions do not overlap**: the times tables and exact division
+are einmaleins' whole game, so the Rechenberg asks NO bare × question and no
+division without its remainder slot — ÷R (division with remainder) is exactly
+the division einmaleins can never teach. „Mix" pools the *equation* modes
+(＋ − ÷R) at the chosen difficulty — not walls or grids, whose multi-cell tasks
 would balloon a mixed round. The difficulty × mode grid the generators realise:
 
-| | ＋ / − | ×÷ | 🧱 Mauern | ⊞ Quadrate |
+| | ＋ / − | ÷R | 🧱 Mauern | ⊞ Quadrate |
 |---|---|---|---|---|
-| Leicht | within 20 · ±  whole tens (`27 + 60`) | ×→+ link (`3 × 6 = 6 + 6 + 6 = ?`) · exact ÷, tables 1–5 | base given, climb with + (3 cells) | 2×2 „+" grid, small numbers (4 cells) |
-| Mittel | crossing the ten: ± one-digit with carry/borrow (`54 + 9`, `80 − 4`) · two-digit with and without (`25 + 32`, `22 + 38`, `91 − 36`) | × full tables · exact ÷ full tables | top + one flank given, descend with − (3 cells) | 2×2 „−" grid ≤ 100 with a **hidden column header** and its anchor cell (4 cells) — a given cell only exists to buy a header |
-| Schwer | **Zerlegen** scaffold (7 cells, below) · gaps (`? + 27 = 61`, `82 − ? = 10`) — no mixed-operator chains: too hard, and a ＋ chain carries a −, so both tiles would ask the same questions | **division with remainder** (`49 : 5 = ? R ?`, 2 cells — the remainder slot is always asked and is sometimes genuinely 0: „R 0" is an answer the child gives) · ×/÷ gaps (`? × 7 = 28`) | mixed blanks, + and − in both directions | 2×2 ± grid with a **hidden row AND column header**, each bought from its own anchor cell (no × grid: the tables are einmaleins' whole game) |
+| Leicht | within 20 · ±  whole tens (`27 + 60`) | the concept, tiny divisors (`7 : 2 = 3 R 1`) | base given, climb with + (3 cells) | 2×2 „+" grid, small numbers (4 cells) |
+| Mittel | crossing the ten: ± one-digit with carry/borrow (`54 + 9`, `80 − 4`) · two-digit with and without (`25 + 32`, `22 + 38`, `91 − 36`) | full divisors, table-sized quotients (`49 : 5 = 9 R 4`) | top + one flank given, descend with − (3 cells) | 2×2 „−" grid ≤ 100 with a **hidden column header** and its anchor cell (4 cells) — a given cell only exists to buy a header |
+| Schwer | **Zerlegen** scaffold (7 cells, below) · gaps (`? + 27 = 61`, `82 − ? = 10`) — no mixed-operator chains: too hard, and a ＋ chain carries a −, so both tiles would ask the same questions | **two-digit quotients** (`74 : 6 = 12 R 2`) — beyond the tables | mixed blanks, + and − in both directions | 2×2 ± grid with a **hidden row AND column header**, each bought from its own anchor cell (no × grid: the tables are einmaleins' whole game) |
+
+Every ÷R line asks BOTH slots (`? R ?`), and the remainder is sometimes
+genuinely 0: „R 0" is an answer the child gives, not a case the format hides.
 
 A wall's six values are pairwise **distinct**, and so are a grid's four headers
 and its four interior values — a puzzle with two 9s reads as a trick.
@@ -1448,7 +1454,7 @@ are keyed by mode, each a three-digit string indexed by difficulty — transpose
 from einmaleins/lesen, which key by difficulty.
 
 ```json
-{ "d": 0, "m": "+", "box": "22322...", "stars": { "+": "310", "-": "2", "x:": "", "mauer": "", "quad": "", "mix": "" }, "tempo": { "+": "200" } }
+{ "d": 0, "m": "+", "box": "22322...", "stars": { "+": "310", "-": "2", "rest": "", "mauer": "", "quad": "", "mix": "" }, "tempo": { "+": "200" } }
 ```
 
 The round mirror (§10.7) is written at **task boundaries** only, so a resumed
