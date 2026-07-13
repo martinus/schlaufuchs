@@ -9,12 +9,23 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { sceneGeometry, THEMES } from "../assets/js/journey.js";
 
-test("the scene is exactly as wide as the round it holds", () => {
+// A short round used to keep the stride and shrink the width — a four-node
+// scene was nearly square, and at CSS width 100 % it blew up to fill half a
+// phone (Martin, first Rechenberg play-test). Now the sky stays a wide strip:
+// the fox simply takes bigger strides.
+test("a short round keeps the ten-node scene's width — wider strides, same sky", () => {
   const ten = sceneGeometry(10);
-  const five = sceneGeometry(5);
-  assert.ok(five.width < ten.width, "a shorter round gets a narrower scene, not a stretched one");
-  // the fox's stride is fixed: five fewer questions is five fewer steps
-  assert.equal(ten.width - five.width, 5 * (ten.nodes[1].x - ten.nodes[0].x));
+  for (const n of [3, 4, 5, 8]) {
+    const g = sceneGeometry(n);
+    assert.equal(g.width, ten.width, `${n} nodes must fill the same width`);
+    assert.ok(g.nodes[1].x - g.nodes[0].x > ten.nodes[1].x - ten.nodes[0].x,
+      `${n} nodes: the stride must widen`);
+    assert.ok(Math.abs(g.basket.x - ten.basket.x) <= 2, `${n} nodes: the basket stays at the finish`);
+  }
+  // a LONGER round still grows to the right, step by fixed step
+  const twelve = sceneGeometry(12);
+  assert.ok(twelve.width > ten.width, "a longer round grows, it does not squeeze");
+  assert.equal(twelve.nodes[1].x - twelve.nodes[0].x, ten.nodes[1].x - ten.nodes[0].x);
   assert.equal(ten.nodes.length, 10);
 });
 

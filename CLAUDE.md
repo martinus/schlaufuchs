@@ -18,7 +18,7 @@ sh tools/serve.sh               # serve on :8000 — ALWAYS, never file:// (ES m
 sh tools/kill-serve.sh          # stop it again
 node --test                     # run unit tests (tests/*.test.js), needs Node 22+
 node --check <file.js>          # syntax-check a module
-node tools/version-assets.js N  # bump asset version — REQUIRED before deploying a change
+node tools/version-assets.js dev # regenerate import maps (deploy stamps the real version)
 node tools/shoot.mjs <url> …    # drive a real Chrome: screenshot + measure (--help)
 sh tools/firefox-shot.sh <url> out.png [WxH]   # the same page in Gecko
 sh tools/ff-probe.sh <url> …                   # Firefox: did the `load` event fire?
@@ -77,6 +77,24 @@ tile `p` (0–3 = themed packs, 4 = Alle); `readLesenScene()` reports the card
 as `ready | faceUp | hidden | away` (`ready` = a word waits behind the
 tap-to-reveal cover, §14.2 — `playLesen` taps it before answering). Its
 resolver is unit-tested the same way (`tests/play-lesen.test.js`).
+
+`tools/play-rechnungen.js` drives rechnungen: `playRechnung({...})` with the
+same options as play.js (`wrongAt`, `delayMs`, `stopAt`/`questions`, plus
+`stopInAid` and `stopKind: "mauer"` — stop with a task of that kind freshly
+on screen, the way to screenshot one kind out of a mixed pool). Keypad input on
+every difficulty, so it types digits and OK like play.js. Seed the cookie with
+difficulty `d` and mode `m` (`"+" "-" "rest" "mauer" "quad" "mix"`). A task can
+hold several cells (a number wall is three answers, a ÷R task two, §12.1); in
+a wall/grid the child picks each blank herself, so the driver CLICKS
+an open "?" first (the game waits with `dataset.cell` = -1), then types.
+`wrongAt` misses the task's first ANSWERED cell, `delayMs` sleeps before every
+cell (the per-cell tempo clock). A new task is announced on `#question`'s
+`dataset.q` stamp, a new cell on `dataset.cell`, because a re-queued skill asks
+a fresh task that may read the same. `resolveRechnung(text)` reads a printed
+one-line task — plain binary, a gap, `? R ?` — and
+`resolveMauer`/`resolveQuad` complete a wall/grid from what is visible; all
+three are unit-tested against every `questionFor` shape, cell by cell
+(`tests/play-rechnungen.test.js`).
 
 The hooks refuse a commit that fails `node --test` or that deletes tests
 without saying so, and a push that would delete a file from `main`. Wave one
@@ -233,12 +251,17 @@ Pages (each an entry point):
 - `index.html` — the world map (inline SVG, viewBox `0 0 360 560`), driven by
   `assets/js/map.js`. Six regions: 5 games + the Trophy Room (→ album).
 - `album.html` — trophy album, driven by `assets/js/album.js`.
-- `games/<name>/index.html` + `<name>.js` — one folder per game. Two are
-  fully implemented: `einmaleins` and `lesen` (Blitzwörter + Quatsch-Sätze,
-  §14 — content in `games/lesen/content.js`, which is **append-only**: item
-  order is the box string's index). `rechnungen`, `tippen`, `vokabeln` are
-  stubs and share one module: their page is a `<body data-game>` and
-  `assets/js/stub.js` is the rest.
+- `games/<name>/index.html` + `<name>.js` — one folder per game. Three are
+  fully implemented: `einmaleins`, `lesen` (Blitzwörter + Quatsch-Sätze, §14 —
+  content in `games/lesen/content.js`, which is **append-only**: item order is
+  the box string's index) and `rechnungen` (workbook arithmetic within 100:
+  ＋ − mit Ergänzen, Division mit Rest ÷R, Rechenmauern 🧱, Rechenquadrate ⊞,
+  Mix — multi-cell tasks on one
+  keypad, §12 — skill buckets in `games/rechnungen/logic.js`, also
+  **append-only**: a bucket's index is its box-string slot). `tippen`,
+  `vokabeln` are stubs and
+  share one module: their page is a `<body data-game>` and `assets/js/stub.js`
+  is the rest.
 
 **Every page contributes an empty `<header class="topbar" id="topbar">` and
 nothing else.** The bar is built by `initTopBar()` (`chrome.js`), in one of two
@@ -262,8 +285,8 @@ Shared modules in `assets/js/`:
   **⭐ is the site's only currency.** `rewards.pr` is the weighted star counter
   (Leicht 1, Mittel 2, Schwer 3); internally the code says `points`, the UI
   never does. `MAX_POINTS` is its denominator everywhere and is a **guess** for
-  the three unbuilt games — recompute when one ships (einmaleins and lesen are
-  computed from their real tiles).
+  the two unbuilt games (`tippen`, `vokabeln`) — recompute when one ships
+  (einmaleins, lesen and rechnungen are computed from their real tiles).
 - `journey.js` — the round's scene; `sceneGeometry(nodes, theme)` is the pure
   arithmetic (tested), `createJourney` is the DOM around it.
 - `mapwalk.js` / `motion.js` / `levelfox.js` — the fox's walk: pure gait
@@ -288,14 +311,20 @@ Shared modules in `assets/js/`:
 
 ## Key invariants & gotchas
 
-- **Bump the asset version on every deploy** (`node tools/version-assets.js N`).
+- **The asset version is stamped at deploy time — never hand-bump it.**
   GitHub Pages serves everything with `Cache-Control: max-age=86400` and each
   file expires on its own clock, so a browser can pair a cached old
   `index.html` with a freshly fetched `map.js`. They disagree about element
   ids, the JS throws, and the page renders without its chips and buttons —
   invisible in incognito, which has an empty cache. Every URL a page loads
   therefore carries the page's version, propagated to nested imports by an
-  import map in each HTML file. Read the header of `tools/version-assets.js`.
+  import map in each HTML file. The DEPLOY WORKFLOW stamps that version (the
+  commit count) into every page just before publishing; the repo stays at the
+  `?v=dev` placeholder (hand-bumps used to touch every HTML in every PR, so
+  any two open PRs conflicted). After adding a module or a page, regenerate
+  the maps with `node tools/version-assets.js dev` and commit that.
+  `tests/cache.test.js` pins the workflow step, the placeholder, and map
+  coverage. Read the header of `tools/version-assets.js`.
 
 - **Graphics registry** (`graphics.js`): all icon-like art is a named entry
   with an emoji fallback. A name renders as an SVG file
@@ -328,8 +357,8 @@ Shared modules in `assets/js/`:
 - `docs/SPEC.md` — full product specification (authoritative).
 - `docs/NEW_GAME.md` — **the checklist for shipping a game**: every cross-file
   fact the PLAYABLE flip pins (test pins, i18n gameDicts, importmaps, parents'
-  view, drivers). Work through it before building `rechnungen`/`tippen`/
-  `vokabeln` — each item on it failed once while `lesen` shipped.
+  view, drivers). Work through it before building `tippen`/`vokabeln` — each
+  item on it failed once while `lesen` shipped.
 - `docs/PLAN_*.md` — past plans, all fully implemented and archived. Kept for
   their reasoning (the colour/type tokens live in the UI design one); SPEC wins
   wherever they disagree. There is no open plan.

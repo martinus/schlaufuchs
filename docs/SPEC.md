@@ -1054,8 +1054,14 @@ i18n. Anything that reprints the equation (the aid card) must build it from
 ### 10.3 Stars (per table & difficulty)
 
 ≥ 60 % → ⭐ · ≥ 80 % → ⭐⭐ · 100 % → ⭐⭐⭐ of the round first-try correct
-(`starsFor` is a ratio, so a 12-question Schwer round needs 8 / 10 / 12 where
-a 10-question round needs 6 / 8 / 10).
+(`starsFor`/`starNeeds` scale with the round, so a 12-question Schwer round
+needs 8 / 10 / 12 where a 10-question round needs 6 / 8 / 10). **The percent
+bands are taken loosely, not literally** (§10.5): on a short round two bands
+can name the same score — 80 % and 100 % of three tasks are both „all three" —
+and two star groups would then land on one waypoint together. `starNeeds`
+pulls the thresholds apart so every star has its own score: a three-task round
+pays at 1 / 2 / 3, a four-task round at 2 / 3 / 4. Ten-question rounds are
+unchanged. (The same rule, duplicated per game as ever, D11.)
 
 **Accuracy is the only criterion for stars.** Speed is not: a child who reads
 or taps slowly knows the times tables just as well, and being slow must never
@@ -1097,7 +1103,15 @@ One picture, no prose. `createJourney()` in `journey.js` draws all of it:
   the stars land, so the reward and the finish line are one object. The fox's
   last step lands beside it. There is no themed goal icon in any theme any
   more; `THEMES` is a path colour and three obstacles.
-- **the path** carries the fox, who advances on every correct answer.
+- **the path** carries the fox. **Every asked question is its own waypoint**:
+  the fox steps forward when a question ends, however it went — onto a green
+  node for a clean answer, onto a **red** node for a missed one. A missed item
+  is re-queued within the round, so the red step also **grows the path by one
+  node** (the scene re-renders in place, strides narrowing — `sceneGeometry`
+  keeps the ten-node width, §10.5): the fox reaches the basket exactly on the
+  round's last answer, and never freezes on a node while new questions come.
+  This holds in **every game and every level**; `advanceMissed()` is the shared
+  journey API for it, called when an aided question finally ends.
 
 A round awards at most **three** stars in every difficulty; what scales with
 difficulty is what each star *counts* (×1 / ×2 / ×3, §8.3). The sky therefore
@@ -1115,6 +1129,13 @@ more appeared only inside a picker a child never opened.
 
 The whole cluster is one `<g>`, so one transform carries every star in it into
 the basket; given a keyframe each, none of them would move under reduced motion.
+
+**At most one group flies per waypoint.** On a short round the ⭐⭐ and ⭐⭐⭐
+thresholds fall on the same last task (80 % and 100 % of three tasks are both
+„all three"), and two groups leaving one waypoint together read as a glitch.
+`setStars` therefore throttles its landings to one group per call — the game
+calls it once per waypoint — and `finish()` flies whatever is still owed as
+the fox reaches the basket.
 
 An earned slot flies into the basket and stays there, leaving a grey ghost of
 the same shape behind. The flight is a CSS `transform` + `transition`, never a
@@ -1315,36 +1336,132 @@ progress display. Requires a physical keyboard (friendly hint otherwise).
 
 ## 12. Game 3: Rechnungen — region **Rechenberg**
 
-Mental arithmetic: **＋ − × ÷** and „Mix". Journey theme: `mountain` — the
-fox climbs; goal node: planting the summit flag. The map's mastered-state
-flag on Rechenberg mirrors this.
+Workbook-style arithmetic within the number range **100**: **＋ −**, division
+with remainder (**÷R**), number walls (Rechenmauern), operation grids
+(Rechenquadrate) and „Mix". Journey theme:
+`mountain` — the fox climbs; the basket at the summit is the goal, exactly as in
+the other games (§10.5). Keypad input on every difficulty (like einmaleins,
+§10; never multiple choice). The task types are modelled on a real 2nd-grade
+workbook. **Shipped 2026-07; redesigned around the workbook before release.**
 
-### 12.1 Modes & difficulties
+### 12.1 Tasks, cells, modes & difficulties
 
-Mode chips (＋ − × ÷ Mix) inside the difficulty picker overlay:
+**The task/cell model.** A round is a sequence of *tasks*; a task holds one or
+more *cells* — the numbers the child types, each on the same keypad. A plain
+equation is a task with one cell; a number wall has three, a division with
+remainder two. The line kinds read in one order, so their cells activate
+themselves; **in a wall or grid the
+child picks which blank to fill herself** — tapping a „?" activates it, only
+then does the keypad apply, and after every fill she picks again. The numbers
+she entered herself stay marked (blue, the colour of what you have) next to
+the printed givens. One task is one engine item, and **every asked task is
+its own waypoint** (§10.5): when the task ends the fox steps forward — onto a
+green node if it went cleanly, onto a red one if any cell was wrong, and then
+the path grows by one node for the re-queued ask, so she still reaches the
+basket exactly on the round's last answer. She stumbles at the moment of the
+wrong cell, and a task counts as first-try only if every cell was — with ONE
+exception: **a task with more than one cell forgives its first wrong answer**.
+A wall is a lot of typing, and one slip must not sink the whole waypoint: the cell shakes, the entry clears, the child rethinks — no
+aid card (it would give the answer away), no penalty. Only the second wrong
+answer in the task is a real miss. A one-cell task is one calculation and
+keeps the einmaleins contract: wrong is wrong. Every cell has an *aid* — a binary
+sub-equation the wrong-answer card draws (§8.1: number line for ±, dot grid
+for ×/÷; no timer, no „Verstanden" — the way out is entering the right
+answer). A wall brick's aid is chosen at miss time from the bricks visible
+right now; a grid cell's is rowHeader ∘ colHeader. A plain ± miss at
+Mittel/Schwer additionally shows the **tens-first decomposition** of the
+failed sum — the workbook's own teaching device, lent to the aid.
 
-| | ＋ / − | × / ÷ |
-|---|---|---|
-| Leicht | 0–10, no carrying | tables 1–5, no remainder |
-| Mittel | 0–100 with carrying/borrowing | full tables 1–10, halving/doubling |
-| Schwer | 0–1000, chains (`17 + 25 − 8`), gaps | beyond tables (`14 × 6`), division with remainder |
+**Six mode tiles** (＋ − ÷R 🧱 ⊞ 🎲Mix) per difficulty section in the picker
+overlay. **The regions do not overlap**: the times tables and exact division
+are einmaleins' whole game, so the Rechenberg asks NO bare × question and no
+division without its remainder slot — ÷R (division with remainder) is exactly
+the division einmaleins can never teach. „Mix" pools the *equation* modes
+(＋ − ÷R) at the chosen difficulty — not walls or grids, whose multi-cell tasks
+would balloon a mixed round. The difficulty × mode grid the generators realise:
 
-Question generation is parameterized (range, carrying, gap position); ×/÷
-reuse the Einmaleins generator. Wrong answers show a one-line visual aid
-(number line for ±, dot grid for ×).
+| | ＋ / − | ÷R | 🧱 Mauern | ⊞ Quadrate |
+|---|---|---|---|---|
+| Leicht | within 20 · ±  whole tens (`27 + 60`) | the concept, tiny divisors (`7 : 2 = 3 R 1`) | base given, climb with + (3 cells) | 2×2 „+" grid, small numbers (4 cells) |
+| Mittel | crossing the ten: ± one-digit with carry/borrow (`54 + 9`, `80 − 4`) · two-digit with and without (`25 + 32`, `22 + 38`, `91 − 36`) | full divisors, table-sized quotients (`49 : 5 = 9 R 4`) | top + one flank given, descend with − (3 cells) | 2×2 „−" grid ≤ 100 with a **hidden column header** and its anchor cell (4 cells) — a given cell only exists to buy a header |
+| Schwer | gaps (`? + 27 = 61`, `82 − ? = 10`) · **Ergänzen** to the next full ten and to 100 (`64 + ? = 70`, `37 + ? = 100`; downward `73 − ? = 70`, `100 − ? = 63`) — no chains (too hard, and ＋/− would ask the same questions), no scaffold (see below) | **two-digit quotients** (`74 : 6 = 12 R 2`) — beyond the tables | mixed blanks, + and − in both directions | 2×2 ± grid with a **hidden row AND column header**, each bought from its own anchor cell (no × grid: the tables are einmaleins' whole game) |
+
+Every ÷R line asks BOTH slots (`? R ?`), and the remainder is sometimes
+genuinely 0: „R 0" is an answer the child gives, not a case the format hides.
+
+A wall's six values are pairwise **distinct**, and so are a grid's four headers
+and its four interior values — a puzzle with two 9s reads as a trick.
+
+Every number a task shows or asks stays **within 100** — Schwer gets hard
+through *format* (steps, gaps, remainders, missing bricks), never through more
+digits. × reuses the einmaleins multiplication generator where it overlaps the
+tables (`games/einmaleins/logic.js`). The division sign is injected
+(`t("divSign")`: „:" German, „÷" English), so the logic module stays i18n-free —
+the einmaleins convention; the remainder is written `? R ?` in both languages.
+
+**No Zerlegen scaffold.** The workbook's „rechne schriftlich" blank form was
+built and then cut after play-testing: of its seven keypad entries, four were
+transcription (copying operands down), not thinking — on paper the writing
+teaches the scheme's shape, on a phone it is friction — and six empty slots
+with no teacher alongside read as a wall of riddles. The tens-first strategy
+itself survives where it teaches best: **in the ± aid card**, which shows the
+two decomposition rows at the moment a sum was missed.
+
+**Consciously skipped:** the workbook's hardest wall variant (assemble a wall
+from loose numbers, one left over) is not a keypad answer and is out of scope.
 
 ### 12.2 Adaptive & stars
 
-The adaptive engine tracks **~30 fixed skill buckets** (e.g. „subtraction
-with borrowing, tens", „division with remainder"), listed canonically in
-`rechnungen.js` — not individual questions. Rounds of 10; stars per mode &
-difficulty with the same criteria as Einmaleins (§10.3).
+The adaptive engine tracks a small fixed set of **skill buckets** (28 as
+shipped — e.g. „addition with carrying, two-digit", „number wall with a missing
+base brick", „division with remainder"), listed canonically and **append-only**
+in `games/rechnungen/logic.js` (`BUCKETS`): a bucket's index is its slot in the
+Leitner box string, so a new one joins at the end and no saved box shifts. (The
+list was rewritten wholesale for the workbook redesign — legal exactly once,
+because the game had never shipped.)
+
+A round does not ask a bucket once — it asks **concrete tasks**, each freshly
+generated from a bucket, so a re-queued miss returns as the same skill with new
+numbers. The shared engine (`adaptive.js`) draws over the cell's buckets
+*expanded* into variant item-ids (`bucketId + BUCKET_COUNT · v`); each
+variant's box is seeded from its bucket, so weak skills are weighted up, and the
+round's per-bucket outcome is folded back at the end (`foldBoxes`).
+
+**Round sizes are per mode and difficulty** (`roundSizeFor`): equations **10**
+tasks, ÷R and Mix **8**, walls **4** (12 cells), grids **3** (9–12 cells) —
+every round lands at roughly 10–16 keypad entries, a comparable effort per
+star. Stars
+per mode & difficulty with the einmaleins criteria (§10.3). The tempo ladder
+(§10.6) rides along per mode; its clock runs **per cell** — a wall brick and a
+plain sum are each one thinking step, and in a wall/grid the choosing counts as
+thinking (switching blanks does not reset the clock) — with its own bounds per
+difficulty, loosened after the first play-test so the ⚡ is genuinely
+reachable.
+
+The Rechenberg point economy is **108** (six modes × three difficulties, three
+stars each, worth 1/2/3): `maxPoints()` in `logic.js` computes it and
+`rewards.js`'s `MAX_POINTS.rechnungen` must equal it. The trophy ladder is
+lesen's hand-tuned shape scaled to 108 with the first rung pinned at 3, so the
+very first perfect Leicht round is a trophy, a first perfect Schwer round buys
+two (not three), and Schwer alone (54) cannot fill the shelf (§8.3).
 
 ### 12.3 Cookie state (`rechnungen`)
 
+`box` is one Leitner digit per skill bucket (not per task). `stars`/`tempo`
+are keyed by mode, each a three-digit string indexed by difficulty — transposed
+from einmaleins/lesen, which key by difficulty.
+
 ```json
-{ "d": 0, "m": "+", "box": "232...", "stars": { "+": "310", "-": "2", "x": "", ":": "", "mix": "" } }
+{ "d": 0, "m": "+", "box": "22322...", "stars": { "+": "310", "-": "2", "rest": "", "mauer": "", "quad": "", "mix": "" }, "tempo": { "+": "200" } }
 ```
+
+The round mirror (§10.7) is written at **task boundaries** only, so a resumed
+round re-asks the interrupted task with fresh numbers — same skill, no stale
+half-wall.
+
+The parents' view (§20) has **no Rechenberg section**: its skill buckets do not
+map to a fact grid a parent recognises, so a report was consciously skipped and
+the game writes no telemetry beyond `box` — no dead cookie bytes.
 
 ---
 

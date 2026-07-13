@@ -33,7 +33,12 @@
 // is still one command, it just writes more lines.
 //
 // Usage: node tools/version-assets.js <version>
-// Run this before committing whenever any file under assets/ or games/ changed.
+//
+// THE DEPLOY WORKFLOW RUNS THIS (deploy.yml: with the commit count as the
+// version) — a bump no longer lives in any PR, so PRs stopped conflicting on
+// the ?v= lines. The repo itself stays at the `dev` placeholder. Run this
+// yourself only to regenerate the import maps after adding a module or a
+// page, always as `node tools/version-assets.js dev`.
 
 import { readFileSync, writeFileSync, readdirSync, existsSync } from "node:fs";
 import { dirname, join, relative } from "node:path";

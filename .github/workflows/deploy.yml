@@ -33,6 +33,21 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # the asset version is the commit count — that needs the full history
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # Cache coherence (see tools/version-assets.js): every deploy stamps its
+      # own version into every page, HERE, not in the PRs — a bump that lived
+      # in each PR touched every HTML file and made any two open PRs conflict.
+      # The commit count is monotonic, so no two deploys ever share a version.
+      # The repo itself stays at the `dev` placeholder; tests/cache.test.js
+      # pins this step so it cannot be dropped silently (a site deployed at
+      # `dev` forever would resurrect the mixed-deploy cache bug, §9.2).
+      - name: Version the assets with the commit count
+        run: node tools/version-assets.js "$(git rev-list --count HEAD)"
       - name: Assemble site (site files only, no dev files)
         run: |
           mkdir -p _site
@@ -74,6 +89,16 @@ jobs:
             echo "not yet ($i/30): $URL"; sleep 5
           done
           echo "site never became reachable: $URL" >&2; exit 1
+      - name: The published site must carry a real version, never `dev`
+        env:
+          URL: ${{ needs.deploy.outputs.url }}
+        run: |
+          # `dev` live would mean every deploy shares one version — the exact
+          # mixed-deploy cache bug the versioning exists to prevent (§9.2)
+          if curl -fsS "$URL" | grep -q 'v=dev'; then
+            echo "the deployed pages still carry v=dev — the version step did not run" >&2
+            exit 1
+          fi
       - name: Cross-engine smoke (Chrome + Firefox)
         env:
           URL: ${{ needs.deploy.outputs.url }}

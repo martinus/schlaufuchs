@@ -495,6 +495,8 @@ footer p { margin: 0; }
 .journey { width: 100%; height: auto; display: block; }
 .journey .j-node { fill: var(--orange-soft); stroke: var(--orange); stroke-width: 2; }
 .journey .j-node.done { fill: var(--ok); stroke: var(--ok); }
+/* a task that ended after a stumble still earns its waypoint — a red one */
+.journey .j-node.missed { fill: #f2b6ba; stroke: var(--err); }
 /* obstacle mini-celebrations when the fox passes a milestone (§8.2).
    transform-box/origin are required so scale/rotate pivot on the glyph
    itself, for both <text> and swapped-in <image>. */
@@ -605,6 +607,72 @@ footer p { margin: 0; }
    at 0.18em the dots floated above the numbers instead of between them. */
 .question .divsign,
 .feedback-aid .divsign { vertical-align: 0.08em; }
+
+/* ---- workbook task layouts (§12.1): scaffold, wall, grid ----
+   Multi-cell kinds wrap and size themselves — the one-line fitter runs only on
+   .qline (rechnungen.js: fitQuestion). A fillable slot is a `.cell`; the one
+   being answered wears `.active`, a solved one `.done` — the orange goes away,
+   the number is the child's now, and the eye moves to the next "?". */
+.question.qmulti { white-space: normal; }
+
+/* A wall or grid is tall, and a SHORT round's scene is nearly square (journey
+   width scales with its nodes, height not) — at full width the two together
+   overflow the stage, which clips BOTH ends (it centres) and silently squeezes
+   the task (a flex item shrinks below its content). While a multi-cell task is
+   up: the task never shrinks, the scene yields (capped height, aspect kept,
+   centred), and the stage gives up its decorative top padding. */
+.question.qmulti { flex: 0 0 auto; }
+.stage:has(.qmulti) { padding-top: 8px; }
+.stage:has(.qmulti) .journey-wrap { display: flex; justify-content: center; }
+.stage:has(.qmulti) .journey { max-height: clamp(80px, 16vh, 140px); width: auto; max-width: 100%; }
+
+/* The numbers the child entered HERSELF stay hers: --depth blue, the colour of
+   what you have — clearly apart from the printed ink of the givens. */
+.question .cell.done { color: var(--depth); }
+.question.qline .cell.done { border-color: transparent; }
+.question .cell.active { box-shadow: 0 0 0 3px var(--orange-soft); }
+/* in a wall/grid an unfilled "?" is a real tap target (§12.1: pick, then type) */
+.q-mauer .cell:not(.done),
+.q-quad .cell:not(.done) { cursor: pointer; }
+
+/* The number wall: three rows of bricks, every brick the same box so the wall
+   reads as one thing. A blank brick is dashed orange until it is filled. */
+.q-mauer { font-size: clamp(1.35rem, 7vw, 2rem); }
+.q-mauer .mauer { display: grid; gap: 5px; justify-items: center; }
+.q-mauer .mrow { display: flex; gap: 5px; justify-content: center; }
+.mcell {
+  min-width: 3em;
+  padding: 4px 10px;
+  background: var(--panel);
+  border: 2px solid var(--ink-soft);
+  border-radius: 10px;
+}
+.mcell.cell { border-style: dashed; border-color: var(--orange); }
+.mcell.cell.done { border-style: solid; border-color: var(--depth-soft); }
+
+/* The operation grid: the op in the corner, headers on blue, cells as boxes —
+   the same table the workbook draws, two by two. */
+.q-quad { font-size: clamp(1.3rem, 6.5vw, 1.9rem); }
+.q-quad .rquad {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(3.1em, auto));
+  gap: 4px;
+  justify-content: center;
+}
+.rquad span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.55em;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.rquad .qcorner { background: var(--orange-soft); }
+.rquad .qhead { background: var(--depth-soft); color: var(--depth); }
+.rquad .qcell { background: var(--panel); border: 2px solid var(--ink-soft); }
+.rquad .qgiven { color: var(--ink-soft); }
+.rquad .cell { background: var(--panel); border: 2px dashed var(--orange); color: var(--orange); }
+.rquad .cell.done { border-style: solid; border-color: var(--depth-soft); }
 
 /* Reserving its line keeps the question from jumping when a streak starts, but
    the aid needs every pixel: an empty streak line takes none. */
@@ -722,6 +790,7 @@ footer p { margin: 0; }
   border-bottom: 4px solid var(--orange);
 }
 .feedback-aid .gap.stumbling,
+.question .cell.stumbling,
 .mc button.stumbling { animation: stumble 0.7s ease; }
 
 /* Up to ten rows of dots have to fit above the keypad on any phone, so the dot

@@ -434,11 +434,17 @@ function rejectRetry(el) {
   el.classList.add("stumbling");
 }
 
-// The only way out of the aid: the right answer, given.
+// The only way out of the aid: the right answer, given. The missed word still
+// ends here — so the fox still takes her step, onto a red waypoint, and the
+// path grows by the re-queued ask (§10.5).
 function continueRound() {
   if (phase !== "wrong-wait") return;
   phase = "correct-wait";
   sfx.correct();
+  // The missed word still ends here — the fox takes her step onto a red
+  // waypoint, and the path grows by the re-queued ask (§10.5).
+  journey.advanceMissed();
+  renderStatus();
   // Finding the right answer after a miss earns the same warm beat as a first-try
   // read (§14.2): on Schwer the passage is still on screen, so the scene emoji
   // cheers and the win lingers a touch. Word/Mittel came via the aid (no scene).
