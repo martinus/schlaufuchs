@@ -8,7 +8,7 @@ export default {
     // spoken names a screen reader reads, and the round-title chip's text.
     modePlus: "Plus",
     modeMinus: "Minus",
-    modeTimesDiv: "Mal & Geteilt",
+    modeRest: "Division mit Rest",
     modeMauer: "Rechenmauern",
     modeQuad: "Rechenquadrate",
     modeMix: "Gemischt",
@@ -25,7 +25,7 @@ export default {
     rechnenPickTitle: "Operation & difficulty",
     modePlus: "Plus",
     modeMinus: "Minus",
-    modeTimesDiv: "Times & divide",
+    modeRest: "Division with remainder",
     modeMauer: "Number walls",
     modeQuad: "Number grids",
     modeMix: "Mixed",

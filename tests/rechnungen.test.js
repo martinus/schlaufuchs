@@ -62,7 +62,7 @@ const drawKey = (key, n = 2000) => {
 };
 
 test("the modes and difficulties are the ones §12 names", () => {
-  assert.deepEqual(MODES, ["+", "-", "x:", "mauer", "quad", "mix"]);
+  assert.deepEqual(MODES, ["+", "-", "rest", "mauer", "quad", "mix"]);
   assert.equal(DIFF_KEYS.length, 3);
   assert.equal(DIFF_SLUGS.length, 3);
   assert.equal(STAR_SLOTS, 3);
@@ -80,7 +80,7 @@ test("roundSizeFor: equations 10 (Schwer ± 6), mix 8/7, walls 4, grids 3", () =
   }
   assert.equal(roundSizeFor("+", 2), 6, "Schwer ± is half scaffolds — shorter round");
   assert.equal(roundSizeFor("-", 2), 6);
-  assert.equal(roundSizeFor("x:", 2), 10);
+  for (const d of [0, 1, 2]) assert.equal(roundSizeFor("rest", d), 8, "two cells per rest task");
   assert.equal(roundSizeFor("mix", 2), 7);
   for (const d of [0, 1, 2]) {
     assert.equal(roundSizeFor("mauer", d), 4);
@@ -89,7 +89,7 @@ test("roundSizeFor: equations 10 (Schwer ± 6), mix 8/7, walls 4, grids 3", () =
 });
 
 test("every bucket is placed in a real cell, and the keys are unique", () => {
-  const modes = ["+", "-", "x:", "mauer", "quad"]; // never "mix" — mix has no buckets of its own
+  const modes = ["+", "-", "rest", "mauer", "quad"]; // never "mix" — mix has no buckets of its own
   for (const b of BUCKETS) {
     assert.ok(modes.includes(b.mode), `${b.key}: bogus mode ${b.mode}`);
     assert.ok([0, 1, 2].includes(b.diff), `${b.key}: bogus difficulty ${b.diff}`);
@@ -174,40 +174,50 @@ test("zerlege: the child builds the whole tens-first scheme, seven cells", () =>
   }
 });
 
-// Division with remainder (§12.1 Schwer): two cells on one line — quotient,
-// then remainder. The remainder slot is ALWAYS asked, and it is sometimes
-// genuinely zero: "no remainder" is an answer the child gives (R 0), not a
-// case the format hides.
+// Division with remainder (§12.1) — the whole ÷R tile, the one division
+// einmaleins can never teach. Two cells on one line — quotient, then
+// remainder. The remainder slot is ALWAYS asked, and it is sometimes genuinely
+// zero: "no remainder" is an answer the child gives (R 0), not a case the
+// format hides.
 test("rest: dividend = divisor · quotient + remainder, 0 ≤ remainder < divisor", () => {
-  let zeros = 0;
-  let nonzeros = 0;
-  for (const task of drawKey("div-s-rest")) {
-    assert.equal(task.kind, "rest");
-    assert.equal(task.cells.length, 2);
-    const [q, r] = task.cells.map((c) => c.answer);
-    assert.equal(task.b * q + r, task.a, `${task.a} : ${task.b} ≠ ${q} R ${r}`);
-    assert.ok(r >= 0 && r < task.b, `remainder ${r} out of 0–${task.b - 1}`);
-    assert.equal(Math.floor(task.a / task.b), q, "the quotient is not the floor");
-    assert.equal((task.text.match(/\?/g) ?? []).length, 2);
-    assert.ok(/\sR\s/.test(task.text), `no R in "${task.text}"`);
-    if (r === 0) zeros++;
-    else nonzeros++;
+  for (const key of ["rest-l", "rest-m", "rest-s"]) {
+    let zeros = 0;
+    let nonzeros = 0;
+    for (const task of drawKey(key)) {
+      assert.equal(task.kind, "rest");
+      assert.equal(task.cells.length, 2);
+      const [q, r] = task.cells.map((c) => c.answer);
+      assert.equal(task.b * q + r, task.a, `${key}: ${task.a} : ${task.b} ≠ ${q} R ${r}`);
+      assert.ok(r >= 0 && r < task.b, `${key}: remainder ${r} out of 0–${task.b - 1}`);
+      assert.equal(Math.floor(task.a / task.b), q, `${key}: the quotient is not the floor`);
+      assert.equal((task.text.match(/\?/g) ?? []).length, 2);
+      assert.ok(/\sR\s/.test(task.text), `${key}: no R in "${task.text}"`);
+      if (key === "rest-l") assert.ok(task.b <= 5 && q <= 9, `${key}: past the concept tier: "${task.text}"`);
+      if (key === "rest-s") assert.ok(q >= 11, `${key}: Schwer must go beyond the tables: "${task.text}"`);
+      if (r === 0) zeros++;
+      else nonzeros++;
+    }
+    assert.ok(zeros > 0, `${key}: a zero remainder must occur — the child answers R 0 herself`);
+    assert.ok(nonzeros > zeros, `${key}: …but real remainders must dominate`);
   }
-  assert.ok(zeros > 0, "a zero remainder must occur — the child answers R 0 herself");
-  assert.ok(nonzeros > zeros, "…but real remainders must dominate");
 });
 
-// The ×→+ link (§12.1 Leicht): the plus form is printed with the times form,
-// one addend per multiplier — reading it IS the lesson.
-test("mulplus: the plus form spells out the times form", () => {
-  for (const task of drawKey("mul-l-plus")) {
-    assert.equal(task.kind, "mulplus");
-    const m = task.text.match(/^(\d+) × (\d+) = (.+) = \?$/);
-    assert.ok(m, `mulplus text "${task.text}"`);
-    const addends = m[3].split(" + ").map(Number);
-    assert.equal(addends.length, Number(m[1]), "one addend per multiplier");
-    assert.ok(addends.every((v) => v === Number(m[2])), "every addend is the factor");
-    assert.equal(task.cells[0].answer, Number(m[1]) * Number(m[2]));
+// The regions must not overlap (user, eighth play-test): the times tables and
+// exact division are einmaleins' whole game, so NOTHING on the Rechenberg may
+// print a bare × question or a division without its R slot. What survives of
+// the old ×÷ tile is exactly what einmaleins can never ask: remainders.
+test("no einmaleins in disguise: no × tasks, no division without a remainder slot", () => {
+  for (let i = 0; i < BUCKET_COUNT; i++) {
+    const rng = seeded(i * 11 + 7);
+    for (let k = 0; k < 400; k++) {
+      const task = questionFor(i, rng, ":");
+      const texts = [task.text, ...(task.cells ?? []).map((c) => c.aid?.text)].filter(Boolean);
+      for (const t of texts) {
+        assert.ok(!t.includes("×"), `${BUCKETS[i].key}: prints a times question "${t}"`);
+        if (t.includes(":")) assert.ok(/\sR\s/.test(t), `${BUCKETS[i].key}: bare division "${t}"`);
+      }
+      assert.ok(task.op !== "x", `${BUCKETS[i].key}: op ×`);
+    }
   }
 });
 
@@ -354,13 +364,8 @@ test("difficulty bands hold: carrying, borrowing, exact division, Leicht ranges"
   for (const t of drawKey("sub-s-zerlege")) {
     assert.ok((t.a % 10) < (t.b % 10), `zerlege without a borrow: ${t.a}−${t.b}`);
   }
-  // division without remainder is always exact
-  for (const key of ["div-l", "div-m"]) for (const q of drawKey(key)) {
-    assert.equal(q.a % q.b, 0, `${key}: "${q.text}" has a remainder`);
-    assert.equal(q.answer, q.a / q.b);
-  }
   // gaps hide exactly one operand
-  for (const q of [...drawKey("add-s-gap"), ...drawKey("sub-s-gap"), ...drawKey("muldiv-s-gap")]) {
+  for (const q of [...drawKey("add-s-gap"), ...drawKey("sub-s-gap")]) {
     assert.equal(q.kind, "gap");
     assert.equal((q.text.match(/\?/g) ?? []).length, 1, `gap has ${q.text}`);
   }
@@ -373,15 +378,12 @@ test("difficulty bands hold: carrying, borrowing, exact division, Leicht ranges"
 // round in German must print ":" and never "÷" — in the plain divisions and in
 // the remainder line alike.
 test("the division sign is the caller's, defaulting to ÷", () => {
-  const i = BUCKETS.findIndex((b) => b.key === "div-m");
+  const i = BUCKETS.findIndex((b) => b.key === "rest-m");
   const colon = questionFor(i, seeded(9), ":");
   const obelus = questionFor(i, seeded(9), "÷");
-  assert.ok(colon.text.includes(" : ") && !colon.text.includes("÷"));
+  assert.ok(colon.text.includes(" : ") && !colon.text.includes("÷"), `"${colon.text}"`);
   assert.equal(colon.text.replace(" : ", " ÷ "), obelus.text);
   assert.equal(questionFor(i, seeded(9)).text, obelus.text, "the default is ÷");
-  const ri = BUCKETS.findIndex((b) => b.key === "div-s-rest");
-  const rest = questionFor(ri, seeded(9), ":");
-  assert.ok(rest.text.includes(" : ") && !rest.text.includes("÷"), `rest line "${rest.text}"`);
 });
 
 // --- the variant expansion the shared engine draws over -----------------------
@@ -398,7 +400,7 @@ test("bucketOf folds every variant back to its bucket, total on junk", () => {
 
 test("bucketsFor: a mode is its own buckets, Mix pools the equation modes", () => {
   for (let d = 0; d < 3; d++) {
-    const single = ["+", "-", "x:"].flatMap((m) => bucketsFor(m, d));
+    const single = ["+", "-", "rest"].flatMap((m) => bucketsFor(m, d));
     const mix = bucketsFor("mix", d);
     assert.deepEqual([...mix].sort((a, b) => a - b), [...single].sort((a, b) => a - b),
       `diff ${d}: Mix must be exactly the equation modes pooled`);
@@ -408,7 +410,7 @@ test("bucketsFor: a mode is its own buckets, Mix pools the equation modes", () =
     for (const b of mix) assert.ok(!["mauer", "quad"].includes(BUCKETS[b].mode), `diff ${d}: mix drew ${BUCKETS[b].key}`);
     // an unknown mode reads as Mix, never an empty cell
     assert.deepEqual(bucketsFor("nonsense", d), mix);
-    for (const m of ["+", "-", "x:", "mauer", "quad"]) {
+    for (const m of ["+", "-", "rest", "mauer", "quad"]) {
       for (const b of bucketsFor(m, d)) assert.equal(BUCKETS[b].mode, m);
       for (const b of bucketsFor(m, d)) assert.equal(BUCKETS[b].diff, d);
     }
@@ -608,7 +610,7 @@ test("a multi-cell task forgives its first slip — the gate is in the page modu
 // named here, both directions, the way lesen names its runtime pack keys.
 test("every mode has a spoken name in both languages, and the picker uses them", () => {
   const src = read("games/rechnungen/picker.js");
-  for (const key of ["modePlus", "modeMinus", "modeTimesDiv", "modeMauer", "modeQuad", "modeMix"]) {
+  for (const key of ["modePlus", "modeMinus", "modeRest", "modeMauer", "modeQuad", "modeMix"]) {
     assert.ok(strings.de[key], `de.js is missing ${key}`);
     assert.ok(strings.en[key], `en.js is missing ${key}`);
     assert.ok(src.includes(`"${key}"`), `picker.js never looks up ${key}`);
