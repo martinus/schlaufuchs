@@ -446,6 +446,31 @@ test("the blitz is a JS timer wearing a CSS transition, never an animation", () 
   assert.ok(!/@keyframes\s+(?!scene-cheer\b)/.test(cardCss), "only the decorative scene cheer may be a keyframe here");
 });
 
+test("the scene anchor and the lively tap moment are wired (§14.2)", () => {
+  const game = read("games/lesen/lesen.js");
+  // The scene emoji renders into its OWN element, and #question/#passage carry
+  // only the question and passage text — the round driver reads THEIR text to
+  // find the answer, and the scene (which could telegraph it) must never join it.
+  const render = game.slice(game.indexOf("function renderQuestion"), game.indexOf("window.addEventListener"));
+  assert.match(render, /const scene = \$\("scene"\)/, "renderQuestion fills its own scene element");
+  assert.match(render, /scene\.textContent =/, "the scene emoji is written to #scene");
+  assert.match(render, /\$\("question"\)\.textContent = question\.text/, "#question stays the question text");
+  assert.ok(!/\$\("(?:question|passage)"\)[^\n]*scene/.test(render), "the scene must not be mixed into the question/passage text");
+
+  // A correct answer hops with a ✓, a wrong one shakes — added on the same tile
+  // the child tapped, in submit and in the aid's retry.
+  const submit = game.slice(game.indexOf("function submit"), game.indexOf("function showFeedback"));
+  assert.match(submit, /"ans-hop"/, "a correct tile hops");
+  assert.match(submit, /"ans-shake"/, "a wrong tile shakes");
+
+  // The ✓ badge is a ::after (not an animation), so reduced motion keeps it; the
+  // hop and shake ARE keyframes, meant to be stilled under reduced motion.
+  const css = read("assets/css/schlaufuchs.css");
+  assert.match(css, /\.ans-hop::after\s*\{[^}]*content:\s*"✓"/, "the correct tile wears a ✓ badge");
+  assert.match(css, /@keyframes ans-hop/, "the hop is a keyframe, stilled under reduced motion");
+  assert.match(css, /\.ans-shake\s*\{[^}]*animation/, "the shake is an animation");
+});
+
 test("a word waits behind the ready cover; the blitz arms only on reveal (§14.2)", () => {
   // The blitz used to start the instant a word appeared, so the first word of a
   // round flashed before the child had looked or knew one was coming. A word now

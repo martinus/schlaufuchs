@@ -1504,6 +1504,16 @@ plain named numbers to be retuned after watching a real child, like
   (`READ_NEXT_MS`), so the reading — the real work on Schwer — feels rewarded,
   not just ticked off. The longer pause never touches the tempo clock, which
   stops at the answer, not at the next question (§14.4).
+- **A lively tap moment on every answer** — the chosen tile HOPS with a ✓ badge
+  when it is right (`ans-hop`), SHAKES when it is wrong (`ans-shake`), in the
+  first answer and in the aid's retry alike. It never touches the answers
+  themselves: an emoji or hint *per answer* would turn comprehension into
+  picture-matching (a child could pick the right tile without reading the
+  passage), so the answers stay plain text and only the **feedback** on the
+  tapped tile comes alive. The green/red flash carries the meaning on its own;
+  the hop and shake are decorative keyframes (stilled under reduced motion), and
+  the ✓ is a `::after` badge, not an animation, so it survives reduced motion.
+  Lesen-only classes (`lesen.js` never marks an einmaleins tile).
 
 ### 14.3 Content (`content.js`), tiles and the adaptive engine
 

@@ -780,6 +780,34 @@ footer p { margin: 0; }
 button.flash-ok { background: var(--ok) !important; color: #fff !important; }
 button.flash-err { background: var(--err) !important; color: #fff !important; }
 
+/* A lively tap moment on a lesen answer (§14.2): the chosen right one HOPS and
+   wears a ✓ badge, the chosen wrong one SHAKES — so picking feels alive, and a
+   correct reading answer is celebrated on the tile as well as by the scene emoji
+   (§14.2). The classes are only ever added by lesen.js (never einmaleins), so
+   they need no container scoping. The green/red flash carries the meaning on its
+   own; the hop and shake are decorative keyframes (reduced motion stills them),
+   and the ✓ is a ::after badge, not an animation, so it survives reduced motion. */
+@keyframes ans-hop { 40% { translate: 0 -8px; } 100% { translate: 0 0; } }
+.ans-hop { position: relative; animation: ans-hop 0.42s ease; }
+.ans-shake { animation: stumble 0.45s ease; }
+.ans-hop::after {
+  content: "✓";
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  background: var(--ok);
+  color: #fff;
+  border: 2px solid var(--panel);
+  border-radius: 50%;
+  font-size: 0.95rem;
+  font-weight: 900;
+  box-shadow: var(--shadow);
+}
+
 /* ---- lesen: the word card and the blitz (§14.2) ---- */
 /* The hide is DECIDED by a JS timer and merely decorated by these transitions:
    prefers-reduced-motion kills every transition site-wide, so the fade

@@ -319,7 +319,7 @@ function answerPress(value, btn) {
   if (phase === "answer") return submit(value, btn);
   if (phase !== "wrong-wait") return;
   if (value === question.answer) {
-    btn.classList.add("flash-ok");
+    btn.classList.add("flash-ok", "ans-hop");
     continueRound();
   } else {
     rejectRetry(btn);
@@ -347,7 +347,9 @@ function blitzFlash() {
 function submit(value, btn) {
   clearTimeout(flashTimer);
   const correct = value === question.answer;
-  btn.classList.add(correct ? "flash-ok" : "flash-err");
+  // The lively tap moment (§14.2): the right tile hops with a ✓, the wrong one
+  // shakes. Decorative — the green/red flash says correct/wrong on its own.
+  btn.classList.add(correct ? "flash-ok" : "flash-err", correct ? "ans-hop" : "ans-shake");
   session.answer(currentId, correct);
   if (correct) {
     // Only a first try feeds the tempo ladder (§10.6, §14.4): an item that was
