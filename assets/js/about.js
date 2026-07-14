@@ -1,5 +1,5 @@
 // The about page (§3.6). Static prose and four outbound links. It reads no
-// state: a page that says who runs the site must not depend on the cookie.
+// state: a page that says who runs the site must not depend on the store.
 
 import { initI18n } from "./i18n.js";
 import { initTopBar } from "./chrome.js";

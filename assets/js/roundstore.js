@@ -7,7 +7,7 @@
 //
 // sessionStorage on purpose, not localStorage: the mirror should live exactly
 // as long as the browsing session that owns the round. A round resurrected a
-// week later, over boxes the cookie has long moved past, would be a stale lie.
+// week later, over boxes the store has long moved past, would be a stale lie.
 //
 // Every touch wears a try: private modes and full quotas throw, and a mirror
 // must never take the round down with it — losing the *mirror* only means the

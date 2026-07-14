@@ -62,7 +62,7 @@ export {
 } from "../../assets/js/roundrules.js";
 
 // The six modes, in picker order (§12.1). These strings ARE the keys of the
-// cookie's `stars`/`tempo` maps (§12.3): "rest" is division with remainder
+// store's `stars`/`tempo` maps (§12.3): "rest" is division with remainder
 // (the one division einmaleins can never teach — everything table-shaped was
 // cut so the two regions do not overlap),
 // "mauer" the number walls, "quad" the operation grids. "mix" draws from the
@@ -363,7 +363,7 @@ export const BUCKETS = [
 export const BUCKET_COUNT = BUCKETS.length;
 
 // The bucket a variant item-id stands for. Total: junk folds to bucket 0 rather
-// than throwing, so a corrupt cookie can never open an empty round.
+// than throwing, so a corrupt store can never open an empty round.
 export function bucketOf(itemId) {
   const b = Math.trunc(itemId) % BUCKET_COUNT;
   return b < 0 ? b + BUCKET_COUNT : b;
@@ -403,7 +403,7 @@ export function questionFor(itemId, rng = Math.random, divSign = "÷") {
 // this round climbs one Leitner box on a clean round and drops to 0 if any of
 // its variants was missed — the standard Leitner move (§7.1), applied once per
 // bucket. Untouched buckets keep their digit. Total and sanitising: whatever
-// comes in, what goes back to the cookie is `count` digits of 0–4.
+// comes in, what goes back to the store is `count` digits of 0–4.
 export function foldBoxes(boxStr, touched = [], missed = [], count = BUCKET_COUNT) {
   const s = String(boxStr ?? "").padEnd(count, "2").slice(0, count).split("").map((c) => clampBox(c));
   const missedSet = new Set(missed);

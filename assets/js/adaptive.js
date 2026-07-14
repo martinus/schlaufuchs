@@ -82,7 +82,7 @@ export function createSession(pool, boxes, opts = {}) {
   for (const id of pool) box[id] = clampBox(boxes[id]);
   if (res) {
     // the snapshot's boxes carry this round's moves (a miss already dropped
-    // its item to 0); clamp each digit as if it had come from the cookie
+    // its item to 0); clamp each digit as if it had come from the store
     for (const [k, v] of Object.entries(res.box ?? {})) {
       if (k in box) box[k] = clampBox(v);
     }

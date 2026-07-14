@@ -135,7 +135,7 @@ test("groupState: weak wins, then solid, and an all-untouched cell is open", () 
   for (const junk of [undefined, null]) assert.equal(groupState(junk), "open");
 });
 
-test("practiceSummary survives an empty, absent or corrupted cookie", () => {
+test("practiceSummary survives an empty, absent or corrupted state", () => {
   assert.deepEqual(practiceSummary(), {
     perDiff: [{ seconds: 0, rounds: 0 }, { seconds: 0, rounds: 0 }, { seconds: 0, rounds: 0 }],
     totalSeconds: 0, totalRounds: 0,

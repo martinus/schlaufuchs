@@ -447,7 +447,7 @@ function endRound() {
     stars: starsObj,
     tempo: tempoObj,
   });
-  // the round is in the cookie now; its mirror has nothing left to protect
+  // the round is in the store now; its mirror has nothing left to protect
   clearRound("lesen");
 
   // points come from progress, never from repetition (§8.3)

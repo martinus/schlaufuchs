@@ -34,7 +34,7 @@ import { t } from "./i18n.js";
 //             "keep playing", the same as Escape on any other overlay.
 //   "ask"   — a round is running; its stars are not saved yet.
 //   "leave" — nothing is at stake: the picker, or a summary already written to
-//             the cookie. Go, without a dialog nobody needs.
+//             the store. Go, without a dialog nobody needs.
 export function leaveAction({ inRound, confirmOpen }) {
   if (confirmOpen) return "stay";
   return inRound ? "ask" : "leave";

@@ -1,5 +1,5 @@
 // Lesen pure logic (§14): item addressing, the blitz clock, questions and
-// options, star criteria, digit-string codecs, and the cookie budget.
+// options, star criteria, digit-string codecs, and the state budget.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -261,7 +261,7 @@ test("the tempo ladder is wired: measured on first tries, saved, painted", () =>
   assert.match(src, /if \(tempoTier\(took, diff\) === 3\) blitzFlash\(/, "the ⚡ moment");
   assert.match(src, /tempoTier\(median\(answerTimes\), diff\)/, "the round's verdict is the median");
   assert.match(src, /awardTempo\(\{ stars, tier, best: oldTempo \}\)/, "the ⭐⭐ gate");
-  assert.match(src, /tempo: tempoObj/, "…and it must reach the cookie");
+  assert.match(src, /tempo: tempoObj/, "…and it must reach the store");
   // the bolt flies over the stage, not inside the flipping word card
   assert.match(src, /blitzFlash\(document\.querySelector\("\.stage"\)\)/);
 
@@ -332,9 +332,9 @@ test("maxPoints is computed from the real tiles: 5·3·1 + 5·3·2 + 5·3·3 = 9
   assert.equal(maxPoints(DE), 90);
 });
 
-// --- cookie budget (§9.2) -----------------------------------------------------------
+// --- state budget (§9.2) -----------------------------------------------------------
 
-test("a maxed lesen section stays a small fraction of the cookie budget", () => {
+test("a maxed lesen section stays a small fraction of the state budget", () => {
   const fullStars = { 0: "3".repeat(STAR_TILES), 1: "3".repeat(STAR_TILES), 2: "3".repeat(STAR_TILES) };
   const maxed = {
     d: 2, p: MIXED,
@@ -486,7 +486,7 @@ test("the aid keeps the same buttons, and only the right one lets the round on",
 });
 
 test("a finished round is written before the summary opens (§10.7)", () => {
-  // The leave guard trusts `roundOver` to mean "the cookie is written": the
+  // The leave guard trusts `roundOver` to mean "the store is written": the
   // stars are banked by setGame/recordRound inside endRound, synchronously,
   // before `showSummary` — whose 700ms celebration timer is what actually
   // opens the sheet.
@@ -494,7 +494,7 @@ test("a finished round is written before the summary opens (§10.7)", () => {
   const end = game.slice(game.indexOf("function endRound"), game.indexOf("showSummary("));
   const write = end.indexOf("setGame(");
   const record = end.indexOf("recordRound(");
-  assert.ok(write > -1 && record > -1, "endRound must write the cookie before it hands off");
+  assert.ok(write > -1 && record > -1, "endRound must write the store before it hands off");
   // …and the sheet is only opened after the wait, in the shared summary.
   const show = read("assets/js/roundsummary.js");
   const painted = show.slice(show.indexOf("function show("));

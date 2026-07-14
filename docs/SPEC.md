@@ -7,7 +7,7 @@ as a small illustrated world: the landing page is a **map**, each game is a
 **region** on it, and the fox mascot travels through it as the child learns.
 The site is fully static, hosted on GitHub Pages under
 **https://schlaufuchs.ankerl.com**. All state (progress, trophies, settings)
-is stored client-side in a cookie — no backend, no login, no data ever leaves
+is stored client-side in localStorage — no backend, no login, no data ever leaves
 the browser.
 
 > **How to use this document (for the implementing agent):** this spec is the
@@ -105,7 +105,7 @@ in HTML/CSS/JS — never absolute paths like `/assets/...`.
 │   │   └── en.js             # Shared UI strings, English
 │   ├── js/                   # shared modules — the full map of them, with
 │   │   │                     # their dependency rules, is docs/ARCHITECTURE.md
-│   │   ├── storage.js        # Cookie-backed state store (§9)
+│   │   ├── storage.js        # localStorage-backed state store (§9)
 │   │   ├── i18n.js           # Translation runtime (§6)
 │   │   ├── adaptive.js       # Weakness-tracking practice engine (§7)
 │   │   ├── rewards.js        # Stars, trophies, region states (§8)
@@ -358,10 +358,10 @@ The bar has exactly two shapes:
   and the three links out. The overlay used to take a `resetKind` and open
   three different sheets (all / game / nothing); it is one sheet now, identical
   everywhere. **Reset is per game**: the "Fortschritt löschen" section lists one
-  row per game the cookie holds progress for (`hasGameData`), plus an "Alles"
+  row per game the store holds progress for (`hasGameData`), plus an "Alles"
   row for the whole site — each a named, two-step confirm calling
   `resetGame(name)` or `resetAll()` (`storage.js`). This is where reset lives;
-  the parents' view is read-only information (§20). A fresh cookie shows only
+  the parents' view is read-only information (§20). A fresh store shows only
   the "Alles" row, so the sheet is never empty of a reset.
 
 Round summaries are overlays too. The browser back button always means
@@ -428,9 +428,11 @@ text that hides half its sentences is worse than one that scrolls.
   every page has one of the two.
 - The URL is resolved from `chrome.js`'s own `import.meta.url`. An absolute
   `/privacy.html` would break a subpath deploy.
-- **What it says must stay true.** Today: one cookie (`schlaufuchs`, one year,
-  progress + settings), strictly necessary for a service the child asked for —
-  which is exactly why the site shows no consent banner. No analytics, no
+- **What it says must stay true.** Today: no cookies at all; one localStorage
+  entry (`schlaufuchs`, progress + settings) that is never transmitted,
+  strictly necessary for a service the child asked for — which is exactly why
+  the site shows no consent banner. (A legacy cookie from before July 2026 is
+  adopted once and deleted, §9.1 — the page says so.) No analytics, no
   third-party requests, no external fonts. GitHub Pages serves the files and
   therefore sees connection data (IP), which we never receive.
 - **Adding analytics changes this.** Anything that stores or reads an
@@ -454,7 +456,7 @@ pages carry links. `tests/about.test.js` enforces that **no page is a dead end**
   the only external URLs the site names anywhere. A test holds them to `https:`
   and to being absolute; nothing else can check that they still resolve.
 - It reads no state. A page that says who runs the site must not need the
-  cookie to render.
+  state to render.
 
 ---
 
@@ -555,7 +557,7 @@ from string dictionaries.
 - **Templates, not concatenation**: `t('roundDone', {ok: 9, total: 10})` with
   `"roundDone": "{ok} von {total} richtig!"`. Never glue sentence fragments.
 - Language selection order: `?lang=` URL parameter (persisted once seen) →
-  saved setting (cookie) → `navigator.language` prefix match → `de`.
+  saved setting (stored) → `navigator.language` prefix match → `de`.
 - The header toggle switches instantly: re-translate in place, update
   `<html lang>`, persist.
 - Fallback chain: missing key → the default language (first entry of
@@ -740,7 +742,7 @@ nothing, and is never a number — it is a per-tile collectible, like the fox's
 poses.)
 
 Internally the counter is still called `pr`, and the functions still say
-`roundPoints`, `starValue`, `MAX_POINTS` — those names are cheap and the cookie
+`roundPoints`, `starValue`, `MAX_POINTS` — those names are cheap and the store
 field is budget-critical (§9.2). The UI says ⭐ and nothing else. There used to
 be two numbers, both called stars: a raw count of three per tile, and this
 weighted one shown as „Punkte". They stood in different places, never agreed,
@@ -784,7 +786,7 @@ and an 8-year-old understood neither.
   The round summary shows the stars just earned next to the score („+6 ⭐"); that
   is the only place a number appears.
 - Each region keeps a lifetime **star** counter (`rewards.pr`, §9.2). The
-  field keeps its short name for the cookie budget (§9.2).
+  field keeps its short name for the state budget (§9.2).
 - Each region has **12 fixed trophies** (emoji + translated name, defined in
   a `TROPHIES` table in `rewards.js`, themed per region — e.g. Wörterwald:
   🦊 🦉 🐿️ 🦡 🍄 🌰 …). Trophy *s* (1-indexed) of a game is earned when **that
@@ -854,32 +856,46 @@ stored as `[lastDateISO, count]`, with milestones at 3/7/14/30 — and it was
 never rendered anywhere: not in the child's top bar (§3.3, §10.5 — a streak
 is a thing a child is nagged by), and after its 🔥 chip left the parents'
 view, not there either. A year of tracking with no consumer was dead state
-in a 3500-byte cookie, so in July 2026 the machinery went too.
+in a 3500-byte state budget, so in July 2026 the machinery went too.
 
-`recordRound` actively scrubs the old `rewards.streak` field from cookies
+`recordRound` actively scrubs the old `rewards.streak` field from stores
 that still carry it (a patch of `streak: undefined` — JSON.stringify drops
 the key). If a streak ever comes back, it belongs on the parents' page, and
 it starts from zero.
 
 ---
 
-## 9. State Storage (Cookie, `storage.js`)
+## 9. State Storage (localStorage, `storage.js`)
 
-All persistent state lives in **one** first-party cookie named `schlaufuchs`.
+All persistent state lives under **one** localStorage key named `schlaufuchs`.
 
-### 9.1 Cookie parameters
+### 9.1 Storage medium & legacy cookie migration
 
 | Attribute | Value |
 |---|---|
-| Name | `schlaufuchs` |
-| Path | `/` |
-| Max-Age | `31536000` (1 year), refreshed on every write |
-| SameSite | `Lax` |
-| Secure | set when served over HTTPS |
+| Key | `schlaufuchs` |
+| Medium | `localStorage` (never transmitted; no expiry) |
+| Blocked storage | degrade to an in-memory session, never crash |
+
+Until July 2026 the state lived in a first-party cookie of the same name
+(percent-encoded, Max-Age 1 year). A cookie rides the header of **every**
+request to the host — the progress blob went to GitHub Pages dozens of times
+per page load, while the privacy page (§3.5) promised the data never leaves
+the device. localStorage makes that promise true, drops the yearly expiry (a
+child may pause longer than a cookie lives), and stores plain JSON (the
+cookie's percent-encoding paid three bytes for every quote and brace).
+
+**Migration**: on load, a legacy cookie's state is adopted **once, only into
+an empty store** (the store is written by newer code, so it wins), and the
+cookie is deleted either way — so it stops being transmitted, and so a
+lingering cookie from a stale cached page (§9.2 mixed-deploy window) can
+never resurrect state a parent has since reset. Seeding state through a
+cookie therefore still works in a fresh browser profile, which is what
+`tools/shoot.mjs --cookie` relies on.
 
 ### 9.2 Payload format
 
-URL-encoded compact JSON with a version field:
+Compact JSON with a version field:
 
 ```json
 {
@@ -897,17 +913,20 @@ URL-encoded compact JSON with a version field:
 - `rewards.at` = game key of the last game played (fox map position).
 - `rewards.pr` = the lifetime **star** counter per game, weighted by the
   difficulty each star was won at (trophies derive from these, §8.3; the top
-  bar's star total is their sum). The short field name is a cookie-budget
+  bar's star total is their sum). The short field name is a state-budget
   decision; the UI never says "points".
 
 Rules:
 
 - Each game owns exactly one top-level key and never touches the others;
   `rewards.js` owns `rewards`, `i18n.js`/settings UI own `settings`.
-- **Size budget: encoded cookie < 3500 bytes.** Games store compact digit
-  strings (per-game shapes below), never event logs. `setGame()` refuses
+- **Size budget: encoded state < 3500 bytes.** localStorage would take
+  megabytes; the budget is a deliberate self-commitment, kept from the cookie
+  era because the discipline it forced is a feature — state stays minimal and
+  derivable, the backup file stays a glanceable page. Games store compact
+  digit strings (per-game shapes below), never event logs. `setGame()` refuses
   writes that would exceed the budget and logs a console warning.
-- Corrupt/unparsable cookie ⇒ empty state (fresh start), never a crash.
+- Corrupt/unparsable state ⇒ empty state (fresh start), never a crash.
 - Box digit strings are indexed by the game's canonical item order (defined
   in each game's data file); missing/short strings are padded with `2`
   (= new item) on read.
@@ -920,28 +939,29 @@ getGame(name): object          // state[name] ?? {}
 setGame(name, data): boolean   // merge + write; false if over budget
 getRewards() / setRewards()
 getSettings() / setSettings()
-resetAll()                     // delete the cookie (settings gear "Alles" row — §3.4)
+resetAll()                     // clear the store + any legacy cookie (settings gear "Alles" row — §3.4)
 resetGame(name): boolean       // drop one game's section + its pr counter (settings gear — §3.4)
 withoutGame(state, name)       // the pure core of resetGame, unit-tested
 exportState(state?): string    // the whole state as pretty JSON — the backup file
 parseBackup(text): object|null // total-or-nothing: junk/arrays/over-budget → null
-replaceState(state): boolean   // a parsed backup becomes the cookie, whole
+replaceState(state): boolean   // a parsed backup becomes the store, whole
 ```
 
-**Backup (the gear, adult-side, §3.4):** the whole site lives in one cookie on
+**Backup (the gear, adult-side, §3.4):** the whole site lives in one store on
 one device, so a cleared cache or a new phone silently deletes every star. The
 gear's „Fortschritt sichern" downloads `exportState()` as
 `schlaufuchs-fortschritt.json`; „Fortschritt laden" reads a file back through
 `parseBackup` (total-or-nothing — a bad file changes NOTHING and says so) and
-replaces the cookie, then reloads. Importing overwrites a child's progress, so
+replaces the store, then reloads. Importing overwrites a child's progress, so
 the button arms first, exactly like the reset rows. The file is a
 user-initiated download that never leaves the device by itself — the privacy
 page stays true.
 
-> **Trade-off note**: `localStorage` would allow more space; the cookie is a
-> deliberate product decision. The budget works with the compact encodings
-> specified per game — tightest case Vokabeln (§13.4), which caps tracked
-> packs. `storage.js` is the single place a backend swap would happen.
+> **Trade-off note**: the budget is far below what localStorage allows, on
+> purpose (§9.2). It works with the compact encodings specified per game —
+> tightest case Vokabeln (§13.4), which caps tracked packs. `storage.js` is
+> the single place a backend swap would happen; the cookie → localStorage
+> move in July 2026 touched no other module.
 
 ---
 
@@ -1101,7 +1121,7 @@ von 10 richtig" — existed twice and was cut twice as one sentence too many):
 the grey ghost groups say what is still to win, and a child who replays the
 tile discovers the rule by playing.
 
-### 10.4 Cookie state (`einmaleins`)
+### 10.4 Stored state (`einmaleins`)
 
 ```json
 {
@@ -1292,7 +1312,7 @@ never has to think about. The mirror lives in sessionStorage on purpose (a
 round resurrected a week later over long-moved boxes would be a lie), is only
 trusted after `validResume` (a foreign or truncated snapshot falls back to the
 picker), and is dropped at the three moments it stops being true: a finished
-round (`endRound` wrote the cookie), a fresh start from the picker (a chosen
+round (`endRound` wrote the store), a fresh start from the picker (a chosen
 tile outranks an interrupted round), and a **confirmed** „Zur Karte" on the
 guard's sheet — leaving on purpose means it. The guard stays underneath as the
 answer for exactly that deliberate exit.
@@ -1342,7 +1362,7 @@ progress display. Requires a physical keyboard (friendly hint otherwise).
 - Leicht/Mittel/Schwer maps to exercise length (0.6× / 1× / 1.4×) and
   threshold strictness (−5 pp / ±0 / +2 pp accuracy).
 
-### 11.4 Cookie state (`tippen`)
+### 11.4 Stored state (`tippen`)
 
 ```json
 {
@@ -1479,7 +1499,7 @@ lesen's hand-tuned shape scaled to 108 with the first rung pinned at 3, so the
 very first perfect Leicht round is a trophy, a first perfect Schwer round buys
 two (not three), and Schwer alone (54) cannot fill the shelf (§8.3).
 
-### 12.3 Cookie state (`rechnungen`)
+### 12.3 Stored state (`rechnungen`)
 
 `box` is one Leitner digit per skill bucket (not per task). `stars`/`tempo`
 are keyed by mode, each a three-digit string indexed by difficulty — transposed
@@ -1495,7 +1515,7 @@ half-wall.
 
 The parents' view (§20) has **no Rechenberg section**: its skill buckets do not
 map to a fact grid a parent recognises, so a report was consciously skipped and
-the game writes no telemetry beyond `box` — no dead cookie bytes.
+the game writes no telemetry beyond `box` — no dead state bytes.
 
 ---
 
@@ -1531,7 +1551,7 @@ Leitner boxes per word pair (§7). Rounds of 10 from the selected pack (or
 the third star additionally requiring every pack word at box ≥ 3
 („Pack gemeistert").
 
-### 13.4 Cookie state (`vokabeln`) — budget-critical
+### 13.4 Stored state (`vokabeln`) — budget-critical
 
 ```json
 {
@@ -1746,7 +1766,7 @@ the shared round rules (`assets/js/roundrules.js`), like the star rules;
 no recall telemetry (`rc`, §20) for lesen. The ⚡ moment additionally plays a
 small zap (`sfx.blitz`, §10.6) — in both games.
 
-### 14.5 Cookie state (`lesen`)
+### 14.5 Stored state (`lesen`)
 
 ```json
 { "d": 1, "p": 2, "box": { "de": "3421…(128)" }, "stars": { "0": "31000", "1": "00000", "2": "00000" }, "tempo": { "0": "30000", "1": "00000", "2": "00000" } }
@@ -1756,14 +1776,14 @@ small zap (`sfx.blitz`, §10.6) — in both games.
 five slots per difficulty (Alle last; `tempo` per §14.4, same layout as
 einmaleins' §9.2). `box` is keyed by language, so an English set adds a second
 string without migration. Maxed ≈ 270 bytes raw — the budget test in
-tests/lesen.test.js holds the whole cookie under §9.2's 3500 even with every
+tests/lesen.test.js holds the whole state under §9.2's 3500 even with every
 game maxed.
 
 ### 14.6 English version & speech
 
 German content only for now. English reading needs a genuine phonics
 approach (CVC words, sight words) — a separate content set, later milestone;
-the engine and the cookie shape are ready for it. SpeechSynthesis (tap a
+the engine and the state shape are ready for it. SpeechSynthesis (tap a
 word to hear it) is deferred to the same milestone: for a fluency trainer
 the emoji anchor suffices, and speech is what a true-beginner stage would
 need first.
@@ -1826,7 +1846,7 @@ need first.
 - **Pure logic lives in DOM-free modules** and is unit-tested with
   `node --test` in `tests/`: adaptive engine (selection weights, re-queue
   timing, box transitions), question generators, scoring/stars, trophy
-  thresholds, i18n lookup/fallback, cookie encode/decode/budget.
+  thresholds, i18n lookup/fallback, state encode/decode/budget.
 - GitHub Actions workflow runs the tests on every push.
 - **i18n completeness test**: every key present in every language, fails CI
   otherwise.
@@ -1835,7 +1855,7 @@ need first.
   does this safely, restoring the file from a copy rather than from git, and
   refusing to claim anything when its pattern matched nothing.
 - Manual checklist per release: fresh-profile smoke test on a real phone,
-  cookie round-trip after browser restart, subpath serving, language toggle
+  state round-trip after browser restart, subpath serving, language toggle
   on every page, SpeechSynthesis on iOS Safari (user-gesture rule), map
   region states at 0/⅓/100 % stars, **and the back gesture mid-round** —
   §10.7 is the one guarantee no emulator can fully confirm.
@@ -1860,7 +1880,7 @@ Rules that keep the implementation on the rails:
 5. **Relative URLs only** (subpath rule, §2).
 6. **All user-visible strings through `t()`** — a hardcoded German or English
    string in JS/HTML (outside i18n files) is a bug.
-7. **Cookie writes only via `storage.js`**; respect the per-game key
+7. **State writes only via `storage.js`**; respect the per-game key
    ownership and the digit-string encodings exactly as specified.
 8. **Numbers in this spec are normative**: thresholds, weights, box counts,
    trophy thresholds, star criteria, level formulas. Do not tune them.
@@ -1917,7 +1937,7 @@ tests, world map page (simple flat-shape version) with all five regions
 tappable, fallback nav, header (language toggle, sound toggle, placeholders
 for level/streak), footer reset. Games may be "coming soon" stubs.
 *Accept:* map renders and scales 360 px→desktop; regions link to game dirs;
-language toggle re-translates the whole page instantly; cookie survives
+language toggle re-translates the whole page instantly; state survives
 reload; site works from a subpath.
 
 **M2 — Einmaleins + shared engines.**
@@ -1939,7 +1959,7 @@ and language; touch-only devices get the hint screen.
 
 **M5 — Vokabeln.** Per §13 with 6 packs.
 *Accept:* all three modes incl. tolerant typed checking; direction flip;
-speech on tap; cookie stays under budget with all packs played.
+speech on tap; state stays under budget with all packs played.
 
 **M6 — Lesen.** Per §14, German content, no speech (§14.6).
 *Accept:* every exercise fully playable without reading UI text; rounds of
@@ -1996,7 +2016,7 @@ all they have. This site has the **knowledge**, so it shows that.
   sight speed). Each game's block appears only once that game has been
   played, and either alone defeats the page's empty state. Lesen keeps no
   `tm`/`rd` practice counters yet, so it has no time table — deliberate:
-  cookie state earns its bytes only with a consumer, and the word cards are
+  stored state earns its bytes only with a consumer, and the word cards are
   the consumer the boxes already pay for.
 - **Practice time is the one clock in the product** (§10.3 keeps it away from
   the child). Aggregated per difficulty as `tm`/`rd`; per question only the
@@ -2011,4 +2031,4 @@ settings gear (§3.4). `resetGame(name)` (and its pure core `withoutGame`) drop
 one game's section (stars, boxes, practice time) **and** its `pr` trophy
 counter, scrub the fox's saved spot if it sat there, and leave every other game,
 the settings and the language untouched. It doubles as the way to tidy a stale
-dev cookie.
+dev state.

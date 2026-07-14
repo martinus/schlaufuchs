@@ -34,7 +34,7 @@ export function createLevelPicker(el, { current, onPick, onDismiss }) {
     onPick,
     onDismiss,
     tilesFor(d) {
-      // read the cookie as it is now, not as it was when the game loaded
+      // read the store as it is now, not as it was when the game loaded
       const savedNow = getGame("einmaleins");
       const starsByDiff = savedNow.stars ?? {};
       const tempoByDiff = savedNow.tempo ?? {};

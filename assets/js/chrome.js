@@ -102,7 +102,7 @@ export function initTopBar({ back = "./", title = null, onChange, onClose, onLea
 //
 // **The same rows on every page that has a gear.** The overlay used to take a
 // `resetKind` and open three different sheets; it is one sheet now, identical
-// everywhere. Reset is per game: one row per game the cookie holds progress for,
+// everywhere. Reset is per game: one row per game the store holds progress for,
 // plus an "everything" row — each a named, two-step confirm. (This is where the
 // reset lives; the parents' view is read-only information, §20.)
 export function initSettingsOverlay({ onChange, onClose } = {}) {
@@ -150,7 +150,7 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
     closeBtn.textContent = t("close");
   }
 
-  // One reset row per game the cookie actually holds progress for (real or a
+  // One reset row per game the store actually holds progress for (real or a
   // stale entry alike), then an "everything" row. Rebuilt on every open, so a
   // game played since last time appears, and a game just cleared drops off.
   function renderResetList() {
@@ -230,7 +230,7 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
     else resetGame(id);
     location.reload();
   });
-  // --- backup (§9.3): the cookie as a file, and the file back as the cookie ---
+  // --- backup (§9.3): the store as a file, and the file back as the store ---
   // Export is harmless and fires at once. Import REPLACES a child's whole
   // progress, so its button arms first, exactly like the reset rows above.
   el.querySelector("#cx-export").addEventListener("click", () => {
@@ -251,7 +251,7 @@ export function initSettingsOverlay({ onChange, onClose } = {}) {
   });
 
   async function importFrom(file) {
-    // Total-or-nothing (storage.js): junk never reaches the cookie, and a
+    // Total-or-nothing (storage.js): junk never reaches the store, and a
     // GOOD file replaces it whole — then the page must start over, because
     // everything in memory (chips, boxes, the round) is now about the old one.
     const state = file ? parseBackup(await file.text()) : null;

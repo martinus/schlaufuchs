@@ -5,7 +5,7 @@
 // paint, the overlay, and its two buttons (OK → level picker, trophy → showcase);
 // only the per-round numbers and the game's own bar/picker come from the caller.
 //
-// What stays per game: computing those numbers (cookie shapes differ, §12/§14)
+// What stays per game: computing those numbers (state shapes differ, §12/§14)
 // and calling `journey.finish()` before `show()` — the walk that precedes the
 // pop belongs to the game's scene, the 700ms wait for it lives here.
 import { t, getLang } from "./i18n.js";
@@ -99,7 +99,7 @@ export function createRoundSummary({ picker, refresh }) {
         sfx.trophy();
       }
       $("sum-ok").textContent = t(SUM_OK_KEYS[Math.floor(Math.random() * SUM_OK_KEYS.length)]);
-      // The stars just changed with the cookie; the chip was rendered at
+      // The stars just changed with the store; the chip was rendered at
       // startRound() and nobody told it. Without this a child reads "⭐ 0" in
       // the top bar while three stars light up beneath it.
       refresh();

@@ -200,7 +200,7 @@ for (const g of GAMES) TROPHIES[g].forEach((s, i) => { s.icon = `trophy-${g}-${i
 
 // Practice time, for the parents' view only (§20) — the child is never shown a
 // clock (§10.3). Aggregated per difficulty, never per question: a per-fact
-// timer would eat the cookie budget and tell a parent nothing the Leitner box
+// timer would eat the state budget and tell a parent nothing the Leitner box
 // does not already say.
 //
 // A round left open on a forgotten tab is not practice, so a single round can
@@ -209,10 +209,10 @@ export const MAX_ROUND_SECONDS = 900;
 
 // The three difficulties are the site's only axis of worth (§10.2): anything
 // that is not 0 (Leicht), 1 (Mittel) or 2 (Schwer) reads as Leicht, so a
-// corrupt cookie can never pay more than the easiest tier.
+// corrupt store can never pay more than the easiest tier.
 export const clampDifficulty = (d) => ([0, 1, 2].includes(d) ? d : 0);
 
-// One practice counter per difficulty, sanitized: whatever the cookie holds,
+// One practice counter per difficulty, sanitized: whatever the store holds,
 // what comes back is three non-negative integers. Shared with the parents'
 // arithmetic (parentstats.js), which reads what `addPractice` writes.
 export const practiceTriple = (v) =>
@@ -292,7 +292,7 @@ export function tilePointsLeft(stars = 0, difficulty = 0) {
 // and could not see that Mittel and Schwer paid more — the two numbers stood in
 // different places and never met. So the weighted counter IS the star count:
 // a star won on Leicht counts 1, on Mittel 2, on Schwer 3, which is precisely
-// what the picker has always claimed with its "×2 ⭐". The cookie is unchanged;
+// what the picker has always claimed with its "×2 ⭐". The store is unchanged;
 // only the word "Punkte" is gone.
 export function gameStarsOf(pr, game) {
   const n = pr?.[game];
@@ -304,14 +304,14 @@ export function totalPoints(pr) {
 }
 
 // Everything the top bar says about the fox (§3.3): the two counters a child
-// collects, read from the cookie.
+// collects, read from the store.
 //
 // There used to be a "level" here (`1 + floor(stars / 10)`), then a progress
 // bar toward the fox's next piece of clothing. Both were second names for the
 // star count, printed beside the star count. What is left is what was actually
 // earned: stars, and the trophies they bought.
 export function foxInfo() {
-  const rewards = getRewards(loadState()); // one cookie parse, two counters
+  const rewards = getRewards(loadState()); // one state parse, two counters
   return {
     stars: totalPoints(rewards.pr),
     trophies: totalTrophies(rewards.pr),
@@ -360,10 +360,10 @@ export function nextTrophyInfo(game, pr) {
 // Called by games at the end of every round (§8). Updates the fox's map
 // position and the per-game star counter; returns the trophies the round won.
 //
-// `streak: undefined` scrubs the daily streak from cookies that still carry
+// `streak: undefined` scrubs the daily streak from stores that still carry
 // it. It was tracked for a year and rendered nowhere (§8.5 — removed), and
 // JSON.stringify drops undefined values, so the field vanishes on the next
-// finished round and its bytes go back to the cookie budget.
+// finished round and its bytes go back to the state budget.
 export function recordRound(game, { points = 0 }) {
   const pr = { ...(getRewards().pr ?? {}) };
   let newTrophies = [];

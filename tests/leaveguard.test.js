@@ -16,7 +16,7 @@ test("a leave attempt mid-round asks before it costs stars", () => {
 
 test("a leave attempt with nothing at stake just goes", () => {
   // the level picker (no session) and the summary (already written to the
-  // cookie) must not put a dialog between a child and the map
+  // store) must not put a dialog between a child and the map
   assert.equal(leaveAction({ inRound: false, confirmOpen: false }), "leave");
 });
 

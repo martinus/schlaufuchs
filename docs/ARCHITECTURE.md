@@ -7,8 +7,8 @@ a page or a game. If the two disagree, SPEC wins and this file has a bug.
 ## The one-paragraph version
 
 A static site: vanilla ES modules, no build step, no dependencies. Every page
-is an HTML shell that loads one entry module; all state lives in one cookie;
-everything a child can earn is derived from that cookie on every load. Code is
+is an HTML shell that loads one entry module; all state lives under one localStorage key;
+everything a child can earn is derived from that store on every load. Code is
 split along one line: **arithmetic is pure and unit-tested, DOM code is thin
 and screenshot-tested.** `node --test` is the only gate.
 
@@ -64,9 +64,9 @@ and `stub.js` renders the rest, throwing loudly on a name it does not know.
 
 ## State
 
-One cookie, `schlaufuchs`, hard-capped at 3500 bytes (`storage.js` refuses
+One localStorage key, `schlaufuchs`, self-capped at 3500 bytes (`storage.js` refuses
 writes over budget — do not add persistent state casually; §9 has the schema).
-Sections: `settings`, `rewards`, and one per game. A page parses the cookie
+Sections: `settings`, `rewards`, and one per game. A page parses the store
 once and hands the parsed state to the section readers.
 
 Everything shown is derived: trophies come from per-game lifetime star
@@ -176,4 +176,5 @@ per-item.
   is the deliberate exception, scrolling inside its sheet); mobile-first from
   360px.
 - Reduced motion is honoured everywhere, with end states intact.
-- Nothing leaves the device: no network after load, no analytics, one cookie.
+- Nothing leaves the device: no network after load, no analytics, one
+  localStorage key (a legacy cookie is adopted once and deleted, §9.1).
