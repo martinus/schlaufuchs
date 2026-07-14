@@ -10,6 +10,7 @@ import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { fastPress } from "../../assets/js/fastpress.js";
 import { blitzFlash } from "../../assets/js/blitz.js";
+import { restartAnimation } from "../../assets/js/anim.js";
 import { createRoundSummary } from "../../assets/js/roundsummary.js";
 import { initTopBar } from "../../assets/js/chrome.js";
 import { createLeaveGuard } from "../../assets/js/leaveguard.js";
@@ -21,7 +22,7 @@ import {
   POOL_COUNT, ROUND_SIZE, tablesFor, DIFF_KEYS, poolFor,
   questionFor, choicesFor, hardnessBoost,
   starsFor, ownedStars, starDigit, withStarDigit, fittedFontSize, retryStep,
-  median, tempoTier, awardTempo, foldRecall,
+  median, tempoTier, awardTempo, foldRecall, divSignHTML as eqHTML,
 } from "./logic.js";
 
 initI18n(strings);
@@ -181,14 +182,6 @@ function fitQuestion() {
   if (fitted !== size) el.style.fontSize = `${fitted}px`;
 }
 
-// German writes division as a colon, and a colon sits on the baseline: between
-// two big numbers "12 : 3" reads as a label and its value, not as a division.
-// Lifted to the optical middle it reads as an operator. "÷" is already centred
-// and never appears here as a colon, so the wrap is a no-op in English.
-function eqHTML(text) {
-  return text.replaceAll(":", '<span class="divsign">:</span>');
-}
-
 function renderQuestion() {
   const shown = input === "" ? "?" : input;
   $("question").innerHTML = eqHTML(question.text).replace(
@@ -309,8 +302,9 @@ function submit(value, mcButton) {
       answerTimes.push(took);
       // a slow first try is an observation too: the parents' recall tracker
       // must see counting, not just recall (§20)
-      recallObs[currentId] = tempoTier(took, diff);
-      if (tempoTier(took, diff) === 3) blitzFlash($("question").parentElement);
+      const tier = tempoTier(took, diff);
+      recallObs[currentId] = tier;
+      if (tier === 3) blitzFlash($("question").parentElement);
     }
     phase = "correct-wait";
     sfx.correct();
@@ -372,11 +366,7 @@ function rejectRetry(el) {
   retry = "";
   renderRetry();
   sfx.wrong();
-  const shake = el ?? $("retry-gap");
-  if (!shake) return;
-  shake.classList.remove("stumbling");
-  void shake.offsetWidth; // restart the animation on a second wrong try
-  shake.classList.add("stumbling");
+  restartAnimation(el ?? $("retry-gap"), "stumbling");
 }
 
 // The only way out of the aid, on every difficulty: the right answer, entered.

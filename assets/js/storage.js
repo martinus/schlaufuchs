@@ -2,6 +2,7 @@
 // Pure encode/decode/budget functions are exported for node --test.
 
 const NAME = "schlaufuchs";
+const COOKIE_RE = new RegExp(`(?:^|;\\s*)${NAME}=([^;]*)`);
 const MAX_AGE = 31536000; // 1 year
 export const BUDGET = 3500; // bytes, hard limit per §9.2
 
@@ -31,7 +32,7 @@ export function patchSection(state, key, patch) {
 
 function readRaw() {
   if (typeof document === "undefined") return "";
-  const m = document.cookie.match(new RegExp(`(?:^|;\\s*)${NAME}=([^;]*)`));
+  const m = document.cookie.match(COOKIE_RE);
   return m ? m[1] : "";
 }
 

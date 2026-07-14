@@ -19,8 +19,8 @@ applyIcons(document); // upgrade static [data-icon] decorations if SVGs exist
 // trophy's own emoji instead — a boot, a circus tent — which read as stray
 // decoration: nobody connects a boot to "trophy". The cup does that job.)
 // A region with no trophy yet shows the cup greyed, the Pokalraum's tease.
-function renderBadge(badgeEl, iconName, count, tier, cups) {
-  badgeEl.innerHTML = iconSVG(iconName, { x: -26, y: 0, size: 12 })
+function renderBadge(badgeEl, count, tier, cups) {
+  badgeEl.innerHTML = iconSVG("ui-star", { x: -26, y: 0, size: 12 })
     + `<text class="region-stars" x="-16" y="0" text-anchor="start">${count}</text>`
     // clearance for a three-digit star count before the cup begins
     + iconSVG("deco-trophy", { x: 12, y: 0, size: 12, cls: cups > 0 ? "" : "cup-ghost" })
@@ -295,7 +295,7 @@ function render() {
         // visitor's map must not throw over an empty pocket (found by smoke.sh:
         // every seeded screenshot had points, only the bare page had none)
         const cups = trophyCount(game, rewards.pr?.[game] ?? 0);
-        renderBadge(badge, "ui-star", gameStarsOf(rewards.pr, game), starBadgeTier(rewards.pr, game), cups);
+        renderBadge(badge, gameStarsOf(rewards.pr, game), starBadgeTier(rewards.pr, game), cups);
       }
     }
     const region = document.getElementById(`region-${game}`);

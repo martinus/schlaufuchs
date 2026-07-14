@@ -16,6 +16,7 @@ import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { fastPress } from "../../assets/js/fastpress.js";
 import { blitzFlash } from "../../assets/js/blitz.js";
+import { restartAnimation } from "../../assets/js/anim.js";
 import { createRoundSummary } from "../../assets/js/roundsummary.js";
 import { initTopBar } from "../../assets/js/chrome.js";
 import { createLeaveGuard } from "../../assets/js/leaveguard.js";
@@ -394,9 +395,7 @@ function retireWrong(btn) {
 // The child tapped something that cannot become the answer (the word/Mittel aid).
 function rejectRetry(el) {
   sfx.wrong();
-  el.classList.remove("stumbling");
-  void el.offsetWidth; // restart the animation on a second wrong try
-  el.classList.add("stumbling");
+  restartAnimation(el, "stumbling");
 }
 
 // The only way out of the aid: the right answer, given. The missed word still

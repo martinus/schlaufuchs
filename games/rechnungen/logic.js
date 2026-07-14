@@ -58,6 +58,7 @@ import {
 export {
   DIFF_KEYS, DIFF_SLUGS, STAR_SLOTS, starNeeds, starsFor, ownedStars,
   TEMPO_SLOTS, TEMPO_ICONS, TEMPO_KEYS, median, awardTempo, fittedFontSize,
+  divSignHTML,
 } from "../../assets/js/roundrules.js";
 
 // The six modes, in picker order (§12.1). These strings ARE the keys of the
