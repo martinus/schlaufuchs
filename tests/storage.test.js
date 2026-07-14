@@ -1,9 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { encodeState, decodeState, overBudget, patchSection, BUDGET, withoutGame, hasGameData, exportState, parseBackup } from "../assets/js/storage.js";
+import { encodeState, decodeState, overBudget, patchSection, BUDGET, withoutGame, hasGameData, exportState, parseBackup, legacyCookieState, loadState, getGame, setGame, resetAll } from "../assets/js/storage.js";
 import { read } from "./pages.js";
 
-test("state roundtrips through the cookie encoding (§9.2)", () => {
+test("state roundtrips through the store encoding (§9.2)", () => {
   const state = {
     v: 1,
     settings: { sound: true, lang: "de" },
@@ -13,23 +13,23 @@ test("state roundtrips through the cookie encoding (§9.2)", () => {
   assert.deepEqual(decodeState(encodeState(state)), state);
 });
 
-// How a field is *removed* from the cookie: patch it with undefined, and
+// How a field is *removed* from the store: patch it with undefined, and
 // JSON.stringify drops it. recordRound retires the dead streak field this way
 // (§8.5) — without this, patchSection's merge would carry a removed field
 // along until the reset button.
-test("patching a section with undefined deletes the key from the cookie", () => {
+test("patching a section with undefined deletes the key from the store", () => {
   const state = { v: 1, rewards: { streak: ["2026-07-08", 4], at: "einmaleins", pr: { einmaleins: 3 } } };
   const scrubbed = decodeState(encodeState(patchSection(state, "rewards", { at: "tippen", streak: undefined })));
   assert.deepEqual(scrubbed.rewards, { at: "tippen", pr: { einmaleins: 3 } }, "the dead field is gone, the live ones stay");
   assert.ok(!encodeState(patchSection(state, "rewards", { streak: undefined })).includes("streak"));
 });
 
-test("corrupt cookie decodes to empty state, never throws (§9.2)", () => {
+test("corrupt stored state decodes to empty state, never throws (§9.2)", () => {
   assert.deepEqual(decodeState("%%%garbage"), {});
   assert.deepEqual(decodeState("not json"), {});
   assert.deepEqual(decodeState(""), {});
-  assert.deepEqual(decodeState(encodeURIComponent('"a string"')), {});
-  assert.deepEqual(decodeState(encodeURIComponent("[1,2]")), {});
+  assert.deepEqual(decodeState('"a string"'), {});
+  assert.deepEqual(decodeState("[1,2]"), {});
 });
 
 test("budget check: realistic full state fits, oversized state is refused", () => {
@@ -87,14 +87,15 @@ test("patchSection merges into one section and copies the rest", () => {
 });
 
 // Regression: `readRaw` matched a hard-coded "schlaufuchs=" while every write
-// used the NAME constant. Renaming the cookie would have made the site forget
-// everything on the next deploy, silently, and only for people who had played.
-test("the cookie is read under the same name it is written", () => {
+// used the NAME constant. Renaming the store's key would have made the site
+// forget everything on the next deploy, silently, and only for people who had
+// played.
+test("the store is read under the same name it is written", () => {
   const src = read("assets/js/storage.js");
   const literals = [...src.matchAll(/"schlaufuchs/g)];
-  assert.equal(literals.length, 1, "the cookie's name is written once, as NAME");
+  assert.equal(literals.length, 1, "the store's key is written once, as NAME");
   assert.match(src, /const NAME = "schlaufuchs"/);
-  assert.ok(!/document\.cookie\.match\(\/[^/]*schlaufuchs/.test(src), "the reader hard-codes the name");
+  assert.ok(!/document\.cookie\.match\(\/[^/]*schlaufuchs/.test(src), "the legacy reader hard-codes the name");
 });
 
 // Per-game reset (§20): remove one game's whole footprint and nothing else.
@@ -115,9 +116,9 @@ test("withoutGame drops a game's section and its trophy counter, keeps the rest"
   assert.deepEqual(next.settings, { sound: false, lang: "de" }, "settings survive");
 
   // the fox was standing on the game we cleared, so its saved spot is scrubbed —
-  // and undefined drops out of the cookie entirely, not written as null
+  // and undefined drops out of the encoding entirely, not written as null
   assert.equal(next.rewards.at, undefined);
-  assert.ok(!encodeState(next).includes("%22at%22"), "at is absent from the cookie, not blanked");
+  assert.ok(!encodeState(next).includes('"at"'), "at is absent from the store, not blanked");
 
   // pure: the caller's state is not mutated
   assert.ok("lesen" in state, "the input state is left intact");
@@ -129,7 +130,7 @@ test("withoutGame keeps the fox's spot when it sat on another game", () => {
   assert.equal(withoutGame(state, "lesen").rewards.at, "einmaleins");
 });
 
-test("withoutGame survives a cookie with no rewards section", () => {
+test("withoutGame survives a state with no rewards section", () => {
   assert.deepEqual(withoutGame({ lesen: { d: 2 } }, "lesen"), {});
   assert.deepEqual(withoutGame({}, "lesen"), {});
 });
@@ -143,11 +144,108 @@ test("hasGameData: a game is resettable if it has a section or a trophy counter"
   assert.equal(hasGameData({ lesen: {} }, "lesen"), false, "an empty section is not progress");
 });
 
+// --- legacy cookie migration (§9.1) --------------------------------------------
+// Until July 2026 the state lived in a cookie, which rode the header of every
+// request to the host. The store must adopt a legacy cookie exactly once and
+// delete it, so a year of stars survives the switch AND stops being sent.
+
+// ESM runs in strict mode and Node may define `localStorage` as an accessor,
+// so a plain assignment could throw — swap globals by descriptor, and put
+// back exactly what was there.
+function withGlobals(t, globals) {
+  for (const [k, v] of Object.entries(globals)) {
+    const prev = Object.getOwnPropertyDescriptor(globalThis, k);
+    Object.defineProperty(globalThis, k, { value: v, configurable: true, writable: true });
+    t.after(() => {
+      if (prev) Object.defineProperty(globalThis, k, prev);
+      else delete globalThis[k];
+    });
+  }
+}
+
+function fakeLocalStorage(init) {
+  const m = new Map(Object.entries(init ?? {}));
+  return {
+    getItem: (k) => (m.has(k) ? m.get(k) : null),
+    setItem: (k, v) => m.set(k, String(v)),
+    removeItem: (k) => m.delete(k),
+  };
+}
+
+// document.cookie's delete API is "assign max-age=0": emulate the one shape
+// storage.js writes, coarsely (a real browser would delete one cookie, not all).
+function fakeDocument(cookie) {
+  return {
+    _c: cookie,
+    get cookie() { return this._c; },
+    set cookie(v) { this._c = /max-age=0/.test(v) ? "" : this._c; },
+  };
+}
+
+test("legacyCookieState reads only real state out of a cookie header", () => {
+  const enc = encodeURIComponent(JSON.stringify({ v: 1, lesen: { d: 1 } }));
+  assert.deepEqual(legacyCookieState(`a=b; schlaufuchs=${enc}`), { v: 1, lesen: { d: 1 } });
+  assert.equal(legacyCookieState("a=b"), null);
+  assert.equal(legacyCookieState(""), null);
+  assert.equal(legacyCookieState(undefined), null);
+  assert.equal(legacyCookieState("schlaufuchs="), null);
+  assert.equal(legacyCookieState("schlaufuchs=%%%bad"), null, "malformed percent-encoding is not state");
+  assert.equal(legacyCookieState(`schlaufuchs=${encodeURIComponent("[1,2]")}`), null, "junk is not state");
+  assert.equal(legacyCookieState(`schlaufuchs=${encodeURIComponent("{}")}`), null, "an empty object is nothing to migrate");
+});
+
+test("a legacy cookie is adopted into an empty store, then deleted (§9.1)", (t) => {
+  const state = { v: 1, einmaleins: { d: 1, t: 7, box: "342" }, rewards: { pr: { einmaleins: 5 } } };
+  withGlobals(t, {
+    document: fakeDocument(`other=1; schlaufuchs=${encodeURIComponent(JSON.stringify(state))}`),
+    localStorage: fakeLocalStorage(),
+  });
+  assert.deepEqual(loadState().einmaleins, state.einmaleins, "a year of stars survives the switch");
+  assert.equal(JSON.parse(globalThis.localStorage.getItem("schlaufuchs")).rewards.pr.einmaleins, 5, "the store now holds it, as plain JSON");
+  assert.ok(!globalThis.document.cookie.includes("schlaufuchs="), "the cookie is deleted — it rode every request header");
+});
+
+test("the store wins over a lingering cookie; the cookie is still deleted", (t) => {
+  withGlobals(t, {
+    document: fakeDocument(`schlaufuchs=${encodeURIComponent(JSON.stringify({ v: 1, lesen: { d: 0 } }))}`),
+    localStorage: fakeLocalStorage({ schlaufuchs: JSON.stringify({ v: 1, lesen: { d: 2 } }) }),
+  });
+  assert.deepEqual(loadState().lesen, { d: 2 }, "the store is written by newer code, so it wins");
+  assert.ok(!globalThis.document.cookie.includes("schlaufuchs="), "a stale cached page must not keep the state in flight");
+});
+
+test("writes land in localStorage, never in a cookie", (t) => {
+  withGlobals(t, { document: fakeDocument(""), localStorage: fakeLocalStorage() });
+  assert.equal(setGame("einmaleins", { d: 2 }), true);
+  assert.equal(JSON.parse(globalThis.localStorage.getItem("schlaufuchs")).einmaleins.d, 2);
+  assert.equal(JSON.parse(globalThis.localStorage.getItem("schlaufuchs")).v, 1, "every write is stamped");
+  assert.equal(globalThis.document.cookie, "", "nothing is ever sent to the host again");
+  assert.deepEqual(getGame("einmaleins"), { d: 2 });
+});
+
+test("resetAll clears the store and any legacy cookie", (t) => {
+  withGlobals(t, {
+    document: fakeDocument("schlaufuchs=leftover"),
+    localStorage: fakeLocalStorage({ schlaufuchs: JSON.stringify({ v: 1, einmaleins: { d: 1 } }) }),
+  });
+  resetAll();
+  assert.equal(globalThis.localStorage.getItem("schlaufuchs"), null);
+  assert.ok(!globalThis.document.cookie.includes("schlaufuchs="), "a reset that left the cookie behind would resurrect it");
+  assert.deepEqual(loadState(), {});
+});
+
+test("blocked or absent storage degrades to an empty session, never a crash", (t) => {
+  const bomb = new Proxy({}, { get() { throw new Error("blocked"); } });
+  withGlobals(t, { localStorage: bomb, document: fakeDocument("") });
+  assert.deepEqual(loadState(), {});
+  assert.equal(setGame("einmaleins", { d: 1 }), true, "the write is accepted; it just does not persist");
+});
+
 // --- backup (§9.3) -------------------------------------------------------------
-// The whole site lives in one cookie on one device: a cleared cache or a new
-// phone deletes a year of stars, silently. The backup is that cookie as a
+// The whole site lives in one store on one device: a cleared cache or a new
+// phone deletes a year of stars, silently. The backup is that state as a
 // file, and the restore is total-or-nothing: junk, arrays, or an oversized
-// state must come back null — never half-written into the cookie.
+// state must come back null — never half-written into the store.
 
 test("a backup roundtrips: what exportState writes, parseBackup accepts", () => {
   const state = {
@@ -180,11 +278,11 @@ test("the gear offers the backup, adult-side, with the same two-step confirm", (
   assert.match(src, /download = "schlaufuchs-fortschritt\.json"/);
   assert.match(src, /exportState\(\)/);
   // import: total-or-nothing through parseBackup, then a reload — the page's
-  // in-memory state is stale the moment the cookie is replaced
+  // in-memory state is stale the moment the store is replaced
   assert.match(src, /parseBackup\(/);
   assert.match(src, /replaceState\(/);
   const imp = src.slice(src.indexOf("function importFrom"), src.indexOf("closeBtn.addEventListener"));
-  assert.match(imp, /location\.reload\(\)/, "a restored cookie needs a fresh page");
+  assert.match(imp, /location\.reload\(\)/, "a restored state needs a fresh page");
   // overwriting a child's progress is the destructive act here: the import
   // button arms first, exactly like the reset rows
   assert.match(src, /id="cx-import"[^>]*data-armable/, "the import must arm before it fires");

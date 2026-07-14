@@ -860,9 +860,9 @@ test("the recall digits never surface in the child's own UI", () => {
   }
 });
 
-// The cookie carries a second digit-string family now. It must stay far from
+// The store carries a second digit-string family now. It must stay far from
 // the 3500-byte budget even at its fullest (§9.2, §10.4).
-test("a maxed einmaleins section stays a small fraction of the cookie budget", () => {
+test("a maxed einmaleins section stays a small fraction of the state budget", () => {
   const full11 = { 0: "3".repeat(11), 1: "3".repeat(11), 2: "3".repeat(11) };
   const maxed = {
     d: 2, t: 0, box: "4".repeat(100), stars: full11, tempo: full11,

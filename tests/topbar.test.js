@@ -119,7 +119,7 @@ test("every gear on this site opens the same settings sheet", () => {
   assert.ok(!chrome.includes("resetKind"), "chrome.js still branches on resetKind");
   assert.ok(!/\$\{resetKind \?/.test(chrome));
 
-  // reset is a per-game list in that one sheet (§3.4): a row per game the cookie
+  // reset is a per-game list in that one sheet (§3.4): a row per game the store
   // holds progress for, plus an "everything" row, each a two-step confirm
   assert.match(chrome, /<div class="resetlist" id="cx-resetlist">/, "the reset list is unconditional markup");
   assert.match(chrome, /resetList\.addEventListener\("click"/, "…and it is always wired");

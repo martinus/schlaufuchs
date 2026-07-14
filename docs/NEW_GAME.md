@@ -6,7 +6,7 @@ re-running the suite. Work through it top to bottom; `rechnungen`, `tippen`
 and `vokabeln` will hit exactly these mines.
 
 Read first: `docs/SPEC.md` §7 (adaptive engine), §8 (motivation/stars/
-trophies), §9.2 (cookie budget), and the game's own § section. The reference
+trophies), §9.2 (state budget), and the game's own § section. The reference
 implementations are `games/einmaleins/` (keypad input, tempo ladder) and
 `games/lesen/` (choice input, data-driven content).
 
@@ -34,7 +34,7 @@ Copy-adapt from einmaleins/lesen; keep the element ids (`#pick-overlay`,
   and its two buttons + the 700ms celebration timer): create it with
   `createRoundSummary({ picker, refresh: () => bar.refresh() })` and call
   `show({ old, stars, improved, diff, tier, tempoImproved, trophies })`. The
-  leave guard trusts `roundOver` to mean "cookie written" — so the persist must
+  leave guard trusts `roundOver` to mean "state saved" — so the persist must
   finish before `showSummary`, whose timer is what actually opens the sheet.
 - `games/<name>/logic.js` — pure, unit-tested. The star/tempo rules, the
   aid's retry and the one-line fitter are **shared**: re-export what the game
@@ -91,10 +91,10 @@ for a PLAYABLE game.
 - [ ] Icons never inside `[data-i18n]` elements (`translateDOM` overwrites
   textContent).
 
-## 4. Cookie, cache, deploy
+## 4. State, cache, deploy
 
-- [ ] Cookie section per §9.2; add a budget test (maxed section small, and
-  everything-maxed-together `< BUDGET` — see "cookie budget" in
+- [ ] State section per §9.2; add a budget test (maxed section small, and
+  everything-maxed-together `< BUDGET` — see "state budget" in
   tests/lesen.test.js).
 - [ ] `node tools/version-assets.js dev` regenerates every importmap (the
   real version is stamped by deploy.yml at publish time — no hand-bump). The
@@ -108,7 +108,7 @@ for a PLAYABLE game.
 
 Decide what the game reports and update `parents.js`/`parentstats.js` (pure
 helpers + tests), or consciously skip and leave the copy honest. State with
-no consumer is dead cookie bytes — don't write `tm`/`rd`-style counters
+no consumer is dead state bytes — don't write `tm`/`rd`-style counters
 until the view renders them.
 
 ## 6. Driver and verification

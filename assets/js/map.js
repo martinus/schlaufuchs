@@ -207,7 +207,7 @@ function soonBubble(region) {
 // --- the fox and its walk (§3.1) --------------------------------------------
 
 // Which anchor the fox is standing on right now. `render()` seeds it from the
-// cookie; the walk moves it. Kept here rather than re-read from storage, because
+// store; the walk moves it. Kept here rather than re-read from storage, because
 // a walk that starts from anywhere but the fox's actual feet is a teleport.
 let foxAt = "einmaleins";
 let walking = false;
@@ -279,7 +279,7 @@ document.querySelector(".worldmap")?.addEventListener("click", (e) => {
 
 function render() {
   const state = loadState();
-  // one cookie parse for the whole map, not one per section
+  // one state parse for the whole map, not one per section
   const rewards = getRewards(state);
 
   // region star badges and visual states

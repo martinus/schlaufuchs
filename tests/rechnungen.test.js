@@ -526,9 +526,9 @@ test("maxPoints is computed from the real tiles: 6·(3·1+3·2+3·3) = 108", () 
   assert.ok(THRESHOLDS.rechnungen[0] <= 3, "a first sitting reaches the first trophy");
 });
 
-// --- cookie budget (§9.2) -----------------------------------------------------
+// --- state budget (§9.2) -----------------------------------------------------
 
-test("a maxed rechnungen section stays a small fraction of the cookie budget", () => {
+test("a maxed rechnungen section stays a small fraction of the state budget", () => {
   const modeStars = Object.fromEntries(MODES.map((m) => [m, "3".repeat(DIFF_SLOTS)]));
   const maxed = {
     d: 2, m: "mix",

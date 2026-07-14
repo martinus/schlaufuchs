@@ -9,7 +9,8 @@ maps the code — layers, dependency rules, testing kinds, extension recipes.
 A static website of educational browser games for children (ages 5–15),
 framed as an illustrated world map. Live at https://schlaufuchs.ankerl.com.
 Fully client-side: vanilla HTML/CSS/JS, **no build step, no dependencies, no
-framework**. Progress is stored in a single cookie. Hosted on GitHub Pages.
+framework**. Progress is stored under a single localStorage key. Hosted on
+GitHub Pages.
 
 ## Commands
 
@@ -57,8 +58,11 @@ plays until the summary is up. Options:
 
 It returns a trace of every question and of the scene after each one;
 `readScene()` and `readSummary()` are also available as separate `eval` steps.
-Seed state through the cookie (difficulty `d`, table `t`, `stars`, `tempo` —
-see the recipe below), and read results back out of `document.cookie`. Two
+Seed state through a cookie (difficulty `d`, table `t`, `stars`, `tempo` —
+see the recipe below): the page adopts it into localStorage on load (§9.1),
+so `--cookie` keeps working in shoot.mjs's fresh profile. Read results back
+with `--do 'eval localStorage.getItem("schlaufuchs")'` — the cookie itself is
+deleted after adoption, so `document.cookie` reads empty. Two
 traps: every post-answer wait must outlive the game's 250ms correct-wait
 transition (`SETTLE = 350` in play.js — on Leicht a shorter wait re-reads the
 same question and silently swallows `wrongAt`), and the trailing duplicate
@@ -272,17 +276,19 @@ title). Never write bar markup into a page; `tests/topbar.test.js` fails on it.
 Shared modules in `assets/js/`:
 - `i18n.js` — `initI18n`, `t(key, params)`, `setLang`; `translateDOM` sets
   `textContent` on `[data-i18n]` and `aria-label` on `[data-i18n-label]`.
-- `storage.js` — the single cookie `schlaufuchs`. Pure encode/decode +
-  `patchSection` + typed section readers (`getSettings`/`getRewards` take an
-  optional already-loaded state, so a page parses the cookie once). **Hard
-  3500-byte budget** (`BUDGET`); writes over budget are refused. Do not add
-  persistent state casually.
+- `storage.js` — the single localStorage key `schlaufuchs`; a legacy cookie
+  of the same name is adopted once and deleted (§9.1), which is what keeps
+  `--cookie` seeding alive. Pure encode/decode + `patchSection` + typed
+  section readers (`getSettings`/`getRewards` take an optional already-loaded
+  state, so a page parses the store once). **Hard 3500-byte budget**
+  (`BUDGET`), a self-commitment kept from the cookie era; writes over budget
+  are refused. Do not add persistent state casually.
 - `rewards.js` — stars, trophies, region/badge state. Pure functions are
   exported and unit-tested: `trophyCount(game, pr)`, `totalTrophies`,
   `totalPoints(pr)`, `starBadgeTier(pr, game)`, `nextTrophyInfo(game, pr)`.
   **The trophy ladder is per game**: `THRESHOLDS[game]`, scaled by
   `ladderFor(MAX_POINTS[game])` from the einmaleins curve. `foxInfo()` reads the
-  cookie and returns the two numbers the top bar shows: `{stars, trophies}`.
+  store and returns the two numbers the top bar shows: `{stars, trophies}`.
   **⭐ is the site's only currency.** `rewards.pr` is the weighted star counter
   (Leicht 1, Mittel 2, Schwer 3); internally the code says `points`, the UI
   never does. `MAX_POINTS` is its denominator everywhere and is a **guess** for

@@ -410,7 +410,7 @@ function endRound() {
     d: diff, t: table, box: boxesToString(full, POOL_COUNT), stars: starsObj,
     tempo: tempoObj, rc: foldRecall(saved.rc, recallObs), ...practice,
   });
-  // the round is in the cookie now; its mirror has nothing left to protect
+  // the round is in the store now; its mirror has nothing left to protect
   clearRound("einmaleins");
 
   // points come from progress, never from repetition (§8.3)
@@ -428,7 +428,7 @@ $("pickchip").addEventListener("click", picker.open);
 // --- leaving a round that is not saved yet (§10.7) ---------------------------
 // A round lives in memory until `endRound()` writes it, but it is only worth a
 // dialog once an answer was given: the picker (no session), the summary (round
-// over, cookie written) and a round the child has merely looked at all have
+// over, state saved) and a round the child has merely looked at all have
 // nothing to lose, and are left without a question.
 // A CONFIRMED leave also drops the round's mirror — "Zur Karte" on the sheet
 // means it; every other way off the page is an accident to resume from.

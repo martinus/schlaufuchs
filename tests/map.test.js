@@ -258,7 +258,7 @@ test("a fogged region carries no star badge", () => {
   assert.match(render, /if \(locked\) badge\.replaceChildren\(\);/);
   assert.ok(render.includes("const cups = trophyCount(game, rewards.pr?.[game] ?? 0)"),
     "…and a playable region keeps its badge — counting cups without throwing on a "
-    + "fresh cookie, where rewards.pr does not exist yet (smoke.sh caught exactly that)");
+    + "fresh store, where rewards.pr does not exist yet (smoke.sh caught exactly that)");
   // …which also carries the trophy count in the fox chip's own grammar
   // ("⭐ N 🏆 M") — the latest trophy's own emoji read as stray decoration.
   assert.ok(mapJs.includes('iconSVG("deco-trophy"'), "the badge must show THE cup, not a trophy's item emoji");

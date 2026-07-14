@@ -100,7 +100,7 @@ export function groupState(boxes) {
   return solid ? "solid" : "open";
 }
 
-// Practice time per difficulty, plus totals. Reads whatever the cookie holds,
+// Practice time per difficulty, plus totals. Reads whatever the store holds,
 // including nothing at all: a parent opening this page before the child has
 // played must see zeroes, not a crash. `practiceTriple` is the same sanitizer
 // `addPractice` writes through, so reader and writer cannot drift.

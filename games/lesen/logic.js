@@ -113,7 +113,7 @@ export function packsFor(difficulty, content) {
 
 // Item ids for one tile: a primary pack's items UNION every extension of its
 // theme, or the difficulty's whole union for the "Alle" tile. A tile index the
-// difficulty does not offer reads as "Alle", so a corrupt cookie can never open
+// difficulty does not offer reads as "Alle", so a corrupt store can never open
 // an empty round.
 export function poolFor(difficulty, pack, content) {
   const dp = diffPacks(difficulty, content);

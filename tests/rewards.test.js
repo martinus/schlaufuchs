@@ -27,7 +27,7 @@ test("the games a child can play shelve first", () => {
 const EM = [2, 6, 12, 20, 29, 39, 50, 62, 75, 88, 100, 112];
 
 test("einmaleins keeps the ladder its players have been climbing (§8.3)", () => {
-  // No child may lose a trophy they have already won: the counter in the cookie
+  // No child may lose a trophy they have already won: the counter in the store
   // is points, and the trophies are derived from it on every load.
   assert.deepEqual(THRESHOLDS.einmaleins, EM);
 });
@@ -116,7 +116,7 @@ test("every game has exactly 12 trophies with de+en names (§8.3)", () => {
   }
 });
 
-// The top bar shows this number, so an empty cookie must produce a 0 and not a
+// The top bar shows this number, so an empty store must produce a 0 and not a
 // NaN: `pr` is absent on a first visit and holds only the games ever played.
 test("trophies are counted across every game (§8.3)", () => {
   assert.equal(TOTAL_TROPHIES, 60, "five games × twelve trophies");
@@ -140,14 +140,14 @@ test("clampDifficulty: anything that is not a real tier reads as Leicht", () => 
 });
 
 // The daily streak is gone (§8.5): a year of tracking that nothing ever
-// rendered. It is not enough to stop writing it — cookies in the wild still
+// rendered. It is not enough to stop writing it — stores in the wild still
 // carry the field, and patchSection merges, so without the scrub those bytes
 // would ride along until the reset button. The mechanism (undefined drops a
 // key through JSON.stringify) is tested in storage.test.js.
 test("recordRound scrubs the removed streak field, and nothing computes one", () => {
   const src = read("assets/js/rewards.js");
   assert.match(src, /setRewards\(\{ at: game, pr, streak: undefined \}\)/,
-    "every finished round must clean the dead field out of the cookie");
+    "every finished round must clean the dead field out of the store");
   for (const dead of ["updateStreak", "todayLocalISO", "STREAK_MILESTONES", "streakMilestone"]) {
     assert.ok(!src.includes(dead), `${dead} survived the streak removal`);
   }
@@ -157,11 +157,11 @@ test("recordRound scrubs the removed streak field, and nothing computes one", ()
 // counts a Leicht star as 1, a Mittel star as 2 and a Schwer star as 3, which
 // is exactly what the picker has always promised with its "×2 ⭐".
 test("totalPoints adds up the one currency there is", () => {
-  assert.equal(totalPoints(undefined), 0, "an empty cookie owns nothing");
+  assert.equal(totalPoints(undefined), 0, "an empty store owns nothing");
   assert.equal(totalPoints({}), 0);
   assert.equal(totalPoints({ einmaleins: 12, tippen: 4 }), 16);
   assert.equal(totalPoints({ einmaleins: 12, nosuchgame: 999 }), 12, "only the five games count");
-  // junk in the cookie must not print "NaN ⭐" in the top bar
+  // junk in the store must not print "NaN ⭐" in the top bar
   for (const junk of [null, "7", NaN, -3, Infinity, {}, []]) {
     assert.equal(totalPoints({ einmaleins: junk }), 0, `pr.einmaleins = ${String(junk)}`);
   }
@@ -439,7 +439,7 @@ test("addPractice refuses nonsense: a forgotten tab is not practice", () => {
     assert.equal(r.rd[0], 1, `seconds=${String(bad)} must still bank the round`);
   }
 
-  // a corrupted cookie must not crash the parents' page
+  // a corrupted state must not crash the parents' page
   for (const junk of [null, "x", [1, 2], [1, 2, 3, 4], { 0: 1 }, [-1, "a", NaN]]) {
     const r = addPractice({ tm: junk, rd: junk }, 0, 5);
     assert.equal(r.tm.length, 3);

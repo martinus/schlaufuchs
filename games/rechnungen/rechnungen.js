@@ -593,7 +593,7 @@ function endRound() {
   if (tempoImproved) tempoObj[mode] = withStarDigit(tempoObj[mode], diff, newTempo);
 
   setGame("rechnungen", { d: diff, m: mode, box, stars: starsObj, tempo: tempoObj });
-  // the round is in the cookie now; its mirror has nothing left to protect
+  // the round is in the store now; its mirror has nothing left to protect
   clearRound("rechnungen");
 
   // points come from progress, never from repetition (§8.3)

@@ -8,7 +8,7 @@
 // adapters now. What stays per game is what a tile IS: `tilesFor(d)` returns
 // one difficulty's tiles — einmaleins' tables, lesen's packs, rechnungen's
 // modes — each as `{ id, face, name, left, tempo }`, read fresh from the
-// cookie on every open. `id` is opaque here: it only round-trips through
+// store on every open. `id` is opaque here: it only round-trips through
 // `current()`/`onPick`, so a number (a table) and a string (a mode) both work.
 //
 // The picker used to be two controls: three difficulty buttons on top, and one
@@ -98,7 +98,7 @@ export function winFlightHTML(from, to, difficulty) {
 //                      childless stage should do (start a round, or reopen the
 //                      summary behind it)
 //   tilesFor(d)      — one difficulty's tiles, in tile order, fresh from the
-//                      cookie: { id, face (markup on the tile), name (the
+//                      store: { id, face (markup on the tile), name (the
 //                      spoken name), left (stars still to give), tempo (tier) }
 export function createLevelPicker(el, { current, onPick, onDismiss, tilesFor }) {
   const list = el.querySelector("#pick-levels");

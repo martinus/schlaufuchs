@@ -186,7 +186,7 @@ export function recallStep(digit, tier) {
 
 // Fold one round's observations ({id: tier}, first-try-correct answers only)
 // into the recall string. Total, and sanitizing: whatever comes in, what goes
-// back to the cookie is always `count` digits of 0–4 — a corrupt slot reads
+// back to the store is always `count` digits of 0–4 — a corrupt slot reads
 // (and is rewritten) as "never timed", never carried along.
 export function foldRecall(str, obs, count = POOL_COUNT) {
   const s = String(str ?? "").padEnd(count, "0").split("").slice(0, count)

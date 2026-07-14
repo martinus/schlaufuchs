@@ -10,14 +10,16 @@ import { abs, read, PAGES, hasFoxBar } from "./pages.js";
 
 test("the privacy page exists and says the things it must say", () => {
   assert.ok(existsSync(abs("privacy.html")));
-  for (const k of ["privacyTitle", "privacyCookieH", "privacyNoTrackH", "privacyHostingH",
+  for (const k of ["privacyTitle", "privacyStorageH", "privacyNoTrackH", "privacyHostingH",
     "privacyDeleteH", "privacyLink"]) {
     assert.equal(typeof de[k], "string", `de.js is missing ${k}`);
     assert.equal(typeof en[k], "string", `en.js is missing ${k}`);
   }
-  // it explains the cookie by name, in both languages
-  assert.match(de.privacyCookieBody, /schlaufuchs/);
-  assert.match(en.privacyCookieBody, /schlaufuchs/);
+  // it names the store, in both languages — and what it promises must be true:
+  // localStorage is never transmitted, so the state may not live in a cookie
+  assert.match(de.privacyStorageBody, /schlaufuchs/);
+  assert.match(en.privacyStorageBody, /schlaufuchs/);
+  assert.match(read("assets/js/storage.js"), /localStorage/, "the promise is only true over localStorage");
 });
 
 // No page is a dead end for privacy. Privacy left the gear (it lives on the
