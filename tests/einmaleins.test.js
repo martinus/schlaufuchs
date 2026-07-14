@@ -203,15 +203,17 @@ test("the aid reprints the question that was asked, not a new one", () => {
 // middle — in the question AND in the aid, which prints the same equation twice.
 test("the division colon is lifted wherever the equation is drawn", () => {
   const src = read("games/einmaleins/einmaleins.js");
+  const rules = read("assets/js/roundrules.js");
   const css = read("assets/css/schlaufuchs.css");
-  assert.match(src, /function eqHTML/);
+  // the transform is the shared divSignHTML (roundrules.js), imported here as eqHTML
+  assert.match(src, /divSignHTML as eqHTML/);
   for (const caller of ["function renderQuestion", "function showFeedback"]) {
     const fn = src.slice(src.indexOf(caller), src.indexOf(caller) + 700);
     assert.match(fn, /eqHTML\(/, `${caller} draws an unlifted colon`);
   }
   // "÷" is already centred, so only the colon may ever be wrapped
-  assert.match(src, /replaceAll\(":"/);
-  assert.ok(!/replaceAll\("÷"/.test(src), "the English sign must not be moved");
+  assert.match(rules, /replaceAll\(":"/);
+  assert.ok(!/replaceAll\("÷"/.test(rules), "the English sign must not be moved");
   assert.match(css, /\.question \.divsign,\s*\n\.feedback-aid \.divsign \{/, "both places, one rule");
 });
 
@@ -788,8 +790,10 @@ test("the tempo ladder is wired: first tries only, symbol only above nothing", (
   assert.match(src, /tempo: tempoObj/);
   // the picker draws a badge only when there is one; tier 0 draws NOTHING
   assert.match(read("assets/js/levelpicker.js"), /const badge = tempo > 0\n\s*\? `<span class="ttempo"/);
-  // the ⚡ moment: a single rocket-speed answer, marked as it lands
-  assert.match(src, /tempoTier\(took, diff\) === 3\) blitzFlash\(/);
+  // the ⚡ moment: a single rocket-speed answer, marked as it lands. The tier is
+  // computed once and reused for the ⚡ and the recall observation below.
+  assert.match(src, /const tier = tempoTier\(took, diff\)/);
+  assert.match(src, /if \(tier === 3\) blitzFlash\(/);
   // the summary line exists in the sheet
   assert.match(read("games/einmaleins/index.html"), /id="sum-tempo"/);
   // the three faces live in the registry, with their emoji fallbacks
@@ -836,7 +840,8 @@ test("foldRecall: a round's observations land in the right slots, junk does not"
 
 test("the recall tracker is wired: observed on first tries, folded at round end", () => {
   const src = read("games/einmaleins/einmaleins.js");
-  assert.match(src, /recallObs\[currentId\] = tempoTier\(took, diff\)/);
+  assert.match(src, /const tier = tempoTier\(took, diff\)/);
+  assert.match(src, /recallObs\[currentId\] = tier/);
   assert.match(src, /recallObs = \{\}/, "…and the observations reset with the round");
   assert.match(src, /rc: foldRecall\(saved\.rc, recallObs\)/);
 });

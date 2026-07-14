@@ -14,7 +14,7 @@ import {
 export {
   DIFF_KEYS, DIFF_SLUGS, STAR_SLOTS, starNeeds, starsFor, ownedStars,
   TEMPO_SLOTS, TEMPO_ICONS, TEMPO_KEYS, median, awardTempo,
-  retryStep, fittedFontSize,
+  retryStep, fittedFontSize, divSignHTML,
 } from "../../assets/js/roundrules.js";
 
 // Canonical item order for the box digit string: 100 pairs,

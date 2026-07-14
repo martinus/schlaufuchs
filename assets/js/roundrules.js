@@ -147,6 +147,15 @@ export function retryStep(input, key, answer, maxLen = 3) {
   return { input: cur.length < maxLen ? cur + key : cur, state: "typing" };
 }
 
+// German writes division as a colon, and a colon sits on the baseline: between
+// two big numbers "12 : 3" reads as a label and its value, not as a division.
+// Lifted to the optical middle (the `.divsign` span) it reads as an operator.
+// "÷" is already centred and never appears here as a colon, so the wrap is a
+// no-op in English. Shared by the two keypad games that print equations.
+export function divSignHTML(text) {
+  return text.replaceAll(":", '<span class="divsign">:</span>');
+}
+
 // The question must always stay on one line (§10.1). Given the size the CSS
 // wishes for, the width the text needs at that size, and the width available,
 // return the size to use: unchanged when it already fits, otherwise shrunk to

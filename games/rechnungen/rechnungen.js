@@ -23,6 +23,7 @@ import { createJourney } from "../../assets/js/journey.js";
 import { sfx } from "../../assets/js/audio.js";
 import { fastPress } from "../../assets/js/fastpress.js";
 import { blitzFlash } from "../../assets/js/blitz.js";
+import { restartAnimation } from "../../assets/js/anim.js";
 import { createRoundSummary } from "../../assets/js/roundsummary.js";
 import { initTopBar } from "../../assets/js/chrome.js";
 import { createLeaveGuard } from "../../assets/js/leaveguard.js";
@@ -34,7 +35,7 @@ import {
   MODES, BUCKET_COUNT, DIFF_KEYS, sign,
   roundSizeFor, poolFor, bucketOf, questionFor, foldBoxes, mauerAidFor, quadAidFor,
   starsFor, ownedStars, starDigit, withStarDigit,
-  fittedFontSize, retryStep, median, tempoTier, awardTempo,
+  fittedFontSize, retryStep, median, tempoTier, awardTempo, divSignHTML as eqHTML,
 } from "./logic.js";
 
 initI18n(strings);
@@ -208,13 +209,6 @@ function fitQuestion() {
   if (fitted !== size) el.style.fontSize = `${fitted}px`;
 }
 
-// German writes division as a colon, and a colon sits on the baseline: lifted
-// to the optical middle it reads as an operator. "÷" is already centred, so the
-// wrap is a no-op in English. (The minus "−" and times "×" already sit centred.)
-function eqHTML(text) {
-  return text.replaceAll(":", '<span class="divsign">:</span>');
-}
-
 // --- rendering a task ---------------------------------------------------------
 // Every fillable slot is a `.cell` span with its index in `data-cell`; the one
 // being answered wears `.active` and echoes the typed digits. Cells before it
@@ -386,11 +380,7 @@ document.addEventListener("keydown", (e) => {
 // on the fresh element; under reduced motion the animation is killed and the
 // wrong-sound alone carries the message.
 function shakeActiveCell() {
-  const el = $("question").querySelector(".cell.active");
-  if (!el) return;
-  el.classList.remove("stumbling");
-  void el.offsetWidth; // restart the animation on a second slip… of the eye
-  el.classList.add("stumbling");
+  restartAnimation($("question").querySelector(".cell.active"), "stumbling");
 }
 
 // The ⚡ (blitz.js) is appended to the stage, not the question — renderQuestion
@@ -559,11 +549,7 @@ function rejectRetry() {
   retry = "";
   renderRetry();
   sfx.wrong();
-  const shake = $("retry-gap");
-  if (!shake) return;
-  shake.classList.remove("stumbling");
-  void shake.offsetWidth; // restart the animation on a second wrong try
-  shake.classList.add("stumbling");
+  restartAnimation($("retry-gap"), "stumbling");
 }
 
 // The only way out of the aid: the right answer, entered. The task carries on
