@@ -443,6 +443,7 @@ const guard = createLeaveGuard({
 // open (§3.4).
 const bar = initTopBar({
   back: "../../",
+  help: "einmaleins",
   // The map button is one tap from the keypad, and Mara found it mid-round.
   onLeave: guard.guardLink,
   onChange() {

@@ -349,6 +349,6 @@ function render() {
 // Its gear opens the one settings sheet every page shares (§3.4). initTopBar
 // repaints the fox chip itself on every settings change; `render` only has to
 // redraw the island.
-initTopBar({ back: null, onChange: render });
+initTopBar({ back: null, help: "map", onChange: render });
 
 render();

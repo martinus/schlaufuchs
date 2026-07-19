@@ -617,6 +617,7 @@ const guard = createLeaveGuard({
 // --- the shared top bar (§3.3) ----------------------------------------------
 const bar = initTopBar({
   back: "../../",
+  help: "rechnungen",
   onLeave: guard.guardLink,
   onChange() {
     updateChip();
