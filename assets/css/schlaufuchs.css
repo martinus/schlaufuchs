@@ -688,12 +688,15 @@ footer p { margin: 0; }
   align-items: center;
   justify-content: center;
   min-height: 1.55em;
-  /* A hair more room below than above: descenderless digits carry their weight
-     above the baseline, so a symmetric box seats them optically high (Martin,
-     2026-07-19). line-height:1 drops the reserved descent the flex box centres
-     around; the extra bottom padding nudges the ink back to the true middle. */
+  /* Seat the numeral optically, not geometrically (Martin, 2026-07-19). The
+     flex box centres the whole LINE box, but Grandstander's digits and "?" sit
+     ~16-17px above the baseline and barely 0-1px below it (measured), so their
+     ink centres ~0.2em above the line-box centre — the glyph reads high. Bias
+     the padding the other way — more above than below, in em so it tracks the
+     clamped font-size — to drop the ink to the true middle. line-height:1 first
+     strips the natural leading the box would otherwise centre around. */
   line-height: 1;
-  padding: 3px 8px 5px;
+  padding: 0.32em 8px 0.1em;
   border-radius: 10px;
 }
 /* One frame, three states, told by colour (Martin, 2026-07-19):
