@@ -46,10 +46,9 @@ const svg = (vb, inner) =>
 // the eye follows the rule; every other brick is calm --depth.
 function wallBrick(x, y, label, hot) {
   const fill = hot ? "var(--orange-soft)" : "var(--depth-soft)";
-  const stroke = hot ? "var(--orange)" : "var(--depth)";
-  const tcol = hot ? "var(--orange)" : "var(--depth)";
-  return `<rect x="${x}" y="${y}" width="64" height="40" rx="9" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`
-    + `<text x="${x + 32}" y="${y + 27}" text-anchor="middle" font-size="21" font-weight="800" fill="${tcol}">${label}</text>`;
+  const line = hot ? "var(--orange)" : "var(--depth)"; // stroke and number share it
+  return `<rect x="${x}" y="${y}" width="64" height="40" rx="9" fill="${fill}" stroke="${line}" stroke-width="2.5"/>`
+    + `<text x="${x + 32}" y="${y + 27}" text-anchor="middle" font-size="21" font-weight="800" fill="${line}">${label}</text>`;
 }
 
 // The wall the Rechenmauer draws: base 4·3·2 given, 7·5 and 12 built above.
@@ -81,14 +80,13 @@ function illQuad() {
     + quadCell(C[0], C[2], "2", "hdr") + quadCell(C[1], C[2], "5", "cell") + quadCell(C[2], C[2], "6", "cell"));
 }
 
-// A one-line task card with orange gaps — the shape ÷R and every keypad task
-// wear. `task` is the printed line; each `?` in it is drawn as an orange gap.
-function illCard(vb, task) {
-  const shown = task.replace(/\?/g, `<tspan fill="var(--orange)" font-weight="800">?</tspan>`);
-  const [, , w, h] = vb.split(" ").map(Number);
-  return svg(vb,
-    `<rect x="4" y="4" width="${w - 8}" height="${h - 8}" rx="12" fill="var(--panel)" stroke="var(--depth-soft)" stroke-width="2.5"/>`
-    + `<text x="${w / 2}" y="${h / 2 + 9}" text-anchor="middle" font-size="26" font-weight="800" fill="var(--ink)">${shown}</text>`);
+// Division with remainder: the printed line `13 : 4 = ? R ?` on a card, its two
+// gaps drawn as orange "?" — the shape a ÷R task wears on the keypad.
+function illRest() {
+  const shown = "13 : 4 = ? R ?".replace(/\?/g, `<tspan fill="var(--orange)" font-weight="800">?</tspan>`);
+  return svg("0 0 200 52",
+    `<rect x="4" y="4" width="192" height="44" rx="12" fill="var(--panel)" stroke="var(--depth-soft)" stroke-width="2.5"/>`
+    + `<text x="100" y="35" text-anchor="middle" font-size="26" font-weight="800" fill="var(--ink)">${shown}</text>`);
 }
 
 // Einmaleins: the three stars a tile is worth, and the equation whose one gap
@@ -183,7 +181,7 @@ const BUILDERS = {
       step(t("helpReS1")),
       step(`<b class="help-mode">${t("helpReMauerH")}</b> ${t("helpReMauer")}`, illWall()),
       step(`<b class="help-mode">${t("helpReQuadH")}</b> ${t("helpReQuad")}`, illQuad()),
-      step(`<b class="help-mode">${t("helpReRestH")}</b> ${t("helpReRest")}`, illCard("0 0 200 52", "13 : 4 = ? R ?")),
+      step(`<b class="help-mode">${t("helpReRestH")}</b> ${t("helpReRest")}`, illRest()),
       step(t("helpStars")),
     ],
   }),
@@ -226,16 +224,14 @@ export function initHelpOverlay(topic) {
   const overlay = createOverlay({
     className: "help-overlay",
     sheet: "",
-    // Focus the title, not the first control: the only control is the Close
-    // button at the very bottom, and focusing it scrolled the tall sheet down
-    // so the guide opened on its last line. The title sits at the top, carries
-    // the same role a screen reader wants read first, and takes no scroll with
-    // it (it is `tabindex="-1"`, reachable only this way).
+    // Focus the title, not the Close button at the very bottom: it is what a
+    // screen reader should read first in a guide meant to be read. The overlay
+    // focuses without scrolling (§ overlay.js), so this is purely the a11y
+    // choice now — the title is `tabindex="-1"`, reachable only this way.
     initialFocus: ".help-title",
     onOpen() {
       const sheet = overlay.el.querySelector(".sheet");
       sheet.innerHTML = helpSheetHTML(topic);
-      sheet.scrollTop = 0;
       sheet.querySelector("#help-close")?.addEventListener("click", () => {
         sfx.click();
         overlay.close();

@@ -77,8 +77,13 @@ export function overlayFrom(el, { dismissible = true, onClose, onOpen, initialFo
       // on something they can press, and a screen reader should read the title
       // it is already inside. `initialFocus` overrides the choice when the
       // first control is not the one to press.
+      //
+      // `preventScroll`: a tall sheet (the help guide) whose first control sits
+      // below the fold would otherwise scroll to it on focus and open on its
+      // last line. Focusing without scroll lets every overlay open at its top,
+      // owned here rather than worked around per sheet.
       const wanted = initialFocus ? sheet.querySelector(initialFocus) : null;
-      (wanted ?? sheet.querySelector(FOCUSABLE))?.focus();
+      (wanted ?? sheet.querySelector(FOCUSABLE))?.focus({ preventScroll: true });
     },
     close() {
       if (!handle.isOpen()) return;
