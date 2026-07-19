@@ -39,6 +39,7 @@
   --ink-soft: #8a6a50;
   --ok: #2f9e44;
   --err: #c1121f;
+  --err-soft: #ecb6b3;
   --sea: #cfe8f7;
   --grass: #b6d7a8;
   --shadow: 0 2px 8px rgba(74, 44, 23, 0.18);
@@ -642,17 +643,15 @@ footer p { margin: 0; }
    `.qline` kind) writes its answer in the SAME `.gap` slot einmaleins uses: an
    orange digit on an orange underline, nothing more (Martin, 2026-07-13 — "that
    is plenty"). Only the boxed grids need more, because there every blank is
-   already an orange box and one of them has to say "this is the one you are
-   filling": on a wall or grid the active cell fills solid orange with white
-   digits and a bold ring, so the eye lands on it at a glance. */
+   already a box and one of them has to say "this is the one you are filling":
+   the active cell fills solid with white digits and a bold ring, so the eye
+   lands on it at a glance. Each shape keeps the colour of its own blanks: the
+   wall fills orange, the grid red (Martin, 2026-07-19) — only the fill differs,
+   so the shared shape lives once and each shape names just its colour. */
 .q-mauer .cell.active,
-.q-quad .cell.active {
-  border-style: solid;
-  border-color: var(--orange);
-  background: var(--orange);
-  color: #fff;
-  box-shadow: 0 0 0 4px var(--orange-soft);
-}
+.rquad .cell.active { border-style: solid; color: #fff; }
+.q-mauer .cell.active { border-color: var(--orange); background: var(--orange); box-shadow: 0 0 0 4px var(--orange-soft); }
+.rquad .cell.active { border-color: var(--err); background: var(--err); box-shadow: 0 0 0 4px var(--err-soft); }
 /* in a wall/grid an unfilled "?" is a real tap target (§12.1: pick, then type) */
 .q-mauer .cell:not(.done),
 .q-quad .cell:not(.done) { cursor: pointer; }
@@ -689,15 +688,36 @@ footer p { margin: 0; }
   align-items: center;
   justify-content: center;
   min-height: 1.55em;
-  padding: 2px 8px;
+  /* Seat the numeral optically, not geometrically (Martin, 2026-07-19). The
+     flex box centres the whole LINE box, but Grandstander's digits and "?" sit
+     ~16-17px above the baseline and barely 0-1px below it (measured), so their
+     ink centres ~0.2em above the line-box centre — the glyph reads high. Bias
+     the padding the other way — more above than below, in em so it tracks the
+     clamped font-size — to drop the ink to the true middle. line-height:1 first
+     strips the natural leading the box would otherwise centre around. */
+  line-height: 1;
+  padding: 0.32em 8px 0.1em;
   border-radius: 10px;
 }
-.rquad .qcorner { background: var(--orange-soft); }
+/* One frame, three states, told by colour (Martin, 2026-07-19):
+   • the RAND — corner + the header row/column — is always blue: the scaffold
+     that is simply there, the same blue as everything the child already has;
+   • a KNOWN inner value is white with a blue border, whether it was printed or
+     the child solved it — a filled cell reads the same as a given one;
+   • a BLANK still to fill is the one thing that shouts: red dashed border, a
+     red "?", so on Schwer (where headers themselves go blank) the eye still
+     finds every hole at a glance instead of hunting orange among orange. */
+.rquad .qcorner,
 .rquad .qhead { background: var(--depth-soft); color: var(--depth); }
-.rquad .qcell { background: var(--panel); border: 2px solid var(--ink-soft); }
+.rquad .qcell { background: var(--panel); border: 2px solid var(--depth-soft); }
 .rquad .qgiven { color: var(--ink-soft); }
-.rquad .cell { background: var(--panel); border: 2px dashed var(--orange); color: var(--orange); }
-.rquad .cell.done { border-style: solid; border-color: var(--depth-soft); }
+.rquad .cell { background: var(--panel); border: 2px dashed var(--err); color: var(--err); }
+/* A filled cell joins the known values (its blue comes from `.question .cell.done`
+   above): the inner one takes a solid blue border, and a filled HEADER also
+   restores the blue field of the frame it belongs to — `.rquad .cell` painted it
+   white while it was blank. */
+.rquad .qcell.cell.done { border-style: solid; border-color: var(--depth-soft); }
+.rquad .qhead.cell.done { background: var(--depth-soft); border-color: var(--depth-soft); }
 
 /* Reserving its line keeps the question from jumping when a streak starts, but
    the aid needs every pixel: an empty streak line takes none. */

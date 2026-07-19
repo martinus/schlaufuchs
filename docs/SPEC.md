@@ -1421,8 +1421,15 @@ too — the frame she builds on. **The answer format follows the layout, not the
 mode**: any number typed on a *line* (a plain equation, an Ergänzen gap, and
 both of ÷R's `? R ?` slots) uses the exact `.gap` slot einmaleins uses — an
 orange digit on an orange underline; only the boxed *grids* (number walls,
-operation grids) draw filled cells, and there the active cell fills solid
-orange so one box among many is clearly the one being answered. One task is one engine item, and **every asked task is
+operation grids) draw filled cells, and there the active cell fills solid so
+one box among many is clearly the one being answered. The **number wall** fills
+orange (its blanks are orange). The **operation grid** is colour-coded by
+state instead (Martin, 2026-07-19): its frame — the corner and the header
+row/column — is always blue, a known inner value is white with a blue border
+whether printed or solved, and a blank still to fill wears a red dashed border
+and a red „?", with the active blank filled red; so on Schwer, where headers
+themselves go blank, the eye finds every hole at a glance rather than hunting
+orange among orange. One task is one engine item, and **every asked task is
 its own waypoint** (§10.5): when the task ends the fox steps forward — onto a
 green node if it went cleanly, onto a red one if any cell was wrong, and then
 the path grows by one node for the re-queued ask, so she still reaches the
