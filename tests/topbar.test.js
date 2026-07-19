@@ -44,7 +44,7 @@ test("the reader's bar is a map button and a heading, with no gear", () => {
 // carry the attribute that a later `setLang()` looks for — miss the attribute
 // and the bar freezes in the language the page opened with.
 test("every string in the bar survives a language switch", () => {
-  for (const bar of [topBarHTML({ back: "./" }), topBarHTML({ back: "./", title: "aboutTitle" })]) {
+  for (const bar of [topBarHTML({ back: "./" }), topBarHTML({ back: "./", help: "map" }), topBarHTML({ back: "./", title: "aboutTitle" })]) {
     for (const [tag] of bar.matchAll(/<[a-z][^>]*>/g)) {
       const label = tag.match(/aria-label="([^"]*)"/)?.[1];
       if (label === undefined) continue;

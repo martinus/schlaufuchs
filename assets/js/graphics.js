@@ -14,6 +14,7 @@ export const GRAPHICS = {
   // UI
   "ui-map": { emoji: "🗺️" },
   "ui-gear": { emoji: "⚙️" },
+  "ui-help": { emoji: "❔" },
   "ui-sound-on": { emoji: "🔊" },
   "ui-sound-off": { emoji: "🔇" },
   "ui-star": { emoji: "⭐" },

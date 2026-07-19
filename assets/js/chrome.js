@@ -21,6 +21,7 @@ import { foxInfo, TOTAL_TROPHIES, GAMES } from "./rewards.js";
 import { foxSVG } from "./fox.js";
 import { iconHTML } from "./graphics.js";
 import { createOverlay } from "./overlay.js";
+import { helpButtonHTML, initHelpOverlay } from "./help.js";
 import { sfx } from "./audio.js";
 
 // The settings overlay links the parents' view (the one adult screen reachable
@@ -54,7 +55,10 @@ export function renderFoxChip(el) {
 // itself — there the button stays, flat and unpressable, because the shape of
 // the bar must not shift between the map and the place it sends you.
 // `title` swaps the chip and the gear for a heading (the reader's pages).
-export function topBarHTML({ back = "./", title = null } = {}) {
+// `help`, when set, adds the ❔ button before the gear — the parent's page for
+// this place (§3.3). The reader's bar never carries it: those pages are the
+// grown-up's side already.
+export function topBarHTML({ back = "./", title = null, help = null } = {}) {
   const map = back === null
     ? `<span class="iconbtn flat" aria-hidden="true">${iconHTML("ui-map", { size: 22 })}</span>`
     : `<a class="iconbtn" href="${back}" aria-label="${t("back")}" data-i18n-label="back">${iconHTML("ui-map", { size: 22 })}</a>`;
@@ -62,6 +66,7 @@ export function topBarHTML({ back = "./", title = null } = {}) {
   if (title) return `${map}<h1 class="roomtitle" data-i18n="${title}">${t(title)}</h1>`;
 
   return `${map}<div class="foxchip" id="foxchip"></div>
+    ${help ? helpButtonHTML() : ""}
     <button class="iconbtn" id="gearbtn" aria-label="${t("settings")}" data-i18n-label="settings">
       ${iconHTML("ui-gear", { size: 22 })}</button>`;
 }
@@ -75,10 +80,10 @@ export function topBarHTML({ back = "./", title = null } = {}) {
 // `onLeave` is handed the map button once, for a page that has something to
 // lose when it is pressed (einmaleins: a round that is not saved yet, §10.7).
 // The bar does not know what that is and does not ask; it only offers the link.
-export function initTopBar({ back = "./", title = null, onChange, onClose, onLeave } = {}) {
+export function initTopBar({ back = "./", title = null, help = null, onChange, onClose, onLeave } = {}) {
   const bar = document.getElementById("topbar");
   if (!bar) return { refresh() {}, settings: null };
-  bar.innerHTML = topBarHTML({ back, title });
+  bar.innerHTML = topBarHTML({ back, title, help });
   if (back !== null) onLeave?.(bar.querySelector("a.iconbtn"));
 
   if (title) return { refresh() {}, settings: null };
@@ -86,6 +91,13 @@ export function initTopBar({ back = "./", title = null, onChange, onClose, onLea
   const chip = bar.querySelector("#foxchip");
   const refresh = () => renderFoxChip(chip);
   refresh();
+
+  // The ❔ button opens this place's parent guide (§3.3), an overlay like the
+  // gear's — built lazily so a page that asks for no help pays for none.
+  if (help) {
+    const helpOverlay = initHelpOverlay(help);
+    bar.querySelector("#helpbtn")?.addEventListener("click", helpOverlay.open);
+  }
 
   const settings = initSettingsOverlay({
     onChange() {

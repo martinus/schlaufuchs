@@ -1918,6 +1918,34 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 .backuprow .btn-menu.armed { background: var(--err); color: #fff; }
 .backupbad { color: var(--err); font-weight: 700; font-size: 0.85rem; margin: 0 0 8px; }
 
+/* ---- Help overlay (§3.3) ---- */
+/* The parent's guide for a place, opened by the ❔ button in the bar. A quiet
+   grown-up sheet like the settings one: --depth headings (information you HAVE),
+   orange kept for the worked example inside each little picture. */
+.help-forparents {
+  margin: 0 0 2px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--depth);
+}
+.help-hero { display: flex; justify-content: center; margin: 8px 0 2px; }
+.help-ill { width: 100%; max-width: 260px; height: auto; display: block; }
+.help-sec { margin: 14px 0 0; }
+.help-sec > h3 { margin: 0 0 6px; font-size: 1rem; color: var(--depth); }
+.help-sec > p { margin: 0; color: var(--ink-soft); line-height: 1.5; }
+.help-steps { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 16px; }
+.help-steps li { display: flex; gap: 12px; align-items: center; }
+/* The little pictures sit beside their step; a step with no picture just reads
+   full width. On the narrowest phones the picture drops above the text. */
+.help-art { flex: 0 0 118px; }
+.help-art .help-ill { width: 118px; max-width: 118px; }
+.help-steptxt { color: var(--ink-soft); line-height: 1.45; font-size: 0.95rem; }
+.help-steptxt .help-mode { color: var(--ink); display: block; }
+@media (max-width: 400px) {
+  .help-steps li { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .help-art { flex: 0 0 auto; align-self: center; }
+}
+
 /* ---- Parents' view (§14) ---- */
 /* A grown-up screen: it may scroll, and it uses --depth for knowledge because
    blue is what you HAVE. Orange stays with the fox and with actions. */

@@ -49,6 +49,49 @@ export default {
   parentsModeMauer: "Number walls",
   parentsModeQuad: "Number squares",
   parentsPace1: "Your child averages {s} seconds per round. Time is not a goal \u2014 slow and right beats fast and wrong.",
+  // --- Help overlay (§3.3): every child page carries a ❔ button before the
+  // gear that explains, FOR PARENTS and with pictures, what to do and what the
+  // child learns. Each explanation's title is the place name (region_*/game_*).
+  helpTitle: "Help",
+  helpForParents: "This explanation is meant for you, the parent.",
+  helpGoalH: "What your child learns",
+  helpStepsH: "How it works",
+  // The same in every game: stars reward progress, mistakes cost nothing.
+  helpStars: "For every right answer the fox walks a little further toward the basket and collects stars. Three stars mean it sits firmly. Full rounds earn trophies over time.",
+  helpAid: "After a mistake the game calmly shows the right answer — no clock, no penalty. Mistakes are there for learning.",
+
+  // Times tables
+  helpEmGoal: "Your child practises the times tables until the answers come without thinking. The game deliberately repeats the rows that still slip, rather than drilling everything equally. Fluent mental arithmetic is the foundation for almost all the maths that follows at school.",
+  helpEmS1: "A task like 3 × 5 = ? appears at the top. Your child types the answer on the number pad and presses OK. On the “Easy” level it picks from four given answers instead.",
+
+  // Math Mountain
+  helpReGoal: "On Math Mountain your child practises arithmetic up to 100: plus and minus with carrying, division with remainder, and tricky number puzzles. This trains not just answers but a feel for how numbers relate to each other.",
+  helpReS1: "Depending on the task, your child types the answer on the number pad and presses OK. If a task has several fields, it first taps an empty field (?) and then enters the number for it.",
+  helpReMauerH: "Number wall",
+  helpReMauer: "Each brick is the sum of the two bricks directly below it. The starting numbers are at the bottom. Example: 4 and 3 make 7, 3 and 2 make 5, and at the top 7 and 5 make 12. Your child fills the empty bricks from the bottom up.",
+  helpReQuadH: "Number square",
+  helpReQuad: "Numbers along the edges label each row and column. Every inner field combines the two edge numbers of its row and column using the sign in the top-left corner — for example 5 + 3. That is how your child finds the missing fields.",
+  helpReRestH: "Division with remainder",
+  helpReRest: "The task looks like this: 13 : 4 = ? R ?. Your child works out how many whole times 4 fits into 13 (3 times) and what is left over (1). It fills both fields — first the count, then the remainder.",
+
+  // Reading Meadow
+  helpLeGoal: "On the Reading Meadow your child practises reading fluency — not the letters, but whole words at a glance and understanding sentences and short texts. That is exactly what turns laborious decoding into confident reading.",
+  helpLeS1: "Easy: a word flashes up briefly and hides again. Your child first taps the card to see the word, then picks the matching one of four pictures. The more firmly a word sits, the shorter it flashes.",
+  helpLeS2: "Medium: a whole sentence is shown. Your child reads it and decides: is it true, or is it nonsense? (“The fish can fly” is nonsense.)",
+  helpLeS3: "Hard: a short text with a question about it. Your child reads the text and picks the right one of four answers.",
+
+  // The learning map
+  helpMapTitle: "The learning map",
+  helpMapGoal: "Schlaufuchs is a map full of learning games for children. Everything runs on this device only — with no sign-in, no ads and no tracking.",
+  helpMapS1: "Each region on the map is a game. Your child taps a region to open it. Some are still being built.",
+  helpMapS2: "The fox at the top shows how many stars and trophies your child has already collected. The gear takes you to sound, language and the parents' page with the learning progress.",
+
+  // Trophy room
+  helpAlGoal: "The trophy room holds every trophy your child has won. Each trophy stands for many collected stars — for real, practised ability, not just for taking part.",
+  helpAlS1: "Collected stars earn trophies. Here your child can see what it has already achieved and which trophy is waiting next.",
+
+  // A game still being built
+  helpStubBody: "This game is still being built and cannot be played yet. But your child can already practise the times tables — tap “Practise times tables” below.",
   resetEverything: "Everything",
   resetBtn: "Reset",
   resetConfirm: "Really? Tap again",

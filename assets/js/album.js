@@ -98,6 +98,6 @@ document.getElementById("album")?.addEventListener("click", (e) => {
 // gear on this site — reset included. It used to open a sheet with no reset at
 // all, so a parent who came looking for one found a settings screen that was
 // missing a row (§3.4).
-initTopBar({ back: "./", onChange: render });
+initTopBar({ back: "./", help: "album", onChange: render });
 
 render();

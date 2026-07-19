@@ -337,9 +337,10 @@ instead of spanning the full viewport.
 The bar has exactly two shapes:
 
 - **The child's bar** (map, Pokalraum, games, stubs): map button · fox chip ·
-  gear. Three things, in the same order, always.
+  help · gear. Four things, in the same order, always.
 - **The reader's bar** (privacy, about, parents): map button · page title. No
-  star count, no settings — these pages are for adults.
+  star count, no settings — these pages are for adults, and carry no help
+  button because they *are* the grown-up's side already.
 
 - **Map button (🗺️)** → back to the map (1 tap). The map icon, not the fox
   — the fox is the player, the map is the place to go back to. On the map
@@ -353,6 +354,19 @@ The bar has exactly two shapes:
 - **Level/difficulty chip** (inside a game, below the bar) showing the current
   difficulty and table; tapping opens the picker **as an overlay** on the same
   page, never a separate page.
+- **Help button (❔)** → the parent's guide for this place, an overlay built by
+  `help.js` and opened by `initTopBar({ help: <topic> })`. It sits **before the
+  gear** and only on the child's bar. A grown-up who had never seen the game —
+  the Rechenberg's "? ? ?" over "4 3 2" and a keypad — had nothing to read; this
+  is that missing page. Each topic (`einmaleins`, `rechnungen`, `lesen`, `map`,
+  `album`, `stub`) is a short **illustrated** explanation written **for the
+  parent**: what the child does, and what the exercise teaches. The pictures are
+  small inline SVGs built in `help.js` (illustrations, not registry icons — they
+  never enter the graphics `AVAILABLE` set); the number wall's rule (each brick =
+  the two below it) is drawn with one worked triangle highlighted in orange. The
+  sheet is rebuilt on every open so a language switch in the gear reaches it,
+  exactly like the settings sheet. Wiring and content are pinned by
+  `tests/help.test.js`.
 - **Settings gear** → shared overlay (`initSettingsOverlay`, `chrome.js`):
   the **same rows on every page that has a gear** — sound, language, reset,
   and the three links out. The overlay used to take a `resetKind` and open

@@ -15,7 +15,7 @@ if (!GAMES.includes(game) || isPlayable(game)) {
 }
 
 initI18n();
-initTopBar({ back: "../../" });
+initTopBar({ back: "../../", help: "stub" });
 
 const main = document.getElementById("stub");
 if (main) {

@@ -49,6 +49,49 @@ export default {
   parentsModeMauer: "Rechenmauern",
   parentsModeQuad: "Rechenquadrate",
   parentsPace1: "Dein Kind braucht im Schnitt {s} Sekunden pro Runde. Zeit ist kein Ziel — langsam und richtig ist besser als schnell und falsch.",
+  // --- Hilfe-Overlay (§3.5): jede Kinder-Seite trägt vor dem Zahnrad einen
+  // ❔-Knopf, der FÜR ELTERN bebildert erklärt, was zu tun ist und was das Kind
+  // dabei lernt. Der Titel jeder Erklärung ist der Ortsname (region_*/game_*).
+  helpTitle: "Hilfe",
+  helpForParents: "Diese Erklärung ist für dich als Elternteil gedacht.",
+  helpGoalH: "Das lernt dein Kind",
+  helpStepsH: "So funktioniert es",
+  // Bei jedem Spiel gleich: Sterne belohnen Fortschritt, Fehler kosten nichts.
+  helpStars: "Für jede richtige Antwort läuft der Fuchs ein Stück weiter Richtung Korb und sammelt Sterne. Drei Sterne heißen: das sitzt sicher. Volle Runden bringen nach und nach Pokale.",
+  helpAid: "Bei einem Fehler zeigt das Spiel in Ruhe die richtige Lösung — ohne Zeitdruck und ohne Strafe. Fehler sind zum Lernen da.",
+
+  // Einmaleins
+  helpEmGoal: "Dein Kind übt das kleine Einmaleins, bis die Ergebnisse ohne Nachdenken kommen. Das Spiel wiederholt gezielt die Reihen, die noch haken, statt stur alles gleich oft abzufragen. Sicheres Kopfrechnen ist die Grundlage für fast alle Mathematik, die in der Schule folgt.",
+  helpEmS1: "Oben steht eine Aufgabe wie 3 × 5 = ?. Dein Kind tippt das Ergebnis auf dem Zahlenfeld ein und drückt OK. In der Stufe „Leicht“ wählt es stattdessen aus vier vorgegebenen Antworten.",
+
+  // Rechenberg
+  helpReGoal: "Am Rechenberg übt dein Kind das Rechnen bis 100: Plus und Minus mit Zehnerübergang, Teilen mit Rest und knifflige Zahlenrätsel. Das trainiert nicht nur Ergebnisse, sondern ein Gefühl dafür, wie Zahlen zusammenhängen.",
+  helpReS1: "Je nach Aufgabe tippt dein Kind das Ergebnis auf dem Zahlenfeld ein und drückt OK. Hat eine Aufgabe mehrere Felder, tippt es zuerst ein leeres Feld (?) an und dann die Zahl dazu.",
+  helpReMauerH: "Rechenmauer",
+  helpReMauer: "Jeder Stein ist die Summe der beiden Steine direkt darunter. Unten stehen die Startzahlen. Beispiel: 4 und 3 ergeben 7, 3 und 2 ergeben 5, und ganz oben 7 und 5 ergeben 12. Dein Kind füllt die leeren Steine von unten nach oben auf.",
+  helpReQuadH: "Rechenquadrat",
+  helpReQuad: "Am Rand stehen Zahlen für jede Zeile und jede Spalte. Jedes innere Feld verrechnet die beiden Randzahlen seiner Zeile und Spalte mit dem Zeichen oben links — zum Beispiel 5 + 3. So findet dein Kind die fehlenden Felder.",
+  helpReRestH: "Teilen mit Rest",
+  helpReRest: "Die Aufgabe sieht so aus: 13 : 4 = ? R ?. Dein Kind überlegt, wie oft die 4 ganz in die 13 passt (3-mal) und was übrig bleibt (1). Es füllt beide Felder — erst die Anzahl, dann den Rest.",
+
+  // Lesewiese
+  helpLeGoal: "Auf der Lesewiese übt dein Kind flüssiges Lesen — nicht die Buchstaben, sondern ganze Wörter auf einen Blick und das Verstehen von Sätzen und kurzen Texten. Genau das macht aus mühsamem Entziffern sicheres Lesen.",
+  helpLeS1: "Leicht: Ein Wort blitzt kurz auf und versteckt sich wieder. Dein Kind tippt zuerst die Karte an, um das Wort zu sehen, und wählt dann aus vier Bildern das passende. Je sicherer ein Wort sitzt, desto kürzer blitzt es.",
+  helpLeS2: "Mittel: Ein ganzer Satz steht da. Dein Kind liest ihn und entscheidet: Stimmt das, oder ist es Blödsinn? („Der Fisch kann fliegen“ ist Blödsinn.)",
+  helpLeS3: "Schwer: Ein kurzer Text mit einer Frage dazu. Dein Kind liest den Text und wählt aus vier Antworten die richtige.",
+
+  // Die Lernkarte
+  helpMapTitle: "Die Lernkarte",
+  helpMapGoal: "Schlaufuchs ist eine Landkarte voller Lernspiele für Kinder. Alles läuft nur auf diesem Gerät — ganz ohne Anmeldung, Werbung oder Tracking.",
+  helpMapS1: "Jede Gegend auf der Karte ist ein Spiel. Dein Kind tippt eine Gegend an, um sie zu öffnen. Manche sind noch im Bau.",
+  helpMapS2: "Der Fuchs oben zeigt, wie viele Sterne und Pokale dein Kind schon gesammelt hat. Über das Zahnrad kommst du zu Ton, Sprache und der Elternseite mit dem Lernstand.",
+
+  // Pokalraum
+  helpAlGoal: "Im Pokalraum stehen alle Pokale, die dein Kind erspielt hat. Jeder Pokal steht für viele gesammelte Sterne — also für echtes, geübtes Können, nicht fürs bloße Dabeisein.",
+  helpAlS1: "Für gesammelte Sterne gibt es Pokale. Hier sieht dein Kind, was es schon geschafft hat und welcher Pokal als Nächstes wartet.",
+
+  // Ein Spiel, das noch gebaut wird
+  helpStubBody: "Dieses Spiel wird gerade gebaut und kann noch nicht gespielt werden. Beim Einmaleins kann dein Kind aber schon üben — tippe unten auf „Einmaleins üben“.",
   resetEverything: "Alles",
   resetBtn: "Zurücksetzen",
   resetConfirm: "Wirklich? Nochmal tippen",
