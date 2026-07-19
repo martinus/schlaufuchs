@@ -663,7 +663,12 @@ footer p { margin: 0; }
 .q-mauer .mrow { display: flex; gap: 5px; justify-content: center; }
 .mcell {
   min-width: 3em;
-  padding: 4px 10px;
+  /* Seat the numeral optically like the grid does (see `.rquad span`): the same
+     Grandstander glyphs sit ~2.5px high in the brick, so bias the vertical
+     padding downward — more above than below, in em so it tracks the clamped
+     font-size. The brick has no min-height, so their sum stays ~equal to keep
+     its height; only their split shifts the ink to the true middle. */
+  padding: 0.26em 10px 0.06em;
   background: var(--panel);
   border: 2px solid var(--ink-soft);
   border-radius: 10px;
