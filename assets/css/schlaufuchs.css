@@ -642,16 +642,23 @@ footer p { margin: 0; }
    `.qline` kind) writes its answer in the SAME `.gap` slot einmaleins uses: an
    orange digit on an orange underline, nothing more (Martin, 2026-07-13 — "that
    is plenty"). Only the boxed grids need more, because there every blank is
-   already an orange box and one of them has to say "this is the one you are
-   filling": on a wall or grid the active cell fills solid orange with white
-   digits and a bold ring, so the eye lands on it at a glance. */
-.q-mauer .cell.active,
-.q-quad .cell.active {
+   already a box and one of them has to say "this is the one you are filling":
+   the active cell fills solid with white digits and a bold ring, so the eye
+   lands on it at a glance. The wall fills orange (its blanks are orange); the
+   grid fills red, keeping the red identity of its blanks (Martin, 2026-07-19). */
+.q-mauer .cell.active {
   border-style: solid;
   border-color: var(--orange);
   background: var(--orange);
   color: #fff;
   box-shadow: 0 0 0 4px var(--orange-soft);
+}
+.rquad .cell.active {
+  border-style: solid;
+  border-color: var(--err);
+  background: var(--err);
+  color: #fff;
+  box-shadow: 0 0 0 4px rgba(193, 18, 31, 0.28);
 }
 /* in a wall/grid an unfilled "?" is a real tap target (§12.1: pick, then type) */
 .q-mauer .cell:not(.done),
@@ -689,15 +696,31 @@ footer p { margin: 0; }
   align-items: center;
   justify-content: center;
   min-height: 1.55em;
-  padding: 2px 8px;
+  /* A hair more room below than above: descenderless digits carry their weight
+     above the baseline, so a symmetric box seats them optically high (Martin,
+     2026-07-19). line-height:1 drops the reserved descent the flex box centres
+     around; the extra bottom padding nudges the ink back to the true middle. */
+  line-height: 1;
+  padding: 3px 8px 5px;
   border-radius: 10px;
 }
-.rquad .qcorner { background: var(--orange-soft); }
+/* One frame, three states, told by colour (Martin, 2026-07-19):
+   • the RAND — corner + the header row/column — is always blue: the scaffold
+     that is simply there, the same blue as everything the child already has;
+   • a KNOWN inner value is white with a blue border, whether it was printed or
+     the child solved it — a filled cell reads the same as a given one;
+   • a BLANK still to fill is the one thing that shouts: red dashed border, a
+     red "?", so on Schwer (where headers themselves go blank) the eye still
+     finds every hole at a glance instead of hunting orange among orange. */
+.rquad .qcorner,
 .rquad .qhead { background: var(--depth-soft); color: var(--depth); }
-.rquad .qcell { background: var(--panel); border: 2px solid var(--ink-soft); }
+.rquad .qcell { background: var(--panel); border: 2px solid var(--depth-soft); color: var(--depth); }
 .rquad .qgiven { color: var(--ink-soft); }
-.rquad .cell { background: var(--panel); border: 2px dashed var(--orange); color: var(--orange); }
-.rquad .cell.done { border-style: solid; border-color: var(--depth-soft); }
+.rquad .cell { background: var(--panel); border: 2px dashed var(--err); color: var(--err); }
+/* filled: it joins the known values — white, solid blue border, the child's own
+   blue; a blank HEADER filled restores the blue frame it belongs to. */
+.rquad .qcell.cell.done { border-style: solid; border-color: var(--depth-soft); color: var(--depth); }
+.rquad .qhead.cell.done { background: var(--depth-soft); border-color: var(--depth-soft); color: var(--depth); }
 
 /* Reserving its line keeps the question from jumping when a streak starts, but
    the aid needs every pixel: an empty streak line takes none. */
