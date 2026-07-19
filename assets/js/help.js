@@ -14,7 +14,6 @@
 // language switch in the gear reaches it, exactly as the settings sheet does.
 
 import { t } from "./i18n.js";
-import { iconHTML } from "./graphics.js";
 import { createOverlay } from "./overlay.js";
 import { sfx } from "./audio.js";
 
@@ -24,12 +23,17 @@ export const HELP_TOPICS = [
   "einmaleins", "rechnungen", "lesen", "map", "album", "stub",
 ];
 
-// The bar button (child's bar only, before the gear). Decorative emoji + the
-// spoken label, carried on `data-i18n-label` so a language switch finds it —
-// the same contract every other bar string keeps (tests/topbar.test.js).
+// The bar button (child's bar only, before the gear). The glyph is a drawn
+// circled "?" in --ink, not the ❔ emoji: the emoji is a pale blue outline that
+// read as washed-out next to the solid gear. currentColor keeps it the bar's
+// ink weight. The spoken label rides on `data-i18n-label` so a language switch
+// finds it — the same contract every other bar string keeps (tests/topbar.js).
 export function helpButtonHTML() {
   return `<button class="iconbtn" id="helpbtn" aria-label="${t("helpTitle")}" data-i18n-label="helpTitle">`
-    + `${iconHTML("ui-help", { size: 22 })}</button>`;
+    + `<svg class="helpicon" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">`
+    + `<circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.2"/>`
+    + `<text x="12" y="17.4" text-anchor="middle" font-size="15" font-weight="800" fill="currentColor">?</text>`
+    + `</svg></button>`;
 }
 
 // --- illustrations ----------------------------------------------------------
@@ -149,7 +153,7 @@ function step(html, art) {
 
 function sheetHTML({ title, hero, goal, steps }) {
   return `<div class="help-top">
-      <h2 class="help-title">${title}</h2>
+      <h2 class="help-title" tabindex="-1">${title}</h2>
       <p class="help-forparents">${t("helpForParents")}</p>
     </div>
     ${hero ? `<div class="help-hero">${hero}</div>` : ""}
@@ -222,9 +226,17 @@ export function initHelpOverlay(topic) {
   const overlay = createOverlay({
     className: "help-overlay",
     sheet: "",
+    // Focus the title, not the first control: the only control is the Close
+    // button at the very bottom, and focusing it scrolled the tall sheet down
+    // so the guide opened on its last line. The title sits at the top, carries
+    // the same role a screen reader wants read first, and takes no scroll with
+    // it (it is `tabindex="-1"`, reachable only this way).
+    initialFocus: ".help-title",
     onOpen() {
-      overlay.el.querySelector(".sheet").innerHTML = helpSheetHTML(topic);
-      overlay.el.querySelector("#help-close")?.addEventListener("click", () => {
+      const sheet = overlay.el.querySelector(".sheet");
+      sheet.innerHTML = helpSheetHTML(topic);
+      sheet.scrollTop = 0;
+      sheet.querySelector("#help-close")?.addEventListener("click", () => {
         sfx.click();
         overlay.close();
       });

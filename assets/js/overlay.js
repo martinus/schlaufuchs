@@ -19,6 +19,17 @@ export function anyOverlayOpen() {
   return openOverlays.size > 0;
 }
 
+// While any overlay is open, the page behind it must not scroll: the Pokalraum
+// is taller than the screen, and a wheel or drag on the backdrop scrolled the
+// shelf behind the open sheet. The lock rides on <html> so it holds whether the
+// page scrolls on the body or the root, and lifts only when the LAST overlay of
+// a stack closes (the summary opens the picker on top of itself).
+function syncScrollLock() {
+  const root = typeof document !== "undefined" && document.documentElement;
+  if (!root) return;
+  root.classList.toggle("overlay-open", openOverlays.size > 0);
+}
+
 // The last opened one is the one Escape closes: overlays stack (the summary
 // opens the picker), and the topmost is the one the user is looking at.
 function topmost() {
@@ -60,6 +71,7 @@ export function overlayFrom(el, { dismissible = true, onClose, onOpen, initialFo
       opener = document.activeElement;
       el.hidden = false;
       openOverlays.add(handle);
+      syncScrollLock();
       onOpen?.();
       // The first control, not the sheet: a child tabbing forward should land
       // on something they can press, and a screen reader should read the title
@@ -72,6 +84,7 @@ export function overlayFrom(el, { dismissible = true, onClose, onOpen, initialFo
       if (!handle.isOpen()) return;
       el.hidden = true;
       openOverlays.delete(handle);
+      syncScrollLock();
       // A hidden opener cannot take focus (the summary's own button opens the
       // picker), and the browser would drop it on <body>. onClose picks it up.
       if (opener?.isConnected && !opener.closest("[hidden]")) opener.focus();

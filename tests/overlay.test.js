@@ -40,6 +40,14 @@ before(async () => {
   globalThis.document = {
     activeElement: null,
     addEventListener(type, fn) { if (type === "keydown") keydown.push(fn); },
+    // The root carries the scroll lock (overlay.js): a classList that just
+    // remembers whether the "overlay-open" freeze is on.
+    documentElement: {
+      classList: {
+        on: false,
+        toggle(cls, want) { if (cls === "overlay-open") this.on = want; },
+      },
+    },
   };
   ({ overlayFrom, anyOverlayOpen } = await import("../assets/js/overlay.js"));
 });
@@ -149,6 +157,25 @@ test("a backdrop click closes only what may be dismissed", () => {
   soft.fire("click", { target: soft });
   assert.ok(!a.isOpen());
   b.close();
+});
+
+// The page behind an open overlay must not scroll (the Pokalraum shelf did):
+// the lock goes on with the first overlay of a stack and comes off only with
+// the last, or the summary opening the picker would unlock the page under it.
+test("the page behind is frozen while any overlay is open", () => {
+  const locked = () => globalThis.document.documentElement.classList.on;
+  const a = overlayFrom(node());
+  const b = overlayFrom(node());
+  assert.equal(locked(), false);
+
+  a.open();
+  assert.equal(locked(), true);
+  b.open();
+  assert.equal(locked(), true, "still frozen with two open");
+  b.close();
+  assert.equal(locked(), true, "…and while one remains");
+  a.close();
+  assert.equal(locked(), false, "unfrozen when the last closes");
 });
 
 // Regression: einmaleins asked `sum-overlay.hidden` to decide whether the

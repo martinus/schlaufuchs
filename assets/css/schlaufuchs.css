@@ -1135,6 +1135,10 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 
 .overlay[hidden] { display: none; }
 
+/* While an overlay is open the page behind it is frozen (overlay.js sets this on
+   <html>): the Pokalraum shelf used to scroll under the open sheet. */
+html.overlay-open, html.overlay-open body { overflow: hidden; }
+
 .sheet {
   background: var(--bg);
   border-radius: 20px 20px 0 0;
@@ -1922,6 +1926,12 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
 /* The parent's guide for a place, opened by the ❔ button in the bar. A quiet
    grown-up sheet like the settings one: --depth headings (information you HAVE),
    orange kept for the worked example inside each little picture. */
+/* The bar's help glyph: a drawn circled "?" in the bar's ink, so it carries the
+   same weight as the gear instead of the pale ❔ emoji. */
+.iconbtn .helpicon { display: block; color: var(--ink); }
+/* The title takes focus on open only to anchor the scroll and the screen reader
+   at the top; it is not an interactive control, so it wears no focus ring. */
+.help-title:focus { outline: none; }
 .help-forparents {
   margin: 0 0 2px;
   font-size: 0.82rem;
