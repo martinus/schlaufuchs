@@ -26,9 +26,11 @@ test("it names its author and a way to reach him", () => {
 
 // Every outbound link was checked by hand once. What a test can hold is that
 // they stay https and that none of them silently becomes a relative path.
+// Anchors only: the page's canonical/OG URLs are absolute site metadata, not
+// outbound links the reader clicks.
 test("every outbound link is absolute and https", () => {
   const html = read("about.html");
-  const external = [...html.matchAll(/href="(https?:[^"]+)"/g)].map((m) => m[1]);
+  const external = [...html.matchAll(/<a [^>]*href="(https?:[^"]+)"/g)].map((m) => m[1]);
   assert.equal(external.length, 4, `expected four project links, found ${external.length}`);
   for (const url of external) assert.match(url, /^https:\/\//, `${url} is not https`);
   for (const host of ["keto-calculator.ankerl.com", "martin.ankerl.com", "github.com/martinus", "ankerl.com/"]) {
