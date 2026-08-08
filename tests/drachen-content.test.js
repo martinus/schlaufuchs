@@ -23,9 +23,9 @@ const CONTENT = STORIES.de;
 // Per difficulty. The character caps are the layout guarantee AND the reading
 // ladder: on the 360×640 baseline the story card has room for roughly this much
 // prose above two or three choice tiles and the round's scene.
-const DEPTH = [5, 6, 7];
-const TEXT = [160, 215, 260];
-const SENT = [75, 115, 145];
+const DEPTH = [7, 9, 11];
+const TEXT = [200, 260, 320];
+const SENT = [85, 120, 150];
 const WORD = [14, 17, 20];
 
 // German quotes swallow the full stop: „…berg.“ ends on the closing quote.
@@ -54,7 +54,9 @@ test("keys and titles are unique, and a title fits a picker tile", () => {
   assert.equal(new Set(titles).size, titles.length, "duplicate story title");
   for (const s of CONTENT) {
     assert.match(s.key, /^[a-z][a-zA-Z]*$/, `${s.key}: keys are lowerCamel`);
-    assert.ok(len(s.title) > 0 && len(s.title) <= 18, `${s.title}: ${len(s.title)} chars, max 18`);
+    // the picker tile is a third of a phone wide and wraps the title to at most
+    // three short lines under the story's emoji
+    assert.ok(len(s.title) > 0 && len(s.title) <= 24, `${s.title}: ${len(s.title)} chars, max 24`);
     assert.ok(!/^[\x00-\x7f]$/.test(s.e), `${s.key}: the tile face must be a picture`);
   }
 });

@@ -281,7 +281,10 @@ Pages (each an entry point):
   fully implemented: `einmaleins`, `lesen` (Blitzwörter + Quatsch-Sätze, §14 —
   content in `games/lesen/content.js`, which is **append-only**: item order is
   the box string's index), `drachen` (Drachengeschichten, §21 — branching
-  stories, one tile per story, three endings each; **no adaptive engine and no
+  TEXT ADVENTURES, one tile per story, three endings each; the place is the
+  puzzle and the column she comes out on decides the ending. `node
+  tools/read-story.js` prints a story by JOIN, which is the only way to check
+  that its steps follow each other; **no adaptive engine and no
   tempo ladder**, and its stars ARE the endings found, so a replay to a known
   ending pays nothing. `games/drachen/content.js` is append-only twice over:
   story order is the mask string's index, and a node's `end` is its bit) and

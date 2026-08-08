@@ -2072,8 +2072,16 @@ dev state.
 Reading **stamina**, by removing the reason to stop. `lesen` (§14) trains
 fluency in drill rounds; this trains staying with a text — and nothing here is
 read because it is practice. It is read because otherwise you cannot tell which
-choice to make. A scene, two or three things you could do, and a story that
-genuinely ends differently depending on what you did.
+choice to make.
+
+These are **text adventures, and the place is the puzzle**: she arrives
+somewhere real, finds a way in, finds something worth having, and something is
+pressing — water coming back, ice working, a mountain settling, a sleeper who
+must not wake. There is real tension, and there are no jokes. The first draft
+shipped whimsy (washing clouds, a book that wrote back) and was rejected on
+sight, for a reason worth keeping: **an idea is not an adventure.** A new story
+must answer three questions on its first screen — where am I, what do I want,
+and what is running out?
 
 Journey theme: `cave`. **No adaptive engine and no tempo ladder**: a story is a
 walk through a graph, not a draw from a pool, and hurrying a story is the
@@ -2091,9 +2099,10 @@ rest: a newly found ending pays one star — 1 on Leicht, 2 on Mittel, 3 on Schw
 — and an ending she already knows pays nothing, however often she walks back to
 it. "Stars come from progress, never from repetition" (§8.3), unchanged.
 
-Three stories per difficulty, nine in all. The difficulties are **reading
-levels**, not lengths: every adventure is short (5, 6 or 7 scenes, three to five
-minutes), and what climbs is sentence length and vocabulary. The per-difficulty
+Three stories per difficulty, nine in all. Depth climbs with the difficulty —
+**7, 9 and 11 scenes** — and so do sentence length and vocabulary; a Schwer
+adventure runs about eight minutes. `depth` is free to change: only the TILE
+count is frozen (below). The per-difficulty
 character caps in `tests/drachen-content.test.js` are that ladder — and at the
 same time the layout guarantee, because a scene too long for the 360×640
 baseline pushes its own choices off a page that does not scroll.
@@ -2125,11 +2134,21 @@ never lock herself out of it without knowing. Both properties are proved per
 story by `tests/drachen-content.test.js`, over `endingsReachable` and
 `pathToEnding` in `logic.js`.
 
-Every ending is a good one. Two are lovely in different ways, and the third is a
-**funny mishap** — something that goes comically sideways, never a failure and
-never a punishment: it pays exactly the same star as the others, and the child
-laughs *with* the dragon. There is no losing on this site (§18.2), and a story
-game is where that would have been easiest to forget.
+The three scenes of a layer are three COLUMNS, and a column is a **way through
+the place**: `a` deeper and forward, `b` reading the marks and the log and the
+voice, `c` the side passage and the tool. A scene's first choice stays in its
+column and its second steps one column onward, so **the column she comes out on
+is the ending she gets**: `a` — she gets what she came for; `b` — she comes out
+with the truth, or with whoever was in there; `c` — she finds another way out,
+and something nobody was after. None is a joke and none is a failure. (The first
+draft made the third a comic mishap, which pulled every premise toward
+slapstick. That is why it is gone.)
+
+Real danger is allowed and wanted: the dark, a roof that settles, water that
+rises, a sleeper who must not wake. §18.2's "nothing attacks, nothing is lost"
+is about the GAME, and it holds — no ending is a failure and no choice costs a
+star. Tension inside the prose is a different thing, and the reader this is
+written for reads dragon books.
 
 ### 21.3 The round, in two beats
 
