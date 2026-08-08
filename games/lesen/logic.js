@@ -20,6 +20,7 @@ import {
 export {
   DIFF_KEYS, DIFF_SLUGS, STAR_SLOTS, starNeeds, starsFor, ownedStars,
   TEMPO_SLOTS, TEMPO_ICONS, TEMPO_KEYS, median, awardTempo, fittedFontSize,
+  GUARD_MS, isBounce,
 } from "../../assets/js/roundrules.js";
 
 // Questions per round (§7.3): eight items. Lesen rounds were six — kept short
@@ -58,27 +59,6 @@ export const FLASH_MS = [
 export function flashMs(box, difficulty) {
   const row = FLASH_MS[difficulty];
   return row ? row[clampBox(box)] : null;
-}
-
-// --- double-tap guard (§14.2) ------------------------------------------------
-// The answer buttons go live the instant a question is answerable, and the next
-// question follows the last by only NEXT_MS (250ms). A physical double-click —
-// one the child never meant — therefore lands its second tap on a button that
-// has, in between, come to mean something else: the freshly shown next question,
-// or the retry inside the aid. A young reader met exactly this — a stray second
-// press picked a wrong answer to a Schwer passage she had not begun to read. So
-// a press within GUARD_MS of the last accepted press is that bounce, and is
-// swallowed. Nobody reads a word or a passage this fast; and a deliberate ⚡
-// answer (§10.6) is timed from its own question — always at least NEXT_MS newer
-// than the previous press — so the guard never costs a genuine fast answer.
-export const GUARD_MS = 300;
-
-// Is a press at `now` the bounce of a double-click — inside the guard window the
-// last accepted press at `armedAt` opened? Pure, so the rule is unit-tested
-// without a clock. A missing/never-set `armedAt` (nothing pressed yet, or a
-// fresh round) is never a bounce.
-export function isBounce(now, armedAt, guard = GUARD_MS) {
-  return Number.isFinite(armedAt) && Number.isFinite(now) && now - armedAt < guard;
 }
 
 // --- item addressing ---------------------------------------------------------

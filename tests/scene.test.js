@@ -152,6 +152,24 @@ test("every game's summary shows star groups, never a score line", () => {
   assert.match(journey, /export function starSlotsHTML/, "journey.js must offer the slot builder");
 });
 
+// Two lines of the summary sheet are OPTIONAL: "Neuer Rekord!" and the tempo
+// medal. A game may carry neither — drachen (§21) has no tempo ladder, and a
+// record line says nothing about finding a story's next ending. Reaching
+// straight through the lookup would throw on that game's first finished round,
+// and nothing else would catch it: tests/cache.test.js greps
+// `getElementById(...).`, and the summary uses a `$()` alias.
+test("the summary's optional lines are optional", () => {
+  for (const id of ["sum-best", "sum-tempo"]) {
+    assert.ok(!new RegExp(`\\$\\("${id}"\\)\\s*\\.`).test(roundsummary),
+      `roundsummary.js reaches through $("${id}") — a sheet without it throws`);
+  }
+  // …and the three mandatory ones are still mandatory, or "optional" would
+  // quietly become "the summary paints nothing".
+  for (const id of ["sum-stars", "sum-trophy", "sum-ok"]) {
+    assert.ok(roundsummary.includes(`$("${id}")`), `roundsummary.js no longer paints #${id}`);
+  }
+});
+
 // The scene is the tallest thing in the stage after the aid card, and the aid
 // card holds ten rows of dots. They must never be on screen together.
 test("the scene yields the stage to the feedback aid", () => {

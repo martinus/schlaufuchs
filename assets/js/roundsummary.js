@@ -69,17 +69,29 @@ export function createRoundSummary({ picker, refresh }) {
       // Hand the win to the picker the OK button opens next: the played tile flies
       // the earned groups off when it reopens (§10.1). Only a real gain animates.
       if (improved) picker.flagWin?.(old, stars);
-      $("sum-best").hidden = !improved;
-      $("sum-best").textContent = t("newBest");
+      // The two optional lines. A game may leave either out of its sheet —
+      // drachen (§21) has no tempo ladder at all, and "Neuer Rekord!" says
+      // nothing about finding a story's next ending — so both are looked up and
+      // skipped when absent. Reaching straight through the lookup would throw on
+      // that game's very first finished round, and no test would see it: the
+      // page-element guard greps `getElementById(...).`, not this `$()` alias.
+      const bestLine = $("sum-best");
+      if (bestLine) {
+        bestLine.hidden = !improved;
+        bestLine.textContent = t("newBest");
+      }
       // The finish line's verdict, as a symbol and its name — never a number of
       // time (§10.6). A round that awarded no tier shows nothing: below the hare
       // there is no snail, only an empty line that never appears.
       const paid = stars >= 2 && tier > 0;
-      $("sum-tempo").hidden = !paid;
-      if (paid) {
-        $("sum-tempo").innerHTML =
-          `${iconHTML(TEMPO_ICONS[tier], { size: 22 })} ${t(TEMPO_KEYS[tier])}`
-          + (tempoImproved ? ` · <b>${t("tempoBest")}</b>` : "");
+      const tempoLine = $("sum-tempo");
+      if (tempoLine) {
+        tempoLine.hidden = !paid;
+        if (paid) {
+          tempoLine.innerHTML =
+            `${iconHTML(TEMPO_ICONS[tier], { size: 22 })} ${t(TEMPO_KEYS[tier])}`
+            + (tempoImproved ? ` · <b>${t("tempoBest")}</b>` : "");
+        }
       }
       // One round can cross several thresholds at once (§8.3) — the summary
       // holds every trophy it paid, each one the same card the album shows.

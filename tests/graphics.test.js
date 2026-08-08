@@ -41,7 +41,7 @@ test("every journey icon a theme names exists, and none is orphaned", () => {
     assert.equal(th.goal, undefined, "the basket is the goal in every theme");
     for (const o of th.obstacles) named.add(o);
   }
-  assert.equal(named.size, 11, `themes name ${named.size} journey icons`);
+  assert.equal(named.size, 14, `themes name ${named.size} journey icons`);
   for (const name of named) assert.ok(GRAPHICS[name], `theme names a missing icon: ${name}`);
 
   const orphans = Object.keys(GRAPHICS).filter((k) => k.startsWith("j-") && !named.has(k));
