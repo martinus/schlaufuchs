@@ -1098,6 +1098,48 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    wins. Sized against the longest passages fitting the 360×640 baseline. */
 .stage:has(#wordcard.read) .journey { max-width: 86%; max-height: 18vh; margin-inline: auto; }
 
+/* A branching story (§21) reads on the same card as a Schwer passage — same
+   book typography, same floated scene emoji, same capped path scene — with one
+   difference: a scene is meant to be read at a comfortable pace rather than
+   scanned for an answer, so it gets a little more air between its lines. */
+.wordcard.story .question { line-height: 1.5; }
+/* A story scene is short — a Leicht one is two sentences — and with only two or
+   three choices under it the stage's centred group floated in a void: a band of
+   empty page between the top bar and the round's title, and another under the
+   card. So the group starts at the top, the way it does when a full reading
+   passage fills the stage, and the room that is left goes to the picture: the
+   path scene is drawn bigger here than anywhere else. A story is the one round
+   that can carry it, and the gap that remains sits where it belongs, above the
+   thumb. */
+.stage:has(#wordcard.story) { justify-content: flex-start; }
+.stage:has(#wordcard.story) .journey { max-height: 26vh; }
+/* …and the page itself keeps a book's height rather than shrink-wrapping its
+   text: a two-sentence Leicht scene and a nine-line Schwer one otherwise made
+   the card jump between a stamp and a wall, and on a tall phone the short one
+   left a hand's width of empty page between it and the choices. */
+.wordcard.story { min-height: clamp(120px, 30vh, 300px); }
+
+/* The ending's own NAME, under the ending scene: the collectible, said out loud.
+   It is the reason the summary waits for a tap instead of opening on its own
+   700ms timer — this line and the scene above it are the whole payoff, and the
+   sheet would cover both before a child had read two words. */
+.endname {
+  clear: both;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 2px dashed var(--depth-soft);
+  font-family: var(--font-display);
+}
+.endname[hidden] { display: none; }
+.endname .en-n { font-weight: 800; font-size: 1.1rem; color: var(--ink); }
+/* "Neues Ende!" is the good news and wears the site's look-here colour; "kanntest
+   du schon" is a quiet note, not a scolding — a known ending costs nothing. */
+.endname .en-tag { margin-left: auto; font-size: .8rem; font-weight: 700; color: var(--ink-soft); }
+.endname.fresh .en-tag { color: var(--orange); }
+
 /* Four emoji to choose from: the emoji is the label, so it has to be big. */
 .mc-emoji button {
   font-size: 2.4rem;
@@ -1348,6 +1390,34 @@ html.overlay-open, html.overlay-open body { overflow: hidden; }
 .tilegrid button.mastered .ttempo { filter: none; }
 
 .tilegrid .tname { position: relative; color: var(--ink); }
+/* A drachen tile names a whole story, not a one-word topic (§21). The tile is a
+   third of a phone wide, so the emoji carries the recognition — a child finds
+   "the one with the egg" long before she reads it — and the title underneath
+   only confirms it, small enough to wrap to two lines without pushing the star
+   groups off the tile. */
+.tilegrid .story-e { display: block; font-size: 1.7rem; line-height: 1.1; }
+.tilegrid .story-t {
+  display: block;
+  font-family: var(--font-display);
+  font-size: .68rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-top: 2px;
+  hyphens: auto;
+}
+/* Every other game's tile wears a one-word name, which the star groups can hang
+   around; a story's name is three words and two lines, and the groups landed on
+   top of it. So on a story tile the name is pinned to the head of the tile and
+   the groups get the whole space below it, a little smaller. The tile grows by
+   the difference — a fresh Schwer story is three pyramids of three. */
+.tilegrid button:has(.story-t) { min-height: 124px; }
+.tilegrid button:has(.story-t) .tname {
+  position: absolute;
+  top: 7px;
+  left: 5px;
+  right: 5px;
+}
+.tilegrid button:has(.story-t) .tstars { inset: 62px 5px 5px; --s: 0.66; }
 
 /* Two states, two looks: mastered pays nothing more, and the level she is
    playing right now is where the list opens. A mastered tile has no invite ring
@@ -1523,6 +1593,38 @@ html.overlay-open, html.overlay-open body { overflow: hidden; }
 /* A round can win several trophies at once, so this is a row, not a slot. The
    cards inside it carry the panel and the frame (see .tcard); the row is only
    the arrangement. */
+/* The ending strip (§21): WHICH endings this story has given up so far, and how
+   many are still hidden. Deliberately without stars — the big slots above already
+   say "how many"; this row says "which, and one is still out there", and that is
+   what sends a child back into the same story by another path. */
+.summary .endings { margin: 10px 0 4px; }
+.summary .end-head {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: .95rem;
+  color: var(--ink);
+}
+.summary .end-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.summary .end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  background: var(--panel);
+  text-align: left;
+}
+.summary .end .end-e { font-size: 1.15rem; line-height: 1; }
+.summary .end .end-n { font-family: var(--font-display); font-weight: 700; font-size: .92rem; }
+/* An ending she has not met keeps its name back. Faded, not crossed out: it is
+   a promise, not a failure. */
+.summary .end.hidden { opacity: .55; }
+.summary .end.hidden .end-n { font-weight: 400; color: var(--ink-soft); }
+/* The one she just found. A transition, never a keyframe, so reduced motion
+   leaves it settled in its end state rather than never arriving. */
+.summary .end.fresh { box-shadow: inset 0 0 0 2.5px var(--orange); }
+
 .summary .trophy-earn {
   display: flex;
   flex-wrap: wrap;

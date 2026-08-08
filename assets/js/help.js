@@ -20,7 +20,7 @@ import { sfx } from "./audio.js";
 // The topics a page may ask for. A page passes one id to `initTopBar({help})`;
 // an unknown id is a wiring bug, caught by tests/help.test.js.
 export const HELP_TOPICS = [
-  "einmaleins", "rechnungen", "lesen", "map", "album", "stub",
+  "einmaleins", "rechnungen", "lesen", "drachen", "map", "album", "stub",
 ];
 
 // The bar button (child's bar only, before the gear). The glyph is a drawn
@@ -114,6 +114,28 @@ function illLesen() {
     + tile(17, "🐶", true) + tile(71, "🐱", false) + tile(125, "🐟", false) + tile(179, "🦆", false));
 }
 
+// Drachen: a scene, the two choices under it, and the three ending slots the
+// story pays into — one of them still a "?", which is the whole game in one
+// picture.
+function illDrachen() {
+  const choice = (y, w) =>
+    `<rect x="18" y="${y}" width="${w}" height="20" rx="8" fill="var(--panel)" stroke="var(--depth-soft)" stroke-width="2"/>`
+    + `<rect x="27" y="${y + 8}" width="${w - 30}" height="4" rx="2" fill="var(--depth-soft)"/>`;
+  const slot = (x, glyph, hot) =>
+    `<circle cx="${x}" cy="118" r="14" fill="var(--panel)" stroke="${hot ? "var(--orange)" : "var(--depth-soft)"}" stroke-width="${hot ? 3 : 2}"/>`
+    + `<text x="${x}" y="124" text-anchor="middle" font-size="15">${glyph}</text>`;
+  return svg("0 0 240 146",
+    `<rect x="14" y="8" width="212" height="44" rx="12" fill="var(--depth-soft)" stroke="var(--depth)" stroke-width="2.5"/>`
+    + `<text x="26" y="30" font-size="16">🐉</text>`
+    + `<rect x="46" y="18" width="166" height="5" rx="2.5" fill="var(--depth)"/>`
+    + `<rect x="46" y="30" width="140" height="5" rx="2.5" fill="var(--depth)"/>`
+    + `<rect x="46" y="42" width="96" height="5" rx="2.5" fill="var(--depth)"/>`
+    + choice(58, 204) + choice(82, 204)
+    + `<path d="M226 68 L226 60 M222 92 L226 100 L230 92" stroke="var(--orange)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`
+    + `<path d="M226 60 a14 14 0 0 1 0 40" stroke="var(--orange)" stroke-width="2.5" fill="none"/>`
+    + slot(66, "💎", false) + slot(120, "🐣", true) + slot(174, "?", false));
+}
+
 // The map: regions to tap, the fox that carries the score, on the island.
 function illMap() {
   const spot = (x, y, emoji) =>
@@ -190,6 +212,12 @@ const BUILDERS = {
     hero: illLesen(),
     goal: t("helpLeGoal"),
     steps: [step(t("helpLeS1")), step(t("helpLeS2")), step(t("helpLeS3")), step(t("helpStars"))],
+  }),
+  drachen: () => sheetHTML({
+    title: t("region_drachen"),
+    hero: illDrachen(),
+    goal: t("helpDrGoal"),
+    steps: [step(t("helpDrS1")), step(t("helpDrS2")), step(t("helpDrS3"))],
   }),
   map: () => sheetHTML({
     title: t("helpMapTitle"),

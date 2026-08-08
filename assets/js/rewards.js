@@ -7,12 +7,12 @@ import { loadState, getRewards, setRewards } from "./storage.js";
 // Playable games lead: the album shelves and the gear's reset rows iterate
 // this order, and a child looks for Lesewiese right under Einmaleins — not
 // below three shelves of games that do not exist yet.
-export const GAMES = ["einmaleins", "lesen", "rechnungen", "tippen", "vokabeln"];
+export const GAMES = ["einmaleins", "lesen", "rechnungen", "drachen", "tippen", "vokabeln"];
 
-// Which of them a child can actually play. The other three are stubs, and the
+// Which of them a child can actually play. The other two are stubs, and the
 // map must not promise what the site cannot deliver: their regions are drawn
 // under fog (§3.1). Move a name here the moment its game exists.
-export const PLAYABLE = ["einmaleins", "lesen", "rechnungen"];
+export const PLAYABLE = ["einmaleins", "lesen", "rechnungen", "drachen"];
 export const isPlayable = (game) => PLAYABLE.includes(game);
 
 // Every game holds twelve trophies (§8.3).
@@ -79,15 +79,35 @@ const RECHNUNGEN_LADDER = [3, 8, 14, 20, 28, 35, 42, 49, 56, 62, 68, 74];
 // games/rechnungen/logic.js computes it, and tests/rewards.test.js holds the
 // two together.
 //
+// drachen is exact as of shipping: three stories per difficulty, three endings
+// each, a star worth its difficulty — 3 × 3 × (1 + 2 + 3) = 54 (§21).
+// `maxPoints()` in games/drachen/logic.js computes it from the real stories, and
+// tests/rewards.test.js holds the two together. Its tile count is FROZEN there,
+// because this number is what regionState/starBadgeTier/pave() measure a child
+// against: raising it would demote someone who had already mastered the cave.
+//
 // **The other two (tippen, vokabeln) are still guesses.** Those games do not
 // exist, and neither does their tile structure; these numbers were once
 // "achievable stars × 2", from a star count that no longer exists. RECOMPUTE a
 // game's maximum from its real tiles the day it ships, exactly as einmaleins'
 // 180 was computed — until then its badge tiers and region states are scaled
 // against a number nobody checked.
+// drachen (§21) is a different economy from the drill games and its ladder says
+// so. A story pays at most one star per read-through — the ending she just
+// found — where a drill round pays up to three, so its rungs sit close together
+// near the bottom: the first trophy after two Leicht endings, and a whole
+// perfect run of one story (three endings on Schwer, nine stars) never more than
+// four. The twelfth sits at 36 of 54 (66.7 %), lesen's own fraction, so filling
+// the shelf needs reading across all three difficulties — Schwer alone caps at
+// 27. It is also pre-scaled for a grid that may one day grow: at 4×3 stories
+// (72 points) 36 is exactly half, still inside the band tests/rewards.test.js
+// enforces, so no child would lose a trophy she had already won.
+const DRACHEN_LADDER = [2, 4, 7, 10, 13, 17, 20, 24, 28, 31, 34, 36];
+
 export const MAX_POINTS = {
   einmaleins: 162,
   rechnungen: 108,
+  drachen: 54,
   tippen: 240,
   vokabeln: 108,
   lesen: 90,
@@ -115,6 +135,7 @@ export function ladderFor(maxPoints) {
 export const THRESHOLDS = {
   einmaleins: EINMALEINS_LADDER,
   rechnungen: RECHNUNGEN_LADDER,
+  drachen: DRACHEN_LADDER,
   tippen: ladderFor(MAX_POINTS.tippen),
   vokabeln: ladderFor(MAX_POINTS.vokabeln),
   lesen: LESEN_LADDER,
@@ -192,6 +213,26 @@ export const TROPHIES = {
     { e: "⭐", de: "Lesestern", en: "Reading Star" },
     { e: "👑", de: "Lesekönig", en: "Reading King" },
   ],
+  // The dragon's cave. The twelfth deliberately breaks the "…könig" pattern the
+  // other shelves end on: the child who reads her way to the end of this one is
+  // a girl, and the trophy she is handed should know it. Names here are kept to
+  // two short words where they would otherwise run long — an album slot is a
+  // third of a phone wide and breaks a single long word mid-syllable
+  // ("Schuppens|child"), which a child then cannot read at all.
+  drachen: [
+    { e: "🥚", de: "Drachenei", en: "Dragon Egg" },
+    { e: "🕯️", de: "Höhlenlicht", en: "Cave Light" },
+    { e: "🗝️", de: "Rostiger Schlüssel", en: "Rusty Key" },
+    { e: "💎", de: "Funkelstein", en: "Sparkle Stone" },
+    { e: "🗺️", de: "Alte Karte", en: "Old Map" },
+    { e: "🛡️", de: "Bodos Schild", en: "Bodo's Shield" },
+    { e: "📜", de: "Alte Schriftrolle", en: "Old Scroll" },
+    { e: "🔥", de: "Warmer Atem", en: "Warm Breath" },
+    { e: "🏺", de: "Goldkrug", en: "Gold Jug" },
+    { e: "🐉", de: "Bester Freund", en: "Best Friend" },
+    { e: "🌋", de: "Feuerberg", en: "Fire Mountain" },
+    { e: "👑", de: "Königin der Drachen", en: "Queen of Dragons" },
+  ],
 };
 
 // Stamp a stable icon name on every trophy (used by the graphics registry).
@@ -237,7 +278,7 @@ export function addPractice(saved = {}, difficulty = 0, seconds = 0) {
 }
 
 // Every game has 12 trophies, so this is the whole collection (§8.3). It counts
-// the four games that do not exist yet: the island promises six regions, and
+// the two games that do not exist yet: the island promises seven regions, and
 // the Pokalraum promises what the island does.
 export const TOTAL_TROPHIES = GAMES.length * TROPHIES_PER_GAME;
 

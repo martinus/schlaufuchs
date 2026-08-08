@@ -7,6 +7,7 @@ import en from "../assets/i18n/en.js";
 import einmaleins from "../games/einmaleins/i18n.js";
 import lesen from "../games/lesen/i18n.js";
 import rechnungen from "../games/rechnungen/i18n.js";
+import drachen from "../games/drachen/i18n.js";
 import { t, LANGUAGES, isLang } from "../assets/js/i18n.js";
 
 const abs = (p) => fileURLToPath(new URL(`../${p}`, import.meta.url));
@@ -29,6 +30,7 @@ test("game dictionaries: every key exists in every language (§6.3)", () => {
   assertKeyParity(einmaleins.de, einmaleins.en, "einmaleins");
   assertKeyParity(lesen.de, lesen.en, "lesen");
   assertKeyParity(rechnungen.de, rechnungen.en, "rechnungen");
+  assertKeyParity(drachen.de, drachen.en, "drachen");
 });
 
 test("t(): placeholder substitution and fallback to key", () => {
@@ -53,7 +55,7 @@ test("no naked concatenation markers in strings (§6.1 templates rule)", () => {
 // UI would have shown the literal text "roundDone" to a child.
 test("every key the code asks for exists in both languages", () => {
   const shared = { ...de };
-  const gameDicts = { einmaleins: einmaleins.de, lesen: lesen.de, rechnungen: rechnungen.de };
+  const gameDicts = { einmaleins: einmaleins.de, lesen: lesen.de, rechnungen: rechnungen.de, drachen: drachen.de };
 
   const files = [
     ...readdirSync(abs("assets/js")).map((f) => [`assets/js/${f}`, null]),
@@ -112,7 +114,7 @@ test("no dictionary key is dead", () => {
   // einmaleins' for a year with no caller. lesenPack<Key> keys are built at
   // runtime from content.js and have their own two-way liveness test
   // (tests/lesen-content.test.js).
-  const gameDicts = { einmaleins: einmaleins.de, lesen: lesen.de, rechnungen: rechnungen.de };
+  const gameDicts = { einmaleins: einmaleins.de, lesen: lesen.de, rechnungen: rechnungen.de, drachen: drachen.de };
   for (const [game, dict] of Object.entries(gameDicts)) {
     const deadG = Object.keys(dict)
       .filter((k) => !used.has(k) && !dynamic.test(k) && !k.startsWith("lesenPack"));

@@ -11,7 +11,7 @@ test("every GRAPHICS entry has an emoji fallback", () => {
   }
 });
 
-test("all 60 generated trophy names exist in GRAPHICS", () => {
+test("all 72 generated trophy names exist in GRAPHICS", () => {
   let count = 0;
   for (const g of GAMES) {
     TROPHIES[g].forEach((s, i) => {
@@ -22,7 +22,7 @@ test("all 60 generated trophy names exist in GRAPHICS", () => {
       count++;
     });
   }
-  assert.equal(count, 60);
+  assert.equal(count, 72);
 });
 
 test("every AVAILABLE name exists in GRAPHICS", () => {

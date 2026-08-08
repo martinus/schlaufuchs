@@ -13,6 +13,8 @@ import { PLAYABLE } from "../assets/js/rewards.js";
 import { maxPoints as lesenMaxPoints } from "../games/lesen/logic.js";
 import { CONTENT } from "../games/lesen/content.js";
 import { maxPoints as rechnenMaxPoints } from "../games/rechnungen/logic.js";
+import { maxPoints as drachenMaxPoints } from "../games/drachen/logic.js";
+import { STORIES } from "../games/drachen/content.js";
 
 // The album shelves and the gear's reset rows both iterate GAMES in order. A
 // child looks for Lesewiese right under Einmaleins — the games she can play —
@@ -119,7 +121,7 @@ test("every game has exactly 12 trophies with de+en names (§8.3)", () => {
 // The top bar shows this number, so an empty store must produce a 0 and not a
 // NaN: `pr` is absent on a first visit and holds only the games ever played.
 test("trophies are counted across every game (§8.3)", () => {
-  assert.equal(TOTAL_TROPHIES, 60, "five games × twelve trophies");
+  assert.equal(TOTAL_TROPHIES, 72, "six games × twelve trophies");
   assert.equal(TOTAL_TROPHIES, GAMES.length * TROPHIES_PER_GAME);
 
   for (const empty of [undefined, null, {}]) assert.equal(totalTrophies(empty), 0);
@@ -284,6 +286,36 @@ test("rechnungen: one round no longer floods the Pokalraum", () => {
   assert.equal(trophyCount("rechnungen", 9), 2, "one Schwer round must not drop three trophies");
   // Schwer alone (6 modes × 9 = 54) must not reach the twelfth trophy
   assert.ok(THRESHOLDS.rechnungen.at(-1) > 6 * 9, "Schwer alone must not fill the shelf");
+});
+
+// The drachen twin. Its maximum is computed from its real stories — three per
+// difficulty, three endings each (§21) — and that number is FROZEN: it is the
+// denominator regionState/starBadgeTier/pave() measure a child against, so
+// raising it would demote someone who had already mastered the cave.
+test("drachen's economy is computed from its real stories (§21)", () => {
+  assert.equal(drachenMaxPoints(STORIES.de), MAX_POINTS.drachen, "rewards.js and logic.js disagree");
+  assert.equal(3 * 3 * (1 + 2 + 3), MAX_POINTS.drachen, "3 stories × 3 endings × three difficulties");
+  assert.equal(trophyCount("drachen", MAX_POINTS.drachen), TROPHIES_PER_GAME,
+    "finding every ending must fill the shelf");
+  assert.ok(THRESHOLDS.drachen[0] <= 3, "a first sitting still reaches the first trophy");
+});
+
+// A story pays at most ONE star per read-through — the ending she just found —
+// where a drill round pays up to three. So the cave's rungs sit closer together
+// at the bottom than lesen's, and the flood test is the tighter one: a whole
+// story read out to all three endings on Schwer is 9 points and must still not
+// clear a third of the shelf.
+test("drachen: one story never floods the Pokalraum (§8.3, §21)", () => {
+  assert.deepEqual(THRESHOLDS.drachen, [2, 4, 7, 10, 13, 17, 20, 24, 28, 31, 34, 36]);
+  assert.equal(trophyCount("drachen", 3), 1, "one Schwer ending is one trophy, no more");
+  assert.ok(trophyCount("drachen", 9) <= 4, "a whole story on Schwer must not empty the shelf");
+  // filling it needs reading across difficulties: Schwer alone caps at 3 × 9
+  assert.ok(THRESHOLDS.drachen.at(-1) > 3 * 9, "Schwer alone must not fill the shelf");
+  // …and it is pre-scaled for a grid that may one day grow to four stories per
+  // difficulty (72 points): the twelfth must stay inside the band below, so no
+  // child would ever lose a trophy she had already won.
+  const grown = THRESHOLDS.drachen.at(-1) / 72;
+  assert.ok(grown > 0.4 && grown <= 0.7, `at a 4×3 grid the twelfth would sit at ${grown}`);
 });
 
 // §8.3: points reward progress and difficulty. They must never reward

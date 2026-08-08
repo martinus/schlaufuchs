@@ -83,6 +83,20 @@ as `ready | faceUp | hidden | away` (`ready` = a word waits behind the
 tap-to-reveal cover, §14.2 — `playLesen` taps it before answering). Its
 resolver is unit-tested the same way (`tests/play-lesen.test.js`).
 
+`tools/play-drachen.js` drives drachen: `playDrachen({...})` reads a branching
+story to an ending. `toEnding: 0|1|2` steers every choice toward that ending —
+the way a child hunting the last one does — and `chooseAll(end)` is its short
+form; `pick` takes a choice index or a list instead. `stopAt` stops after n
+choices (a mid-story shot), `stopAtEnding` stops ON the ending scene rather than
+pressing „Weiter", which is the shot worth taking: the ending's text and its
+name are the whole payoff, and the summary only opens on that tap (§21.3). Seed
+the cookie with difficulty `d` and story `s`; `readDrachenScene()` reports
+`choice | ending`, and `readDrachenSummary()` reads the ending strip.
+`resolveDrachen` looks a scene up by its printed text (scene texts are unique
+game-wide) and `chooseFor` re-derives `pathToEnding`'s first step — both are
+unit-tested against every node of every story (`tests/play-drachen.test.js`),
+because a driver that clicks the wrong thing proves nothing, quietly.
+
 `tools/play-rechnungen.js` drives rechnungen: `playRechnung({...})` with the
 same options as play.js (`wrongAt`, `delayMs`, `stopAt`/`questions`, plus
 `stopInAid` and `stopKind: "mauer"` — stop with a task of that kind freshly
@@ -254,12 +268,17 @@ workflow runs it before publishing.
 
 Pages (each an entry point):
 - `index.html` — the world map (inline SVG, viewBox `0 0 360 560`), driven by
-  `assets/js/map.js`. Six regions: 5 games + the Trophy Room (→ album).
+  `assets/js/map.js`. Seven regions: 6 games + the Trophy Room (→ album).
 - `album.html` — trophy album, driven by `assets/js/album.js`.
-- `games/<name>/index.html` + `<name>.js` — one folder per game. Three are
+- `games/<name>/index.html` + `<name>.js` — one folder per game. Four are
   fully implemented: `einmaleins`, `lesen` (Blitzwörter + Quatsch-Sätze, §14 —
   content in `games/lesen/content.js`, which is **append-only**: item order is
-  the box string's index) and `rechnungen` (workbook arithmetic within 100:
+  the box string's index), `drachen` (Drachengeschichten, §21 — branching
+  stories, one tile per story, three endings each; **no adaptive engine and no
+  tempo ladder**, and its stars ARE the endings found, so a replay to a known
+  ending pays nothing. `games/drachen/content.js` is append-only twice over:
+  story order is the mask string's index, and a node's `end` is its bit) and
+  `rechnungen` (workbook arithmetic within 100:
   ＋ − mit Ergänzen, Division mit Rest ÷R, Rechenmauern 🧱, Rechenquadrate ⊞,
   Mix — multi-cell tasks on one
   keypad, §12 — skill buckets in `games/rechnungen/logic.js`, also
@@ -293,7 +312,10 @@ Shared modules in `assets/js/`:
   (Leicht 1, Mittel 2, Schwer 3); internally the code says `points`, the UI
   never does. `MAX_POINTS` is its denominator everywhere and is a **guess** for
   the two unbuilt games (`tippen`, `vokabeln`) — recompute when one ships
-  (einmaleins, lesen and rechnungen are computed from their real tiles).
+  (einmaleins, lesen, rechnungen and drachen are computed from their real
+  tiles). **drachen's is frozen, not merely computed**: three stories per
+  difficulty is a number its content file may not grow past, because raising
+  `MAX_POINTS` demotes a child who has already mastered that region.
 - `journey.js` — the round's scene; `sceneGeometry(nodes, theme)` is the pure
   arithmetic (tested), `createJourney` is the DOM around it.
 - `mapwalk.js` / `motion.js` / `levelfox.js` — the fox's walk: pure gait
