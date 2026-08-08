@@ -37,11 +37,16 @@ test("every AVAILABLE name exists in GRAPHICS", () => {
 // in the registry that no theme uses any more.
 test("every journey icon a theme names exists, and none is orphaned", () => {
   const named = new Set();
-  for (const th of Object.values(THEMES)) {
+  for (const [key, th] of Object.entries(THEMES)) {
     assert.equal(th.goal, undefined, "the basket is the goal in every theme");
+    // A theme is a path colour and THREE friendly obstacles (journey.js). Say
+    // it per theme, not as a grand total: the set is smaller than 3 × themes
+    // because themes may share an icon (village and forest both use j-door), so
+    // a total both hides a theme that lost one and moves whenever a shared
+    // icon appears.
+    assert.equal(th.obstacles.length, 3, `theme ${key} names ${th.obstacles.length} obstacles`);
     for (const o of th.obstacles) named.add(o);
   }
-  assert.equal(named.size, 14, `themes name ${named.size} journey icons`);
   for (const name of named) assert.ok(GRAPHICS[name], `theme names a missing icon: ${name}`);
 
   const orphans = Object.keys(GRAPHICS).filter((k) => k.startsWith("j-") && !named.has(k));

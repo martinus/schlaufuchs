@@ -431,12 +431,12 @@ test("one round can win several trophies, and the summary must show them all", (
     fileURLToPath(new URL("../assets/js/roundsummary.js", import.meta.url)),
     "utf8",
   );
-  const show = src.slice(src.indexOf("function show("));
+  const paint = src.slice(src.indexOf("function paint("));
   assert.ok(
-    !/trophies\[0\]/.test(show),
+    !/trophies\[0\]/.test(paint),
     "showing only trophies[0] swallows the other prizes",
   );
-  assert.ok(/trophies\s*\n?\s*\.map\(/.test(show), "the summary must render every won trophy");
+  assert.ok(/trophies\s*\n?\s*\.map\(/.test(paint), "the summary must render every won trophy");
   // and every game feeds it the full list
   const root = new URL("../", import.meta.url);
   for (const g of ["einmaleins/einmaleins", "lesen/lesen", "rechnungen/rechnungen"]) {

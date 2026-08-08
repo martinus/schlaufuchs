@@ -13,44 +13,38 @@
 // found", and the level picker's three star groups are literally the endings
 // still hidden from her.
 
-import {
-  DIFF_KEYS, STAR_SLOTS,
-} from "../../assets/js/roundrules.js";
+import { DIFF_KEYS, STAR_SLOTS, withStarDigit } from "../../assets/js/roundrules.js";
 
 // The round rules every game shares live in roundrules.js; this module keeps
 // only drachen's own data and graph arithmetic. There is no tempo ladder here
 // (§21): rushing a story is the opposite of reading it.
-export {
-  DIFF_KEYS, DIFF_SLUGS, STAR_SLOTS, GUARD_MS, isBounce,
-} from "../../assets/js/roundrules.js";
+export { DIFF_KEYS, isBounce } from "../../assets/js/roundrules.js";
 
 // Endings per story, and stories per difficulty. BOTH are frozen (§21):
 // END_SLOTS is the width of the bit mask, STORY_TILES the length of the digit
 // string — and STORY_TILES is also the denominator of MAX_POINTS.drachen, which
 // is what regionState/starBadgeTier/pave() measure a child's progress against.
 // Growing it later would demote a child who had already mastered the cave.
-export const END_SLOTS = 3;
+// "the stars on a tile ARE the endings she has found" is the whole design, so
+// this is the same number as STAR_SLOTS by construction, not by agreement.
+export const END_SLOTS = STAR_SLOTS;
 export const STORY_TILES = 3;
 
 // --- the ending mask (§21 stored state) --------------------------------------
 // One decimal digit 0..7 per story: bit e is set when ending e has been found.
 // Stars are DERIVED from it (`foundCount`), so nothing else is stored.
 //
-// This codec is drachen's own on purpose. roundrules.js has starDigit/
-// withStarDigit for exactly this shape, but `starDigit` clamps to 3 (a star
-// count can never exceed STAR_SLOTS) — it would read a full mask of 7 back as
-// 3, silently forgetting two endings. Reading and writing therefore stay
-// together here, where the range is 0..7.
+// The READER is drachen's own on purpose: roundrules.js' `starDigit` clamps to
+// 3, because a star count can never exceed STAR_SLOTS — it would read a full
+// mask of 7 back as 3 and silently forget two endings. The WRITER clamps
+// nothing, so it is the shared one.
 export function endMask(maskString, index) {
   const d = Number.parseInt((maskString ?? "")[index], 10);
   return Number.isInteger(d) && d >= 0 && d <= 7 ? d : 0;
 }
 
-export function withEndMask(maskString, index, mask, slots = STORY_TILES) {
-  const s = (maskString ?? "").padEnd(slots, "0").split("");
-  s[index] = String(mask & 7);
-  return s.join("");
-}
+export const withEndMask = (maskString, index, mask) =>
+  withStarDigit(maskString, index, mask & 7, STORY_TILES);
 
 export const hasEnd = (mask, end) => (mask & (1 << end)) !== 0;
 export const addEnd = (mask, end) => (mask | (1 << end)) & 7;
@@ -65,11 +59,15 @@ export function storiesFor(difficulty, content) {
 }
 
 // Junk in, story zero out — a corrupt store must never leave a child on a blank
-// page (§9.2).
-export function storyAt(difficulty, index, content) {
+// page (§9.2). The game clamps the INDEX (it has to write stars to that slot),
+// the tools take the story; both go through the one rule.
+export function clampStoryIndex(difficulty, index, content) {
   const list = storiesFor(difficulty, content);
-  return list[Number.isInteger(index) && index >= 0 && index < list.length ? index : 0] ?? null;
+  return Number.isInteger(index) && index >= 0 && index < list.length ? index : 0;
 }
+
+export const storyAt = (difficulty, index, content) =>
+  storiesFor(difficulty, content)[clampStoryIndex(difficulty, index, content)] ?? null;
 
 export const isEnding = (node) => Number.isInteger(node?.end);
 export const nodeById = (story, id) => story?.nodes?.find((n) => n.id === id) ?? null;
@@ -107,8 +105,6 @@ export function layersOf(story) {
   }
   return layer;
 }
-
-export const layerOf = (story, id) => layersOf(story).get(id) ?? null;
 
 // Which endings can still be reached from `id`. This is the function the
 // no-lock-out rule is written in: a child hunting the last ending must never be

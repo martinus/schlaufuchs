@@ -4,20 +4,19 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
 import {
   END_SLOTS, STORY_TILES,
   endMask, withEndMask, hasEnd, addEnd, foundCount,
-  storiesFor, storyAt, nodeById, startNode, isEnding, journeyNodes,
-  layersOf, layerOf, endingsReachable, pathToEnding, validStoryResume, maxPoints,
+  storiesFor, storyAt, clampStoryIndex, nodeById, startNode, isEnding, journeyNodes,
+  layersOf, endingsReachable, pathToEnding, validStoryResume, maxPoints,
 } from "../games/drachen/logic.js";
 import { STORIES } from "../games/drachen/content.js";
 import { storyFace } from "../games/drachen/picker.js";
 import { MAX_POINTS, tilePointsLeft, roundPoints } from "../assets/js/rewards.js";
 import { encodeState, BUDGET } from "../assets/js/storage.js";
+import { STAR_SLOTS } from "../assets/js/roundrules.js";
+import { read } from "./pages.js";
 
-const read = (p) => readFileSync(fileURLToPath(new URL(`../${p}`, import.meta.url)), "utf8");
 const game = read("games/drachen/drachen.js");
 const html = read("games/drachen/index.html");
 const CONTENT = STORIES.de;
@@ -44,6 +43,10 @@ test("the mask codec is total: junk in, zero out", () => {
   assert.equal(endMask("70", 5), 0, "past the end of the string");
   assert.equal(withEndMask(undefined, 2, 3), "003", "a missing string is padded, not thrown at");
   assert.equal(withEndMask("7", 0, 1).length, STORY_TILES, "a short string grows to the tile count");
+});
+
+test("an ending slot IS a star slot — the game's whole premise, structurally", () => {
+  assert.equal(END_SLOTS, STAR_SLOTS);
 });
 
 test("bits are endings, and popcount is stars", () => {
@@ -83,9 +86,14 @@ test("every difficulty offers exactly STORY_TILES stories, in content order", ()
 test("a corrupt story index lands on story zero, never on a blank page", () => {
   const first = storiesFor(1, CONTENT)[0];
   for (const ix of [undefined, null, -1, 3, 99, "1", 1.5, NaN]) {
+    assert.equal(clampStoryIndex(1, ix, CONTENT), 0, `index ${JSON.stringify(ix)}`);
     assert.equal(storyAt(1, ix, CONTENT), first, `index ${JSON.stringify(ix)}`);
   }
+  assert.equal(clampStoryIndex(2, 2, CONTENT), 2);
   assert.equal(storyAt(2, 2, CONTENT), storiesFor(2, CONTENT)[2]);
+  // the game clamps the INDEX because it writes a star to that slot; a story
+  // picked without its index would bank the ending on the wrong tile
+  assert.match(game, /storyIx = clampStoryIndex\(/, "the page must clamp the slot it writes to");
 });
 
 // The scene walks one waypoint per CHOICE, not per scene: she starts on the
@@ -102,14 +110,14 @@ test("layersOf reaches every node, and every edge steps exactly one layer", () =
   for (const story of CONTENT) {
     const layers = layersOf(story);
     assert.equal(layers.size, story.nodes.length, `${story.key}: orphaned nodes`);
-    assert.equal(layerOf(story, startNode(story).id), 0);
+    assert.equal(layers.get(startNode(story).id), 0);
     for (const node of story.nodes) {
       for (const c of node.c ?? []) {
         assert.equal(layers.get(c.to), layers.get(node.id) + 1, `${story.key}/${node.id}→${c.to}`);
       }
     }
   }
-  assert.equal(layerOf(CONTENT[0], "nope"), null);
+  assert.equal(layersOf(CONTENT[0]).get("nope"), undefined);
 });
 
 test("pathToEnding finds a path to every ending, and following it lands there", () => {
@@ -169,7 +177,7 @@ test("the mirror's difficulty and story are checked before its path is", () => {
   const boot = game.slice(game.indexOf('const interrupted = loadRound("drachen")'));
   assert.match(boot, /\[0, 1, 2\]\.includes\(interrupted\.d\)/, "a foreign difficulty is not resumable");
   assert.match(boot, /Number\.isInteger\(interrupted\.s\)/, "…nor a foreign story index");
-  assert.match(boot, /validStoryResume\(interrupted, storyAt\(interrupted\.d, interrupted\.s, CONTENT\)\)/,
+  assert.match(boot, /validStoryResume\(interrupted, storiesFor\(interrupted\.d, CONTENT\)\[interrupted\.s\]\)/,
     "and the path is validated against THAT story, not the one last played");
   assert.match(boot, /clearRound\("drachen"\)/, "an unusable mirror is dropped, not carried around");
 });
@@ -222,18 +230,35 @@ test("the summary sheet has one button, no tempo line and an ending strip", () =
 // The round ends in TWO beats, and the order is what makes the leave guard safe:
 // the store is written while the ending is still on screen, so `inRound()` is
 // already false and walking away mid-ending costs her nothing.
-test("the ending persists BEFORE it is shown, and the summary waits for a tap", () => {
-  const ending = game.slice(game.indexOf("function renderEnding"), game.indexOf("function paintEndings"));
-  const set = ending.indexOf('setGame("drachen"');
-  const clear = ending.indexOf('clearRound("drachen")');
-  const record = ending.indexOf('recordRound("drachen"');
+//
+// The beat that PAYS is separate from the beat that DRAWS, and that split is
+// load-bearing three times over: the summary is painted (so the top bar stops
+// reading ⭐ 0 and the sheet can never be opened blank) the moment the star is
+// banked; the drawing half can run again on a language switch without paying
+// twice; and the sheet itself is only revealed when she taps on.
+test("the ending is paid once, drawn as often as needed, and revealed on a tap", () => {
+  const award = game.slice(game.indexOf("function awardEnding"), game.indexOf("function paintEnding("));
+  const set = award.indexOf('setGame("drachen"');
+  const clear = award.indexOf('clearRound("drachen")');
+  const record = award.indexOf('recordRound("drachen"');
   assert.ok(set > -1 && clear > set, "the mirror is dropped only once the store holds the ending");
   assert.ok(record > set, "the trophies are recorded after the ending is written");
-  assert.ok(ending.includes("roundOver = true"), "…and the round is over from here");
-  assert.ok(!ending.includes("showSummary("), "the summary must NOT open on the ending scene");
-  // it opens on the ending's own button instead
+  assert.ok(award.includes("roundOver = true"), "…and the round is over from here");
+  assert.match(award, /paintSummary\(\{/, "the sheet must be painted the moment the star is banked");
+  assert.ok(!award.includes("revealSummary("), "…but not shown: she is still reading the ending");
+
+  // the paying half runs from `choose` only — never from a re-render
+  const render = game.slice(game.indexOf("function renderScene"), game.indexOf("function renderChoices"));
+  assert.ok(!render.includes("awardEnding("), "a redraw must not pay a second time");
+  assert.match(render, /paintEnding\(\)/, "a redraw draws the ending again");
+
   const finish = game.slice(game.indexOf("function finishStory"));
-  assert.match(finish, /showSummary\(\{/, "the 'Weiter' button is what opens the summary");
+  assert.match(finish, /revealSummary\(\)/, "the 'Weiter' button is what shows the summary");
+  // …and every other way the sheet can come back asks whether it was ever shown
+  assert.ok(!/if \(roundOver\) summary\.open\(\)/.test(game),
+    "reopening on `roundOver` shows an unpainted sheet on the ending scene");
+  assert.equal(game.match(/if \(summaryShown\) summary\.open\(\)/g)?.length, 2,
+    "the picker's dismiss and the gear's close both gate on the sheet having been shown");
 });
 
 // The ending scene has to hold the ending's TEXT and its NAME at the reading
@@ -242,12 +267,16 @@ test("the ending persists BEFORE it is shown, and the summary waits for a tap", 
 // the collectible. So the path steps back on the ending beat — and steps
 // forward again on the next story.
 test("the path yields its room on the ending scene", () => {
-  const ending = game.slice(game.indexOf("function renderEnding"), game.indexOf("function paintEndings"));
-  assert.match(ending, /classList\.add\("ended"\)/, "the ending beat must mark the card");
-  const choices = game.slice(game.indexOf("function renderChoices"), game.indexOf("function choose("));
-  assert.match(choices, /classList\.remove\("ended"\)/, "…and a new scene must take the mark off again");
-  assert.match(read("assets/css/schlaufuchs.css"), /\.stage:has\(#wordcard\.ended\) \.journey/,
+  const render = game.slice(game.indexOf("function renderScene"), game.indexOf("function renderChoices"));
+  assert.match(render, /classList\.toggle\("ended", ending\)/,
+    "one toggle, so the mark goes on at an ending and off at every other scene");
+  const css = read("assets/css/schlaufuchs.css");
+  assert.match(css, /\.stage:has\(#wordcard\.ended\) \.journey/,
     "the mark has no rule — the ending name would be clipped again");
+  // …and the two rules must not merely tie on specificity, with source order
+  // deciding. Reordering the blocks would silently clip the name again.
+  assert.match(css, /\.stage:has\(#wordcard\.story:not\(\.ended\)\) \.journey/,
+    "the story and ending heights must be mutually exclusive, not order-dependent");
 });
 
 test("every choice is mirrored, and every way out of a story drops the mirror", () => {
@@ -255,10 +284,10 @@ test("every choice is mirrored, and every way out of a story drops the mirror", 
   assert.match(choose, /saveRound\("drachen", \{ d: diff, s: storyIx, path: \[\.\.\.path\] \}\)/,
     "a scene she walked into must survive a reload");
   assert.match(choose, /isBounce\(now, guardArmedAt\)/, "a double-tap must not pick the next scene's choice");
-  // the three moments the mirror is dropped (§10.7): a finished story, a fresh
-  // pick from the picker, and a confirmed "Zur Karte"
-  assert.equal(game.match(/clearRound\("drachen"\)/g)?.length, 4,
-    "ending, fresh start, leave guard, and the un-resumable boot");
+  // the moments the mirror is dropped (§10.7): a finished story, a fresh pick
+  // from the picker, a confirmed "Zur Karte", and a boot that cannot resume
+  assert.match(game.slice(game.indexOf("function awardEnding")), /clearRound\("drachen"\)/);
+  assert.match(game.slice(game.indexOf("function startStory")), /if \(!snap\) clearRound\("drachen"\)/);
   assert.match(game, /onGo: \(\) => clearRound\("drachen"\)/);
   assert.match(game, /inRound: \(\) => story !== null && !roundOver && path\.length > 1/,
     "a story with no decision in it yet has nothing to lose");

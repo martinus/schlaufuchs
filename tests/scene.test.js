@@ -231,19 +231,24 @@ test("the round hands the scene the tile's best stars", () => {
 // top bar still read "⭐ 0" while three stars lit up in the summary beneath it.
 // The child only saw the real count after walking back to the map.
 test("the star chip is refreshed when the round changes the stars", () => {
-  // The shared summary refreshes the chip inside its celebration timer; each
-  // game hands it that refresh as a thunk over its own top bar. Bound the slice
-  // to the setTimeout body — reading to the end of the file let this pass on an
-  // unrelated refresh, a guard that guarded nothing.
-  const show = roundsummary.slice(roundsummary.indexOf("function show("));
-  const open = show.indexOf("setTimeout(");
-  const close = show.indexOf("}, SETTLE_MS);", open);
-  assert.ok(close > open, "the summary is still painted inside a setTimeout");
-  const painted = show.slice(open, close);
-  assert.ok(painted.includes("refresh()"), "the summary must refresh the chip it just invalidated");
+  // The refresh belongs to PAINTING, not to opening: a game may paint the sheet
+  // long before it shows it (drachen banks the ending's star while the child is
+  // still reading the ending, §21.3), and for that whole beat the bar would go
+  // on reading "⭐ 0" over a star that is already in the store. Bound the slice
+  // to `paint` — reading to the end of the file let this pass on an unrelated
+  // refresh, a guard that guarded nothing.
+  const paint = roundsummary.slice(
+    roundsummary.indexOf("function paint("),
+    roundsummary.indexOf("function reveal("),
+  );
+  assert.ok(paint.length > 0, "the summary must still have a paint step");
+  assert.ok(paint.includes("refresh()"), "the summary must refresh the chip it just invalidated");
+  const reveal = roundsummary.slice(roundsummary.indexOf("function reveal("));
+  assert.ok(!reveal.slice(0, reveal.indexOf("}")).includes("refresh()"),
+    "refreshing on reveal would leave the bar stale for the whole beat before it");
 
   // …and each game supplies that refresh over its real top bar.
-  for (const g of ["einmaleins/einmaleins", "lesen/lesen", "rechnungen/rechnungen"]) {
+  for (const g of ["einmaleins/einmaleins", "lesen/lesen", "rechnungen/rechnungen", "drachen/drachen"]) {
     assert.match(read(`games/${g}.js`), /refresh: \(\) => bar\.refresh\(\)/,
       `${g}.js must hand the summary its top bar`);
   }

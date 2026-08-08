@@ -1107,7 +1107,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    lesen's four comprehension answers are tuned to fit a passage AND four tiles
    on the 360×640 baseline, and drachen has at most three. */
 .game:has(#wordcard.story) .mc-read button { font-size: 1.14rem; }
-.game:has(#wordcard.story) .endname .en-n { font-size: 1.2rem; }
+.wordcard.story .endname .en-n { font-size: 1.2rem; }
 /* A story scene is short — a Leicht one is two sentences — and with only two or
    three choices under it the stage's centred group floated in a void: a band of
    empty page between the top bar and the round's title, and another under the
@@ -1117,7 +1117,7 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    that can carry it, and the gap that remains sits where it belongs, above the
    thumb. */
 .stage:has(#wordcard.story) { justify-content: flex-start; }
-.stage:has(#wordcard.story) .journey { max-height: 26vh; }
+.stage:has(#wordcard.story:not(.ended)) .journey { max-height: 26vh; }
 /* On the ending scene the path has nothing left to say — the fox is in the
    basket — so it steps back and gives its room to the ending text and the
    ending's name. The longest ending would otherwise push that name out of the

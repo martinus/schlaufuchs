@@ -11,10 +11,12 @@
 //   • Stars are ENDINGS. A tile is a story, a story has three endings, and a
 //     newly found one pays a star — a known one pays nothing, exactly as
 //     "stars come from progress, never from repetition" (§8.3) already says.
-//   • The round ends in TWO beats. The state is written the moment the ending
-//     scene appears, and the summary waits for her to press "Weiter" — the
-//     shared summary would otherwise cover the ending text after 700 ms, and
-//     that text is the whole point of the game.
+//   • The round ends in TWO beats. `awardEnding` banks the star and PAINTS the
+//     summary the moment the ending scene appears; `finishStory` only reveals
+//     the sheet, when she taps "Weiter". The shared summary's own 700 ms timer
+//     would otherwise cover the ending text, and that text is the whole point
+//     of the game. Painting early is not an optimisation: it is what keeps the
+//     top bar honest and the sheet from ever being opened blank (§21.3).
 //
 // The stories are German (§14.6); the chrome is bilingual.
 
@@ -34,7 +36,7 @@ import { STORIES } from "./content.js";
 import { createLevelPicker } from "./picker.js";
 import {
   DIFF_KEYS, END_SLOTS, isBounce,
-  storiesFor, storyAt, nodeById, startNode, isEnding, journeyNodes,
+  storiesFor, clampStoryIndex, nodeById, startNode, isEnding, journeyNodes,
   endMask, withEndMask, foundCount, hasEnd, addEnd, validStoryResume,
 } from "./logic.js";
 
@@ -47,44 +49,50 @@ const CONTENT = STORIES.de;
 // Same contract as every other game: the picker can be waved away, the summary
 // cannot.
 const picker = createLevelPicker(document.getElementById("pick-overlay"), {
-  current: () => ({ diff, story: storyIx }),
+  current: () => ({ diff, id: storyIx }),
   onPick(d, s) {
     diff = d;
     storyIx = s;
     startStory();
   },
   onDismiss() {
-    if (roundOver) summary.open();
+    // Only once the sheet has actually been revealed — on an ending scene she
+    // is still reading, and a summary popping over it is not what waving the
+    // picker away meant.
+    if (summaryShown) summary.open();
     else if (!story) startStory();
   },
 });
-const { summary, show: showSummary } = createRoundSummary({
+const { summary, paint: paintSummary, reveal: revealSummary } = createRoundSummary({
   picker,
   refresh: () => bar.refresh(),
 });
 
 // --- state -------------------------------------------------------------------
-let saved = getGame("drachen");
-let diff = clampDifficulty(saved.d);
-let storyIx = Number.isInteger(saved.s) ? saved.s : 0;
+let diff = clampDifficulty(getGame("drachen").d);
+let storyIx = 0;
 
 let story = null;      // the story being read; also "is a story on the stage?"
 let journey = null;
 let path = [];         // node ids visited, current scene last
-let node = null;       // the scene on screen
+let node = null;       // the scene on screen — always the last id in `path`
 let maskBefore = 0;    // the tile's ending mask when the story started
-let maskAfter = 0;     // …and after the ending was reached
-let freshEnd = -1;     // the ending just found, or -1 when it was already known
-let roundOver = false;
-let wonTrophies = [];  // what this ending paid, held for the summary's second beat
+let roundOver = false; // the ending is on screen and its star is in the store
+let summaryShown = false; // …and she has tapped past it, so the sheet exists
+let wonTrophies = [];  // what this ending paid, held for the summary
 let guardArmedAt = 0;  // double-tap bounce guard (§14.2)
-let sceneStamp = 0;    // the driver's "this is a new scene" counter
+
+// Everything else about the ending is DERIVED from those two, so there is no
+// second copy to keep in step across the two beats and a language switch.
+const endingFresh = () => roundOver && !hasEnd(maskBefore, node.end);
+const maskNow = () => (roundOver ? addEnd(maskBefore, node.end) : maskBefore);
 
 // --- chrome ------------------------------------------------------------------
 function updateChip() {
+  const title = storiesFor(diff, CONTENT)[storyIx]?.title ?? "";
   $("pickchip").innerHTML =
     `<span class="ph-sym" aria-hidden="true">${iconHTML("region-drachen", { size: 20 })}</span>`
-    + `<span class="ph-txt">${t(DIFF_KEYS[diff])}<span class="ph-sep" aria-hidden="true"></span>${(story ?? storyAt(diff, storyIx, CONTENT))?.title ?? ""}</span>`;
+    + `<span class="ph-txt">${t(DIFF_KEYS[diff])}<span class="ph-sep" aria-hidden="true"></span>${title}</span>`;
 }
 
 // --- a story -----------------------------------------------------------------
@@ -92,12 +100,12 @@ function updateChip() {
 // is fresh and any stale mirror is dropped — a chosen story outranks an
 // interrupted one.
 function startStory(resume = null) {
-  saved = getGame("drachen");
-  story = storyAt(diff, storyIx, CONTENT);
-  // storyAt is total, so a corrupt index lands on story zero rather than a blank
-  // page; the index has to follow, or the stars would be written to the wrong
-  // tile.
-  storyIx = storiesFor(diff, CONTENT).indexOf(story);
+  const saved = getGame("drachen");
+  // Clamp once and index from the clamp: a corrupt index lands on story zero
+  // rather than a blank page, and the index has to follow it, or the stars
+  // would be written to the wrong tile.
+  storyIx = clampStoryIndex(diff, storyIx, CONTENT);
+  story = storiesFor(diff, CONTENT)[storyIx] ?? null;
   updateChip();
   bar.refresh();
 
@@ -106,9 +114,8 @@ function startStory(resume = null) {
   path = snap ? [...snap.path] : [startNode(story).id];
 
   maskBefore = endMask((saved.e ?? {})[diff], storyIx);
-  maskAfter = maskBefore;
-  freshEnd = -1;
   roundOver = false;
+  summaryShown = false;
 
   journey = createJourney($("journey"), {
     nodes: journeyNodes(story),
@@ -120,20 +127,31 @@ function startStory(resume = null) {
   for (let i = 1; i < path.length; i++) journey.advance();
 
   summary.close();
-  renderScene(nodeById(story, path[path.length - 1]));
+  renderScene();
 }
 
-function renderScene(next) {
-  node = next;
-  sceneStamp += 1;
+// Draw whatever scene `path` ends on. Pure paint — safe to run again on a
+// language switch, which is exactly what makes that handler a one-liner.
+function renderScene() {
+  node = nodeById(story, path[path.length - 1]);
+  const ending = isEnding(node);
 
   $("scene").textContent = node.e ?? "";
   const q = $("question");
   q.textContent = node.t;
-  q.dataset.q = String(sceneStamp);
+  // The driver's "this is a new scene" stamp. `path.length` says it without a
+  // counter to maintain — and, unlike a counter, it does NOT change when the
+  // same scene is redrawn in another language.
+  q.dataset.q = String(path.length);
   q.dataset.node = node.id;
 
-  if (isEnding(node)) renderEnding();
+  $("endname").hidden = !ending;
+  // On the ending scene the path has nothing left to say — the fox is in the
+  // basket — so it yields its room to the ending text and the ending's name.
+  // Without this the name is pushed out of the stage on the longest endings.
+  $("wordcard").classList.toggle("ended", ending);
+
+  if (ending) paintEnding();
   else renderChoices();
 }
 
@@ -141,8 +159,6 @@ function renderScene(next) {
 // same one-column shape lesen's comprehension answers wear — a choice is a
 // sentence, and a sentence needs a line, not a square.
 function renderChoices() {
-  $("endname").hidden = true;
-  $("wordcard").classList.remove("ended");
   const box = document.createElement("div");
   box.className = "mc mc-read";
   box.setAttribute("role", "group");
@@ -172,33 +188,27 @@ function choose(index) {
   journey.advance();
   path.push(next.id);
 
-  if (isEnding(next)) {
-    // The state is written the moment the ending is on screen (below), so the
-    // mirror is dropped there, not here.
-    renderScene(next);
-    return;
-  }
-  saveRound("drachen", { d: diff, s: storyIx, path: [...path] });
-  renderScene(next);
+  // An ending is banked instead of mirrored: the store holds it from here on,
+  // so the mirror has nothing left to protect.
+  if (isEnding(next)) awardEnding(next);
+  else saveRound("drachen", { d: diff, s: storyIx, path: [...path] });
+
+  renderScene();
 }
 
-// --- the ending: beat one ----------------------------------------------------
+// --- the ending: beat one, the part that happens exactly once ----------------
 // Persist FIRST, then let her read. Because the store is already written,
 // `inRound()` is false from here on: she may walk away in the middle of an
 // ending and keeps the star she just earned.
-function renderEnding() {
-  const known = hasEnd(maskBefore, node.end);
-  freshEnd = known ? -1 : node.end;
-  maskAfter = addEnd(maskBefore, node.end);
-
-  const masks = { ...(saved.e ?? {}) };
-  masks[diff] = withEndMask(masks[diff], storyIx, maskAfter);
+function awardEnding(end) {
+  const mask = addEnd(maskBefore, end.end);
+  const masks = { ...(getGame("drachen").e ?? {}) };
+  masks[diff] = withEndMask(masks[diff], storyIx, mask);
   setGame("drachen", { d: diff, s: storyIx, e: masks });
-  // the ending is in the store now; its mirror has nothing left to protect
   clearRound("drachen");
 
   const oldStars = foundCount(maskBefore);
-  const stars = foundCount(maskAfter);
+  const stars = foundCount(mask);
   // stars come from progress, never from repetition (§8.3): a known ending pays
   // nothing, however often she walks back to it
   const points = roundPoints({ oldStars, newStars: stars, difficulty: diff });
@@ -207,19 +217,29 @@ function renderEnding() {
   roundOver = true;
   // the group flies into the basket while she is still reading the ending
   journey.setStars(stars);
-  if (!known) sfx.correct();
+  if (stars > oldStars) sfx.correct();
 
-  // The path has done its job — the fox is in the basket — so it yields its
-  // room to the ending text and the ending's name, which are the whole payoff.
-  // Without this the name is pushed out of the stage on the longest endings.
-  $("wordcard").classList.add("ended");
+  // Paint the sheet NOW, though it is not shown until she taps on: the top bar
+  // must stop reading ⭐ 0 the moment the star is in the store, and a sheet that
+  // can be opened from the gear or the picker must never be opened blank.
+  paintSummary({
+    old: oldStars,
+    stars,
+    improved: stars > oldStars,
+    diff,
+    trophies: wonTrophies,
+  });
+}
+
+// --- the ending: the part that may be drawn again ----------------------------
+function paintEnding() {
+  const fresh = endingFresh();
   const en = $("endname");
-  en.hidden = false;
   // no emoji here: the ending's own picture is floated into the scene right
   // above, and a second copy of it two lines down reads as a stutter
   en.innerHTML = `<span class="en-n">${node.name}</span>`
-    + `<span class="en-tag">${known ? t("drachenKnownEnding") : t("drachenNewEnding")}</span>`;
-  en.classList.toggle("fresh", !known);
+    + `<span class="en-tag">${fresh ? t("drachenNewEnding") : t("drachenKnownEnding")}</span>`;
+  en.classList.toggle("fresh", fresh);
 
   paintEndings();
 
@@ -237,7 +257,8 @@ function renderEnding() {
 // slots above already say "how many"; this row says "WHICH, and one is still
 // out there". It is what makes a child play the same story again.
 function paintEndings() {
-  const found = foundCount(maskAfter);
+  const mask = maskNow();
+  const found = foundCount(mask);
   const left = END_SLOTS - found;
   const head = left === 0
     ? t("drachenAll")
@@ -245,11 +266,11 @@ function paintEndings() {
       + (left === 1 ? t("drachenLeft1") : t("drachenLeft", { n: left }));
 
   const rows = story.nodes.filter(isEnding).sort((a, b) => a.end - b.end).map((end) => {
-    if (!hasEnd(maskAfter, end.end)) {
+    if (!hasEnd(mask, end.end)) {
       return `<li class="end hidden"><span class="end-e" aria-hidden="true">❔</span>`
         + `<span class="end-n">${t("drachenHidden")}</span></li>`;
     }
-    const fresh = end.end === freshEnd ? " fresh" : "";
+    const fresh = end.end === node.end && endingFresh() ? " fresh" : "";
     return `<li class="end found${fresh}"><span class="end-e" aria-hidden="true">${end.e}</span>`
       + `<span class="end-n">${end.name}</span></li>`;
   });
@@ -259,25 +280,12 @@ function paintEndings() {
 
 // --- the ending: beat two ----------------------------------------------------
 function finishStory() {
-  if (!roundOver) return;
-  const now = Date.now();
-  if (isBounce(now, guardArmedAt)) return;
-  guardArmedAt = now;
+  if (!roundOver || summaryShown) return;
+  if (isBounce(Date.now(), guardArmedAt)) return;
 
   journey.finish();
-  const oldStars = foundCount(maskBefore);
-  const stars = foundCount(maskAfter);
-  // no tempo ladder in the cave (§21): the shared summary skips both the tempo
-  // line and the record line, and this sheet does not even carry them
-  showSummary({
-    old: oldStars,
-    stars,
-    improved: stars > oldStars,
-    diff,
-    tier: 0,
-    tempoImproved: false,
-    trophies: wonTrophies,
-  });
+  summaryShown = true;
+  revealSummary();
 }
 
 // --- picker overlay (§3.3: chip → pick = 2 taps) ----------------------------
@@ -300,20 +308,14 @@ const bar = initTopBar({
   onLeave: guard.guardLink,
   onChange() {
     updateChip();
-    // The story is content and does not translate; only the chrome around it
-    // does — the ending strip and the "Weiter" button carry UI strings.
-    if (roundOver && node) {
-      const tag = $("endname").querySelector(".en-tag");
-      if (tag) tag.textContent = freshEnd === -1 ? t("drachenKnownEnding") : t("drachenNewEnding");
-      const next = $("story-next");
-      if (next) next.textContent = t("drachenNext");
-      paintEndings();
-    } else if (story) {
-      $("answers").querySelector(".mc")?.setAttribute("aria-label", t("drachenChoose"));
-    }
+    // The story itself is content and does not translate; the chrome around it
+    // does — the choices' spoken label, the ending's tag, the strip, the button.
+    // Redrawing the scene is all of them at once, and it cannot pay a star
+    // twice: the paying half lives in awardEnding.
+    if (story) renderScene();
   },
   onClose() {
-    if (roundOver) summary.open();
+    if (summaryShown) summary.open();
   },
 });
 
@@ -321,11 +323,13 @@ const bar = initTopBar({
 // left (§3.4) — unless a story was interrupted mid-read (§10.7): then the game
 // rehydrates it, same story, same scene, the fox where she stood, with no
 // picker and no dialog. A stale or foreign mirror falls back to the picker.
+const saved = getGame("drachen");
+storyIx = clampStoryIndex(diff, saved.s, CONTENT);
 const interrupted = loadRound("drachen");
 const canResume = interrupted
   && [0, 1, 2].includes(interrupted.d)
   && Number.isInteger(interrupted.s)
-  && validStoryResume(interrupted, storyAt(interrupted.d, interrupted.s, CONTENT));
+  && validStoryResume(interrupted, storiesFor(interrupted.d, CONTENT)[interrupted.s]);
 if (canResume) {
   diff = interrupted.d;
   storyIx = interrupted.s;

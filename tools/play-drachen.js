@@ -15,13 +15,13 @@
 // before every choice), `stopAt` (stop after that many choices, e.g. for a
 // mid-story screenshot), `stopAtEnding` (stop on the ending scene rather than
 // pressing "Weiter" — the ending text and its name are the shot worth taking).
-// `chooseAll(end)` is the short form of `playDrachen({ toEnding: end })`, and
-// `readDrachenScene()` / `readDrachenSummary()` are separate globals for `eval`
-// steps.
+// `readDrachenScene()` and `readDrachenSummary()` are separate globals for
+// `eval` steps.
 //
-// `drachenMaps`, `resolveDrachen` and `chooseFor` are plain functions on
-// `globalThis`: they are the only part with real logic, and
-// tests/play-drachen.test.js runs them in Node against every node of every
+// The steering comes from the game's own `logic.js`, imported at run time
+// beside `content.js`; only the page-reading half lives here. `drachenMaps` and
+// `resolveDrachen` are plain functions on `globalThis` so
+// tests/play-drachen.test.js can run them in Node against every scene of every
 // story. A driver that clicks the wrong thing proves nothing, quietly.
 
 (() => {
@@ -32,49 +32,35 @@
   // makes reading the page enough to know where the driver stands.
   function drachenMaps(stories) {
     const byText = new Map();
-    const byKey = new Map();
     for (const story of stories) {
-      byKey.set(story.key, story);
-      for (const node of story.nodes) byText.set(node.t.trim(), { storyKey: story.key, nodeId: node.id });
+      for (const node of story.nodes) byText.set(node.t.trim(), { story, node });
     }
-    return { byText, byKey };
+    return byText;
   }
   globalThis.drachenMaps = drachenMaps;
 
   function resolveDrachen(text, maps) {
-    const hit = maps.byText.get(String(text).trim());
+    const hit = maps.get(String(text).trim());
     if (!hit) throw new Error(`not in the content: "${String(text).slice(0, 40)}…"`);
-    const story = maps.byKey.get(hit.storyKey);
-    return { story, node: story.nodes.find((n) => n.id === hit.nodeId) };
+    return hit;
   }
   globalThis.resolveDrachen = resolveDrachen;
 
-  // Which choice still leads to `end` from this node — the first step of
-  // logic.js' pathToEnding, re-derived here because the driver may not import
-  // the game's modules. Returns null on an ending node, throws when the ending
-  // is out of reach (which the content test proves can never happen before the
-  // last choice).
-  function chooseFor(node, story, end) {
-    if (Number.isInteger(node.end)) return null;
-    const reaches = (id, seen = new Set()) => {
-      if (seen.has(id)) return false;
-      seen.add(id);
-      const n = story.nodes.find((x) => x.id === id);
-      if (!n) return false;
-      if (Number.isInteger(n.end)) return n.end === end;
-      return (n.c ?? []).some((c) => reaches(c.to, seen));
-    };
-    const i = (node.c ?? []).findIndex((c) => reaches(c.to));
-    if (i === -1) throw new Error(`ending ${end} is unreachable from ${story.key}/${node.id}`);
-    return i;
-  }
-  globalThis.chooseFor = chooseFor;
-
   let maps = null;
-  async function ensureMaps() {
-    // Absolute URL, so the import map does not apply: the module loads
-    // unversioned, which is fine locally — it is data, loaded twice at worst.
-    maps ??= drachenMaps((await import(new URL("content.js", location.href).href)).STORIES.de);
+  let logic = null;
+  async function ensureLoaded() {
+    // Absolute URLs, so the import map does not apply: the modules load
+    // unversioned, which is fine locally — loaded twice at worst. The steering
+    // is the game's OWN pathToEnding, not a second copy of it: a driver that
+    // walks a different graph than the page proves nothing.
+    if (!maps) {
+      const [content, mod] = await Promise.all([
+        import(new URL("content.js", location.href).href),
+        import(new URL("logic.js", location.href).href),
+      ]);
+      maps = drachenMaps(content.STORIES.de);
+      logic = mod;
+    }
     return maps;
   }
 
@@ -133,7 +119,7 @@
   globalThis.playDrachen = async ({
     toEnding = 0, pick = null, delayMs = 0, stopAt = null, stopAtEnding = false,
   } = {}) => {
-    const m = await ensureMaps();
+    const m = await ensureLoaded();
     const picks = pick === null ? null : (Array.isArray(pick) ? pick : [pick]);
     const pause = Number.isFinite(delayMs) && delayMs > 0 ? Math.round(delayMs) : 0;
     const trace = [];
@@ -173,9 +159,11 @@
       if (stopAt !== null && n >= stopAt) return trace;
       if (pause) await sleep(pause);
 
-      const i = picks ? picks[Math.min(n, picks.length - 1)] : chooseFor(node, story, toEnding);
-      const btn = document.querySelector(`#answers button[data-choice="${i}"]`);
-      if (!btn) throw new Error(`no choice ${i} on ${story.key}/${node.id}`);
+      const i = picks
+        ? picks[Math.min(n, picks.length - 1)]
+        : logic.pathToEnding(story, node.id, toEnding)?.[0];
+      const btn = i == null ? null : document.querySelector(`#answers button[data-choice="${i}"]`);
+      if (!btn) throw new Error(`no choice toward ending ${toEnding} on ${story.key}/${node.id}`);
       btn.click();
       n += 1;
       await sleep(SETTLE);
@@ -183,11 +171,12 @@
 
     // wait out the summary's own settle timer, so a screenshot after this call
     // finds the sheet open rather than half-way there
+    // `stopAtEnding` has already returned above, so reaching here without a
+    // summary means the deadline expired — a run that stopped early must not
+    // come back looking like one that finished.
     for (let i = 0; i < 60 && !summaryUp(); i++) await sleep(40);
-    if (!summaryUp() && !stopAtEnding) throw new Error("the summary never opened");
+    if (!summaryUp()) throw new Error("the summary never opened");
     trace.push({ step: n, summary: readDrachenSummary() });
     return trace;
   };
-
-  globalThis.chooseAll = (end) => playDrachen({ toEnding: end });
 })();

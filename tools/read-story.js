@@ -3,23 +3,21 @@
 // its steps FOLLOW each other, and that defect is invisible in the diff: every
 // scene reads fine on its own, and only the join between two of them is wrong.
 //
-//   node tools/read-story.js              # every story, joins view
-//   node tools/read-story.js ei           # one story
-//   node tools/read-story.js ei --paths   # every complete path, start to end
+//   node tools/read-story.js         # every story
+//   node tools/read-story.js ei      # one story
 //
-// The default view is by JOIN, because that is the review unit. A scene in a
-// layered DAG can be walked into from more than one earlier scene, and it has to
-// make sense after EACH of them — after "Über den Bach springen" as well as
-// after "Den Zettel einstecken". Reading whole paths finds the same defects but
-// re-reads the coherent parts 2^depth times.
+// The view is by JOIN, because that is the review unit. A scene in a layered
+// DAG can be walked into from more than one earlier scene, and it has to make
+// sense after EACH of them — after "Über den Bach springen" as well as after
+// "Den Zettel einstecken". Reading whole paths instead finds the same defects
+// but re-reads the coherent parts 2^depth times, which is why there is no
+// whole-path mode here.
 
 import { STORIES } from "../games/drachen/content.js";
-import { storiesFor, isEnding, startNode, layersOf } from "../games/drachen/logic.js";
+import { storiesFor, isEnding, layersOf } from "../games/drachen/logic.js";
 
 const DIFF = ["Leicht", "Mittel", "Schwer"];
-const args = process.argv.slice(2);
-const wantPaths = args.includes("--paths");
-const only = args.find((a) => !a.startsWith("--"));
+const only = process.argv[2];
 
 const wrap = (text, indent) => {
   const words = String(text).split(/\s+/);
@@ -53,24 +51,6 @@ function joins(story) {
   }
 }
 
-function paths(story) {
-  console.log(`\n${"═".repeat(78)}\n${story.title}  — alle Wege\n${"═".repeat(78)}`);
-  const walk = (node, trail) => {
-    if (isEnding(node)) {
-      console.log(`\n--- ${trail.map((t) => t.pick).join(" → ")}`);
-      for (const t of trail) console.log(wrap(`${t.e} ${t.t}`, "   ") + `\n      ▸ ${t.pick}`);
-      console.log(wrap(`${node.e} ${node.t}`, "   ") + `\n      ★ ${node.name}`);
-      return;
-    }
-    for (const c of node.c ?? []) {
-      walk(story.nodes.find((n) => n.id === c.to), [...trail, { ...node, pick: c.a }]);
-    }
-  };
-  walk(startNode(story), []);
-}
-
-const all = [0, 1, 2].flatMap((d) => storiesFor(d, STORIES.de));
-for (const story of all) {
-  if (only && story.key !== only) continue;
-  if (wantPaths) paths(story); else joins(story);
+for (const story of [0, 1, 2].flatMap((d) => storiesFor(d, STORIES.de))) {
+  if (!only || story.key === only) joins(story);
 }

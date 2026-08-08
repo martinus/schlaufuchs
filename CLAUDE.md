@@ -85,17 +85,24 @@ resolver is unit-tested the same way (`tests/play-lesen.test.js`).
 
 `tools/play-drachen.js` drives drachen: `playDrachen({...})` reads a branching
 story to an ending. `toEnding: 0|1|2` steers every choice toward that ending —
-the way a child hunting the last one does — and `chooseAll(end)` is its short
-form; `pick` takes a choice index or a list instead. `stopAt` stops after n
-choices (a mid-story shot), `stopAtEnding` stops ON the ending scene rather than
-pressing „Weiter", which is the shot worth taking: the ending's text and its
-name are the whole payoff, and the summary only opens on that tap (§21.3). Seed
-the cookie with difficulty `d` and story `s`; `readDrachenScene()` reports
-`choice | ending`, and `readDrachenSummary()` reads the ending strip.
-`resolveDrachen` looks a scene up by its printed text (scene texts are unique
-game-wide) and `chooseFor` re-derives `pathToEnding`'s first step — both are
-unit-tested against every node of every story (`tests/play-drachen.test.js`),
-because a driver that clicks the wrong thing proves nothing, quietly.
+the way a child hunting the last one does; `pick` takes a choice index or a list
+instead. `stopAt` stops after n choices (a mid-story shot), `stopAtEnding` stops
+ON the ending scene rather than pressing „Weiter", which is the shot worth
+taking: the ending's text and its name are the whole payoff, and the summary
+only opens on that tap (§21.3). Seed the cookie with difficulty `d` and story
+`s`; `readDrachenScene()` reports `choice | ending`, and `readDrachenSummary()`
+reads the ending strip. The steering is the game's OWN `pathToEnding`, imported
+at run time beside `content.js` — a driver that walks a different graph than the
+page proves nothing. Only `resolveDrachen` (a scene looked up by its printed
+text, which is unique game-wide) lives in the driver, and it is unit-tested
+against every scene of every story (`tests/play-drachen.test.js`).
+
+`node tools/read-story.js [key]` prints a story BY JOIN — every scene under the
+choices that lead into it. That is the review unit for a branching story: a
+scene can be walked into from two different earlier scenes and has to make sense
+after both, and no test can check it. Reading whole paths instead re-reads the
+coherent parts 2^depth times. Every join defect the first draft had was found
+this way, and none of them was visible in the diff.
 
 `tools/play-rechnungen.js` drives rechnungen: `playRechnung({...})` with the
 same options as play.js (`wrongAt`, `delayMs`, `stopAt`/`questions`, plus

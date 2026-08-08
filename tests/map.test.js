@@ -171,7 +171,7 @@ function hitRects() {
 
 test("every region has one bounded hit rect, big enough for a finger", () => {
   const rects = hitRects();
-  assert.equal(Object.keys(rects).length, 7, "expected seven regions");
+  assert.equal(Object.keys(rects).length, REGIONS.length, "every region needs a hit rect");
   for (const [id, r] of Object.entries(rects)) {
     assert.ok(r.w >= TAP, `${id}: hit rect is ${r.w}px wide, a finger needs ${TAP}`);
     assert.ok(r.h >= TAP, `${id}: hit rect is ${r.h}px tall, a finger needs ${TAP}`);
@@ -226,7 +226,7 @@ test("no hit shape exists outside a region", () => {
   const inRegions = regionBlocks().join("").match(/class="hit"/g)?.length ?? 0;
   const inPage = html.match(/class="hit"/g)?.length ?? 0;
   assert.equal(inPage, inRegions, "a hit shape outside an <a> is a hotspot on open land");
-  assert.equal(inPage, 7);
+  assert.equal(inPage, REGIONS.length);
 });
 
 test("the fog is built from the art, never from the hit rect", () => {
@@ -319,7 +319,7 @@ function regionBlocks() {
 test("no region art is drawn at the edge of the viewBox", () => {
   // Regression: the mountain's polygon reached x=360 and the Trophy Room's
   // shelf y=528, so both spilled across the coastline into the sea.
-  assert.equal(regionBlocks().length, 7, "expected seven regions");
+  assert.equal(regionBlocks().length, REGIONS.length, "one <a class=region> per region");
   for (const block of regionBlocks()) {
     const id = block.match(/id="(region-[a-z]+)"/)[1];
 

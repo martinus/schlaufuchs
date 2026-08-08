@@ -23,10 +23,10 @@ export function storyFace(story) {
 
 export function createLevelPicker(el, { current, onPick, onDismiss }) {
   return sharedPicker(el, {
-    current: () => {
-      const c = current();
-      return { diff: c.diff, id: c.story };
-    },
+    // No remap: the shared picker's tile id is opaque, and drachen's tile id IS
+    // the story index. The three older adapters rename a field here only
+    // because their game modules predate that contract.
+    current,
     onPick,
     onDismiss,
     tilesFor(d) {
