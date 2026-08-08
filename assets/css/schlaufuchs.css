@@ -1102,7 +1102,12 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    book typography, same floated scene emoji, same capped path scene — with one
    difference: a scene is meant to be read at a comfortable pace rather than
    scanned for an answer, so it gets a little more air between its lines. */
-.wordcard.story .question { line-height: 1.5; }
+.wordcard.story .question { font-size: 1.18rem; line-height: 1.5; }
+/* …and the choices are read too, so they grow with it. Scoped to a story page:
+   lesen's four comprehension answers are tuned to fit a passage AND four tiles
+   on the 360×640 baseline, and drachen has at most three. */
+.game:has(#wordcard.story) .mc-read button { font-size: 1.14rem; }
+.game:has(#wordcard.story) .endname .en-n { font-size: 1.2rem; }
 /* A story scene is short — a Leicht one is two sentences — and with only two or
    three choices under it the stage's centred group floated in a void: a band of
    empty page between the top bar and the round's title, and another under the
@@ -1113,6 +1118,11 @@ button.flash-err { background: var(--err) !important; color: #fff !important; }
    thumb. */
 .stage:has(#wordcard.story) { justify-content: flex-start; }
 .stage:has(#wordcard.story) .journey { max-height: 26vh; }
+/* On the ending scene the path has nothing left to say — the fox is in the
+   basket — so it steps back and gives its room to the ending text and the
+   ending's name. The longest ending would otherwise push that name out of the
+   stage, and the name is the collectible (§21.3). */
+.stage:has(#wordcard.ended) .journey { max-height: 13vh; }
 /* …and the page itself keeps a book's height rather than shrink-wrapping its
    text: a two-sentence Leicht scene and a nine-line Schwer one otherwise made
    the card jump between a stamp and a wall, and on a tall phone the short one

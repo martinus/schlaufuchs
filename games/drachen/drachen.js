@@ -142,6 +142,7 @@ function renderScene(next) {
 // sentence, and a sentence needs a line, not a square.
 function renderChoices() {
   $("endname").hidden = true;
+  $("wordcard").classList.remove("ended");
   const box = document.createElement("div");
   box.className = "mc mc-read";
   box.setAttribute("role", "group");
@@ -208,6 +209,10 @@ function renderEnding() {
   journey.setStars(stars);
   if (!known) sfx.correct();
 
+  // The path has done its job — the fox is in the basket — so it yields its
+  // room to the ending text and the ending's name, which are the whole payoff.
+  // Without this the name is pushed out of the stage on the longest endings.
+  $("wordcard").classList.add("ended");
   const en = $("endname");
   en.hidden = false;
   // no emoji here: the ending's own picture is floated into the scene right

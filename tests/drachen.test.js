@@ -236,6 +236,20 @@ test("the ending persists BEFORE it is shown, and the summary waits for a tap", 
   assert.match(finish, /showSummary\(\{/, "the 'Weiter' button is what opens the summary");
 });
 
+// The ending scene has to hold the ending's TEXT and its NAME at the reading
+// size, and on the longest ending that does not fit beside a full-size path
+// scene: the name is pushed out of the stage, which clips it, and the name is
+// the collectible. So the path steps back on the ending beat — and steps
+// forward again on the next story.
+test("the path yields its room on the ending scene", () => {
+  const ending = game.slice(game.indexOf("function renderEnding"), game.indexOf("function paintEndings"));
+  assert.match(ending, /classList\.add\("ended"\)/, "the ending beat must mark the card");
+  const choices = game.slice(game.indexOf("function renderChoices"), game.indexOf("function choose("));
+  assert.match(choices, /classList\.remove\("ended"\)/, "…and a new scene must take the mark off again");
+  assert.match(read("assets/css/schlaufuchs.css"), /\.stage:has\(#wordcard\.ended\) \.journey/,
+    "the mark has no rule — the ending name would be clipped again");
+});
+
 test("every choice is mirrored, and every way out of a story drops the mirror", () => {
   const choose = game.slice(game.indexOf("function choose("), game.indexOf("// --- the ending: beat one"));
   assert.match(choose, /saveRound\("drachen", \{ d: diff, s: storyIx, path: \[\.\.\.path\] \}\)/,
