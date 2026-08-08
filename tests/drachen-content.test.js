@@ -107,6 +107,35 @@ test("every scene offers two or three real choices", () => {
   });
 });
 
+// --- the skeleton ------------------------------------------------------------
+// Every story wears the SAME graph, and that is not a coincidence — it is the
+// thing that makes a branching story readable at all. The scenes of a layer are
+// three columns (mutig / behutsam / schlau); a scene's first choice stays in its
+// column and its second steps one column onward, so the ending she reaches is
+// simply the column she finishes in. Rewire it by hand and two paths start
+// arriving in a scene that only follows from one of them — the exact defect the
+// first draft of this content had everywhere.
+test("every story wears the same skeleton: stay in the column, or step one on", () => {
+  for (const story of CONTENT) {
+    const layers = layersOf(story);
+    const byLayer = [];
+    for (const node of story.nodes) (byLayer[layers.get(node.id)] ??= []).push(node);
+
+    assert.equal(byLayer.length, story.depth, `${story.key}: ${byLayer.length} layers`);
+    assert.deepEqual(byLayer.map((l) => l.length), [1, 2, ...Array(story.depth - 3).fill(3), END_SLOTS],
+      `${story.key}: layer sizes`);
+
+    for (let k = 0; k < byLayer.length - 1; k++) {
+      const next = byLayer[k + 1];
+      byLayer[k].forEach((node, i) => {
+        const want = [next[i % next.length].id, next[(i + 1) % next.length].id];
+        assert.deepEqual((node.c ?? []).map((c) => c.to), want,
+          `${story.key}/${node.id}: choice 1 must stay in its column, choice 2 step one onward`);
+      });
+    }
+  }
+});
+
 // --- no lock-out -------------------------------------------------------------
 // The rule that makes replaying worth it AND fair: early choices change which
 // scenes she reads, never which endings she can still reach.
