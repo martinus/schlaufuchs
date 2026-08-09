@@ -496,9 +496,9 @@ test("a finished round is written before the summary opens (§10.7)", () => {
   const record = end.indexOf("recordRound(");
   assert.ok(write > -1 && record > -1, "endRound must write the store before it hands off");
   // …and the sheet is only opened after the wait, in the shared summary.
-  const show = read("assets/js/roundsummary.js");
-  const painted = show.slice(show.indexOf("function show("));
-  assert.ok(painted.indexOf("setTimeout(") < painted.indexOf("summary.open()"),
+  const summary = read("assets/js/roundsummary.js");
+  const show = summary.slice(summary.indexOf("function show("));
+  assert.ok(show.indexOf("setTimeout(") < show.indexOf("reveal()"),
     "the summary opens inside the celebration timer");
 });
 

@@ -30,6 +30,7 @@ export const GRAPHICS = {
   "region-tippen": { emoji: "🌊" },
   "region-vokabeln": { emoji: "🌲" },
   "region-lesen": { emoji: "📖" },
+  "region-drachen": { emoji: "🐉" },
   "region-pokalraum": { emoji: "🏆" },
 
   // Map decorations
@@ -47,6 +48,8 @@ export const GRAPHICS = {
   "deco-book": { emoji: "📖" },
   "deco-trophy": { emoji: "🏆" },
   "deco-party": { emoji: "🎉" },
+  "deco-dragon": { emoji: "🐲" },
+  "deco-treasure": { emoji: "💰" },
 
   // The tempo ladder (§10.6): hare → race car → rocket. There is no snail —
   // the lowest state is no symbol at all.
@@ -66,6 +69,9 @@ export const GRAPHICS = {
   "j-butterfly": { emoji: "🦋" },
   "j-flower": { emoji: "🌼" },
   "j-bee": { emoji: "🐝" },
+  "j-lantern": { emoji: "🏮" },
+  "j-bat": { emoji: "🦇" },
+  "j-crystal": { emoji: "💎" },
 };
 
 // Trophy icon names come from the TROPHIES table (60 entries): rewards.js

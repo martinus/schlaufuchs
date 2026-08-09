@@ -66,6 +66,8 @@
       "./assets/js/trophycard.js": "./assets/js/trophycard.js?v=dev",
       "./assets/i18n/de.js": "./assets/i18n/de.js?v=dev",
       "./assets/i18n/en.js": "./assets/i18n/en.js?v=dev",
+      "./games/drachen/logic.js": "./games/drachen/logic.js?v=dev",
+      "./games/drachen/content.js": "./games/drachen/content.js?v=dev",
       "./games/einmaleins/logic.js": "./games/einmaleins/logic.js?v=dev",
       "./games/lesen/logic.js": "./games/lesen/logic.js?v=dev",
       "./games/lesen/content.js": "./games/lesen/content.js?v=dev",
@@ -115,10 +117,8 @@
              island's heart was bare, and bare green reads as unfinished page,
              not as meadow. Decorative only — no handler, no hit shape. -->
         <g class="meadow-deco">
-          <ellipse cx="163" cy="303" rx="15" ry="7" fill="#8fbf7f"/>
-          <ellipse cx="175" cy="299" rx="10" ry="6" fill="#a6cd8f"/>
-          <circle cx="150" cy="320" r="3.5" fill="#fff"/>
-          <circle cx="150" cy="320" r="1.4" fill="#f4b400"/>
+          <ellipse cx="190" cy="308" rx="15" ry="7" fill="#8fbf7f"/>
+          <ellipse cx="202" cy="304" rx="10" ry="6" fill="#a6cd8f"/>
           <circle cx="196" cy="290" r="3.5" fill="#fff"/>
           <circle cx="196" cy="290" r="1.4" fill="#f4b400"/>
           <circle cx="207" cy="322" r="3.5" fill="#fff"/>
@@ -138,6 +138,7 @@
           <path class="road" id="road-rechnungen" d="M170 388 q76 -76 112 -198"/>
           <path class="road" id="road-tippen" d="M170 388 q62 -36 100 -68"/>
           <path class="road" id="road-lesen" d="M138 414 q-16 12 -34 36"/>
+          <path class="road" id="road-drachen" d="M150 400 q-26 -20 -32 -48"/>
           <path class="road" id="road-pokalraum" d="M204 418 q26 22 34 44"/>
         </g>
         <!-- the dashed centre line of a dirt track; hidden once it is paved -->
@@ -146,6 +147,7 @@
           <use class="roadline" id="roadline-rechnungen" href="#road-rechnungen"/>
           <use class="roadline" id="roadline-tippen" href="#road-tippen"/>
           <use class="roadline" id="roadline-lesen" href="#road-lesen"/>
+          <use class="roadline" id="roadline-drachen" href="#road-drachen"/>
           <use class="roadline" id="roadline-pokalraum" href="#road-pokalraum"/>
         </g>
 
@@ -184,6 +186,34 @@
           <g class="layer-mastered"><text data-icon="deco-swan" data-icon-size="15" x="306" y="304" font-size="15">🦢</text></g>
           <text class="region-label" x="282" y="346" data-i18n="region_tippen">Tippsee</text>
           <g class="region-badge" data-badge="tippen" transform="translate(282,361)"></g>
+        </a>
+
+        <!-- Drachenhöhle (Drachengeschichten), the bluff on the island's west
+             shoulder, in the open band between Wörterwald and the village.
+             Painted after the fogged regions so their fog banks never wash out
+             its label — SVG paints in document order (tests/map.test.js, §3.1).
+             The label plate stops just above the village's tap zone, which
+             starts at y=350. -->
+        <a href="games/drachen/" class="region" id="region-drachen" data-game="drachen">
+          <rect class="hit" fill="transparent" x="10" y="246" width="198" height="104"/>
+          <!-- the bluff sits on the ground: nothing floats (§3.1) -->
+          <ellipse cx="106" cy="306" rx="64" ry="12" fill="#96c47f"/>
+          <polygon points="52,306 74,254 118,248 154,306" fill="#8a8f96"/>
+          <polygon points="118,248 154,306 126,306" fill="#6f757c"/>
+          <polygon points="74,254 84,268 66,272" fill="#a5abb2"/>
+          <!-- the cave mouth, and two friendly eyes waiting inside it -->
+          <path d="M86 306 a20 24 0 0 1 40 0 Z" fill="#33383e"/>
+          <circle cx="99" cy="292" r="2.8" fill="#f4b400"/>
+          <circle cx="113" cy="292" r="2.8" fill="#f4b400"/>
+          <ellipse cx="58" cy="302" rx="9" ry="5" fill="#9aa0a6"/>
+          <ellipse cx="160" cy="303" rx="7" ry="4" fill="#9aa0a6"/>
+          <g class="layer-thriving"><text data-icon="deco-dragon" data-icon-size="16" x="132" y="266" font-size="16">🐲</text></g>
+          <g class="layer-mastered">
+            <text data-icon="deco-treasure" data-icon-size="15" x="64" y="300" font-size="15">💰</text>
+            <text data-icon="deco-sparkle" data-icon-size="13" x="150" y="264" font-size="13">✨</text>
+          </g>
+          <text class="region-label" x="106" y="324" data-i18n="region_drachen">Drachenhöhle</text>
+          <g class="region-badge" data-badge="drachen" transform="translate(106,339)"></g>
         </a>
 
         <!-- Rechenberg (Rechnungen) top right. Painted after the fogged regions
@@ -288,6 +318,7 @@
       <a href="games/tippen/"><span class="nav-ico" data-icon="region-tippen" data-icon-size="20">🌊</span><span data-i18n="game_tippen">Tippen</span></a>
       <a href="games/vokabeln/"><span class="nav-ico" data-icon="region-vokabeln" data-icon-size="20">🌲</span><span data-i18n="game_vokabeln">Vokabeln</span></a>
       <a href="games/lesen/"><span class="nav-ico" data-icon="region-lesen" data-icon-size="20">📖</span><span data-i18n="game_lesen">Lesen</span></a>
+      <a href="games/drachen/"><span class="nav-ico" data-icon="region-drachen" data-icon-size="20">🐉</span><span data-i18n="game_drachen">Drachengeschichten</span></a>
       <a href="album.html"><span class="nav-ico" data-icon="region-pokalraum" data-icon-size="20">🏆</span><span data-i18n="region_pokalraum">Pokalraum</span></a>
     </nav>
   </main>

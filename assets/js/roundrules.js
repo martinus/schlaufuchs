@@ -147,6 +147,31 @@ export function retryStep(input, key, answer, maxLen = 3) {
   return { input: cur.length < maxLen ? cur + key : cur, state: "typing" };
 }
 
+// --- the double-tap guard (§14.2) --------------------------------------------
+// The answer buttons go live the instant a question is answerable, and the next
+// question follows the last by only a couple hundred ms. A physical
+// double-click — one the child never meant — therefore lands its second tap on a
+// button that has, in between, come to mean something else: the freshly shown
+// next question, the retry inside the aid, or the next scene of a story. A young
+// reader met exactly this — a stray second press picked a wrong answer to a
+// Schwer passage she had not begun to read. So a press within GUARD_MS of the
+// last accepted press is that bounce, and is swallowed. Nobody reads a word, a
+// passage or a scene this fast; and a deliberate ⚡ answer (§10.6) is timed from
+// its own question — always at least one inter-question pause newer than the
+// previous press — so the guard never costs a genuine fast answer.
+//
+// It lived in games/lesen/logic.js until drachen became the second game whose
+// choices are text buttons that swap under the thumb.
+export const GUARD_MS = 300;
+
+// Is a press at `now` the bounce of a double-click — inside the guard window the
+// last accepted press at `armedAt` opened? Pure, so the rule is unit-tested
+// without a clock. A missing/never-set `armedAt` (nothing pressed yet, or a
+// fresh round) is never a bounce.
+export function isBounce(now, armedAt, guard = GUARD_MS) {
+  return Number.isFinite(armedAt) && Number.isFinite(now) && now - armedAt < guard;
+}
+
 // German writes division as a colon, and a colon sits on the baseline: between
 // two big numbers "12 : 3" reads as a label and its value, not as a division.
 // Lifted to the optical middle (the `.divsign` span) it reads as an operator.

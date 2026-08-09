@@ -80,6 +80,12 @@ export default {
   helpLeS2: "Mittel: Ein ganzer Satz steht da. Dein Kind liest ihn und entscheidet: Stimmt das, oder ist es Blödsinn? („Der Fisch kann fliegen“ ist Blödsinn.)",
   helpLeS3: "Schwer: Ein kurzer Text mit einer Frage dazu. Dein Kind liest den Text und wählt aus vier Antworten die richtige.",
 
+  // Drachenhöhle
+  helpDrGoal: "In der Drachenhöhle liest dein Kind Geschichten, in denen es selbst entscheidet, wie es weitergeht. Gelesen wird hier nicht, weil geübt wird, sondern weil man sonst nicht weiß, was man wählen soll — und genau das baut Ausdauer beim Lesen auf.",
+  helpDrS1: "Jede Szene endet mit zwei oder drei Möglichkeiten. Was dein Kind antippt, bestimmt, welche Szene als Nächstes kommt — und wie die Geschichte ausgeht.",
+  helpDrS2: "Jede Geschichte hat drei verschiedene Enden. Ein neu entdecktes Ende bringt einen Stern, ein schon bekanntes nicht. Deshalb lohnt es sich, dieselbe Geschichte noch einmal anders zu spielen.",
+  helpDrS3: "Nach dem Ende zeigt die Übersicht, welche Enden schon gefunden sind und wie viele noch versteckt warten. Es gibt kein falsches Ende und nichts zu verlieren.",
+
   // Die Lernkarte
   helpMapTitle: "Die Lernkarte",
   helpMapGoal: "Schlaufuchs ist eine Landkarte voller Lernspiele für Kinder. Alles läuft nur auf diesem Gerät — ganz ohne Anmeldung, Werbung oder Tracking.",
@@ -167,6 +173,7 @@ export default {
   game_rechnungen: "Rechnungen",
   game_vokabeln: "Vokabeln",
   game_lesen: "Lesen",
+  game_drachen: "Drachengeschichten",
   // The village is called after the game it holds: one name, in the top bar, on
   // the map and on the album's shelf. "Zahlendorf" was a sixth name to learn.
   region_einmaleins: "Einmaleins",
@@ -174,4 +181,5 @@ export default {
   region_rechnungen: "Rechenberg",
   region_vokabeln: "Wörterwald",
   region_lesen: "Lesewiese",
+  region_drachen: "Drachenhöhle",
 };

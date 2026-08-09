@@ -3,25 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Einmaleins — Schlaufuchs</title>
-  <meta name="description" content="Das kleine Einmaleins spielerisch üben, auf einer bunten Weltkarte. Kostenlos, werbefrei und ohne Anmeldung.">
-  <link rel="canonical" href="https://schlaufuchs.ankerl.com/games/einmaleins/">
+  <title>Drachengeschichten — Schlaufuchs</title>
+  <meta name="description" content="Lesen und selbst entscheiden: Drachengeschichten mit je drei verschiedenen Enden. Kostenlos, werbefrei und ohne Anmeldung.">
+  <link rel="canonical" href="https://schlaufuchs.ankerl.com/games/drachen/">
   <!-- Link previews (Open Graph + Twitter). Absolute production URLs on
        purpose (a crawler needs a full URL); see the longer note in index.html. -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Schlaufuchs">
   <meta property="og:locale" content="de_AT">
-  <meta property="og:url" content="https://schlaufuchs.ankerl.com/games/einmaleins/">
-  <meta property="og:title" content="Einmaleins üben — Schlaufuchs">
-  <meta property="og:description" content="Das kleine Einmaleins spielerisch üben, auf einer bunten Weltkarte. Kostenlos, werbefrei und ohne Anmeldung.">
+  <meta property="og:url" content="https://schlaufuchs.ankerl.com/games/drachen/">
+  <meta property="og:title" content="Drachengeschichten — Schlaufuchs">
+  <meta property="og:description" content="Lesen und selbst entscheiden: Drachengeschichten mit je drei verschiedenen Enden. Kostenlos, werbefrei und ohne Anmeldung.">
   <meta property="og:image" content="https://schlaufuchs.ankerl.com/assets/img/og-image.jpg">
   <meta property="og:image:type" content="image/jpeg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="Der Schlaufuchs mit dem Schriftzug „Schlaufuchs – Lernspiele für Kinder“">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Einmaleins üben — Schlaufuchs">
-  <meta name="twitter:description" content="Das kleine Einmaleins spielerisch üben, auf einer bunten Weltkarte. Kostenlos, werbefrei und ohne Anmeldung.">
+  <meta name="twitter:title" content="Drachengeschichten — Schlaufuchs">
+  <meta name="twitter:description" content="Lesen und selbst entscheiden: Drachengeschichten mit je drei verschiedenen Enden. Kostenlos, werbefrei und ohne Anmeldung.">
   <meta name="twitter:image" content="https://schlaufuchs.ankerl.com/assets/img/og-image.jpg">
   <link rel="icon" href="../../assets/img/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../../assets/css/schlaufuchs.css?v=dev">
@@ -63,13 +63,14 @@
       "../../assets/js/trophycard.js": "../../assets/js/trophycard.js?v=dev",
       "../../assets/i18n/de.js": "../../assets/i18n/de.js?v=dev",
       "../../assets/i18n/en.js": "../../assets/i18n/en.js?v=dev",
-      "../drachen/logic.js": "../drachen/logic.js?v=dev",
-      "../drachen/content.js": "../drachen/content.js?v=dev",
       "./logic.js": "./logic.js?v=dev",
+      "./content.js": "./content.js?v=dev",
+      "../einmaleins/logic.js": "../einmaleins/logic.js?v=dev",
       "../lesen/logic.js": "../lesen/logic.js?v=dev",
       "../lesen/content.js": "../lesen/content.js?v=dev",
       "../rechnungen/logic.js": "../rechnungen/logic.js?v=dev",
-      "./einmaleins.js": "./einmaleins.js?v=dev",
+      "./content.js": "./content.js?v=dev",
+      "./drachen.js": "./drachen.js?v=dev",
       "./i18n.js": "./i18n.js?v=dev",
       "./logic.js": "./logic.js?v=dev",
       "./picker.js": "./picker.js?v=dev"
@@ -81,53 +82,54 @@
   <div class="game">
     <header class="topbar" id="topbar"></header>
 
-    <!-- the path and the question are one group: "here is how far you are,
-         here is what is next". The answers sit under the thumb. -->
+    <!-- the path and the scene are one group: "here is how far you are, here is
+         what is happening". The choices sit under the thumb. -->
     <div class="stage">
-      <!-- The table and difficulty read as the round's title, so they sit above
-           the scene and share its width instead of crowding the top bar. -->
+      <!-- The story and its difficulty read as the round's title, so they sit
+           above the scene and share its width instead of crowding the top bar. -->
       <button class="chip pickheading" id="pickchip"></button>
-      <!-- one picture, no words: sky = stars still to win, basket = stars you
-           own, path = the fox. See §10.5. -->
+      <!-- one picture, no words: sky = endings still to find, basket = the ones
+           you own, path = the fox walking deeper into the story. See §10.5. -->
       <div class="journey-wrap" id="journey" role="img"></div>
-      <div class="question" id="question"></div>
-      <div class="feedback-aid" id="feedback" hidden></div>
+      <!-- The story card. It reuses lesen's reading card (`.read`) on purpose:
+           book typography, the scene emoji as an illustrated capital, and the
+           rule that shrinks the path scene so a long scene, its choices and the
+           fox all fit one phone screen without scrolling. `#endname` is the
+           ending's own name — the collectible, said out loud, and the reason the
+           summary waits for a tap instead of covering it. -->
+      <div class="wordcard read story" id="wordcard">
+        <span class="scene" id="scene" aria-hidden="true"></span>
+        <div class="question" id="question"></div>
+        <p class="endname" id="endname" hidden></p>
+      </div>
     </div>
 
     <div class="answers" id="answers"></div>
   </div>
 
-  <!-- Level picker (§3.3: overlay, never a separate page). One scrollable list
-       of every level there is. Difficulty is not a switch: it is where a tile
-       sits, what colour it has, and how many stars it still has to give. -->
+  <!-- Level picker (§3.3: overlay, never a separate page). Every story there is,
+       three per difficulty, each showing the endings it still has to give. -->
   <div class="overlay" id="pick-overlay" hidden>
     <div class="sheet" role="dialog" aria-modal="true">
-      <h2 data-i18n="emPickTitle">Reihe &amp; Schwierigkeit</h2>
+      <h2 data-i18n="drachenPickTitle">Geschichte &amp; Schwierigkeit</h2>
       <div class="levels" id="pick-levels"></div>
     </div>
   </div>
 
-  <!-- round summary (§10.1) -->
+  <!-- round summary (§10.1): stars say how it went, the ending strip says WHICH
+       endings she has and how many are still hidden, the trophy is the prize,
+       ONE button says what happens next. There is no "Neuer Rekord!" line and no
+       tempo line here (§21) — the shared summary skips both when they are
+       absent. NOT aria-modal: the top bar and the chip stay tappable (§3.4). -->
   <div class="overlay" id="sum-overlay" hidden>
-    <!-- A child who just won reads almost nothing. Stars say how it went, the
-         trophy is the prize, ONE button says what happens next. Mara read the
-         three buttons that used to be here as a wall and tried to press the
-         chip behind the sheet; the map and the level picker live in the top bar
-         and the chip, which is where she looked for them anyway (§10.1).
-
-         NOT aria-modal: those two are above this sheet and stay tappable, on
-         purpose (§3.4). Claiming modality would tell a screen reader that the
-         only way out of the summary does not exist. -->
     <div class="sheet summary" role="dialog" aria-modal="false">
       <div class="bigstars" id="sum-stars"></div>
-      <p class="sline best" id="sum-best" hidden></p>
-      <!-- the tempo ladder (§10.6): a symbol, never seconds -->
-      <p class="sline tempo" id="sum-tempo" hidden></p>
+      <div class="endings" id="sum-endings"></div>
       <div class="trophy-earn" id="sum-trophy" hidden></div>
       <button class="primary" id="sum-ok"></button>
     </div>
   </div>
 
-  <script type="module" src="einmaleins.js?v=dev"></script>
+  <script type="module" src="drachen.js?v=dev"></script>
 </body>
 </html>

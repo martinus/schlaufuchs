@@ -80,6 +80,12 @@ export default {
   helpLeS2: "Medium: a whole sentence is shown. Your child reads it and decides: is it true, or is it nonsense? (“The fish can fly” is nonsense.)",
   helpLeS3: "Hard: a short text with a question about it. Your child reads the text and picks the right one of four answers.",
 
+  // Dragon's Lair
+  helpDrGoal: "In the Dragon's Lair your child reads stories and decides herself how they go on. Nothing here is read because it is practice — it is read because otherwise you cannot tell which choice to make, and that is exactly what builds reading stamina.",
+  helpDrS1: "Every scene ends with two or three options. Whichever one your child taps decides which scene comes next — and how the story ends.",
+  helpDrS2: "Every story has three different endings. A newly discovered ending earns a star; one she already knows earns nothing. That is why it pays to play the same story again, differently.",
+  helpDrS3: "After an ending, the summary shows which endings she has found and how many are still hidden. There is no wrong ending here, and nothing to lose.",
+
   // The learning map
   helpMapTitle: "The learning map",
   helpMapGoal: "Schlaufuchs is a map full of learning games for children. Everything runs on this device only — with no sign-in, no ads and no tracking.",
@@ -157,9 +163,11 @@ export default {
   game_rechnungen: "Arithmetic",
   game_vokabeln: "Vocabulary",
   game_lesen: "Reading",
+  game_drachen: "Dragon Stories",
   region_einmaleins: "Times tables",
   region_tippen: "Typing Lake",
   region_rechnungen: "Math Mountain",
   region_vokabeln: "Word Forest",
   region_lesen: "Reading Meadow",
+  region_drachen: "Dragon's Lair",
 };

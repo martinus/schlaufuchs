@@ -18,6 +18,9 @@ export const ANCHORS = {
   tippen: [300, 266],
   vokabeln: [88, 198],
   lesen: [104, 496],
+  // beside the cave mouth (x 86..126 in the map SVG), never on it: the fox is
+  // 44 wide and drawn from its anchor minus 22, so it would sit on an eye
+  drachen: [150, 314],
   pokalraum: [220, 498],
 };
 

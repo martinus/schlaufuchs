@@ -133,7 +133,7 @@ in HTML/CSS/JS — never absolute paths like `/assets/...`.
 The landing page is a single **inline SVG map** in portrait orientation
 (viewBox `0 0 360 560`, scaling to the viewport width). The world is drawn
 as an **island**: sea, a sandy coastline, land, a compass rose, and dashed
-roads linking the regions from the village crossroads. It shows five themed
+roads linking the regions from the village crossroads. It shows six themed
 regions; **each region is one big tap target.** Tapping it walks the fox there
 and opens the game the moment the fox arrives (§3.1, "the fox walks") — there
 is no intermediate page.
@@ -145,13 +145,15 @@ is no intermediate page.
 | Wörterwald / Word Forest | Vokabeln | forest with animals |
 | Tippsee / Typing Lake | Tippen | lake with a boathouse |
 | Lesewiese / Reading Meadow | Lesen | meadow with a giant book-tree |
+| Drachenhöhle / Dragon's Lair | Drachengeschichten | bluff with a lit cave mouth, west shoulder |
 | Pokalraum / Trophy Room | (the collection) | trophy hall, bottom-right |
 
 The village **is called after its game**: a child who plays "Einmaleins" should
 not have to learn that it happens in a place called something else. The other
-four regions keep a place name, because their game's name is a verb.
+five regions keep a place name, because their game's name is a verb or a kind
+of story.
 
-The **Pokalraum** is a sixth region that links to the collection
+The **Pokalraum** is a seventh region that links to the collection
 (`album.html` — the filename is kept for URL stability) instead of a game. It
 evolves like the others (thriving ≥ 20 trophies, mastered = 60). It carries **no
 star badge**: the number of trophies in it is written on its own facade, above
@@ -747,7 +749,7 @@ unique item** in the round and the fox token on the current node.
 ### 8.3 Trophies and stars
 
 **Vocabulary (use these words everywhere, in code, UI and docs):** a **trophy**
-(DE „Pokal") is one of the 60 collectibles displayed in the Pokalraum (§3.2).
+(DE „Pokal") is one of the 72 collectibles displayed in the Pokalraum (§3.2).
 The **star** (⭐) is the site's **one and only currency**: it accumulates per
 region and unlocks the next trophy at fixed thresholds. The words *sticker* and
 *Punkte / points* are retired; **neither appears anywhere a child can read**.
@@ -848,14 +850,15 @@ and an 8-year-old understood neither.
   (§3.2): the cup, its emoji, its name, no sentence (§10.1). Tapping it opens
   the same showcase the Pokalraum opens, over the summary — it does not
   navigate. A round can earn more than one at a time.
-- Total: 60 trophies. The Pokalraum (§3.2) renders earned/unearned from the
-  counters.
+- Total: 72 trophies (`TOTAL_TROPHIES` = `GAMES.length × 12`, so it follows the
+  game list rather than being written down twice). The Pokalraum (§3.2) renders
+  earned/unearned from the counters.
 
 ### 8.4 Fuchs-Status (site-wide)
 
-- `totalPoints(pr)` = the child's stars, summed over the five games — the one
+- `totalPoints(pr)` = the child's stars, summed over the six games — the one
   currency (§8.3), weighted by the difficulty each was won at.
-- `totalTrophies` = trophies earned across all games (§8.3), of 60.
+- `totalTrophies` = trophies earned across all games (§8.3), of 72.
 - Both are shown in the top bar beside the fox (§3.3), and nowhere else. The
   parents' view shows the same two numbers (§20) — never a second star count.
 - The fox itself never changes with progress. It had a level number (a second
@@ -920,7 +923,7 @@ Compact JSON with a version field:
     "pr": { "einmaleins": 3, "rechnungen": 1 }
   },
   "einmaleins": {}, "tippen": {}, "rechnungen": {},
-  "vokabeln": {}, "lesen": {}
+  "vokabeln": {}, "lesen": {}, "drachen": {}
 }
 ```
 
@@ -1938,7 +1941,9 @@ Decisions already made — do not reopen:
    **deferred to M8** and must not leak complexity into earlier milestones.
    The journey strip and map states are designed so adventure mode can be
    added as a layer on top (nodes reuse round configs; map regions gain a
-   path overlay).
+   path overlay). **Drachengeschichten (§21) is not this**: it is a reading
+   game whose branching lives inside one round, changes no map state and adds
+   no campaign layer. M8 stays deferred.
 8. **Pages deploys via GitHub Actions** (curated artifact, tests must pass),
    not from a branch — development files are never published (§2).
 9. **Light theme only.** No dark mode, regardless of the device preference —
@@ -1991,6 +1996,12 @@ comprehension over a passage, where a guess never pays.
 `prefers-reduced-motion` audit.
 
 **M8 — Adventure mode.** Per §18.7.
+
+**M9 — Drachengeschichten.** Per §21, German content only.
+*Accept:* every story reaches all three of its endings and no choice before the
+last can put one out of reach; a newly found ending pays a star and a known one
+pays nothing; the ending scene stays on screen until she taps on; an interrupted
+story resumes on the same scene with no picker.
 
 ---
 
@@ -2053,3 +2064,178 @@ one game's section (stars, boxes, practice time) **and** its `pr` trophy
 counter, scrub the fox's saved spot if it sat there, and leave every other game,
 the settings and the language untouched. It doubles as the way to tidy a stale
 dev state.
+
+---
+
+## 21. Game 6: Drachengeschichten — region **Drachenhöhle**
+
+Reading **stamina**, by removing the reason to stop. `lesen` (§14) trains
+fluency in drill rounds; this trains staying with a text — and nothing here is
+read because it is practice. It is read because otherwise you cannot tell which
+choice to make.
+
+These are **text adventures, and the place is the puzzle**: she arrives
+somewhere real, finds a way in, finds something worth having, and something is
+pressing. There is real tension, and there are no jokes. Two drafts were thrown
+away before this shape held, and both lessons are written into the header of
+`content.js`, where the next author will meet them:
+
+1. **An idea is not an adventure.** Draft one was whimsy — washing clouds, a
+   book that wrote back. Nothing was at stake and nothing was hidden.
+2. **A place is not a reason.** Draft two had real places and still no pull,
+   because the coherence rule below forbids referring to anything she did — so
+   nothing she did could matter, and a reader feels that at once. The five rules
+   that buy the pull back: she wants something and it is HERS; everything she
+   carries is handed to her in scene one; **the clock ticks by DEPTH, not by
+   path** (layer 3 a motor starts, layer 4 the drill, layer 5 the siren — identical
+   on every path, so it may escalate without breaking coherence); every scene is
+   an event and not a view; and a choice costs something.
+
+A new story answers three questions on its first screen — where am I, what do I
+want, and what is running out — and plants one question that only the endings
+answer.
+
+3. **A choice is read from where she stands, not from where it leads.** The
+   third defect found by playtest was in the CHOICE texts, not the scenes: a
+   door scene offered „dem Wasser folgen" on a path where no water had ever been
+   mentioned. A choice may name only what its own scene shows; the one that
+   steps into another column is a direction or an action, never the name of its
+   destination. German makes this machine-checkable — a definite article claims
+   the noun is known — and `tests/drachen-content.test.js` enforces it.
+
+Journey theme: `cave`. **No adaptive engine and no tempo ladder**: a story is a
+walk through a graph, not a draw from a pool, and hurrying a story is the
+opposite of reading it. Stories are German only (§14.6); the chrome is
+bilingual. Content lives in `games/drachen/content.js`, the graph arithmetic in
+`games/drachen/logic.js`.
+
+### 21.1 A tile is a story, a story has three endings
+
+That single decision is what makes the whole game fit the site's economy without
+a special case anywhere: `STAR_SLOTS` is 3, so **the stars on a tile ARE the
+endings she has found**, and the level picker's three star groups (§10.5) are
+literally the endings still hidden from her. `roundPoints` then already says the
+rest: a newly found ending pays one star — 1 on Leicht, 2 on Mittel, 3 on Schwer
+— and an ending she already knows pays nothing, however often she walks back to
+it. "Stars come from progress, never from repetition" (§8.3), unchanged.
+
+Three stories per difficulty, nine in all. Depth climbs with the difficulty —
+**7, 9 and 11 scenes** — and so do sentence length and vocabulary; a Schwer
+adventure runs about eight minutes. `depth` is free to change: only the TILE
+count is frozen (below). The per-difficulty
+character caps in `tests/drachen-content.test.js` are that ladder — and at the
+same time the layout guarantee, because a scene too long for the 360×640
+baseline pushes its own choices off a page that does not scroll.
+
+**The tile count is frozen at three.** `MAX_POINTS.drachen` = 3 × 3 × (1+2+3) =
+**54** is the denominator `regionState`, `starBadgeTier` and `pave()` measure a
+child against; raising it would demote a child who had already mastered the cave
+and turn her cobbled road back into a dirt track. The `extends` trick that lets
+`lesen` grow content without moving `maxPoints` (§14.3) has no analogue here,
+because a story *is* the tile. The trophy ladder is pre-scaled for a grid that
+may one day grow to four stories per difficulty anyway: its twelfth rung sits at
+36, which is 67 % of 54 and 50 % of 72 — inside the band either way, so no child
+would lose a trophy she had already won.
+
+### 21.2 Shape: a layered DAG, and no lock-out
+
+Every story is a layered directed graph. The start node, then layers of scenes,
+then exactly three endings — and **every path from the start to an ending has
+the same number of scenes** (`depth`). That is what lets the round's scene draw
+a fixed path: one waypoint per *choice*, so the fox reaches the basket exactly
+as the ending appears. Choices always step one layer forward, never sideways and
+never back.
+
+**No early choice can put an ending out of reach.** From every scene except the
+last choice, all three endings are still reachable; on the last choice each
+scene still offers two. So early choices change *which scenes she reads* — real
+variety, a real reason to replay — while a child hunting the third ending can
+never lock herself out of it without knowing. Both properties are proved per
+story by `tests/drachen-content.test.js`, over `endingsReachable` and
+`pathToEnding` in `logic.js`.
+
+The three scenes of a layer are three COLUMNS, and a column is a **way through
+the place**: `a` deeper and forward, `b` reading the marks and the log and the
+voice, `c` the side passage and the tool. A scene's first choice stays in its
+column and its second steps one column onward, so **the column she comes out on
+is the ending she gets**: `a` — she gets what she came for; `b` — she comes out
+with the truth, or with whoever was in there; `c` — she finds another way out,
+and something nobody was after. None is a joke and none is a failure. (The first
+draft made the third a comic mishap, which pulled every premise toward
+slapstick. That is why it is gone.)
+
+Real danger is allowed and wanted: the dark, a roof that settles, water that
+rises, a sleeper who must not wake. §18.2's "nothing attacks, nothing is lost"
+is about the GAME, and it holds — no ending is a failure and no choice costs a
+star. Tension inside the prose is a different thing, and the reader this is
+written for reads dragon books.
+
+### 21.3 The round, in two beats
+
+Picker → scene → two or three choices under the thumb (`.mc-read`, the same
+one-column reading tiles §14.2 uses, each through `fastPress` and the shared
+bounce guard) → the fox steps → … → the ending scene.
+
+The ending is deliberately **two beats**, unlike every other game:
+
+1. **The moment the ending renders**, the state is written — `setGame` →
+   `clearRound` → `recordRound` — the newly earned group flies into the basket,
+   the ending's own **name** appears under the text (the collectible, said out
+   loud), and `#answers` holds a single "Weiter".
+2. **She taps "Weiter"**, and only then does the round summary open.
+
+The shared summary opens on a 700 ms timer (`roundsummary.js`), which would
+cover the ending text before a child had read two words of it — and that text is
+the whole payoff. A useful side effect: because the store is already written,
+`inRound()` is false on an ending scene, so she may walk away in the middle of
+one and keeps the star.
+
+The summary sheet carries neither the record line nor the tempo line — there is
+no tempo ladder here, and "Neuer Rekord!" says nothing about finding a story's
+next ending. `roundsummary.js` treats both as optional (pinned by
+`tests/scene.test.js`). In their place sits the **ending strip**: which endings
+this story has given up so far, by name, and the ones still hidden as `???`,
+under a line like „2 von 3 Enden gefunden · Noch 1 Ende versteckt!". It carries
+no stars — the slots above already say *how many*; this row says *which*, and
+that is what sends a child back into the same story by another path.
+
+### 21.4 Stored state (`drachen`)
+
+```json
+{ "d": 1, "s": 2, "e": { "0": "731", "1": "000", "2": "000" } }
+```
+
+`d` difficulty 0–2, `s` the story last played, and `e` one string per
+difficulty holding **one decimal digit 0–7 per story**: a three-bit mask of
+which endings have been found. Stars are derived from it (`foundCount`), so
+there is no `stars` field, no `box` and no `tempo`. Maxed ≈ 51 bytes — the
+smallest game section on the site.
+
+The codec (`endMask`/`withEndMask`) is drachen's own on purpose:
+`roundrules.js`'s `starDigit` clamps to 3, because a star count cannot exceed
+`STAR_SLOTS`, and would read a full mask of 7 back as 3 — silently forgetting
+two endings.
+
+The round mirror (§10.7) is the list of scene ids visited, current scene last;
+`validStoryResume` is the adaptive-free twin of `validResume`. Every story wears
+the same skeleton of node ids, so a path alone cannot say which story it walked
+— the mirror's own `d`/`s` are what pin that, and the boot checks them before it
+trusts the path against a story.
+
+### 21.5 Content rules
+
+`games/drachen/content.js` is **append-only twice over**: a story's position
+within its difficulty is its slot in the mask string, and a node's `end` value
+(0, 1, 2) is its bit in that mask. Node ids are free — they live only in the
+per-tab round mirror. The structural, length and uniqueness rules are all
+machine-checked in `tests/drachen-content.test.js`; the editorial ones (funny
+never frightening, endings tellable apart by name, choices that are *actions*
+and not opinions about herself, a scene emoji that never gives the ending away)
+live in the file's header, where the next author will read them.
+
+### 21.6 Parents' view
+
+None, deliberately. There are no Leitner boxes to render, and "which endings she
+has found" is already on the picker tile and the ending strip — the child's own
+side says it better than a table would. No `tm`/`rd` counters either: state
+earns its bytes only with a consumer (§12.3).

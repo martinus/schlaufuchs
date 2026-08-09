@@ -29,6 +29,9 @@ export const THEMES = {
   mountain: { obstacles: ["j-rock", "j-tree", "j-goat"], path: "#b0a99f" },
   forest: { obstacles: ["j-mushroom", "j-hedgehog", "j-door"], path: "#8fbf7f" },
   meadow: { obstacles: ["j-butterfly", "j-flower", "j-bee"], path: "#a8d08d" },
+  // a lantern, a bat, a crystal — the dragon's cave lit from inside, and, like
+  // every other theme, friendly: nothing in a Schlaufuchs path is a threat.
+  cave: { obstacles: ["j-lantern", "j-bat", "j-crystal"], path: "#a99b86" },
 };
 
 const OBSTACLE_AT = [2, 5, 8]; // 0-indexed: nodes 3, 6, 9 (§8.2)

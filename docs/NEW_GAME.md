@@ -1,14 +1,16 @@
 # Shipping a new game — the checklist
 
 Every cross-file fact a new game must touch, learned by shipping `lesen`
-(2026-07): each item below failed one at a time back then and was found by
-re-running the suite. Work through it top to bottom; `rechnungen`, `tippen`
-and `vokabeln` will hit exactly these mines.
+(2026-07) and added to by `rechnungen` and `drachen`: each item below failed one
+at a time and was found by re-running the suite. Work through it top to bottom;
+`tippen` and `vokabeln` will hit exactly these mines.
 
 Read first: `docs/SPEC.md` §7 (adaptive engine), §8 (motivation/stars/
 trophies), §9.2 (state budget), and the game's own § section. The reference
-implementations are `games/einmaleins/` (keypad input, tempo ladder) and
-`games/lesen/` (choice input, data-driven content).
+implementations are `games/einmaleins/` (keypad input, tempo ladder),
+`games/lesen/` (choice input, data-driven content) and `games/drachen/` (the
+one that uses NEITHER the adaptive engine nor the tempo ladder — read it before
+assuming a game must).
 
 ## 0. Branch hygiene
 
@@ -77,6 +79,26 @@ for a PLAYABLE game.
   `PLAYABLE` since lesen shipped.
 - [ ] `assets/js/map.js` unfogs the region automatically via `isPlayable`.
 
+### A SEVENTH region (a game that is not already drawn on the map)
+
+The five game regions and the Pokalraum have been on the island since M1, so
+`lesen` and `rechnungen` never hit any of this. `drachen` did:
+
+- [ ] `index.html`: the `<a class="region">` block (one bounded `.hit` rect
+  ≥64×64 spanning its own label anchor and no neighbour's, art ≥4 units inside
+  the viewBox, `layer-thriving`/`layer-mastered`), `road-<game>` +
+  `roadline-<game>`, and the `.fallback-nav` link. Paint it AFTER every fogged
+  region or their fog washes out its label.
+- [ ] `assets/js/mapwalk.js`: an `ANCHORS` entry — and check the fox's 44px
+  span does not park on the art that makes the region readable.
+- [ ] `assets/js/graphics.js`: `region-<game>` plus any `deco-*` the art names.
+- [ ] `TOTAL_TROPHIES` moves with `GAMES.length`, so the Pokalraum's thriving
+  threshold and the album grow on their own — but the PINS do not:
+  `tests/rewards.test.js` and `tests/graphics.test.js` hold the total twice on
+  purpose (a literal AND a derivation). Bump the literals.
+- [ ] `tests/map.test.js` counts regions; it computes `REGIONS` at the top —
+  use it rather than adding another literal.
+
 ## 3. i18n
 
 - [ ] Every UI string in BOTH `games/<name>/i18n.js` languages; shared
@@ -116,7 +138,10 @@ until the view renders them.
 - [ ] `tools/play-<name>.js` — copy the play.js/play-lesen.js shape: globals
   on an IIFE, resolver as a plain function, `SETTLE = 350` after every
   answer (the 250ms correct-wait trap), a question stamp (`dataset.q`) so a
-  re-queued identical question is not misread.
+  re-queued identical question is not misread. A driver runs in the page, so it
+  CAN `import()` the game's own `logic.js` by absolute URL — do that instead of
+  re-deriving its arithmetic (play-drachen.js shipped a second copy of a graph
+  walk before anyone noticed).
 - [ ] `tests/play-<name>.test.js` — run the resolver in Node against every
   `questionFor` shape. A driver that answers the wrong thing proves nothing.
 - [ ] Mutation-check the new pure logic: `sh tools/mutate.sh <file>
@@ -125,6 +150,26 @@ until the view renders them.
   `--reduced-motion` (any timed/animated mechanic must survive it —
   JS-timer + CSS *transition*, never a keyframe), `--do back` mid-round
   (leave guard), the map afterwards (region unfogged, badge counts).
+
+## 6b. If the game is not a drill
+
+A game may skip the shared machinery, but each skip has a consequence someone
+has already paid for:
+
+- [ ] **No tempo ladder / no "Neuer Rekord!"** — just leave the lines out of the
+  sheet. `roundsummary.js` paints what the markup holds, and `show()` defaults
+  `tier`/`tempoImproved`.
+- [ ] **The summary opens on a tap rather than on its timer** — use
+  `paint()` + `reveal()` instead of `show()`, and PAINT the moment the state
+  changes. Painting late leaves the fox chip reading ⭐ 0 over a star that is
+  already in the store, and leaves a sheet that the gear or the picker can open
+  blank and undismissable. Both shipped in drachen and were caught by review,
+  not by a test.
+- [ ] **No adaptive session** — then `validResume` does not fit either; write
+  the round mirror's own validator (`validStoryResume`). Note that
+  `tests/resume.test.js` and `tests/leaveguard.test.js` carry hard-coded
+  two-game lists, so your game is NOT covered by them: pin the §10.7 rules in
+  your own test file.
 
 ## 7. Docs, last
 

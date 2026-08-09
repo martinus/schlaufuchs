@@ -171,7 +171,7 @@ function hitRects() {
 
 test("every region has one bounded hit rect, big enough for a finger", () => {
   const rects = hitRects();
-  assert.equal(Object.keys(rects).length, 6, "expected six regions");
+  assert.equal(Object.keys(rects).length, REGIONS.length, "every region needs a hit rect");
   for (const [id, r] of Object.entries(rects)) {
     assert.ok(r.w >= TAP, `${id}: hit rect is ${r.w}px wide, a finger needs ${TAP}`);
     assert.ok(r.h >= TAP, `${id}: hit rect is ${r.h}px tall, a finger needs ${TAP}`);
@@ -226,7 +226,7 @@ test("no hit shape exists outside a region", () => {
   const inRegions = regionBlocks().join("").match(/class="hit"/g)?.length ?? 0;
   const inPage = html.match(/class="hit"/g)?.length ?? 0;
   assert.equal(inPage, inRegions, "a hit shape outside an <a> is a hotspot on open land");
-  assert.equal(inPage, 6);
+  assert.equal(inPage, REGIONS.length);
 });
 
 test("the fog is built from the art, never from the hit rect", () => {
@@ -319,7 +319,7 @@ function regionBlocks() {
 test("no region art is drawn at the edge of the viewBox", () => {
   // Regression: the mountain's polygon reached x=360 and the Trophy Room's
   // shelf y=528, so both spilled across the coastline into the sea.
-  assert.equal(regionBlocks().length, 6, "expected six regions");
+  assert.equal(regionBlocks().length, REGIONS.length, "one <a class=region> per region");
   for (const block of regionBlocks()) {
     const id = block.match(/id="(region-[a-z]+)"/)[1];
 
@@ -343,15 +343,17 @@ test("no region art is drawn at the edge of the viewBox", () => {
   }
 });
 
-// Three of the five games are stubs. A map that shows six inviting regions and
-// delivers two is a map that lies, so the unbuilt ones sit under fog.
+// Two of the six games are stubs. A map that shows seven inviting regions and
+// delivers five is a map that lies, so the unbuilt ones sit under fog.
 test("every region without a game is fogged, and every playable one is not", () => {
-  assert.deepEqual(PLAYABLE, ["einmaleins", "lesen", "rechnungen"], "update this test when a game ships");
+  assert.deepEqual(PLAYABLE, ["einmaleins", "lesen", "rechnungen", "drachen"],
+    "update this test when a game ships");
   assert.ok(html.includes('id="fog-blur"'), "the fog needs its blur filter in <defs>");
   assert.ok(mapJs.includes("fogRegion"), "map.js must build the fog");
   assert.ok(mapJs.includes("isPlayable"), "and it must ask which games exist");
   for (const g of GAMES) assert.equal(typeof isPlayable(g), "boolean");
-  assert.ok(!isPlayable("tippen") && isPlayable("einmaleins") && isPlayable("lesen") && isPlayable("rechnungen"));
+  assert.ok(!isPlayable("tippen") && isPlayable("einmaleins") && isPlayable("lesen")
+    && isPlayable("rechnungen") && isPlayable("drachen"));
 });
 
 // Regression: the fog is drawn inside its own <a>, and SVG paints in document
@@ -372,6 +374,28 @@ test("playable regions are painted after the fogged ones", () => {
 });
 
 // The fox stood dead-centre on the Lesewiese anchor, and the anchor sat right
+// The same rule on the Drachenhöhle, where the thing to clear is the cave mouth
+// with the two eyes waiting inside it: a fox parked over it covers an eye, and
+// the cliff stops reading as a cave at all.
+test("the fox at the Drachenhöhle does not stand in the cave mouth", () => {
+  const region = html.slice(
+    html.indexOf('id="region-drachen"'),
+    html.indexOf("</a>", html.indexOf('id="region-drachen"')),
+  );
+  // the mouth is the one arc path in the region: M<x> <y> a<rx> <ry> …
+  const mouth = region.match(/<path d="M(\d+) \d+ a(\d+) \d+ 0 0 1 (\d+) 0 Z"/);
+  assert.ok(mouth, "the cave mouth must exist to be cleared");
+  const mouthLeft = Number(mouth[1]);
+  const mouthRight = mouthLeft + Number(mouth[3]);
+
+  const FOX_HALF = 22; // half of foxSVG size 44 (map.js: translate by x - 22)
+  const [fx] = ANCHORS.drachen;
+  assert.ok(
+    fx - FOX_HALF >= mouthRight || fx + FOX_HALF <= mouthLeft,
+    `fox span [${fx - FOX_HALF}, ${fx + FOX_HALF}] overlaps the cave mouth [${mouthLeft}, ${mouthRight}]`,
+  );
+});
+
 // on the tree's trunk — the fox's body hid it, so the tree read as a green ball
 // floating over the grass. The fox is drawn 44 wide, centred on its anchor
 // (map.js placeFox translates by x - 22), so its span must clear the trunk rect.
