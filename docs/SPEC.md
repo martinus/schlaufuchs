@@ -2095,6 +2095,14 @@ A new story answers three questions on its first screen — where am I, what do 
 want, and what is running out — and plants one question that only the endings
 answer.
 
+3. **A choice is read from where she stands, not from where it leads.** The
+   third defect found by playtest was in the CHOICE texts, not the scenes: a
+   door scene offered „dem Wasser folgen" on a path where no water had ever been
+   mentioned. A choice may name only what its own scene shows; the one that
+   steps into another column is a direction or an action, never the name of its
+   destination. German makes this machine-checkable — a definite article claims
+   the noun is known — and `tests/drachen-content.test.js` enforces it.
+
 Journey theme: `cave`. **No adaptive engine and no tempo ladder**: a story is a
 walk through a graph, not a draw from a pool, and hurrying a story is the
 opposite of reading it. Stories are German only (§14.6); the chrome is

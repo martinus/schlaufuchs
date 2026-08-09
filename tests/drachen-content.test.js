@@ -186,6 +186,40 @@ test("a scene fits its difficulty's reading level and the phone it is read on", 
   });
 });
 
+// THE DEFECT THIS EXISTS FOR, found by playtest: on the mine's door scene the
+// second choice read "Die Tür lassen und dem Wasser folgen" — and on that path
+// no water had ever been mentioned. "Welchem Wasser?"
+//
+// A choice is written by an author who knows where it LEADS, and read by a child
+// who only knows where she STANDS. So a choice may only name what its own scene
+// names (or what scene one handed her). German makes this checkable: a definite
+// article in front of a capitalised noun claims the noun is already known.
+// Indefinite is always fine — "nach Wasser suchen" asks nothing of the reader.
+//
+// The practical rule this enforces: the SECOND choice of a scene — the one that
+// steps into another column — must be phrased as a direction or an action, never
+// as the name of the place it leads to.
+test("a choice never names something its own scene has not shown", () => {
+  // Parts of a body, of a room and of a path: available in any scene of any
+  // story, and never the thing a child would ask "which one?" about.
+  const EVERYWHERE = /^(hand|hände|augen|schulter|kopf|rand|boden|mitte|ende|seite|stelle|licht|wand|gang|hof|hofs|weg|luft|zeit)$/;
+  const DEFINITE = /\b(?:der|die|das|dem|den|des|zur|zum|ins|im|am|ans|beim|vom|dieser|diese|dieses)\s+(?:[a-zäöüß]+\s+)?([A-ZÄÖÜ][a-zäöüß]{3,})/g;
+  for (const story of CONTENT) {
+    const opening = story.nodes[0].t.toLowerCase();
+    for (const node of story.nodes) {
+      const known = `${node.t.toLowerCase()} ${opening}`;
+      for (const c of node.c ?? []) {
+        for (const [, noun] of c.a.matchAll(DEFINITE)) {
+          if (EVERYWHERE.test(noun.toLowerCase())) continue;
+          assert.ok(known.includes(noun.toLowerCase().slice(0, 5)),
+            `${story.key}/${node.id}: „${c.a}“ says „${noun}“ as if she knew it — `
+            + "the scene never shows one, and on another path in she never saw one");
+        }
+      }
+    }
+  }
+});
+
 // The driver reads the page and looks the scene up by its text
 // (tools/play-drachen.js), so a repeated scene would make it answer for the
 // wrong node — and a child would notice the repetition long before a test did.

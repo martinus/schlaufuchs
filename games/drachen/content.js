@@ -93,6 +93,16 @@
 //      photographs are not a story.
 //   5. A CHOICE COSTS SOMETHING. "Die Lampe kleiner drehen" — see less, be seen
 //      less. "Weitergehen / stehen bleiben" is not a choice, it is a menu.
+//   6. A CHOICE MAY ONLY NAME WHAT ITS OWN SCENE SHOWS. This is the coherence
+//      rule again, and it is the one that keeps being forgotten, because a
+//      choice is WRITTEN by someone who knows where it leads and READ by a child
+//      who only knows where she stands. The mine's door scene once offered "Die
+//      Tür lassen und dem Wasser folgen" — and on that path no water had ever
+//      appeared. "Welchem Wasser?" So: the second choice of a scene, the one
+//      that steps into another column, is phrased as a DIRECTION or an ACTION,
+//      never as the name of the place it leads to. German makes the slip
+//      machine-checkable — a definite article before a noun claims the noun is
+//      known — and tests/drachen-content.test.js checks exactly that.
 //
 // And one question is planted in scene one and answered only in the endings.
 //
@@ -124,16 +134,16 @@ export const STORIES = {
       e: "⛏️",
       title: "Der Stollen",
       nodes: [
-        { id: "s0", e: "⛏️", t: "Morgen um sechs sprengen sie den Hang. Und seit drei Nächten klopft es aus dem Berg: drei kurze, Pause, drei kurze. So hat dein Großvater geklopft, sagt Mama. Bevor er nicht mehr herauskam.", c: [
-          { a: "Durch die alten Bretter", to: "a1" },
-          { a: "Erst zu Großvaters Schuppen", to: "b1" },
+        { id: "s0", e: "⛏️", t: "Morgen um sechs sprengen sie den Hang. Seit drei Nächten klopft es aus dem alten Stollen: drei kurze, Pause, drei kurze. So klopfte Großvater, bevor er nicht mehr herauskam. Du nimmst seine Lampe.", c: [
+          { a: "Zum Stollen hinauf", to: "a1" },
+          { a: "Erst in Großvaters Schuppen", to: "b1" },
         ] },
-        { id: "a1", e: "🪵", t: "Die Bretter splittern, und die kalte Luft schlägt dir die Lampe fast aus. Drinnen liegt Staub auf allem — bis auf einen Streifen in der Mitte. Da geht jemand hin und her. Oft.", c: [
+        { id: "a1", e: "🪵", t: "Der Eingang ist vernagelt, aber die Bretter sind morsch. Sie splittern, und die kalte Luft schlägt dir die Lampe fast aus. Drinnen liegt Staub auf allem — bis auf einen Streifen in der Mitte.", c: [
           { a: "Dem Streifen nach", to: "a2" },
           { a: "Die Lampe kleiner drehen", to: "b2" },
         ] },
-        { id: "b1", e: "🔦", t: "Im Schuppen hängt Großvaters Lampe, voll Öl. Daneben ein zweiter Haken, leer. Und an der Wand, mit Kreide: drei Striche, Pause, drei Striche. Die Kreide staubt noch.", c: [
-          { a: "Die Lampe nehmen und hinein", to: "b2" },
+        { id: "b1", e: "🔦", t: "Hier hing die Lampe. Daneben ein zweiter Haken, leer. Und an der Wand, mit Kreide: drei Striche, Pause, drei Striche. Die Kreide staubt noch.", c: [
+          { a: "Zum Stollen und hinein", to: "b2" },
           { a: "Fragen, wer heute Kreide gekauft hat", to: "c2" },
         ] },
         { id: "a2", e: "👟", t: "Der Streifen führt tiefer. Auf halbem Weg liegt ein Schuh, ausgetreten und viel zu klein für einen Bergmann. Daneben ein Pfeil, in den Staub gemalt. Er zeigt nach vorn.", c: [
@@ -146,7 +156,7 @@ export const STORIES = {
         ] },
         { id: "c2", e: "🪨", t: "„Kreide? Heute früh“, sagt der Krämer. „So ein kleiner Kerl, ganz dreckig. Hat mit dem hier bezahlt.“ Er legt es auf den Tresen: eine Schuppe, grün. Und sie ist warm.", c: [
           { a: "Die Schuppe mitnehmen", to: "c3" },
-          { a: "Damit sofort in den Berg", to: "a3" },
+          { a: "Damit sofort zum Stollen", to: "a3" },
         ] },
         { id: "a3", e: "🔊", t: "Der Gang knickt nach unten. Von da kommt das Klopfen so nah, dass der Fels es an deine Hand weitergibt. Drei kurze. Pause. Drei kurze. Und dann, zum ersten Mal: vier.", c: [
           { a: "Vier zurückklopfen", to: "a4" },
@@ -162,7 +172,7 @@ export const STORIES = {
         ] },
         { id: "a4", e: "🚪", t: "Der Gang endet an einer Tür aus Bohlen, von innen verriegelt. Über dir setzt ein Bohrer ein, und der Staub rieselt in Fäden. Dann klopft es gegen die Tür. Einmal, ganz schwer.", c: [
           { a: "Den Riegel aufbrechen", to: "a5" },
-          { a: "Die Tür lassen und dem Wasser folgen", to: "b5" },
+          { a: "Die Tür lassen und weiter bergab", to: "b5" },
         ] },
         { id: "b4", e: "✍️", t: "Im Licht liegt ein Stein, und darauf steht ein Name in Kreide. Es ist deiner. Darunter, kleiner: „Sie kommt. Sag ihr nichts vom Wasser.“ Über dir setzt ein Bohrer ein.", c: [
           { a: "Nach dem Wasser sehen", to: "b5" },
@@ -170,7 +180,7 @@ export const STORIES = {
         ] },
         { id: "c4", e: "🕳️", t: "Über dir bohrt jetzt etwas. Der Staub rieselt in Fäden, und die Fäden zittern im Takt. Neben dir öffnet sich ein Riss im Fels, der vorhin noch nicht da war.", c: [
           { a: "In den Riss", to: "c5" },
-          { a: "Zurück zum Hauptgang", to: "a5" },
+          { a: "Zurück, wo der Gang breiter war", to: "a5" },
         ] },
         { id: "a5", e: "🔧", t: "Der Riegel sitzt, aber das Holz ist morsch. Draußen heult die Sirene: fünf Minuten. Hinter der Tür atmet jemand, schnell und flach, wie einer, der Angst hat.", c: [
           { a: "Aufbrechen", to: "e0" },
@@ -242,7 +252,7 @@ export const STORIES = {
         ] },
         { id: "c4", e: "🐟", t: "Im Priel schiebt sich etwas gegen die Strömung. Grau, geschuppt, so lang wie dein Arm. Es hält an, dreht den Kopf zu dir — und wartet.", c: [
           { a: "Ihm folgen", to: "c5" },
-          { a: "Zurück in den Laderaum", to: "a5" },
+          { a: "Zurück an Bord und hinunter", to: "a5" },
         ] },
         { id: "a5", e: "🧭", t: "Die siebte Kiste steht ganz hinten, offen und leer bis auf ein Bündel Öltuch. Darin ein Kompass, und seine Nadel zeigt nicht nach Norden. Vom Ufer bläst das Horn.", c: [
           { a: "Den Kompass mitnehmen", to: "e0" },
@@ -282,11 +292,11 @@ export const STORIES = {
         ] },
         { id: "a2", e: "🔨", t: "Unter dem Putz kommt Holz zum Vorschein. Eine Tür, zugenagelt mit Nägeln, die jemand krumm geschlagen hat. In Eile.", c: [
           { a: "Die Nägel herausziehen", to: "a3" },
-          { a: "Den Plan im Treppenhaus holen", to: "b3" },
+          { a: "Unten nach alten Papieren suchen", to: "b3" },
         ] },
         { id: "b2", e: "📐", t: "Es klingt überall gleich — bis auf eine Stelle in Kopfhöhe. Da klingt es nicht hohl, sondern dumpf. Als läge etwas dicht dahinter. Etwas Weiches.", c: [
           { a: "An dieser Stelle aufkratzen", to: "b3" },
-          { a: "Nach draußen zum Efeu", to: "c3" },
+          { a: "Nach draußen und außen hinauf", to: "c3" },
         ] },
         { id: "c2", e: "🌿", t: "Der Efeu hält. Auf halber Höhe kommst du an dem schiefen Fenster vorbei. Es ist zugemauert, bis auf einen Spalt oben. Aus dem Spalt kommt Wärme.", c: [
           { a: "Durch den Spalt schauen", to: "c3" },
@@ -294,7 +304,7 @@ export const STORIES = {
         ] },
         { id: "a3", e: "⚙️", t: "Die Nägel geben nach, einer nach dem anderen. Draußen fährt ein Bagger auf den Hof und stellt den Motor ab. Männer steigen aus und schauen am Turm hoch.", c: [
           { a: "Weitermachen", to: "a4" },
-          { a: "Nachsehen, was auf dem Plan steht", to: "b4" },
+          { a: "Zurück und Wilmas Papiere lesen", to: "b4" },
         ] },
         { id: "b3", e: "🖋️", t: "Auf dem alten Plan sind fünf Zimmer, und über eines hat jemand ein Kreuz gemacht. Daneben, in Wilmas Schrift: „Zugemacht. Nicht heizen. Sie schläft.“ Draußen fährt ein Bagger auf den Hof.", c: [
           { a: "Wilmas Schrift weiterlesen", to: "b4" },
@@ -310,11 +320,11 @@ export const STORIES = {
         ] },
         { id: "b4", e: "🕰️", t: "„Solange der Stein glüht, ist sie da“, steht auf der Rückseite. „Wer ihn nimmt, muss bleiben.“ Draußen schlägt der erste Hammer gegen die Hofmauer, und der Turm zittert mit.", c: [
           { a: "Nach dem Stein suchen", to: "b5" },
-          { a: "Über das Dach zum Fenster", to: "c5" },
+          { a: "Außen am Turm hinauf", to: "c5" },
         ] },
         { id: "c4", e: "🪨", t: "Der lose Stein kippt heraus und schlägt unten auf. Durch das Loch fällt Licht in den runden Raum. An der Wand bewegt sich etwas, das eben noch ein Schatten war.", c: [
           { a: "Hineinklettern", to: "c5" },
-          { a: "Zurück zum Kamin", to: "a5" },
+          { a: "Zurück nach drinnen", to: "a5" },
         ] },
         { id: "a5", e: "💨", t: "Der Kamin führt in den runden Raum. Der Stein liegt in der Mitte, und die Wärme steht darüber wie über einem Ofen. Draußen rufen sie deinen Namen. Sie wollen anfangen.", c: [
           { a: "Den Stein nehmen", to: "e0" },
@@ -326,7 +336,7 @@ export const STORIES = {
         ] },
         { id: "c5", e: "🪟", t: "Über dem runden Raum tut sich noch einer auf. Klein, hell, mit einem Fenster nach Osten. Auf dem Plan war er nicht. Draußen rufen sie deinen Namen. Sie wollen anfangen.", c: [
           { a: "Hinaufklettern", to: "e2" },
-          { a: "Hinunter zu dem Stein", to: "e0" },
+          { a: "Hinunter in den runden Raum", to: "e0" },
         ] },
         { id: "e0", e: "🔥", end: 0, name: "Der Wärmestein", t: "Der Stein ist warm wie ein Tier. Du trägst ihn hinaus, und der Bagger wartet, bis du durch bist. Zweihundert Jahre hat er gewärmt, was in diesem Turm gewohnt hat. Jetzt steht er bei euch am Fenster, und im Winter kommt das halbe Dorf vorbei." },
         { id: "e1", e: "🐉", end: 1, name: "Die alte Wächterin", t: "An der Wand hängt sie, grau und faltig und kaum größer als ein Hund. „Nein“, sagst du. „Sie kommt nicht mehr.“ Sie ist lange still. Dann klettert sie dir auf die Schulter. Ihr geht zusammen hinaus, bevor der erste Stein fällt." },
@@ -347,7 +357,7 @@ export const STORIES = {
         ] },
         { id: "a1", e: "🪨", t: "Das Wasser trommelt dir auf die Schulter. Nach zwanzig Schritten hört es auf — du stehst in einem Gang, und hinter dir hängt der Fall wie ein Vorhang. Auf dem Boden liegt ein zweiter Meißel, abgebrochen.", c: [
           { a: "In den Gang hinein", to: "a2" },
-          { a: "Die Wand am Eingang abtasten", to: "b2" },
+          { a: "Die Wand hier abtasten", to: "b2" },
         ] },
         { id: "b1", e: "🧰", t: "In der Werkstatt liegen dreißig Meißel, alle stumpf. Und ein Heft, in dem er nachgehalten hat, wie oft er drin war: 412 Striche. Der letzte ist von vorletzter Woche.", c: [
           { a: "Zum Wasserfall aufbrechen", to: "b2" },
@@ -402,16 +412,16 @@ export const STORIES = {
           { a: "Zur großen Halle hinüber", to: "a6" },
         ] },
         { id: "a6", e: "✨", t: "Am hinteren Ende der Halle liegt etwas im Sand, das dein Licht zurückwirft. Nicht gelb wie Gold, in allen Farben zugleich. Zwischen dir und ihm liegt sie, und sie hebt gerade den Kopf.", c: [
-          { a: "Am Rand entlang zu dem Funkeln", to: "a7" },
-          { a: "Zurück zu der Nische am Rand", to: "b7" },
+          { a: "Am Rand entlang darauf zu", to: "a7" },
+          { a: "Zurück in den Gang am Rand", to: "b7" },
         ] },
         { id: "b6", e: "🪶", t: "Der Wegweiser endet an einer Nische: eine Decke, ein Wasserschlauch, ein Stück Kreide. Und ein Zettel, so oft gefaltet, dass er an den Kanten durch ist.", c: [
           { a: "Den Zettel lesen", to: "b7" },
-          { a: "Nachsehen, wohin der Kamin führt", to: "c7" },
+          { a: "Der Wand nach oben folgen", to: "c7" },
         ] },
         { id: "c6", e: "🧗", t: "An der Wand gehen Krallenspuren einen Kamin hinauf, Griff für Griff. Als wären sie für jemanden gemacht, der klettern lernen musste. Unten im Gang läuft jetzt Wasser über den Boden.", c: [
           { a: "Hinaufklettern", to: "c7" },
-          { a: "Erst hinunter zur Halle", to: "a7" },
+          { a: "Erst wieder hinunter", to: "a7" },
         ] },
         { id: "a7", e: "🤫", t: "Du bist so nah, dass du die Wärme spürst, die von ihr aufsteigt. Ihr Atem geht in langen Zügen, und dazwischen ist eine Pause, in der man drei Schritte weit kommt. Vier nicht.", c: [
           { a: "In den Pausen weitergehen", to: "e0" },
@@ -419,7 +429,7 @@ export const STORIES = {
         ] },
         { id: "b7", e: "📜", t: "„Wenn du das liest, bist du weit gekommen“, steht da. „Sie ist blind, nicht böse. Die Zeichen sind für sie, nicht für dich. Und sie hört alles.“ Darunter eine Hand, mit Kreide nachgezogen.", c: [
           { a: "Die Hand auf die Wand legen", to: "e1" },
-          { a: "Dem Licht im Kamin nachgehen", to: "e2" },
+          { a: "Dem Zug nach oben folgen", to: "e2" },
         ] },
         { id: "c7", e: "🏞️", t: "Oben wird der Kamin eng, dann hörst du Vögel. Zwischen zwei Felsplatten fällt Tageslicht herein, und dahinter steht Gras. Über dir liegt der halbe Berg — und trotzdem: Gras.", c: [
           { a: "Dich hinausschieben", to: "e2" },
@@ -447,15 +457,15 @@ export const STORIES = {
         ] },
         { id: "b1", e: "📖", t: "Zwischen den letzten Seiten klebt ein zweiter Zettel, in Großvaters Schrift: „Nie allein hinunter. Und nie bei Regen.“ Draußen fängt es an zu tröpfeln.", c: [
           { a: "Trotzdem los", to: "b2" },
-          { a: "Ein Seil aus der Scheune holen", to: "c2" },
+          { a: "Erst ein Seil holen", to: "c2" },
         ] },
         { id: "a2", e: "👣", t: "Die Spur läuft zum Turm, im Bogen zurück und dann schnurstracks auf eine Kellertreppe zu. Vor der Treppe steht sie still: Da hat er lange überlegt. Dann geht sie hinunter.", c: [
           { a: "Ihm nach in den Keller", to: "a3" },
-          { a: "Erst die fünfte Ecke des Hofs", to: "b3" },
+          { a: "Erst den Hof genau abgehen", to: "b3" },
         ] },
         { id: "b2", e: "📐", t: "Der Hof auf deiner Hälfte hat vier Ecken. Der Hof vor dir hat fünf. Die fünfte fehlt auf dem Papier — genau da, wo der Riss durchgeht, und genau da steht auch das Kreuz.", c: [
           { a: "Zur fünften Ecke", to: "b3" },
-          { a: "Außen um die Mauer herum", to: "c3" },
+          { a: "Außen um die Ruine herum", to: "c3" },
         ] },
         { id: "c2", e: "🪢", t: "In der Scheune hängt ein Seil. Daneben klebt ein Zettel in derselben Schrift wie im Buch: „Wenn du das liest, geh nicht allein.“ Er hängt da seit Jahren.", c: [
           { a: "Seil mitnehmen und los", to: "c3" },
@@ -471,7 +481,7 @@ export const STORIES = {
         ] },
         { id: "c3", e: "🚴", t: "Hinter der Mauer liegt ein Fahrrad im Brennnesselfeld, und darüber klafft ein Loch in der Mauer. Der Regen fängt richtig an, und durch das Loch zieht es kalt heraus.", c: [
           { a: "Durch das Loch", to: "c4" },
-          { a: "Über den Hof zum Keller", to: "a4" },
+          { a: "Über den Hof und hinunter", to: "a4" },
         ] },
         { id: "a4", e: "🕯️", t: "Am Ende des Gangs brennt eine Kerze auf einem Stein. Daneben ein Rucksack, offen. Und aus der Dunkelheit dahinter kommt ein Kratzen, wie von einem Schuh auf Sand, viel zu schnell.", c: [
           { a: "In die Dunkelheit hinein", to: "a5" },
@@ -479,18 +489,18 @@ export const STORIES = {
         ] },
         { id: "b4", e: "🕳️", t: "Der Deckel gibt nach, und darunter geht es senkrecht hinunter. Von unten kommt kalte Luft und eine Stimme, die mit sich selbst redet. Sie klingt nicht besonders mutig.", c: [
           { a: "Hinunterrufen", to: "b5" },
-          { a: "Um den Anbau herum weitersuchen", to: "c5" },
+          { a: "Ringsum weitersuchen", to: "c5" },
         ] },
         { id: "c4", e: "🧤", t: "Hinter dem Loch liegt ein Raum, den der Schutt verschont hat. Ein Handschuh, ein Stück Kreide. Und an der Wand eine Zeichnung: dieselben Linien wie auf deiner Karte, nur ganz.", c: [
           { a: "Die Zeichnung abgehen", to: "c5" },
-          { a: "Dem Gang zum Keller folgen", to: "a5" },
+          { a: "Dem Gang nach unten folgen", to: "a5" },
         ] },
         { id: "a5", e: "😮", t: "Er ist so alt wie du und erschrickt schlimmer. In der Hand ein Papier mit frischer Risskante. Hinter ihm endet der Gang an glatten Steinen — und unter der Tür läuft Wasser durch.", c: [
           { a: "Zur Wand hinüber", to: "a6" },
           { a: "Fragen, woher er seine Hälfte hat", to: "b6" },
         ] },
         { id: "b5", e: "🗣️", t: "Die Stimme verstummt. Dann, vorsichtig: „Bist du oben? Ich komm hier nicht mehr rauf, der Schutt ist nachgerutscht.“ Pause. „Und es läuft Wasser rein.“", c: [
-          { a: "Ihm das Seil hinunterlassen", to: "b6" },
+          { a: "Ihm die Hand hinunterreichen", to: "b6" },
           { a: "Nach einem zweiten Zugang suchen", to: "c6" },
         ] },
         { id: "c5", e: "🖍️", t: "Die Zeichnung zeigt, was die Karte verschweigt: Der Keller hat zwei Gänge. Der zweite endet nicht, er läuft unter dem Hof durch und weiter. Über dir gluckert es in den Steinen.", c: [
@@ -515,7 +525,7 @@ export const STORIES = {
         ] },
         { id: "b7", e: "📄", t: "Riss an Riss passen die Hälften zusammen. Erst jetzt ergibt die Zeichnung einen Sinn: Das Kreuz steht nicht auf dem Hof, sondern darunter. Und ein Pfeil zeigt auf die Tür im Keller.", c: [
           { a: "Zusammen hinunter zur Tür", to: "e1" },
-          { a: "Dem Pfeil in die andere Richtung", to: "e2" },
+          { a: "Dem Pfeil andersherum folgen", to: "e2" },
         ] },
         { id: "c7", e: "🌱", t: "Der Gang endet unter einer Steinplatte, und die Platte lässt sich heben. Du steckst den Kopf heraus: Regen, Wiese, und die Ruine liegt zweihundert Schritte hinter dir.", c: [
           { a: "Nachsehen, was hier oben steht", to: "e2" },
@@ -547,10 +557,10 @@ export const STORIES = {
         ] },
         { id: "a2", e: "🔵", t: "Zehn Meter tiefer ist das Licht blau und der Lärm weg. Es tropft. Überall tropft es — und vor einer Woche, sagt dein Onkel, hat es hier oben noch gefroren.", c: [
           { a: "Weiter hinunter", to: "a3" },
-          { a: "Auf das Knacken hören", to: "b3" },
+          { a: "Stehen bleiben und horchen", to: "b3" },
         ] },
         { id: "b2", e: "🪨", t: "Der Felsblock steht nicht auf Fels. Er steht auf blankem Eis, und rundherum hat das Schmelzwasser eine Rinne gezogen, fingertief. Heute Morgen war sie das noch nicht.", c: [
-          { a: "Trotzdem am Seil hinunter", to: "b3" },
+          { a: "Trotzdem hinunterklettern", to: "b3" },
           { a: "Einen sichereren Weg suchen", to: "c3" },
         ] },
         { id: "c2", e: "🚪", t: "Am flachen Ende kommst du ohne Seil hinein. Nach ein paar Metern wird der Spalt zum Tunnel — und der Tunnel ist rund. Nicht gerissen. Geschmolzen, von etwas Warmem.", c: [
@@ -563,7 +573,7 @@ export const STORIES = {
         ] },
         { id: "b3", e: "👂", t: "Das Eis knackt in Wellen: erst weit weg, dann näher, dann direkt neben deinem Ohr. Und über dir läuft jetzt Wasser über die Kante, wo vorhin nur Tropfen hingen.", c: [
           { a: "Zwischen den Wellen weiter", to: "b4" },
-          { a: "In den geschmolzenen Tunnel", to: "c4" },
+          { a: "Quer hinüber, wo es warm zieht", to: "c4" },
         ] },
         { id: "c3", e: "🫧", t: "Der Tunnel führt schräg nach unten. Im Eis stecken Luftblasen in langen Ketten, und dazwischen etwas Dunkles, Langes. Von oben läuft Wasser herein und sucht sich denselben Weg.", c: [
           { a: "Der dunklen Kante folgen", to: "c4" },
@@ -583,11 +593,11 @@ export const STORIES = {
         ] },
         { id: "a5", e: "🫀", t: "Du legst die Hand auf die Schuppen. Sie sind nicht kalt. Und alle paar Sekunden hebt sich die Wand einen Fingerbreit und senkt sich wieder. Das hier atmet. Sehr, sehr langsam.", c: [
           { a: "Der Wand nach oben folgen", to: "a6" },
-          { a: "An der Eiswand nach Zeichen sehen", to: "b6" },
+          { a: "An der Wand daneben nachsehen", to: "b6" },
         ] },
         { id: "b5", e: "✍️", t: "An der Eiswand steht eine Reihe Kreidezeichen, halb verwischt: Zahlen, Tiefen. Und ganz am Ende ein einziges Wort, groß und dreimal nachgezogen. „Lebt.“", c: [
           { a: "Nachsehen, worauf das Wort zeigt", to: "b6" },
-          { a: "In den warmen Tunnel wechseln", to: "c6" },
+          { a: "Dorthin, wo es warm zieht", to: "c6" },
         ] },
         { id: "c5", e: "💨", t: "Der Tunnel wird zu einer Höhle, und in der Höhle ist es warm. Aus einer Öffnung im Eis strömt Luft, so warm wie Atem — weil es Atem ist. Draußen kracht etwas Großes und rutscht.", c: [
           { a: "In die warme Öffnung", to: "c6" },
@@ -611,11 +621,11 @@ export const STORIES = {
         ] },
         { id: "b7", e: "🗣️", t: "Deine Stimme kommt vom Eis dreifach zurück. Dann verschiebt sich tief unter dir etwas so Großes, dass die Wand knirscht — und das Lid im Eis geht einen Spalt auf.", c: [
           { a: "Sitzen bleiben und weiterreden", to: "e1" },
-          { a: "In die warme Kammer zurückweichen", to: "e2" },
+          { a: "Zurückweichen, wo es warm war", to: "e2" },
         ] },
         { id: "c7", e: "⭕", t: "In der warmen Kammer liegt ein Kreis aus flachem Kies, gelegt Stein für Stein, in drei Ringen. In der Mitte eine Mulde, in der der Kies angeschmolzen und wieder erstarrt ist.", c: [
           { a: "In die Mulde greifen", to: "e2" },
-          { a: "Hinauf zu dem Runden im Eis", to: "e0" },
+          { a: "Hinauf an der roten Wand", to: "e0" },
         ] },
         { id: "e0", e: "☄️", end: 0, name: "Das rote Auge", t: "Beim dritten Klopfen geht das Lid auf. Ein Auge so groß wie ein Wagenrad sieht dich an: ruhig, uralt, gar nicht überrascht. Dann schließt es sich wieder. Am Abend rutscht der ganze Gletscher zehn Meter talwärts, und dein Onkel sagt kein Wort — aber er sieht dich an." },
         { id: "e1", e: "🐉", end: 1, name: "Der Schläfer im Eis", t: "Du sitzt bis zum Abend da und erzählst, was es oben Neues gibt: zwanzig Jahre in einer Stunde. Als du aufstehst, ist der Spalt eine Handbreit enger. „Komm wieder“, knirscht das Eis. „Dein Onkel kommt seit zwanzig Jahren. Er traut sich nur nie herunter.“" },
@@ -630,7 +640,7 @@ export const STORIES = {
       e: "🌒",
       title: "Die versunkene Stadt",
       nodes: [
-        { id: "s0", e: "🌒", t: "Einmal im Jahr fällt der See um zwölf Meter und gibt Gassen und Türme zurück. Auf der Steintafel am Brunnen stehen sieben Namen unter „Geblieben“, und der siebte ist eurer. Deine Mutter redet nicht darüber. Der Fährmann leiht dir sein Boot und sagt: „Sechs Stunden.“", c: [
+        { id: "s0", e: "🌒", t: "Einmal im Jahr fällt der See um zwölf Meter und gibt die Stadt zurück: Gassen, Dächer, den Turm, das große Haus am Markt. Auf der Tafel am Brunnen stehen sieben Namen unter „Geblieben“, und der siebte ist eurer. Deine Mutter redet nicht darüber. Der Fährmann leiht dir sein Boot: „Sechs Stunden.“", c: [
           { a: "Die Hauptgasse hinunter", to: "a1" },
           { a: "Erst zur Tafel am Brunnen", to: "b1" },
         ] },
@@ -639,23 +649,23 @@ export const STORIES = {
           { a: "In das Haus mit dem Laden", to: "b2" },
         ] },
         { id: "b1", e: "🪧", t: "Sieben Namen. Sechs sind später durchgestrichen worden, jeder mit einem anderen Werkzeug. Eurer nicht. Er steht ganz unten und ist am tiefsten eingeschlagen, als hätte jemand lange daran gearbeitet.", c: [
-          { a: "Zum großen Haus am Platz", to: "b2" },
+          { a: "Zum großen Haus am Markt", to: "b2" },
           { a: "Am Ufer entlangschauen", to: "c2" },
         ] },
         { id: "a2", e: "⛲", t: "Der Marktplatz ist eine flache Schüssel aus Schlamm, und quer hindurch führt eine Spur. Keine Fußspur. Eine Schleifspur, breit wie ein Tisch, und sie ist neuer als der Schlamm.", c: [
           { a: "Der Schleifspur folgen", to: "a3" },
-          { a: "Zurück in das trockene Zimmer", to: "b3" },
+          { a: "Zurück in die Gasse", to: "b3" },
         ] },
         { id: "b2", e: "🪟", t: "Im Erdgeschoss steht der Schlamm hoch, aber die Treppe hält. Oben ein Zimmer, trockener als alles hier: Tisch, Stuhl, ein Bett aus Brettern. Auf dem Tisch liegt Kreide, und sie ist nicht nass geworden.", c: [
           { a: "Das Zimmer durchsuchen", to: "b3" },
-          { a: "Aus dem Fenster über die Dächer schauen", to: "c3" },
+          { a: "Von oben über die Dächer schauen", to: "c3" },
         ] },
         { id: "c2", e: "⛵", t: "Am Stadtrand liegt ein zweites Boot — nicht gestrandet, festgemacht. Das Tau geht hinauf zu einem Dachbalken und ist so gebunden, dass man es von oben löst. Jemand ankert hier oben, nicht unten.", c: [
           { a: "Das Boot untersuchen", to: "c3" },
           { a: "Über den Markt zum großen Haus", to: "a3" },
         ] },
         { id: "a3", e: "🚪", t: "Die Schleifspur endet an zwei Türflügeln aus Eichenholz, schwarz und schwer wie Stein. Sie sind zu. Und draußen bläst der Fährmann zum ersten Mal ins Horn: die Hälfte der Zeit ist herum.", c: [
-          { a: "Durch das rostige Fensterloch", to: "a4" },
+          { a: "Ein Fenster daneben suchen", to: "a4" },
           { a: "Die Inschrift über der Tür lesen", to: "b4" },
         ] },
         { id: "b3", e: "✍️", t: "Auf dem Tisch liegt unter der Kreide ein Zettel, und die Schrift ist dieselbe wie auf der Tafel am Brunnen. „Er zählt die Jahre nicht mit“, steht da. Draußen bläst der Fährmann ins Horn.", c: [
@@ -716,14 +726,14 @@ export const STORIES = {
         ] },
         { id: "a8", e: "🔒", t: "Im Kasten liegt auf verblasstem Samt ein Reif aus dunklem Gold, ohne Steine. Eingeschlagen ist ein Muster: Schuppen, rundherum. Der Schlüssel steckt außen. Und in der Gasse gurgelt es jetzt.", c: [
           { a: "Aufschließen", to: "a9" },
-          { a: "Nachsehen, was unter dem Ratssaal liegt", to: "b9" },
+          { a: "Nachsehen, was unter dem Boden liegt", to: "b9" },
         ] },
         { id: "b8", e: "🕳️", t: "Unter dem Ratssaal gibt es keinen Keller, sondern eine Öffnung im Boden, so groß wie ein Tisch. Darunter ist es nicht schwarz, sondern schwach rot, wie unter einer Aschedecke. In der Gasse gurgelt es.", c: [
           { a: "Hinunterrufen", to: "b9" },
-          { a: "Der Wärme nach hinaus zum Damm", to: "c9" },
+          { a: "Der Wärme nach hinaus", to: "c9" },
         ] },
         { id: "c8", e: "〰️", t: "Der Strich läuft schnurgerade vom Ufer bis zu den Schornsteinen. Kein Fluss macht das. Und kurz vor der zweiten Häuserreihe ist er unterbrochen, als hätte jemand ein Stück herausgenommen. In der Gasse gurgelt es.", c: [
-          { a: "Zu der Lücke hinaus", to: "c9" },
+          { a: "Dorthin hinaus", to: "c9" },
           { a: "Zurück ins große Haus", to: "a9" },
         ] },
         { id: "a9", e: "👑", t: "Der Schlüssel dreht sich leicht, das Glas hebt sich, der Reif liegt frei. Er ist schwerer, als Gold sein dürfte, und er ist warm. Draußen läuft das Wasser jetzt in die Gassen, hörbar, von allen Seiten.", c: [
@@ -732,7 +742,7 @@ export const STORIES = {
         ] },
         { id: "b9", e: "🗣️", t: "Aus der Öffnung kommt keine Antwort, nur Wärme — und dann ein Ton, so tief, dass du ihn in den Rippen spürst. Er wiederholt sich zweimal, langsamer. Draußen läuft das Wasser in die Gassen.", c: [
           { a: "Antworten", to: "e1" },
-          { a: "Hinaus zum Damm, solange es geht", to: "e2" },
+          { a: "Hinaus, solange es noch geht", to: "e2" },
         ] },
         { id: "c9", e: "🧱", t: "Die Lücke im Damm ist kein Schaden. Die Steine liegen ordentlich zur Seite geräumt, und dahinter geht eine Rampe schräg unter das Wasser. Ein Weg für etwas sehr Großes, das trotzdem leise kommen will.", c: [
           { a: "Die Rampe hinunter", to: "e2" },
@@ -751,7 +761,7 @@ export const STORIES = {
       title: "Der Hort",
       nodes: [
         { id: "s0", e: "💰", t: "Auf dem Foto am Kaminsims trägt deine Urgroßmutter einen flachen grauen Stein mit einem Loch um den Hals. Der Stein ist seit sechzig Jahren fort. „Er zählt“, sagt der Alte am Feuer, „und ihm fehlt eins.“ Draußen fallen die ersten Flocken. Wenn er fertig zählt, geht er suchen.", c: [
-          { a: "Sofort in den Hort", to: "a1" },
+          { a: "Sofort hinein", to: "a1" },
           { a: "Den Alten weiter ausfragen", to: "b1" },
         ] },
         { id: "a1", e: "🕯️", t: "Der Gang ist hoch genug für einen Wagen und glatt wie poliert. Nach der zweiten Biegung wird es hell, und die Helligkeit kommt nicht von Feuer. Aus der Tiefe kommen Zahlen: eine, Pause, die nächste.", c: [
@@ -759,7 +769,7 @@ export const STORIES = {
           { a: "Auf dem Boden nachsehen", to: "b2" },
         ] },
         { id: "b1", e: "🧓", t: "„Zweimal ist einer zurückgekommen“, sagt der Alte. „Der eine hatte nichts dabei.“ Er sieht ins Feuer. „Der andere hatte was dabei und hat es wieder hingelegt. Das war eine Frau, und das ist sechzig Jahre her.“", c: [
-          { a: "In den Hort", to: "b2" },
+          { a: "Hinein", to: "b2" },
           { a: "Nach einem zweiten Eingang fragen", to: "c2" },
         ] },
         { id: "a2", e: "🪙", t: "Die Halle ist so groß wie eine Kirche, und der Boden ist kein Boden: Gold, Silber, Kupfer, Glas, meterhoch bis in die Ecken. Mitten darin liegt er wie ein Hügel im Hügel und zählt weiter.", c: [
@@ -772,11 +782,11 @@ export const STORIES = {
         ] },
         { id: "c2", e: "🌲", t: "„Hinter dem Wasserfall im Nordhang“, sagt der Alte langsam. „Für ihn ist der zu eng, deshalb schaut er da nie nach.“ Er sieht dich an. „Und deshalb geht da auch sonst keiner rein.“", c: [
           { a: "Zum Nordhang", to: "c3" },
-          { a: "Doch durch den großen Eingang", to: "a3" },
+          { a: "Doch den breiten Weg nehmen", to: "a3" },
         ] },
         { id: "a3", e: "😴", t: "Aus der Nähe sieht man die Schuppen einzeln, jede so groß wie ein Wagenrad. Bei jedem Ausatmen klirrt es im ganzen Saal. Und am Eingang, weit hinter dir, liegt jetzt eine dünne weiße Linie: Der Schnee kommt herein.", c: [
           { a: "Weiter am Rand entlang", to: "a4" },
-          { a: "Zu dem Brett zwischen den Reihen", to: "b4" },
+          { a: "Zurück an den Rand", to: "b4" },
         ] },
         { id: "b3", e: "🔢", t: "Die Stücke liegen in Reihen, und auf jedem steht unten eine Zahl. Du drehst drei um: 4471, 4472, 4473. Alles hier ist gezählt. Am Eingang liegt jetzt eine dünne weiße Linie.", c: [
           { a: "Die Reihe entlanggehen", to: "b4" },
@@ -788,7 +798,7 @@ export const STORIES = {
         ] },
         { id: "a4", e: "🏔️", t: "Du gehst an ihm entlang, und du gehst lange. Sein Rücken ist ein Hügelkamm, sein Schwanz verschwindet in einem Seitengang. Und die Zahlen kommen jetzt schneller. Die Pausen dazwischen werden kürzer.", c: [
           { a: "Bis zum Kopf weitergehen", to: "a5" },
-          { a: "Zurück zu den Reihen am Rand", to: "b5" },
+          { a: "An den Rand zurückgehen", to: "b5" },
         ] },
         { id: "b4", e: "📏", t: "Zwischen zwei Reihen liegt ein Brett mit einer Kerbe für jedes Hundert. Ganz am Ende, hinter der letzten, steht eine einzelne Kerbe für sich allein. Und die Zahlen kommen jetzt schneller.", c: [
           { a: "Die einzelne Kerbe untersuchen", to: "b5" },
@@ -800,27 +810,27 @@ export const STORIES = {
         ] },
         { id: "a5", e: "👁️", t: "Sein Kopf liegt auf den Vorderklauen, groß wie ein Haus. Ein Auge ist zu, das andere steht einen Spalt offen und bewegt sich nicht. Und mitten im Zählen macht er einen Fehler und fängt die Reihe noch einmal an.", c: [
           { a: "Ganz langsam weitergehen", to: "a6" },
-          { a: "Zu dem freien Platz am Rand zurück", to: "b6" },
+          { a: "Am Rand nachsehen", to: "b6" },
         ] },
         { id: "b5", e: "0️⃣", t: "Die einzelne Kerbe hat keine Zahl. Sie hat ein Wort, klein und ordentlich ins Holz geritzt: „fehlt“. Daneben ein leerer Platz auf dem Boden, staubfrei, genau so groß wie eine Handfläche.", c: [
           { a: "Den leeren Platz ansehen", to: "b6" },
-          { a: "Nach der schmalen Kammer suchen", to: "c6" },
+          { a: "Nach einem schmalen Weg suchen", to: "c6" },
         ] },
         { id: "c5", e: "📚", t: "In den Regalen stehen über hundert Bücher, alle gleich gebunden, auf jedem Rücken eine Jahreszahl. Du ziehst das oberste heraus: Seite für Seite Zahlen in Spalten, in einer sehr ordentlichen Handschrift.", c: [
           { a: "Das neueste Buch aufschlagen", to: "c6" },
-          { a: "Durch die Ritze in die Halle", to: "a6" },
+          { a: "Durch eine Ritze nach nebenan", to: "a6" },
         ] },
         { id: "a6", e: "🪨", t: "Vor seinem Maul liegt ein Stück, das nicht wie das andere ist: kein Gold, kein Silber. Ein flacher grauer Stein mit einem Loch in der Mitte, glatt geschliffen. Er liegt allein, mit Abstand zu allem übrigen.", c: [
           { a: "Nach dem Stein greifen", to: "a7" },
           { a: "Ihn erst betrachten", to: "b7" },
         ] },
         { id: "b6", e: "🖐️", t: "Rundherum liegt der Staub von Jahrzehnten, und in der Mitte liegt gar keiner. Da hat etwas gelegen, und zwar bis vor kurzem. Nicht bis vor sechzig Jahren. Bis vor kurzem.", c: [
-          { a: "In der Halle danach suchen", to: "b7" },
-          { a: "In den schmalen Gang wechseln", to: "c7" },
+          { a: "Ringsum danach suchen", to: "b7" },
+          { a: "Nach nebenan wechseln", to: "c7" },
         ] },
         { id: "c6", e: "✒️", t: "In der schmalen Kammer bricht im neuesten Buch die Handschrift auf halber Seite ab. Darunter geht es weiter: größer, schiefer, mit Klauen geschrieben. Er zählt selbst, seit der Zähler nicht mehr kommt.", c: [
-          { a: "Bis zur letzten Zeile lesen", to: "c7" },
-          { a: "In die Halle zu ihm", to: "a7" },
+          { a: "Ganz zu Ende lesen", to: "c7" },
+          { a: "Hinüber zu ihm", to: "a7" },
         ] },
         { id: "a7", e: "🫸", t: "Der Stein ist kühl und wiegt nichts, und durch das Loch passt ein Finger. Als du ihn anhebst, hören die Zahlen auf. Nicht leiser. Sie hören einfach auf, mitten in einer.", c: [
           { a: "Ihn festhalten und dich umdrehen", to: "a8" },
@@ -828,18 +838,18 @@ export const STORIES = {
         ] },
         { id: "b7", e: "🔎", t: "Du gehst die Reihen ab und suchst ein Stück ohne Zahl. Es gibt keins — bis auf einen flachen grauen Stein mit einem Loch, der vorn beim Kopf liegt, ganz allein. Und die Zahlen hören auf.", c: [
           { a: "Zu dem Stein hinüber", to: "b8" },
-          { a: "Erst in die schmale Kammer", to: "c8" },
+          { a: "Erst nebenan nachsehen", to: "c8" },
         ] },
         { id: "c7", e: "📝", t: "Die letzte Zeile ist von heute, und sie ist keine Zahl. „Immer noch eins zu wenig“, steht da. „Wenn ich fertig bin, gehe ich es holen. Ich weiß, wo es ist.“ Draußen hört der Schnee auf.", c: [
           { a: "Das Buch mitnehmen", to: "c8" },
-          { a: "In die Halle zu ihm", to: "a8" },
+          { a: "Hinüber zu ihm", to: "a8" },
         ] },
         { id: "a8", e: "😳", t: "Das offene Auge ist jetzt ganz offen und sieht auf deine Hand. Er hebt den Kopf nicht und sagt nichts. Er wartet nur, so ruhig, wie ein Berg wartet, und die Stille geht bis in die letzte Ecke der Halle.", c: [
           { a: "Ihm den Stein zeigen", to: "a9" },
           { a: "Ihn fragen, was fehlt", to: "b9" },
         ] },
         { id: "b8", e: "🕯️", t: "Aus der Nähe sieht man es: Der Stein ist von Händen glatt geworden, nicht von Wasser. So glatt wird etwas nur, wenn es jemand jahrzehntelang in der Tasche hatte und immer wieder anfasste.", c: [
-          { a: "Ihn auf den freien Platz legen", to: "b9" },
+          { a: "Ihn dorthin zurücklegen", to: "b9" },
           { a: "In den schmalen Gang zurück", to: "c9" },
         ] },
         { id: "c8", e: "🚪", t: "Am Ende des schmalen Gangs ist eine kleine Tür in den Fels geschlagen, mit einem Riegel von innen. Dahinter Stufen, und die Stufen gehen nicht in die Halle. Sie gehen nach oben, aus dem Berg heraus.", c: [
@@ -856,7 +866,7 @@ export const STORIES = {
         ] },
         { id: "c9", e: "🪜", t: "Die Stufen sind ausgetreten, hunderte Male begangen. Oben eine Falltür, und darauf liegt Laub. Wer hier gewohnt hat, ist jeden Tag hinein- und hinausgegangen, und er hat es nie gemerkt.", c: [
           { a: "Die Falltür aufstoßen", to: "e2" },
-          { a: "Umkehren in die Halle", to: "e0" },
+          { a: "Umkehren und zu ihm", to: "e0" },
         ] },
         { id: "e0", e: "🪨", end: 0, name: "Das eine Stück", t: "Du gehst mit dem grauen Stein hinaus, und niemand hält dich auf. Erst draußen siehst du, dass durch das Loch ein Lederband gehört und dass innen eine Zahl steht: 4806. Er zählt jetzt vollständig. Und auf dem Foto am Kaminsims trägt deine Urgroßmutter genau das, was jetzt dir um den Hals hängt." },
         { id: "e1", e: "🐲", end: 1, name: "Der Zähler", t: "Du legst den Stein in das riesige Maul, und er nimmt ihn so vorsichtig, wie man ein Küken nimmt. „Sie hat sechzig Jahre für mich gezählt“, sagt er. „Dann ist sie nicht mehr gekommen, und ich wusste nicht, ob ich sie suchen darf.“ Von da an zählt ihr zu zweit, einmal im Winter." },
@@ -872,7 +882,7 @@ export const STORIES = {
       nodes: [
         { id: "s0", e: "🔭", t: "Auf dem Messingschild an Großvaters Fernrohr steht: „Zweite Kuppel — nur zur Sonnenwende.“ Zweite Kuppel gibt es nicht, sagen alle. Aber in der Nordwand sitzt ein grüner Buckel aus Kupfer mit einem Schlitz nach Osten. Und heute ist Sonnenwende.", c: [
           { a: "Zur Kuppel hinaufsteigen", to: "a1" },
-          { a: "Erst den Fels darunter absuchen", to: "b1" },
+          { a: "Erst die Wand darunter absuchen", to: "b1" },
         ] },
         { id: "a1", e: "🚪", t: "Unter der Kuppel sitzt eine Tür aus Eisen im Fels, ohne Griff und ohne Schloss. In der Mitte ein Rad mit Zähnen am Rand. Es geht schwer — und als du es anfasst, ist es warm von der Sonne, aber nur oben.", c: [
           { a: "Das Rad drehen", to: "a2" },
@@ -880,7 +890,7 @@ export const STORIES = {
         ] },
         { id: "b1", e: "🪜", t: "Der Fels unter der Kuppel ist gemauert, nicht gewachsen, und aus der Mauer stehen eiserne Sprossen. Manche fehlen. In einer steckt noch eine Schraube mit einem frischen Kratzer.", c: [
           { a: "Zur Tür hinaufsteigen", to: "b2" },
-          { a: "An der Mauer entlang um den Berg", to: "c2" },
+          { a: "An der Mauer um die Schulter", to: "c2" },
         ] },
         { id: "a2", e: "⚙️", t: "Das Rad rastet eine Vierteldrehung weiter ein. Hinter der Tür klackt es, als spränge etwas Großes einen Zahn weiter. Dann steht alles still. Und die Tür ist immer noch zu.", c: [
           { a: "Weiterdrehen", to: "a3" },
@@ -899,7 +909,7 @@ export const STORIES = {
           { a: "Erst hineinleuchten", to: "b4" },
         ] },
         { id: "b3", e: "🧮", t: "Zwölf Sternbilder, und eines ist doppelt eingeschlagen, tiefer als der Rest: ein Bogen aus sieben Punkten, mit zweien dicht beieinander am Ende. Und oben kippt das Licht in den Schlitz.", c: [
-          { a: "Das Rad auf dieses Zeichen stellen", to: "b4" },
+          { a: "Das Rad darauf stellen", to: "b4" },
           { a: "Am Fels nach demselben Bogen suchen", to: "c4" },
         ] },
         { id: "c3", e: "🕯️", t: "Der Spalt wird zum Gang, und der Gang ist gemauert. An der Wand ein Kerzenhalter mit einem Stummel, an dem vor sehr langer Zeit zum letzten Mal ein Streichholz war. Oben kippt das Licht in den Schlitz.", c: [
@@ -964,7 +974,7 @@ export const STORIES = {
         ] },
         { id: "c8", e: "🕳️", t: "An der Stelle, auf die der Strahl zeigt, ist die Wand einen Fingerbreit heller. Als du dagegen drückst, gibt sie nach: keine Wand, eine Platte. Dahinter ist es dunkel und kühl. Der Streifen ist bei der vorletzten Linie.", c: [
           { a: "Die Platte aufschieben", to: "c9" },
-          { a: "In die Mitte zum Kasten", to: "a9" },
+          { a: "Zurück in die Mitte", to: "a9" },
         ] },
         { id: "a9", e: "📜", t: "Im Kasten liegt, in Leinen geschlagen, ein Bogen aus dünnem Leder, gefaltet wie ein Brief. Außen steht ein Wort in einer Schrift, die du nicht kennst. Der Streifen erreicht die letzte Linie.", c: [
           { a: "Ihn auseinanderfalten", to: "e0" },
