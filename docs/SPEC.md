@@ -2076,12 +2076,24 @@ choice to make.
 
 These are **text adventures, and the place is the puzzle**: she arrives
 somewhere real, finds a way in, finds something worth having, and something is
-pressing — water coming back, ice working, a mountain settling, a sleeper who
-must not wake. There is real tension, and there are no jokes. The first draft
-shipped whimsy (washing clouds, a book that wrote back) and was rejected on
-sight, for a reason worth keeping: **an idea is not an adventure.** A new story
-must answer three questions on its first screen — where am I, what do I want,
-and what is running out?
+pressing. There is real tension, and there are no jokes. Two drafts were thrown
+away before this shape held, and both lessons are written into the header of
+`content.js`, where the next author will meet them:
+
+1. **An idea is not an adventure.** Draft one was whimsy — washing clouds, a
+   book that wrote back. Nothing was at stake and nothing was hidden.
+2. **A place is not a reason.** Draft two had real places and still no pull,
+   because the coherence rule below forbids referring to anything she did — so
+   nothing she did could matter, and a reader feels that at once. The five rules
+   that buy the pull back: she wants something and it is HERS; everything she
+   carries is handed to her in scene one; **the clock ticks by DEPTH, not by
+   path** (layer 3 a motor starts, layer 4 the drill, layer 5 the siren — identical
+   on every path, so it may escalate without breaking coherence); every scene is
+   an event and not a view; and a choice costs something.
+
+A new story answers three questions on its first screen — where am I, what do I
+want, and what is running out — and plants one question that only the endings
+answer.
 
 Journey theme: `cave`. **No adaptive engine and no tempo ladder**: a story is a
 walk through a graph, not a draw from a pool, and hurrying a story is the

@@ -25,6 +25,11 @@ const CONTENT = STORIES.de;
 // prose above two or three choice tiles and the round's scene.
 const DEPTH = [7, 9, 11];
 const TEXT = [200, 260, 320];
+// An ending scene has room a choice scene does not: the path steps back to 13vh
+// there (§21.3) and there is one button under it instead of three tiles. It is
+// also the payoff, and cutting the payoff to fit a choice screen's budget is the
+// wrong trade. Measured against the longest ending at 360×640.
+const END_TEXT = [260, 300, 340];
 const SENT = [85, 120, 150];
 const WORD = [14, 17, 20];
 
@@ -170,7 +175,8 @@ test("a scene fits its difficulty's reading level and the phone it is read on", 
     const d = story.diff;
     assert.ok(node.t?.length > 0, `${where}: empty scene`);
     assert.match(node.t, /[.!?][“”]?$/, `${where}: a scene ends on a full sentence`);
-    assert.ok(len(node.t) <= TEXT[d], `${where}: ${len(node.t)} chars, max ${TEXT[d]}`);
+    const cap = isEnding(node) ? END_TEXT[d] : TEXT[d];
+    assert.ok(len(node.t) <= cap, `${where}: ${len(node.t)} chars, max ${cap}`);
     for (const s of sentences(node.t)) {
       assert.ok(len(s) <= SENT[d], `${where}: sentence of ${len(s)} chars, max ${SENT[d]} — "${s}"`);
     }
